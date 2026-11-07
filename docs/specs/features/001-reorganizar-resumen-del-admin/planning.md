@@ -2,9 +2,9 @@
 
 - Feature: `001-reorganizar-resumen-del-admin`
 - Especificación: [specification.md](specification.md)
-- Estado: borrador
+- Estado: aprobado
 - Fecha: 2026-11-07
-- Hito de arquitectura: pendiente
+- Hito de arquitectura: aprobado por Sebastián Avila el 2026-11-07, con el gráfico propio (alternativa A)
 
 ## Enfoque
 
@@ -12,7 +12,7 @@ Todo se resuelve en el **Admin**, dentro de la feature `tienda`, con los datos d
 
 1. **Reglas puras en `domain/`.** Un único archivo de reglas, `resumen.rules.ts`, calcula los indicadores, la variación, los clientes nuevos, la serie por día, los pedidos por distrito, los últimos pedidos y la distribución por estado. Cada función recibe el instante actual (`ahora`) como parámetro: así las pruebas fijan la fecha y no dependen del reloj. Se escriben con TDD ([STD-18](../../../architecture/standards.md)).
 2. **Días en hora de Lima con `Intl`.** La fecha civil de un instante se obtiene con `Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' })`, la misma técnica que ya usa el BFF en [`reclamo.rules.mjs`](../../../../backend/src/domain/reclamos/reclamo.rules.mjs) (`addPeruBusinessDays`). Los tramos del mes se comparan como fechas civiles (año, mes y día), sin aritmética de horas.
-3. **Presentación.** `ResumenPage` se reorganiza con la estructura de la especificación y llama a las reglas desde señales `computed`. El gráfico es un componente propio de `presentation/` hecho con CSS y los tokens de la paleta B, sin librería de gráficos (pendiente del [hito](#hito-de-arquitectura)).
+3. **Presentación.** `ResumenPage` se reorganiza con la estructura de la especificación y llama a las reglas desde señales `computed`. El gráfico es un componente propio de `presentation/` hecho con CSS y los tokens de la paleta B, sin librería de gráficos (alternativa A del [hito](#hito-de-arquitectura)).
 4. **Pedidos.** `PedidosPage` recibe el parámetro `pedido` como `input()` gracias a `withComponentInputBinding()`, que ya está activo en [`app.config.ts`](../../../../frontend/projects/admin/src/app/app.config.ts), y lo usa como selección inicial con `linkedSignal`. La plantilla no cambia.
 
 Alternativas descartadas:
@@ -115,9 +115,9 @@ Restricción de la prueba: `resumen.rules.spec.mjs` sigue el patrón de [`tarifa
   - `?pedido=` como `input()` con `linkedSignal`. La URL no se actualiza al elegir otra fila: sin cambio visual ni de comportamiento.
   - `ETIQUETAS_ESTADO_PEDIDO` pasa a `tienda.model.ts`.
   - Solo los tokens que ya existen: `primary` para «Pedidos», `accent` para «Clientes nuevos», `warning` para el stock bajo. No se añaden tokens.
-- **Condicionadas** (qué trabajo bloquean):
-  - **Gráfico propio o librería de gráficos.** Bloquea la tarea del gráfico (`GraficoPedidosComponent`) y, si se elige una librería, todo `sdd-tasks` hasta su ADR. Lo demás (reglas, Pedidos y e2e de caracterización) no depende de esta decisión.
-- **ADR necesarios:** ninguno si se aprueba el gráfico propio, porque no entra ninguna dependencia ni cambia una regla de arquitectura. Si se elige una librería, un ADR en `sdd-decide` («Usar <librería> para los gráficos del Admin»), con su peso en el bundle, su licencia, cómo toma los tokens y su accesibilidad.
+  - Gráfico propio con CSS y tokens (`GraficoPedidosComponent`), sin librería de gráficos: decisión del [hito de arquitectura](#hito-de-arquitectura) del 2026-11-07.
+- **Condicionadas** (qué trabajo bloquean): ninguna.
+- **ADR necesarios:** ninguno. No entra ninguna dependencia ni cambia una regla de arquitectura, así que la siguiente etapa es `sdd-tasks`, sin `sdd-decide`.
 
 ## Estrategia de pruebas
 
@@ -228,4 +228,4 @@ Se pide aprobar:
 
 Recomendación: **A**. Si se aprueba, no hace falta `sdd-decide` y la siguiente etapa es `sdd-tasks`. Si se elige B o C, la siguiente etapa es `sdd-decide`, con el ADR de la librería.
 
-Aprobación: pendiente.
+Aprobación: Sebastián Avila aprobó el plan el 2026-11-07 y eligió la alternativa A (gráfico propio con CSS y tokens). Las alternativas B y C quedan descartadas. No hace falta ADR: la siguiente etapa es `sdd-tasks`.
