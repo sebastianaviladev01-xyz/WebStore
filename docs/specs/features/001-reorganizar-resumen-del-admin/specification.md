@@ -2,9 +2,9 @@
 
 - Feature: `001-reorganizar-resumen-del-admin`
 - Historia de usuario: ninguna. El [índice de historias](../../../planning/user-stories/user-stories.md#lo-que-no-se-convirtió-en-historia) registra «Resumen (Dashboard) del Admin: las fuentes lo nombran, pero no dicen qué muestra». Esta feature lo concreta a partir del pedido de Daniel (líder del proyecto) del 2026-11-06: «¿Puedes hacer que el dashboard tenga esta estructura?» y «Si, solo el dashboard», con la demo de OpenCart como referencia
-- Estado: borrador
+- Estado: aprobada
 - Fecha: 2026-11-07
-- Hito de alcance: pendiente. Las diez preguntas se respondieron el 2026-11-07 ([decisiones del hito](#decisiones-del-hito-de-alcance)); falta la aprobación del alcance completo
+- Hito de alcance: aprobado por Sebastián Avila el 2026-11-07, con las diez [decisiones del hito](#decisiones-del-hito-de-alcance)
 
 ## Problema y actores
 
