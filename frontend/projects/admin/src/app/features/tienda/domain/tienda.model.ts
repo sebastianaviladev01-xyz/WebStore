@@ -155,6 +155,14 @@ export interface SnapshotTienda {
 }
 
 /** Etiquetas visibles: el panel nunca muestra los códigos internos. */
+export const ETIQUETAS_ESTADO_PEDIDO: Readonly<Record<EstadoPedido, string>> = {
+  confirmed: 'Confirmado',
+  processing: 'En preparación',
+  shipped: 'Enviado',
+  delivered: 'Entregado',
+  cancelled: 'Cancelado',
+};
+
 export const ETIQUETAS_ESTADO_RECLAMO: Readonly<Record<Reclamo['status'], string>> = {
   received: 'Recibido',
   'in-review': 'En revisión',
