@@ -1,4 +1,4 @@
-import type { FechaLima, IndicadoresResumen, TramoMes } from './resumen.model';
+import type { DiaDelMes, FechaLima, IndicadoresResumen, TramoMes } from './resumen.model';
 import type { Cliente, Pedido } from './tienda.model';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
@@ -117,4 +117,23 @@ export function calcularIndicadores(
       variacion: variacionPorcentual(ahoraTramo.clientes, antesTramo.clientes),
     },
   };
+}
+
+/** Un punto por día del mes en curso de Lima, con los pedidos creados y los clientes nuevos de ese día. */
+export function serieDelMes(pedidos: readonly Pedido[], ahora: Date): DiaDelMes[] {
+  const { anio, mes } = fechaEnLima(ahora);
+  const serie: DiaDelMes[] = Array.from({ length: diasDelMes(anio, mes) }, (_, i) => ({
+    dia: i + 1,
+    pedidos: 0,
+    clientesNuevos: 0,
+  }));
+  const delMes = (fecha: FechaLima) => fecha.anio === anio && fecha.mes === mes;
+  for (const pedido of pedidos) {
+    const fecha = fechaEnLima(pedido.createdAt);
+    if (delMes(fecha)) serie[fecha.dia - 1].pedidos++;
+  }
+  for (const fecha of clientesNuevosPorFecha(pedidos).values()) {
+    if (delMes(fecha)) serie[fecha.dia - 1].clientesNuevos++;
+  }
+  return serie;
 }

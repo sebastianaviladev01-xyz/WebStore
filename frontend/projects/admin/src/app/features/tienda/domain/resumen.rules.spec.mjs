@@ -7,8 +7,14 @@ const source = await readFile(new URL('./resumen.rules.ts', import.meta.url), 'u
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { fechaEnLima, tramosDeComparacion, clientesNuevosPorFecha, variacionPorcentual, calcularIndicadores } =
-  await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+const {
+  fechaEnLima,
+  tramosDeComparacion,
+  clientesNuevosPorFecha,
+  variacionPorcentual,
+  calcularIndicadores,
+  serieDelMes,
+} = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 test('la fecha de Lima de un instante no depende de la zona del equipo', () => {
   assert.deepEqual(fechaEnLima('2026-11-01T03:00:00Z'), { anio: 2026, mes: 10, dia: 31 }, '22:00 del 31/10');
@@ -154,4 +160,42 @@ test('sin pedidos en el tramo anterior no hay variación; sin pedidos en el actu
     ventas: { total: 0, variacion: null },
     clientes: { total: 0, variacion: null },
   });
+});
+
+test('la serie tiene un punto por día del mes en curso de Lima y cuenta por día de Lima', () => {
+  const serie = serieDelMes(
+    [
+      venta('2026-11-01T05:00:00Z', 10, 'dora@correo.pe'),
+      venta('2026-11-01T03:00:00Z', 10, 'carla@correo.pe'),
+      venta('2026-11-03T15:00:00Z', 10, 'ana@correo.pe'),
+      venta('2026-11-03T20:00:00Z', 10, 'ana@correo.pe'),
+      venta('2026-11-08T15:00:00Z', 10, 'ana@correo.pe', 'cancelled'),
+      venta('2026-11-08T16:00:00Z', 10, 'bea@correo.pe'),
+      venta('2026-10-20T15:00:00Z', 10, 'bea@correo.pe'),
+      venta('2026-12-01T04:30:00Z', 10, 'luis@correo.pe'),
+      venta('2026-12-05T15:00:00Z', 10, 'luis@correo.pe'),
+    ],
+    ahora,
+  );
+  assert.deepEqual(
+    serie.map((punto) => punto.dia),
+    Array.from({ length: 30 }, (_, i) => i + 1),
+    'noviembre tiene 30 días',
+  );
+  const con = serie.filter((punto) => punto.pedidos || punto.clientesNuevos);
+  assert.deepEqual(con, [
+    { dia: 1, pedidos: 1, clientesNuevos: 1 }, // 00:00 de Lima; 03:00 Z del mismo día es el 31/10 y no entra
+    { dia: 3, pedidos: 2, clientesNuevos: 1 },
+    { dia: 8, pedidos: 2, clientesNuevos: 0 }, // bea ya era cliente nueva en octubre
+    { dia: 30, pedidos: 1, clientesNuevos: 1 }, // 23:30 de Lima del 30/11
+  ]);
+});
+
+test('la serie cubre febrero, bisiesto y diciembre, y sin pedidos queda toda en cero', () => {
+  const largo = (fecha) => serieDelMes([], new Date(fecha)).length;
+  assert.equal(largo('2026-02-10T17:00:00Z'), 28);
+  assert.equal(largo('2028-02-10T17:00:00Z'), 29);
+  assert.equal(largo('2026-12-31T17:00:00Z'), 31);
+  assert.equal(largo('2026-12-01T04:30:00Z'), 30, 'el 01/12 04:30 Z todavía es el 30/11 en Lima');
+  assert.ok(serieDelMes([], ahora).every((punto) => punto.pedidos === 0 && punto.clientesNuevos === 0));
 });
