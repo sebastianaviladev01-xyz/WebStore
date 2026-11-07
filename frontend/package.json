@@ -1,0 +1,62 @@
+{
+  "name": "webstore-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "start": "ng serve storefront",
+    "start:storefront": "ng serve storefront --proxy-config proxy.conf.json",
+    "start:admin": "ng serve admin --port 4300 --proxy-config proxy.conf.json",
+    "build": "ng build storefront",
+    "build:storefront": "ng build storefront",
+    "build:admin": "ng build admin",
+    "build:all": "npm run build:storefront && npm run build:admin",
+    "build:prod": "ng build storefront --configuration production",
+    "typecheck:storefront": "tsc -p tsconfig.app.json --noEmit",
+    "typecheck:admin": "tsc -p projects/admin/tsconfig.app.json --noEmit",
+    "lint": "eslint src projects",
+    "format": "prettier --write \"src/**/*.{ts,html,css,mjs}\" \"projects/**/*.{ts,html,css,mjs}\" \"tests/**/*.{mjs,ts}\" \"tools/**/*.mjs\" \"*.{mjs,ts}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,css,mjs}\" \"projects/**/*.{ts,html,css,mjs}\" \"tests/**/*.{mjs,ts}\" \"tools/**/*.mjs\" \"*.{mjs,ts}\"",
+    "test": "node --test \"src/**/*.spec.mjs\" \"projects/**/*.spec.mjs\"",
+    "test:architecture": "node --test \"tests/architecture/*.test.mjs\"",
+    "test:e2e": "playwright test",
+    "verify": "npm run lint && npm test && npm run test:architecture && npm run build:all"
+  },
+  "dependencies": {
+    "@angular/cdk": "22.2.4",
+    "@angular/common": "22.2.4",
+    "@angular/compiler": "22.2.4",
+    "@angular/core": "22.2.4",
+    "@angular/forms": "22.2.4",
+    "@angular/material": "22.2.4",
+    "@angular/platform-browser": "22.2.4",
+    "@angular/router": "22.2.4",
+    "@fontsource-variable/source-sans-3": "^5.3.1",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@angular/build": "22.2.5",
+    "@angular/cli": "22.2.4",
+    "@angular/compiler-cli": "22.2.4",
+    "@eslint/js": "9.39.5",
+    "@playwright/test": "1.65.0",
+    "@softarc/eslint-plugin-sheriff": "0.20.0",
+    "@softarc/sheriff-core": "0.20.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "angular-eslint": "22.6.0",
+    "eslint": "9.39.5",
+    "postcss": "8.5.32",
+    "prettier": "3.9.10",
+    "tailwindcss": "4.3.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.1"
+  },
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || ^26.0.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "11.0.5"
+    }
+  }
+}

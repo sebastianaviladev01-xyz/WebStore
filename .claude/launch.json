@@ -1,0 +1,24 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "bff",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["backend/src/main.mjs"],
+      "port": 3000,
+      "env": { "WEBSTORE_EXPOSE_TEST_CODES": "true" }
+    },
+    {
+      "name": "storefront",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "start:storefront"],
+      "port": 4200
+    },
+    {
+      "name": "admin",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "frontend", "run", "start:admin"],
+      "port": 4300
+    }
+  ]
+}

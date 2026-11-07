@@ -1,0 +1,436 @@
+/**
+ * Smoke test del contrato HTTP del BFF (`npm run test:contract`): levanta el servidor real con un archivo de
+ * estado temporal (nunca `backend/data.json`) y recorre el contrato de docs/BFF-CONTRACT.md. No usa node:test.
+ */
+import { spawn } from 'node:child_process';
+import { unlink } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const port = 3107;
+const base = `http://localhost:${port}`;
+const dataFile = join(tmpdir(), `webstore-smoke-${process.pid}.json`);
+const serverEntry = fileURLToPath(new URL('../../src/main.mjs', import.meta.url));
+const child = spawn(process.execPath, [serverEntry], {
+  stdio: 'ignore',
+  env: {
+    ...process.env,
+    PORT: String(port),
+    WEBSTORE_DATA_FILE: dataFile,
+    WEBSTORE_EXPOSE_TEST_CODES: 'true',
+    WEBSTORE_NON_WORKING_DATES: '',
+  },
+});
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function raw(path, options = {}) {
+  return fetch(base + path, {
+    headers: { 'content-type': 'application/json', ...(options.headers ?? {}) },
+    ...options,
+  });
+}
+async function request(path, options = {}) {
+  const response = await raw(path, options);
+  if (!response.ok)
+    throw new Error(`${options.method ?? 'GET'} ${path}: ${response.status} ${await response.text()}`);
+  return response.status === 204 ? null : response.json();
+}
+const authorization = (token) => ({ authorization: `Bearer ${token}` });
+async function adminLogin(email = 'owner@webstore.demo', password = 'WebStore#2026') {
+  return request('/bff/admin/sessions', { method: 'POST', body: JSON.stringify({ email, password }) });
+}
+
+try {
+  for (let index = 0; index < 30; index++) {
+    try {
+      await request('/health');
+      break;
+    } catch {
+      await sleep(100);
+    }
+  }
+
+  let owner = await adminLogin();
+  await request('/bff/admin/reset', { method: 'POST', headers: authorization(owner.token), body: '{}' });
+  owner = await adminLogin();
+  let snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  snapshot.products[0].stock = 15;
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify(snapshot),
+  });
+
+  let products = await request('/bff/catalog/products');
+  if (products[0].stock !== 15) throw new Error('El stock modificado en Admin no llegó al Storefront');
+  if (!products[0].highlights.length || !products[0].thumbnailUrl)
+    throw new Error('La ficha pública no expone características y miniatura');
+  if (products[0].images[0] !== products[0].imageUrl || products[0].images.length < 2)
+    throw new Error('La ficha pública no expone la galería con la imagen principal primero');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  snapshot.products[0] = {
+    ...snapshot.products[0],
+    gallery: ['assets/products/tv.svg', 'assets/brand/living-room-v2.jpg'],
+  };
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify(snapshot),
+  });
+  products = await request('/bff/catalog/products');
+  if (
+    products[0].images.join() !==
+    [products[0].imageUrl, 'assets/products/tv.svg', 'assets/brand/living-room-v2.jpg'].join()
+  )
+    throw new Error('La galería editada en Admin no llegó al Storefront');
+
+  const product = products[0];
+  // Mismo payload que envía el Storefront: CartItem sin productId y montos calculados en el cliente.
+  const command = {
+    customer: {
+      fullName: 'Smoke Test',
+      email: 'smoke@example.com',
+      phone: '999999999',
+      document: '12345678',
+    },
+    shipping: { addressLine: 'Av Demo 123', district: 'San Isidro', province: 'Lima', department: 'Lima' },
+    deliveryDate: '2026-11-10',
+    paymentMethod: 'card',
+    items: [{ product: { ...product, price: 1 }, quantity: 2 }],
+    subtotal: 2,
+    igv: 0,
+    shippingCost: 0,
+    total: 2,
+  };
+  const order = await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
+  products = await request('/bff/catalog/products');
+  if (products[0].stock !== 13) throw new Error('Checkout no descontó stock');
+  if (order.shippingOrigin !== 'Lima Centro' || order.shippingCost !== 12)
+    throw new Error('El BFF no asignó origen/tarifa desde la tabla de envíos');
+  if (order.total !== Math.round((product.price * 2 + 12) * 100) / 100)
+    throw new Error('El BFF aceptó montos calculados por el cliente');
+  if (!order.accessToken || order.accessTokenHash)
+    throw new Error('El checkout no entregó un token de acceso público seguro');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  if (!snapshot.orders.some((item) => item.id === order.id)) throw new Error('Pedido no llegó al Admin');
+  if (!snapshot.customers.some((customer) => customer.email === 'smoke@example.com'))
+    throw new Error('Cliente no llegó al Admin');
+
+  const quote = await request('/bff/shipping/quote?destination=Lince');
+  if (quote.origin !== 'Lima Centro' || quote.price !== 10)
+    throw new Error('La cotización no eligió el origen desde la tabla');
+  if ((await raw('/bff/orders?email=smoke@example.com')).status !== 401)
+    throw new Error('Listar pedidos por correo no exige sesión');
+  if ((await raw(`/bff/orders/${order.id}`)).status !== 404)
+    throw new Error('Un pedido es visible sin autorización');
+  if ((await raw(`/bff/orders/${order.id}`, { headers: { 'x-order-token': 'token-ajeno' } })).status !== 404)
+    throw new Error('Un token ajeno accede al pedido');
+  if ((await raw(`/bff/orders/${order.id}/cancel`, { method: 'PATCH', body: '{}' })).status !== 404)
+    throw new Error('Un pedido se puede cancelar sin autorización');
+  const guestAccess = { 'x-order-token': order.accessToken };
+  const guestOrder = await request(`/bff/orders/${order.id}`, { headers: guestAccess });
+  if (guestOrder.id !== order.id) throw new Error('El token de invitado no recupera su pedido');
+  const moved = await request(`/bff/orders/${order.id}/shipping`, {
+    method: 'PATCH',
+    headers: guestAccess,
+    body: JSON.stringify({ shipping: { ...command.shipping, district: 'Lince' } }),
+  });
+  if (moved.shippingCost !== 10 || moved.total !== Math.round((product.price * 2 + 10) * 100) / 100)
+    throw new Error('Cambiar de distrito no recalculó el envío');
+  await request(`/bff/orders/${order.id}/cancel`, { method: 'PATCH', headers: guestAccess, body: '{}' });
+  products = await request('/bff/catalog/products');
+  if (products[0].stock !== 15) throw new Error('Cancelar el pedido no liberó el stock reservado');
+
+  const adminOrder = await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  snapshot.orders = snapshot.orders.map((item) =>
+    item.id === adminOrder.id ? { ...item, status: 'cancelled' } : item,
+  );
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify(snapshot),
+  });
+  products = await request('/bff/catalog/products');
+  if (products[0].stock !== 15) throw new Error('Cancelar desde Admin no liberó el stock reservado');
+
+  // Un Admin con datos viejos no debe pisar el stock vendido mientras tanto.
+  const staleSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
+  const staleSave = await raw('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: staleSnapshot.revision,
+      brands: staleSnapshot.brands,
+      products: staleSnapshot.products,
+    }),
+  });
+  if (staleSave.status !== 409)
+    throw new Error('El BFF aceptó un guardado del Admin con datos desactualizados');
+  products = await request('/bff/catalog/products');
+  if (products[0].stock !== 13) throw new Error('Un guardado desactualizado del Admin alteró el stock');
+  const fresh = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const partial = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: fresh.revision, brands: fresh.brands }),
+  });
+  if (partial.revision !== fresh.revision + 1 || partial.products[0].stock !== 13)
+    throw new Error('El guardado parcial del Admin no conservó el stock o no avanzó la revisión');
+
+  // Jerarquía de categorías: sin ciclos ni padres inexistentes.
+  const cyclic = partial.categories.map((category) =>
+    category.id === 'cat-tv' ? { ...category, parentId: 'cat-tv-oled' } : category,
+  );
+  for (const categories of [
+    cyclic,
+    partial.categories.map((category) =>
+      category.id === 'cat-tv' ? { ...category, parentId: 'cat-tv' } : category,
+    ),
+    [...partial.categories, { id: 'cat-huerfana', name: 'Huérfana', parentId: 'no-existe' }],
+  ]) {
+    const invalid = await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ revision: partial.revision, categories }),
+    });
+    if (invalid.status !== 400) throw new Error('El BFF aceptó una jerarquía de categorías inválida');
+  }
+  if ((await request('/bff/catalog/categories')).find((category) => category.id === 'cat-tv')?.parentId)
+    throw new Error('Una jerarquía rechazada alteró las categorías');
+
+  const registration = await request('/bff/accounts', {
+    method: 'POST',
+    body: JSON.stringify({
+      fullName: 'Cuenta Smoke',
+      email: 'account@example.com',
+      phone: '999999999',
+      document: '87654321',
+      password: 'CuentaSmoke2026',
+    }),
+  });
+  if (!registration.testCode) throw new Error('El canal de prueba no entregó el código temporal');
+  await request('/bff/account-verifications', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'account@example.com', code: registration.testCode }),
+  });
+  const accountSession = await request('/bff/account-sessions', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'account@example.com', password: 'CuentaSmoke2026' }),
+  });
+  const current = await request('/bff/account-sessions/current', {
+    headers: authorization(accountSession.token),
+  });
+  if (current.user.email !== 'account@example.com')
+    throw new Error('La sesión de cliente no recuperó el perfil');
+  const accountOrder = await request('/bff/checkout/orders', {
+    method: 'POST',
+    headers: authorization(accountSession.token),
+    body: JSON.stringify({ ...command, customer: { ...command.customer, email: 'account@example.com' } }),
+  });
+  const mine = await request('/bff/orders', { headers: authorization(accountSession.token) });
+  if (!mine.some((item) => item.id === accountOrder.id) || mine.some((item) => item.id === order.id))
+    throw new Error('La cuenta no ve exactamente sus pedidos');
+  if ((await raw(`/bff/orders/${order.id}`, { headers: authorization(accountSession.token) })).status !== 404)
+    throw new Error('Una cuenta accede a pedidos de otro correo');
+  const reset = await request('/bff/password-reset-requests', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'account@example.com' }),
+  });
+  await request('/bff/password-resets', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'account@example.com', code: reset.testCode, password: 'CuentaNueva2026' }),
+  });
+  const oldSession = await raw('/bff/account-sessions/current', {
+    headers: authorization(accountSession.token),
+  });
+  if (oldSession.status !== 401) throw new Error('El cambio de contraseña no revocó sesiones anteriores');
+
+  const complaint = await request('/bff/complaints', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'Cliente Smoke',
+      document: '12345678',
+      email: 'smoke@example.com',
+      phone: '999999999',
+      address: 'Av Demo 123',
+      subject: 'Producto de prueba',
+      amount: 100,
+      type: 'reclamo',
+      detail: 'Detalle suficiente para la prueba contractual.',
+      request: 'Solicito revisión del caso.',
+    }),
+  });
+  if (!complaint.id.startsWith('REC-')) throw new Error('No se generó código de reclamación');
+  const toLimaDate = (date) =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Lima',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date);
+  const cursor = new Date(`${toLimaDate(new Date(complaint.createdAt))}T00:00:00Z`);
+  const dueDate = new Date(`${toLimaDate(new Date(complaint.dueAt))}T00:00:00Z`);
+  let businessDays = 0;
+  while (cursor < dueDate) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+    const weekday = cursor.getUTCDay();
+    if (weekday !== 0 && weekday !== 6) businessDays += 1;
+  }
+  if (businessDays !== 15) throw new Error(`El plazo debe ser 15 días hábiles; calculados ${businessDays}`);
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  if (!snapshot.complaints.some((item) => item.id === complaint.id))
+    throw new Error('La reclamación no llegó al Admin');
+
+  const settings = {
+    ...snapshot.config,
+    storeName: 'Tienda Smoke',
+    primaryColor: '#123456',
+    logoUrl: 'data:image/svg+xml;base64,PHN2Zy8+',
+    sideNavigation: 'TV y audio, Cocina',
+    shippingPageEnabled: false,
+    privacyContent: 'Privacidad contractual',
+  };
+  snapshot.config = settings;
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify(snapshot),
+  });
+  const publicSettings = await request('/bff/content/settings');
+  if (
+    publicSettings.storeName !== 'Tienda Smoke' ||
+    publicSettings.primaryColor !== '#123456' ||
+    publicSettings.privacyContent !== 'Privacidad contractual'
+  )
+    throw new Error('CMS Admin no llegó al Storefront');
+  if (
+    publicSettings.logoUrl !== settings.logoUrl ||
+    publicSettings.sideNavigation !== 'TV y audio, Cocina' ||
+    publicSettings.shippingPageEnabled !== false
+  )
+    throw new Error('Configuración pública incompleta');
+
+  snapshot.banners[0] = {
+    ...snapshot.banners[0],
+    title: 'Campaña de prueba',
+    imageUrl: 'assets/brand/living-room-v2.jpg',
+    imageFit: 'cover',
+    imageTone: 'dark',
+    imageFocusY: 120,
+    ctaUrl: '/catalogo?categoria=cat-tv',
+  };
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify(snapshot),
+  });
+  const publicBanners = await request('/bff/content/banners');
+  const campaign = publicBanners.find((banner) => banner.id === snapshot.banners[0].id);
+  if (
+    campaign?.title !== 'Campaña de prueba' ||
+    campaign.imageFit !== 'cover' ||
+    campaign.imageTone !== 'dark' ||
+    campaign.imageFocusY !== 100 ||
+    campaign.ctaUrl !== '/catalogo?categoria=cat-tv' ||
+    campaign.imageUrl !== 'assets/brand/living-room-v2.jpg'
+  )
+    throw new Error('Banner o presentación de imagen no llegó al Storefront');
+
+  // Roles fijos: el Admin envía solo las colecciones que cambió, así que las pruebas hacen lo mismo.
+  const put = (session, update) =>
+    raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: { ...authorization(session.token), 'content-type': 'application/json' },
+      body: JSON.stringify(update),
+    });
+
+  const seller = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
+  const sellerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(seller.token) });
+  if (seller.user.role !== 'vendedor' || sellerSnapshot.users.length || sellerSnapshot.rates.length)
+    throw new Error('El vendedor recibió colecciones fuera de su rol');
+  if (
+    !sellerSnapshot.orders.length ||
+    !sellerSnapshot.orders[0].items?.length ||
+    !sellerSnapshot.orders[0].district
+  )
+    throw new Error('El vendedor no recibe el detalle de pedidos (líneas y distrito)');
+  if (sellerSnapshot.roles?.map((role) => role.id).join() !== 'superadmin,admin,vendedor')
+    throw new Error('El snapshot no publica los roles fijos');
+  const forbidden = await put(seller, {
+    revision: sellerSnapshot.revision,
+    products: [...sellerSnapshot.products, { ...sellerSnapshot.products[0], id: 'forbidden' }],
+  });
+  if (forbidden.status !== 403) throw new Error('El BFF permitió ampliar catálogo con rol restringido');
+  const sellerCategories = await put(seller, {
+    revision: sellerSnapshot.revision,
+    categories: sellerSnapshot.categories,
+  });
+  if (sellerCategories.status !== 403) throw new Error('El vendedor pudo modificar categorías');
+  const sellerEdit = await put(seller, {
+    revision: sellerSnapshot.revision,
+    products: sellerSnapshot.products.map((item, index) =>
+      index === 0 ? { ...item, gallery: ['assets/products/tv.svg'], price: 1 } : item,
+    ),
+  });
+  if (!sellerEdit.ok) throw new Error(`El vendedor no pudo editar la ficha: ${sellerEdit.status}`);
+  const afterSellerEdit = (await request('/bff/catalog/products'))[0];
+  if (afterSellerEdit.images.length !== 2 || afterSellerEdit.price === 1)
+    throw new Error('El vendedor no puede editar fotos o pudo cambiar el precio');
+
+  const manager = await adminLogin('admin@webstore.demo', 'Admin#2026');
+  let managerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(manager.token) });
+  if (manager.user.role !== 'admin' || managerSnapshot.users.length || !managerSnapshot.rates.length)
+    throw new Error('El rol Administrador no recibe lo que le corresponde');
+  const managerUsers = await put(manager, { revision: managerSnapshot.revision, users: [] });
+  if (managerUsers.status !== 403) throw new Error('El Administrador pudo gestionar usuarios');
+  const managerReset = await raw('/bff/admin/reset', {
+    method: 'POST',
+    headers: authorization(manager.token),
+    body: '{}',
+  });
+  if (managerReset.status !== 403) throw new Error('El Administrador pudo reiniciar la tienda');
+  const managerRates = await put(manager, {
+    revision: managerSnapshot.revision,
+    rates: managerSnapshot.rates.map((rate) => ({ ...rate, price: rate.price + 1 })),
+  });
+  if (!managerRates.ok) throw new Error('El Administrador no pudo ajustar tarifas');
+
+  const superSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const invalidRole = await put(owner, {
+    revision: superSnapshot.revision,
+    users: superSnapshot.users.map((user) => (user.role === 'vendedor' ? { ...user, role: 'owner' } : user)),
+  });
+  if (invalidRole.status !== 400) throw new Error('El BFF aceptó un rol fuera de los fijos');
+  const lockout = await put(owner, {
+    revision: superSnapshot.revision,
+    users: superSnapshot.users.map((user) => ({
+      ...user,
+      role: user.role === 'superadmin' ? 'admin' : user.role,
+    })),
+  });
+  if (lockout.status !== 409) throw new Error('El BFF permitió quedarse sin superadministrador');
+
+  const rates = await request('/bff/shipping/rates');
+  if (!rates.length) throw new Error('Tarifas compartidas vacías');
+
+  console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
+  console.log('✓ Storefront → Admin: pedido/cliente/inventario');
+  console.log('✓ Pedidos: acceso por cuenta o token, stock liberado al cancelar, envío desde la tabla');
+  console.log('✓ Concurrencia: un guardado desactualizado del Admin se rechaza (409) sin alterar el stock');
+  console.log('✓ Categorías: se rechazan ciclos y padres inexistentes');
+  console.log('✓ Cuentas: registro/verificación/sesión/recuperación/revocación');
+  console.log('✓ Roles fijos: superadmin, admin y vendedor con permisos validados en el BFF');
+  console.log('✓ Reclamaciones: registro persistente y recepción administrativa');
+  console.log('✓ CMS: logo/navegación/toggles/contenido legal');
+  console.log('✓ Campañas y envíos compartidos');
+  console.log('\nSmoke test BFF: OK');
+} finally {
+  child.kill();
+  await sleep(100);
+  try {
+    await unlink(dataFile);
+  } catch {}
+}

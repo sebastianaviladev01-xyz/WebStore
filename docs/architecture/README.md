@@ -1,0 +1,59 @@
+# Arquitectura del sistema — WebStore
+
+Vista de sistema: contenedores, stack y principios. El diseño interno de cada aplicación está en [`frontend/architecture.md`](../../frontend/architecture.md) y [`backend/architecture.md`](../../backend/architecture.md). Las decisiones están en [`docs/adrs/`](../adrs/).
+
+## Topología
+
+```text
+storefront (público)                 admin (privado)
+store.example.com                    admin.store.example.com
+          │                                  │
+          └───────────────┬──────────────────┘
+                          ↓
+                    WebStore BFF
+                 fuente de verdad web
+                          ↓
+       catálogo · inventario · clientes · pedidos
+          envíos · contenido · banners · pagos
+```
+
+En la demo, el BFF de prueba de [`backend/`](../../backend/) reemplaza al BFF productivo y persiste su estado en un archivo JSON. Ambos frontends lo consumen por HTTP en `/bff`; no hay catálogos ni inventarios administrativos independientes.
+
+## Contenedores y stack
+
+| Contenedor | Carpeta | Stack | Puerto local |
+|---|---|---|---|
+| Storefront (tienda pública) | `frontend/src/` | Angular standalone, signals, Angular Material/CDK, Tailwind CSS | 4200 |
+| Admin (backoffice) | `frontend/projects/admin/` | El mismo workspace Angular | 4300 |
+| BFF de prueba | `backend/` | Node.js sin dependencias, estado en `backend/data.json` | 3000 |
+
+Las versiones exactas viven solo en los manifiestos: [`frontend/package.json`](../../frontend/package.json) y [`backend/package.json`](../../backend/package.json).
+
+## Principios
+
+- Separación Storefront/Admin: dos aplicaciones del mismo workspace, sin código compartido entre ellas.
+- Frontend organizado por features con capas internas (`domain`, `application`, `data`, `presentation`), con los límites comprobados por Sheriff ([ADR-0006](../adrs/0006-organizar-el-frontend-por-features-y-capas.md)).
+- BFF en Clean Architecture simplificada (`domain`, `application`, `infrastructure`, `api`) ([ADR-0007](../adrs/0007-organizar-el-bff-en-capas.md)).
+- HTTP solo en los adaptadores `Bff*Gateway` de la capa `data/`; la aplicación depende de puertos del dominio.
+- Contratos del BFF orientados a la experiencia, no a tablas ([contrato](../../backend/docs/BFF-CONTRACT.md)).
+- Vocabulario de negocio en español y términos técnicos en inglés ([ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md)).
+- Configuración del negocio desacoplada de los componentes: la publica el CMS del Admin.
+- Pruebas unitarias e integración con `node:test` y e2e con Playwright ([ADR-0009](../adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md)).
+
+## Una sola fuente de datos
+
+El Admin modifica la misma fuente que usa el Storefront. Por ello:
+
+- cambiar stock cambia el catálogo público;
+- el checkout descuenta el inventario que administra el Admin;
+- el checkout crea o actualiza clientes visibles en el Admin;
+- los pedidos públicos aparecen en el Admin;
+- CMS, banners y tarifas de envío se publican desde la misma fuente.
+
+## Roles
+
+Tres roles fijos, asignables pero no editables: `superadmin` (todo, incluidos usuarios), `admin` (toda la operación sin usuarios) y `vendedor` (fichas de productos existentes, inventario y estado de pedidos). Las rutas del Admin usan `permisoGuard(permiso)` y el menú se filtra con `session.can(permiso)`; el BFF vuelve a validar cada operación. Detalle en el [contrato del BFF](../../backend/docs/BFF-CONTRACT.md).
+
+## SEO / SSR
+
+Las sesiones acordaron primero una versión funcional y después una refactorización hacia SSR/SEO. Las features y el acceso a datos están desacoplados para que esa evolución no obligue a reescribir dominio ni aplicación.

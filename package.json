@@ -1,0 +1,32 @@
+{
+  "name": "webstore",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WebStore: tienda Angular (storefront y Admin) y BFF de prueba.",
+  "type": "module",
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || ^26.0.0"
+  },
+  "scripts": {
+    "setup": "npm ci && npm ci --prefix frontend",
+    "start:bff": "npm start --prefix backend",
+    "start:storefront": "npm run start:storefront --prefix frontend",
+    "start:admin": "npm run start:admin --prefix frontend",
+    "check:syntax": "npm run check:syntax --prefix backend",
+    "check:agents": "node tools/check-agents.mjs",
+    "lint": "npm run lint --prefix frontend",
+    "format": "prettier --write \"backend/**/*.mjs\" \"tools/**/*.mjs\" && npm run format --prefix frontend",
+    "format:check": "prettier --check \"backend/**/*.mjs\" \"tools/**/*.mjs\" && npm run format:check --prefix frontend",
+    "build:all": "npm run build:all --prefix frontend",
+    "test": "npm test --prefix frontend && npm test --prefix backend",
+    "test:architecture": "npm run test:architecture --prefix frontend",
+    "test:e2e": "npm run test:e2e --prefix frontend",
+    "validate:structure": "node tools/validate-structure.mjs",
+    "validate:contract": "npm run validate:structure && npm test && npm run test:contract --prefix backend",
+    "audit:all": "npm audit && npm audit --prefix frontend",
+    "verify": "npm run check:agents && npm run check:syntax && npm run format:check && npm run lint && npm run test:architecture && npm run build:all && npm run validate:contract"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}

@@ -1,0 +1,1211 @@
+/* Storefront composition. Data and content remain owned by the BFF. */
+
+.ws-desktop-navigation {
+  position: relative;
+  display: none;
+}
+
+.ws-utility-bar {
+  background: var(--ws-primary-strong);
+  color: #ffffff;
+}
+
+.ws-site-header {
+  background: color-mix(in srgb, var(--ws-surface) 96%, transparent);
+  box-shadow: 0 1px 0 rgba(15, 23, 42, 0.06);
+  backdrop-filter: saturate(130%) blur(14px);
+}
+
+.ws-brand-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ws-brand-mark {
+  display: inline-grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 11px 11px 11px 3px;
+  background: var(--ws-primary);
+  color: #ffffff;
+  font-family: var(--ws-font-display), sans-serif;
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: -0.04em;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--ws-primary) 24%, transparent);
+}
+
+.ws-navigation-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 24px;
+}
+
+.ws-navigation-all,
+.ws-navigation-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 46px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0;
+  background: transparent;
+  color: var(--ws-text);
+  font-size: 14px;
+  font-weight: 500;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.ws-navigation-all {
+  margin-right: 6px;
+  color: var(--ws-ink);
+}
+
+.ws-navigation-trigger svg {
+  width: 15px;
+  height: 15px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
+  transition:
+    transform 180ms ease,
+    opacity 160ms ease;
+}
+
+/*
+ * La flecha de las categorías con subcategorías va más tenue en reposo y se enciende al pasar el mouse o
+ * al abrir el menú: sigue indicando que se despliega, sin parecer un adorno distinto al resto de la fila.
+ */
+.ws-navigation-trigger[aria-expanded] svg {
+  opacity: 0.55;
+}
+
+.ws-navigation-trigger[aria-expanded]:hover svg,
+.ws-navigation-trigger[aria-expanded]:focus-visible svg,
+.ws-navigation-trigger.is-active svg {
+  opacity: 1;
+}
+
+.ws-navigation-trigger:hover,
+.ws-navigation-trigger.is-active {
+  border-bottom-color: var(--ws-primary);
+  color: var(--ws-primary);
+}
+
+.ws-navigation-trigger.is-active svg {
+  transform: rotate(180deg);
+}
+
+.ws-navigation-secondary {
+  display: flex;
+  gap: 22px;
+  margin-left: auto;
+  /* Mismo margen interno que las acciones de la cabecera: Envíos termina alineado con Carrito. */
+  padding-right: 0.65rem;
+}
+
+/*
+ * Enlaces de servicio a la derecha (Envíos): mismo color y peso que las categorías, con ícono, para que se
+ * lean como enlace y no como un dato suelto. La cabecera anterior conserva su gris en home-previous.css.
+ */
+.ws-navigation-secondary .ws-navigation-trigger {
+  gap: 7px;
+  color: var(--ws-text);
+}
+
+.ws-navigation-trigger .ws-navigation-icon {
+  width: 18px;
+  height: 18px;
+  stroke: var(--ws-primary-strong);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ws-navigation-trigger:hover .ws-navigation-icon {
+  stroke: currentColor;
+}
+
+.ws-mega-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: var(--ws-surface);
+  border-top: 1px solid var(--ws-border);
+  border-bottom: 1px solid var(--ws-border);
+  box-shadow: 0 24px 56px rgba(15, 23, 42, 0.12);
+  z-index: 50;
+  max-height: 70vh;
+  overflow-y: auto;
+  transform-origin: top center;
+  animation: ws-mega-enter 180ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes ws-mega-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-7px) scaleY(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+  }
+}
+
+.ws-mega-layout {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  gap: 70px;
+  padding-block: 40px 48px;
+}
+
+.ws-mega-intro {
+  border-right: 1px solid var(--ws-border);
+  padding-right: 36px;
+}
+
+.ws-mega-intro h2 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.ws-mega-intro p {
+  margin: 14px 0 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ws-muted);
+}
+
+.ws-mega-intro a {
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ws-mega-columns {
+  display: grid;
+  align-content: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 32px;
+}
+
+.ws-mega-heading {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.ws-mega-leaf {
+  display: block;
+  min-height: 32px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ws-muted);
+}
+
+.ws-mega-panel a:hover {
+  color: var(--ws-primary);
+  text-decoration: underline;
+}
+
+@keyframes ws-hero-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+/* Filtros de Destacados: pestañas subrayadas sobre una línea a todo el ancho. En celular se
+   deslizan en horizontal; cada pestaña mide al menos 48 px de alto para tocarla con el dedo.
+   Los 4 px de relleno dejan sitio al contorno de foco, que el desplazamiento recortaría; la
+   línea se dibuja dentro del contenido para que mida lo mismo que la grilla. */
+.ws-category-tabs {
+  display: flex;
+  gap: 32px;
+  overflow-x: auto;
+  margin: -4px -4px 24px;
+  padding: 4px;
+  background: linear-gradient(var(--ws-border), var(--ws-border)) bottom / 100% 1px no-repeat content-box;
+  scrollbar-width: none;
+}
+
+.ws-category-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.ws-category-tabs button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  min-height: 48px;
+  padding: 12px 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ws-muted);
+  font-size: 15px;
+  font-weight: 500;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+/* Reserva el ancho de la versión en negrita para que las pestañas no se muevan al elegir una. */
+.ws-category-tabs button::after {
+  content: attr(data-label);
+  height: 0;
+  overflow: hidden;
+  font-weight: 600;
+  visibility: hidden;
+}
+
+.ws-category-tabs button:hover {
+  color: var(--ws-ink);
+}
+
+.ws-category-tabs button:focus-visible {
+  outline-offset: 2px;
+}
+
+.ws-category-tabs button.is-active {
+  border-bottom-color: var(--ws-primary);
+  color: var(--ws-ink);
+  font-weight: 600;
+}
+
+.ws-product-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  view-transition-name: ws-featured-products;
+}
+
+.ws-product-grid > *,
+.ws-collection-products > * {
+  min-width: 0;
+}
+
+.ws-empty-products {
+  grid-column: 1 / -1;
+  padding: 48px 20px;
+  text-align: center;
+  color: var(--ws-muted);
+}
+
+.ws-product-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--ws-border);
+  border-radius: 14px;
+  background: var(--ws-surface);
+  transition:
+    border-color 180ms ease,
+    box-shadow 220ms ease,
+    transform 220ms cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.ws-product-card:hover {
+  border-color: color-mix(in srgb, var(--ws-primary) 34%, var(--ws-border));
+  box-shadow: 0 18px 44px rgba(15, 23, 42, 0.08);
+  transform: translateY(-2px);
+}
+
+.ws-product-image {
+  display: grid;
+  position: relative;
+  aspect-ratio: 1.14;
+  place-items: center;
+  padding: 34px 24px 14px;
+  background: var(--ws-surface-subtle);
+}
+
+.ws-product-image img {
+  mix-blend-mode: multiply;
+  transition: transform 360ms cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.ws-product-badge {
+  position: absolute;
+  left: 20px;
+  top: 16px;
+  border-radius: 6px;
+  background: var(--ws-primary);
+  padding: 5px 8px;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ws-product-badge.is-offer {
+  background: var(--ws-accent);
+}
+
+.ws-product-more {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--ws-border);
+  border-radius: 50%;
+  background: var(--ws-surface);
+  color: var(--ws-text);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.ws-product-more:hover,
+.ws-product-more:focus-visible {
+  border-color: var(--ws-primary);
+  color: var(--ws-primary);
+}
+
+.ws-product-more svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.ws-product-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 10px 20px 20px;
+}
+
+.ws-product-brand {
+  margin: 0 0 9px;
+  font-size: 12px;
+  color: var(--ws-muted);
+}
+
+.ws-product-brand span::before {
+  content: '·';
+  margin-inline: 6px;
+}
+
+/* Nombre y descripción sin altura reservada: el texto ocupa lo que necesita y el precio (margin-top:
+   auto) queda alineado abajo en toda la fila, así no aparecen huecos con nombres de una línea. */
+.ws-product-body h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.ws-product-body h3 a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ws-product-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 8px 0 12px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--ws-muted);
+}
+
+.ws-product-stock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 20px;
+  color: var(--ws-muted);
+  font-size: 12px;
+}
+
+.ws-product-stock span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--ws-primary);
+}
+
+.ws-product-stock.is-unavailable span {
+  background: var(--ws-border-strong);
+}
+
+.ws-product-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.ws-product-price strong {
+  font-family: var(--ws-font-display), sans-serif;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-product-price del {
+  color: var(--ws-muted);
+  font-size: 12px;
+}
+
+.ws-product-tax {
+  margin: 3px 0 20px;
+  color: var(--ws-muted);
+  font-size: 11px;
+}
+
+.ws-product-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ws-product-actions .ws-btn-primary {
+  min-height: 42px;
+  padding-inline: 10px;
+  font-size: 13px;
+}
+
+.ws-product-detail {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ws-campaign-section {
+  background: var(--ws-surface-soft);
+}
+
+.ws-campaign-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.82fr);
+  gap: 24px;
+}
+
+.ws-campaign {
+  overflow: hidden;
+  border: 1px solid var(--ws-border);
+  border-radius: 16px;
+  background: var(--ws-surface);
+}
+
+.ws-campaign-media {
+  height: 310px;
+  overflow: hidden;
+  background: var(--ws-surface-soft);
+}
+
+.ws-campaign-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 30px;
+  mix-blend-mode: multiply;
+  transition: transform 520ms cubic-bezier(0.2, 0.75, 0.2, 1);
+}
+
+.ws-campaign-media.is-photo img {
+  object-fit: cover;
+  padding: 0;
+  mix-blend-mode: normal;
+}
+
+.ws-campaign-copy {
+  padding: 28px 32px 32px;
+}
+
+.ws-campaign-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-top: 24px;
+}
+
+.ws-campaign-actions small {
+  color: var(--ws-muted);
+  font-size: 13px;
+}
+
+.ws-campaign-copy h3 {
+  max-width: 390px;
+  margin: 0 0 14px;
+  font-size: 26px;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.ws-campaign-copy > span {
+  display: block;
+  max-width: 440px;
+  min-height: 48px;
+  color: var(--ws-muted);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.ws-collection + .ws-collection {
+  border-top: 1px solid var(--ws-border);
+}
+
+.ws-collection-intro h2 {
+  margin: 0;
+  font-size: clamp(24px, 2.4vw, 32px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+}
+
+.ws-collection-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2.6fr);
+  gap: 48px;
+  align-items: center;
+}
+
+.ws-collection-intro p {
+  margin: 20px 0 28px;
+  color: var(--ws-muted);
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+.ws-collection-products {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 20px;
+}
+
+.ws-header-wordmark {
+  font-family: var(--ws-font-display), sans-serif;
+  font-size: 21px;
+  letter-spacing: -0.035em;
+  font-weight: 600;
+}
+
+.ws-catalog-layout {
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+
+/* Acompaña al scroll debajo de la cabecera; si no cabe en pantallas bajas, se desplaza por dentro
+   en vez de quedar cortado. */
+.ws-catalog-filters {
+  position: sticky;
+  top: var(--ws-sticky-top);
+  max-height: calc(100dvh - var(--ws-sticky-top) - 24px);
+  overflow-y: auto;
+  padding: 24px;
+  border: 1px solid var(--ws-border);
+  border-radius: 14px;
+  background: var(--ws-surface);
+}
+
+.ws-catalog-filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.ws-catalog-filter-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* "Limpiar filtros" vive solo en el panel (sirve en escritorio y en celular). Mide 44 px de alto
+   para tocarlo con el dedo; el margen deja el texto a 20 px del último filtro. */
+.ws-filter-clear {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: 8px;
+}
+
+/* Solo para el panel de filtros en celular. "Ver N productos" lleva también .ws-btn-primary, que
+   se declara después con display propio; el selector con dos clases asegura que se oculte. */
+.ws-catalog-mobile-toolbar,
+.ws-filter-close,
+.ws-catalog-filters .ws-filter-apply,
+.ws-filter-backdrop {
+  display: none;
+}
+
+.ws-catalog-products {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.ws-featured {
+  background: var(--ws-surface);
+}
+
+.ws-pdp-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 30px;
+  color: var(--ws-muted);
+  font-size: 13px;
+}
+
+.ws-pdp-breadcrumb a:hover {
+  color: var(--ws-primary);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ws-pdp-gallery {
+  border-radius: 16px;
+  background: var(--ws-surface-soft);
+}
+
+.ws-cart-item {
+  display: grid;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+}
+
+.ws-cart-item:first-child {
+  border-top: 1px solid var(--ws-border);
+}
+
+.ws-cart-media {
+  display: grid;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--ws-surface-subtle);
+  padding: 16px;
+}
+
+.ws-order-summary {
+  padding: 28px;
+  border: 1px solid var(--ws-border);
+  border-radius: 14px;
+  background: var(--ws-surface);
+}
+
+/* Resumen del carrito y del checkout: acompaña al scroll desde escritorio, a la misma distancia de
+   la cabecera que los filtros (antes se metía 11 px debajo de ella). En pantallas bajas se
+   desplaza por dentro para que "Confirmar pedido" nunca quede fuera de la vista. */
+@media (min-width: 1024px) {
+  .ws-order-summary {
+    position: sticky;
+    top: var(--ws-sticky-top);
+    max-height: calc(100dvh - var(--ws-sticky-top) - 24px);
+    overflow-y: auto;
+  }
+}
+
+.ws-checkout-step {
+  padding: 28px 0 32px;
+  border-top: 1px solid var(--ws-border);
+}
+
+.ws-checkout-step:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.ws-checkout-step-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.ws-pdp-gallery img {
+  mix-blend-mode: multiply;
+}
+
+/* Las fotos adicionales suelen ser de ambiente: se muestran sin fundirse con el fondo. */
+.ws-pdp-gallery img.is-photo {
+  mix-blend-mode: normal;
+  border-radius: 10px;
+}
+
+.ws-pdp-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ws-pdp-thumbs button {
+  display: grid;
+  width: 84px;
+  height: 64px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--ws-border);
+  border-radius: 10px;
+  background: var(--ws-surface-soft);
+  padding: 4px;
+  cursor: pointer;
+  transition: border-color 160ms ease;
+}
+
+.ws-pdp-thumbs button:hover,
+.ws-pdp-thumbs button:focus-visible {
+  border-color: color-mix(in srgb, var(--ws-primary) 50%, var(--ws-border));
+}
+
+.ws-pdp-thumbs button.is-active {
+  border: 2px solid var(--ws-primary);
+}
+
+.ws-pdp-thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.ws-pdp-category {
+  color: var(--ws-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.ws-pdp-mobile-price {
+  display: none;
+}
+
+.ws-pdp-highlights > div {
+  border: 0 !important;
+  border-top: 1px solid var(--ws-border) !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  padding: 13px 0 !important;
+  text-align: left !important;
+}
+
+.ws-pdp-assurances span {
+  position: relative;
+  padding-left: 18px;
+}
+
+.ws-pdp-assurances span::before {
+  content: '';
+  position: absolute;
+  top: 0.45em;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ws-primary);
+}
+
+.ws-header-action.ws-orders-action {
+  display: none;
+}
+
+/* Pedidos queda a la vista desde tablet; en teléfonos angostos está en el menú lateral. */
+@media (min-width: 480px) {
+  .ws-header-action.ws-orders-action {
+    display: inline-flex;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .ws-product-card:hover .ws-product-image img {
+    transform: translateY(-6px) scale(1.025);
+  }
+  .ws-campaign:hover .ws-campaign-media img {
+    transform: scale(1.035);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ws-desktop-navigation {
+    display: block;
+  }
+  .ws-icon-button.ws-mobile-menu {
+    display: none;
+  }
+  .ws-header-action.ws-orders-action {
+    display: inline-flex;
+  }
+}
+
+@media (max-width: 1100px) {
+  .ws-product-grid {
+    gap: 12px;
+  }
+  .ws-product-body {
+    padding-inline: 16px;
+  }
+  .ws-collection-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2.7fr);
+    gap: 28px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ws-catalog-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+  .ws-catalog-filters {
+    position: fixed;
+    z-index: 70;
+    inset: 0 auto 0 0;
+    width: min(90vw, 390px);
+    overflow-y: auto;
+    max-height: none;
+    padding: 24px;
+    border: 0;
+    border-right: 1px solid var(--ws-border);
+    border-radius: 0;
+    background: var(--ws-surface);
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition:
+      transform 260ms cubic-bezier(0.2, 0.78, 0.2, 1),
+      visibility 0s linear 260ms;
+  }
+  .ws-catalog-filters.is-open {
+    visibility: visible;
+    transform: translateX(0);
+    transition-delay: 0s;
+  }
+  .ws-catalog-filters > div {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .ws-catalog-filter-header {
+    position: sticky;
+    z-index: 1;
+    top: -24px;
+    margin: -24px -24px 24px;
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid var(--ws-border);
+    background: var(--ws-surface);
+  }
+  .ws-catalog-filter-header h2 {
+    font-size: 22px;
+  }
+  .ws-filter-close {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    border: 1px solid var(--ws-border);
+    border-radius: 50%;
+    background: var(--ws-surface);
+    font-size: 24px;
+  }
+  .ws-catalog-filters .ws-filter-apply {
+    display: flex;
+    width: 100%;
+    margin-top: 24px;
+  }
+  .ws-filter-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 65;
+    inset: 0;
+    border: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(2px);
+    animation: ws-mega-enter 180ms ease both;
+  }
+  .ws-catalog-mobile-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding-block: 12px;
+    border-block: 1px solid var(--ws-border);
+  }
+  .ws-catalog-results-bar {
+    display: none;
+  }
+  .ws-catalog-mobile-toolbar p {
+    margin: 0;
+    color: var(--ws-muted);
+    font-size: 13px;
+  }
+  .ws-filter-toggle {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    gap: 8px;
+    border: 0;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .ws-filter-toggle svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+  .ws-filter-toggle span {
+    border-radius: 999px;
+    background: var(--ws-primary-soft);
+    padding: 3px 7px;
+    color: var(--ws-primary-strong);
+    font-size: 10px;
+  }
+  .ws-catalog-products {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ws-product-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+  }
+  .ws-collection-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+  .ws-collection-intro {
+    max-width: 500px;
+  }
+  .ws-campaign-media {
+    height: 220px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ws-site-header {
+    backdrop-filter: none;
+  }
+  .ws-brand-lockup {
+    gap: 8px;
+  }
+  .ws-brand-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px 10px 10px 3px;
+    font-size: 15px;
+  }
+  .ws-catalog-filters > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ws-catalog-products {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+  }
+  .ws-category-tabs {
+    gap: 24px;
+    margin-bottom: 16px;
+  }
+  .ws-category-tabs button {
+    font-size: 14px;
+  }
+  .ws-product-grid {
+    display: flex;
+    gap: 14px;
+    width: calc(100vw - 16px);
+    margin-right: calc(16px - 100vw);
+    overflow-x: auto;
+    padding: 0 16px 18px 0;
+    scroll-padding-left: 0;
+    scroll-snap-type: x mandatory;
+  }
+  .ws-product-grid > * {
+    flex: 0 0 min(82vw, 340px);
+    scroll-snap-align: start;
+  }
+  .ws-collection-products {
+    gap: 14px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ws-product-image {
+    aspect-ratio: 1.24;
+    padding: 32px 20px 12px;
+  }
+  .ws-product-badge {
+    top: 10px;
+    left: 12px;
+    font-size: 10px;
+  }
+  .ws-product-body {
+    padding: 14px 18px 20px;
+  }
+  .ws-product-brand {
+    font-size: 12px;
+  }
+  .ws-product-body h3 {
+    min-height: auto;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  .ws-product-description {
+    font-size: 13px;
+  }
+  .ws-product-stock {
+    font-size: 12px;
+    margin-bottom: 18px;
+  }
+  .ws-product-price strong {
+    font-size: 25px;
+  }
+  .ws-product-actions .ws-btn-primary {
+    padding-inline: 12px;
+    min-height: 46px;
+    font-size: 13px;
+  }
+  .ws-campaign-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ws-campaign-copy {
+    padding: 24px;
+  }
+  .ws-campaign-copy h3 {
+    font-size: 26px;
+  }
+  .ws-header-wordmark {
+    font-size: 19px;
+  }
+  .ws-pdp-breadcrumb {
+    margin-bottom: 22px;
+  }
+  .ws-pdp-info .ws-title {
+    font-size: 34px;
+  }
+  .ws-pdp-highlights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .ws-pdp-actions {
+    position: sticky;
+    z-index: 20;
+    bottom: 0;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-inline: -16px;
+    padding: 12px 16px max(12px, env(safe-area-inset-bottom));
+    border-top: 1px solid var(--ws-border);
+    background: color-mix(in srgb, var(--ws-surface) 96%, transparent);
+    box-shadow: 0 -12px 30px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(14px);
+  }
+  .ws-pdp-mobile-price {
+    display: block;
+    font-family: var(--ws-font-display), sans-serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+  }
+  .ws-pdp-actions .ws-btn-primary {
+    min-width: 190px;
+  }
+  .ws-pdp-actions .ws-btn-secondary {
+    display: none;
+  }
+  .ws-pdp-assurances {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ws-order-summary {
+    padding: 22px;
+  }
+}
+
+.ws-site-footer {
+  background: var(--ws-footer);
+  color: var(--ws-footer-text);
+}
+
+/* Pie: más aire arriba y una franja legal corta abajo, para que el contenido quede anclado y no
+   flote sobre un fondo oscuro vacío. Los espacios van en clases propias porque el reinicio global
+   de párrafos anula los márgenes de utilidad (mt-*) sobre <p>. */
+.ws-footer-inner {
+  padding-block: 72px 32px;
+}
+
+.ws-footer-brand {
+  display: grid;
+  align-content: start;
+  gap: 16px;
+}
+
+.ws-footer-contact {
+  margin-top: 8px;
+}
+
+.ws-footer-legal {
+  margin-top: 56px;
+  font-size: 13px;
+}
+
+@media (max-width: 639px) {
+  .ws-footer-inner {
+    padding-block: 48px 28px;
+  }
+  .ws-footer-legal {
+    margin-top: 40px;
+  }
+}
+
+.ws-footer-links a:hover {
+  color: #ffffff;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 600px) {
+  .ws-footer-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 34px 24px;
+  }
+  .ws-footer-grid > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+/*
+ * Buscador centrado entre "WebStore" e "Ingresar" (desde tablet). El margen negativo compensa el
+ * relleno del primer botón (12 px con solo ícono, 0.65rem con texto) y los 5 px de aire propio del
+ * ícono, para que el espacio visible hasta su trazo sea igual al que hay desde el texto del logo.
+ */
+@media (min-width: 768px) {
+  .ws-header-main > .ml-auto {
+    margin-left: -17px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .ws-header-main > .ml-auto {
+    margin-left: calc(-0.65rem - 5px);
+  }
+}

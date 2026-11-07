@@ -1,0 +1,74 @@
+### Dependencias y compilación ###
+node_modules/
+dist/
+.angular/
+out-tsc/
+coverage/
+*.tsbuildinfo
+
+### BFF de prueba ###
+# Estado local: hashes de contraseñas, sesiones y datos de clientes de prueba. El BFF lo regenera desde el seed.
+backend/data*.json
+
+### QA local ###
+# Capturas y perfiles de Chrome de las revisiones visuales.
+frontend/output/
+playwright-report/
+test-results/
+
+### Originales de diseño ###
+# PNG originales pesados; las versiones optimizadas están en frontend/src/assets/.
+frontend/design/
+
+### Herramientas de IA ###
+# Se versionan .claude/ y .agents/ (agentes, skills y launch.json), sin ajustes locales ni ejecutables.
+**/.claude/settings.local.json
+.worktrees/
+# Copias de .agents/skills/ creadas como enlaces por el instalador de skills.
+frontend/.claude/skills/
+# Carpetas de otras herramientas, generadas por el instalador de skills (ver frontend/skills-lock.json).
+.codex/
+.impeccable/
+frontend/.agent/
+frontend/agent/
+frontend/codex/
+frontend/.codex/
+frontend/.cursor/
+frontend/.devin/
+frontend/.dsh/
+frontend/.gemini/
+frontend/.github/
+frontend/.grok/
+frontend/.hermes/
+frontend/.impeccable/
+frontend/.kiro/
+frontend/.omp/
+frontend/.opencode/
+frontend/.pi/
+frontend/.qoder/
+frontend/.rovodev/
+frontend/.trae/
+frontend/.trae-cn/
+frontend/.vibe/
+
+### Entorno y secretos ###
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+### Ejecutables ###
+*.exe
+*.app
+
+### Logs ###
+*.log
+npm-debug.log*
+
+### IDE y sistema operativo ###
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db

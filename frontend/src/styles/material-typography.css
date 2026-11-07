@@ -1,0 +1,17 @@
+:root {
+  --mat-sys-body-large-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-body-medium-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-body-small-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-display-large-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-display-medium-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-display-small-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-headline-large-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-headline-medium-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-headline-small-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-label-large-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-label-medium-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-label-small-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-title-large-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-title-medium-font: 'Source Sans 3 Variable', sans-serif;
+  --mat-sys-title-small-font: 'Source Sans 3 Variable', sans-serif;
+}

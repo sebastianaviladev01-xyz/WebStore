@@ -1,0 +1,41 @@
+import { provideHttpClient } from '@angular/common/http';
+import { ApplicationConfig, LOCALE_ID } from '@angular/core';
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
+
+import { routes } from './app.routes';
+import { CuentaGateway } from './features/cuenta/domain/cuenta.gateway';
+import { BFF_BASE_URL } from './core/bff.config';
+import { CatalogoGateway } from './features/catalogo/domain/catalogo.gateway';
+import { CheckoutGateway } from './features/checkout/domain/checkout.gateway';
+import { ReclamoGateway } from './features/reclamos/domain/reclamo.gateway';
+import { ContenidoGateway } from './features/contenido/domain/contenido.gateway';
+import { PedidoGateway } from './features/pedidos/domain/pedido.gateway';
+import { EnvioGateway } from './features/envios/domain/envio.gateway';
+import { BffCuentaGateway } from './features/cuenta/data/bff-cuenta.gateway';
+import { BffCatalogoGateway } from './features/catalogo/data/bff-catalogo.gateway';
+import { BffCheckoutGateway } from './features/checkout/data/bff-checkout.gateway';
+import { BffReclamoGateway } from './features/reclamos/data/bff-reclamo.gateway';
+import { BffContenidoGateway } from './features/contenido/data/bff-contenido.gateway';
+import { BffPedidoGateway } from './features/pedidos/data/bff-pedido.gateway';
+import { BffEnvioGateway } from './features/envios/data/bff-envio.gateway';
+
+/** Composición: cada puerto del dominio se resuelve con su adaptador HTTP hacia el BFF. */
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
+    ),
+    provideHttpClient(),
+    { provide: LOCALE_ID, useValue: 'es-PE' },
+    { provide: BFF_BASE_URL, useValue: '/bff' },
+    { provide: CatalogoGateway, useClass: BffCatalogoGateway },
+    { provide: CheckoutGateway, useClass: BffCheckoutGateway },
+    { provide: EnvioGateway, useClass: BffEnvioGateway },
+    { provide: CuentaGateway, useClass: BffCuentaGateway },
+    { provide: PedidoGateway, useClass: BffPedidoGateway },
+    { provide: ContenidoGateway, useClass: BffContenidoGateway },
+    { provide: ReclamoGateway, useClass: BffReclamoGateway },
+  ],
+};

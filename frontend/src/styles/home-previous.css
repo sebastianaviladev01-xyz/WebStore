@@ -1,0 +1,265 @@
+/*
+ * /inicio-anterior: el inicio tal como estaba antes de alinearlo con la propuesta B,
+ * publicado aparte para compararlo. Todo queda acotado a .ws-home-previous; el inicio actual no cambia.
+ */
+
+/* Buscador con borde marcado (vive en la cabecera, fuera de la página). */
+body:has(.ws-home-previous) .ws-site-header input[type='search'] {
+  border-color: var(--ws-border-strong);
+  background: var(--ws-surface-soft);
+}
+
+.ws-home-previous .ws-section {
+  padding-block: clamp(4.25rem, 6.5vw, 6.5rem);
+}
+
+/* Hero: un botón con la etiqueta del banner al lado; contador, puntos y flechas abajo. */
+.ws-home-previous .ws-hero-layout {
+  min-height: 440px;
+}
+
+.ws-home-previous .ws-hero-copy {
+  padding: 56px 48px 104px;
+}
+
+.ws-home-previous .ws-hero-description {
+  margin: 18px 0 28px;
+}
+
+.ws-home-previous .ws-hero-media img {
+  max-height: 440px;
+}
+
+.ws-home-previous .ws-hero-media.ws-hero-photo img {
+  max-height: none;
+}
+
+.ws-home-previous .ws-hero-controls {
+  bottom: 24px;
+  left: 40px;
+  gap: 4px;
+}
+
+.ws-home-previous .ws-hero-counter {
+  min-width: 36px;
+  color: var(--ws-primary-strong);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ws-home-previous .ws-hero-pagination {
+  margin-inline: 2px 8px;
+}
+
+.ws-home-previous .ws-hero-page {
+  width: 22px;
+}
+
+.ws-home-previous .ws-hero-page.is-active {
+  width: 40px;
+}
+
+.ws-home-previous .ws-hero-page::after,
+.ws-home-previous .ws-hero-page::before {
+  left: 8px;
+  right: 8px;
+}
+
+/* Destacados: pestañas subrayadas con las medidas anteriores (sin el relleno para el foco ni el
+   ancho reservado en negrita que usa el inicio actual). */
+.ws-home-previous .ws-category-tabs {
+  gap: 32px;
+  margin: 0 0 30px;
+  padding: 0;
+  border-bottom: 1px solid var(--ws-border);
+  background: none;
+}
+
+.ws-home-previous .ws-category-tabs button,
+.ws-home-previous .ws-category-tabs button:hover {
+  display: block;
+  min-height: 48px;
+  padding: 0 0 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ws-muted);
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.ws-home-previous .ws-category-tabs button::after {
+  content: none;
+}
+
+.ws-home-previous .ws-category-tabs button:focus-visible {
+  outline-offset: 3px;
+}
+
+.ws-home-previous .ws-category-tabs button.is-active {
+  border-bottom-color: var(--ws-primary);
+  background: transparent;
+  color: var(--ws-text);
+  font-weight: 600;
+}
+
+/* Colecciones y fichas con las medidas anteriores. */
+.ws-home-previous .ws-collection-intro h2 {
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.ws-home-previous .ws-product-brand span::before {
+  content: none;
+}
+
+.ws-home-previous .ws-product-brand span {
+  margin-left: 7px;
+  font-size: 11px;
+}
+
+.ws-home-previous .ws-product-body {
+  padding: 8px 22px 24px;
+}
+
+.ws-home-previous .ws-product-body h3 {
+  min-height: 48px;
+  font-size: 18px;
+  line-height: 1.4;
+  letter-spacing: -0.025em;
+}
+
+.ws-home-previous .ws-product-description {
+  min-height: 42px;
+  margin-top: 10px;
+}
+
+.ws-home-previous .ws-product-price strong {
+  font-size: 25px;
+  letter-spacing: -0.035em;
+}
+
+@media (max-width: 900px) {
+  .ws-home-previous .ws-hero-copy {
+    padding: 36px 28px 92px;
+  }
+  .ws-home-previous .ws-hero-controls {
+    left: 20px;
+    bottom: 16px;
+  }
+}
+
+@media (max-width: 600px) {
+  .ws-home-previous .ws-category-tabs {
+    gap: 24px;
+  }
+  .ws-home-previous .ws-category-tabs button {
+    font-size: 13px;
+  }
+  .ws-home-previous .ws-hero-copy {
+    padding: 28px 20px 84px;
+  }
+  .ws-home-previous .ws-hero-counter {
+    display: none;
+  }
+}
+
+/* Cabecera previa (la cabecera es común; .ws-shell-previous solo existe en /inicio-anterior). */
+.ws-shell-previous .ws-utility-bar .ws-container {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ws-shell-previous .ws-header-search {
+  flex: 0 1 32rem;
+  max-width: 32rem;
+  margin-inline: auto;
+}
+
+.ws-shell-previous .ws-navigation-row {
+  column-gap: 26px;
+}
+
+.ws-shell-previous .ws-navigation-all,
+.ws-shell-previous .ws-navigation-trigger {
+  min-height: 52px;
+  color: inherit;
+  font-weight: 600;
+}
+
+.ws-shell-previous .ws-navigation-all {
+  color: inherit;
+}
+
+.ws-shell-previous .ws-navigation-secondary,
+.ws-shell-previous .ws-navigation-secondary .ws-navigation-trigger {
+  color: var(--ws-muted);
+}
+
+.ws-shell-previous .ws-navigation-trigger:hover,
+.ws-shell-previous .ws-navigation-trigger.is-active {
+  color: var(--ws-primary);
+}
+
+/* La flecha de las categorías se ve siempre entera, como antes (en la actual va tenue en reposo). */
+.ws-shell-previous .ws-navigation-trigger[aria-expanded] svg {
+  opacity: 1;
+}
+
+.ws-shell-previous .ws-header-action.ws-orders-action {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .ws-shell-previous .ws-utility-bar .ws-container {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ws-shell-previous .ws-header-action.ws-orders-action {
+    display: inline-flex;
+  }
+}
+
+.ws-shell-previous .ws-navigation-secondary {
+  padding-right: 0;
+}
+
+@media (min-width: 768px) {
+  .ws-shell-previous .ws-header-main > .ml-auto {
+    margin-left: auto;
+  }
+}
+
+/* Pie previo: medidas de antes del ajuste de aire del 06/11. */
+.ws-shell-previous .ws-footer-inner {
+  padding-block: 48px;
+}
+
+@media (min-width: 640px) {
+  .ws-shell-previous .ws-footer-inner {
+    padding-block: 64px;
+  }
+}
+
+.ws-shell-previous .ws-footer-brand {
+  display: block;
+}
+
+.ws-shell-previous .ws-footer-contact {
+  margin-top: 0;
+}
+
+.ws-shell-previous .ws-footer-legal {
+  margin-top: 48px;
+  font-size: 12px;
+  line-height: 1rem;
+}
+
+.ws-shell-previous .ws-footer-links {
+  gap: 0.75rem;
+  font-size: 0.84rem;
+}

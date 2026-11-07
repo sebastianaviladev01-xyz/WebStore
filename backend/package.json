@@ -1,0 +1,15 @@
+{
+  "name": "webstore-bff",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "^22.22.3 || ^24.15.0 || ^26.0.0"
+  },
+  "scripts": {
+    "start": "node src/main.mjs",
+    "check:syntax": "node tools/check-syntax.mjs",
+    "test": "node --test \"tests/unit/**/*.test.mjs\" \"tests/integration/**/*.test.mjs\"",
+    "test:contract": "node tests/integration/contrato.smoke.mjs",
+    "clear:demo-sessions": "node tools/clear-demo-sessions.mjs"
+  }
+}

@@ -1,0 +1,133 @@
+import { CurrencyPipe, DatePipe } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+
+import { TiendaFacade } from '../application/tienda.facade';
+import { Reclamo, ETIQUETAS_ESTADO_RECLAMO } from '../domain/tienda.model';
+
+@Component({
+  selector: 'ws-complaints-admin-page',
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  template: `
+    <h1 class="text-3xl font-semibold tracking-tight text-ink">Reclamaciones</h1>
+    <p class="mt-3 max-w-3xl text-sm leading-6 text-muted">
+      Consulta la información registrada por el consumidor, actualiza el estado y documenta la respuesta del
+      proveedor.
+    </p>
+    <div class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <section class="admin-card overflow-hidden">
+        @for (item of admin.complaints(); track item.id) {
+          <button
+            type="button"
+            class="grid w-full gap-2 border-b border-line p-5 text-left hover:bg-subtle sm:grid-cols-[150px_1fr_auto]"
+            (click)="select(item)"
+          >
+            <span>
+              <strong class="block">{{ item.id }}</strong>
+              <small class="text-muted">{{ item.createdAt | date: 'short' }}</small>
+            </span>
+            <span>
+              <strong class="block">{{ item.subject }}</strong>
+              <small class="text-muted">{{ item.name }} · {{ item.email }}</small>
+            </span>
+            <span class="rounded-full bg-soft px-3 py-1 text-xs font-semibold">
+              {{ statusLabels[item.status] }}
+            </span>
+          </button>
+        } @empty {
+          <div class="p-8 text-center text-muted">Todavía no se registraron solicitudes.</div>
+        }
+      </section>
+      @if (selected(); as item) {
+        <aside class="admin-card h-fit p-6">
+          <h2 class="text-xl font-semibold">{{ item.id }}</h2>
+          <dl class="mt-5 grid gap-3 text-sm">
+            <div>
+              <dt class="text-muted">Consumidor</dt>
+              <dd class="font-semibold">{{ item.name }} · {{ item.document }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted">Contacto</dt>
+              <dd class="font-semibold">{{ item.email }} · {{ item.phone }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted">Domicilio</dt>
+              <dd>{{ item.address }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted">Tipo y monto</dt>
+              <dd class="font-semibold">
+                {{ item.type }} · {{ item.amount | currency: 'PEN' : 'symbol' : '1.2-2' }}
+              </dd>
+            </div>
+            <div>
+              <dt class="text-muted">Plazo interno de atención</dt>
+              <dd class="font-semibold">{{ item.dueAt | date: 'longDate' }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted">Detalle</dt>
+              <dd class="whitespace-pre-line">{{ item.detail }}</dd>
+            </div>
+            <div>
+              <dt class="text-muted">Pedido</dt>
+              <dd class="whitespace-pre-line">{{ item.request }}</dd>
+            </div>
+          </dl>
+          <form [formGroup]="form" (ngSubmit)="save()" class="mt-6 grid gap-3">
+            <mat-form-field>
+              <mat-label>Estado</mat-label>
+              <mat-select formControlName="status">
+                @for (status of statuses; track status) {
+                  <mat-option [value]="status">{{ statusLabels[status] }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field>
+              <mat-label>Respuesta del proveedor</mat-label>
+              <textarea matInput rows="5" formControlName="providerResponse"></textarea>
+            </mat-form-field>
+            <button
+              class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white"
+              type="submit"
+            >
+              Guardar atención
+            </button>
+            @if (saved()) {
+              <p class="text-sm text-primary-strong" role="status">Atención guardada.</p>
+            }
+          </form>
+        </aside>
+      }
+    </div>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ReclamacionesPage {
+  protected readonly admin = inject(TiendaFacade);
+  protected readonly statusLabels = ETIQUETAS_ESTADO_RECLAMO;
+  protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_RECLAMO) as Reclamo['status'][];
+  protected readonly selected = signal<Reclamo | null>(null);
+  protected readonly form = new FormGroup({
+    status: new FormControl<Reclamo['status']>('received', { nonNullable: true }),
+    providerResponse: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(4000)] }),
+  });
+  protected readonly saved = signal(false);
+
+  protected select(item: Reclamo) {
+    this.saved.set(false);
+    this.selected.set(item);
+    this.form.setValue({ status: item.status, providerResponse: item.providerResponse });
+  }
+  protected async save() {
+    const item = this.selected();
+    if (!item || this.form.invalid) return;
+    const updated = { ...item, ...this.form.getRawValue(), updatedAt: new Date().toISOString() };
+    this.saved.set(false);
+    if (!(await this.admin.updateComplaint(updated))) return;
+    this.selected.set(updated);
+    this.saved.set(true);
+  }
+}

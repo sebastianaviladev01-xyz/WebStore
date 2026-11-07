@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Verificar (sintaxis, formato, lint, arquitectura, build, pruebas y contrato)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      # Raíz (Prettier) y frontend con npm ci; el BFF no tiene dependencias.
+      - run: npm run setup
+
+      - run: npm run verify
+
+      - name: Auditoría de dependencias
+        run: npm run audit:all
+
+  e2e:
+    name: E2E (Playwright contra el BFF de prueba)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            frontend/package-lock.json
+
+      - run: npm run setup
+
+      # En la CI se usa el Chromium de Playwright; en local, el Google Chrome instalado (playwright.config.ts).
+      - name: Instalar Chromium para Playwright
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      # Levanta el BFF (3400), el Storefront (4400) y el Admin (4500) con un estado temporal.
+      - run: npm run test:e2e --prefix frontend
+
+      - name: Reporte de Playwright
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: frontend/playwright-report/
+          retention-days: 7

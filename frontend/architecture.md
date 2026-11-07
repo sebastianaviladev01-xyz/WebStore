@@ -1,0 +1,144 @@
+# Arquitectura del frontend
+
+Cómo se organiza el código del workspace Angular: dos aplicaciones (Storefront y Admin), reglas de dependencia, convenciones, integración con el BFF y pruebas. Sigue el mismo esquema que el frontend de IdShield.
+
+No incluye versiones (están en [`package.json`](package.json)) ni comandos (están en el [README](../README.md) y en el [`AGENTS.md` raíz](../AGENTS.md)). La vista de sistema está en [`docs/architecture/README.md`](../docs/architecture/README.md).
+
+## 1. Alcance y stack
+
+| Pieza | Uso |
+|---|---|
+| Angular | Componentes standalone, signals, `inject()`, `OnPush`, formularios reactivos tipados y rutas con carga diferida |
+| Angular Material y CDK | Diálogos, menús, selects, foco y overlays |
+| Tailwind CSS (vía PostCSS) | Layout y utilidades; solo analiza el código de cada aplicación (`source(none)` + `@source '.'` en `styles.css`) |
+| Tokens CSS | Paleta B (azul cobalto), tipografía y espaciado en [`src/styles/tokens.css`](src/styles/tokens.css) |
+| ESLint, angular-eslint y Sheriff | Calidad y límites entre capas y features ([`eslint.config.mjs`](eslint.config.mjs), [`sheriff.config.ts`](sheriff.config.ts)) |
+
+## 2. Estilo arquitectónico
+
+Cada aplicación se organiza **por features con capas internas** ([ADR-0006](../docs/adrs/0006-organizar-el-frontend-por-features-y-capas.md)). Dentro de cada feature se aplican puertos y adaptadores: `domain/` define el puerto `<Concepto>Gateway` (clase abstracta, sin Angular) y `data/` lo implementa con `Bff<Concepto>Gateway`. `app.config.ts` es la raíz de composición: asocia cada puerto con su adaptador.
+
+```mermaid
+flowchart LR
+    subgraph FEATURE["features/nombre-de-feature"]
+        PRES["presentation<br/>(páginas, diálogos y componentes)"] --> APP["application<br/>(facade y guards)"]
+        PRES --> DOMAIN["domain<br/>(modelos, reglas y puerto)"]
+        APP --> DOMAIN
+        DATA["data<br/>(adaptador BFF)"] -. implementa .-> DOMAIN
+    end
+    LAYOUT["layout"] --> APP
+    PRES --> UI["shared/ui"]
+    APP --> CORE["core"]
+    DATA --> CORE
+    DATA --> API["BFF /bff"]
+    ROOT["app.config.ts"] -. elige el adaptador .-> DATA
+```
+
+### 2.1. Reglas obligatorias
+
+| Desde | Puede depender de | No puede depender de |
+|---|---|---|
+| `domain/` | `domain/` de su feature o de otra feature permitida | Angular, RxJS ni ninguna otra capa |
+| `application/` | `application/` y `domain/` de su feature o de otra permitida, `core/` | `data/`, `presentation/`, `@angular/common/http` |
+| `data/` | `domain/`, `core/`, `HttpClient` | `application/`, `presentation/` |
+| `presentation/` | `application/`, `domain/`, `core/`, `shared/ui/` | `data/`, `@angular/common/http` |
+| `<feature>.routes.ts` | `presentation/` y `application/` de su feature | `data/` |
+| `layout/` | `application/` y `domain/` de las features, `core/`, `shared/ui/` | `data/` |
+| `shared/ui/` | `core/` | `features/`, `layout/` |
+| `core/` | Solo Angular y librerías técnicas | `features/`, `layout/`, `shared/` |
+| Raíz de composición (`app.config.ts`, `app.routes.ts`) | Todo | — |
+
+1. Una feature solo usa `domain/` y `application/` de otra, en la dirección declarada en `sheriff.config.ts` y sin ciclos. Storefront y Admin no se importan entre sí.
+2. Solo `data/` y `core/` usan `HttpClient`. La aplicación recibe los errores del BFF como `BffRequestError` ([`core/bff-request.error.ts`](src/app/core/bff-request.error.ts)).
+3. Cada feature tiene una sola facade, que expone el estado con signals y coordina las operaciones. Las páginas no llaman al BFF.
+4. No se crean capas vacías, abstracciones que solo deleguen ni barrels (`index.ts`).
+
+Sheriff impone la regla 1; `no-restricted-imports` impone la parte de las reglas 1 y 2 que afecta a librerías externas. Las dos corren con `npm run lint` y la prueba [`tests/architecture/boundaries.test.mjs`](tests/architecture/boundaries.test.mjs) comprueba que siguen rechazando lo prohibido. Si una regla bloquea un cambio, se corrige el diseño, no la regla.
+
+**Diferencia con IdShield.** En IdShield una facade no usa la de otra feature. En WebStore sí, en la dirección declarada, porque el negocio lo pide: el checkout coordina carrito, cuenta y pedidos, y el carrito concilia precios con el catálogo. El grafo sigue siendo acíclico.
+
+### 2.2. Dependencias entre features
+
+```text
+Storefront                                   Admin
+vitrina  → catalogo, carrito, contenido      tienda → sesion
+carrito  → catalogo
+checkout → carrito, catalogo, cuenta, envios, pedidos
+pedidos  → carrito, catalogo, cuenta, envios
+envios   → contenido
+```
+
+## 3. Organización del código
+
+```text
+src/app/                                  projects/admin/src/app/
+├── app.config.ts, app.routes.ts, app.ts  ├── app.config.ts, app.routes.ts, app.ts
+├── core/        (BFF: URL base, cabeceras ├── core/        (cabecera Bearer)
+│                 y errores)               ├── layout/      (AppLayout)
+├── layout/      (AppLayout, menú de       └── features/
+│                 categorías, 404)             ├── sesion/  (login, roles y permisos, guards)
+├── shared/ui/   (empty-state, reveal)         └── tienda/  (resumen, productos, inventario,
+└── features/                                                categorías, marcas, clientes, usuarios,
+    ├── catalogo/  productos y categorías                    pedidos, banners, contenido, tarifas,
+    ├── vitrina/   inicio, /inicio-anterior,                 reclamaciones)
+    │              listado, ficha y tarjeta
+    ├── carrito/   ├── checkout/  ├── pedidos/
+    ├── cuenta/    ├── envios/    ├── contenido/ (CMS y páginas informativas)
+    └── reclamos/  (libro de reclamaciones)
+```
+
+`vitrina` agrupa la presentación que combina catálogo, carrito y contenido (inicio, listado, ficha de producto, tarjeta y diálogo de agregar al carrito). Así `catalogo` no depende de `carrito`, que sí depende de `catalogo`.
+
+Cada feature tiene hasta cuatro capas, cada una en una carpeta plana. Las rutas de la feature van en `<feature>.routes.ts`, en su raíz (`cuenta`, `vitrina`). `app.routes.ts` conserva las URL públicas: `/`, `/inicio-anterior`, `/catalogo`, `/carrito`, `/checkout`, `/pedido/:id`, `/pedidos`, `/cuenta/*`, `/info/*`, `/libro-reclamaciones` y la página 404.
+
+## 4. Componentes y convenciones
+
+- Componentes standalone con `inject()`, signals, `input`/`output`, control de flujo integrado y `OnPush`.
+- Selectores con prefijo `ws-` (los estilos dependen de ellos) y directivas `ws…`.
+- Colores y estados como tokens en `src/styles/tokens.css`. El Admin reutiliza esos tokens.
+- Formato: Prettier ([`.prettierrc.json`](../.prettierrc.json) en la raíz del repositorio).
+
+El nombre del archivo indica su rol con un sufijo. La parte de negocio va en español y el término técnico en inglés:
+
+| Rol | Capa | Archivo | Identificador |
+|---|---|---|---|
+| Modelo | `domain/` | `producto.model.ts` | `Producto`, `Categoria` |
+| Reglas | `domain/` | `categoria.rules.ts`, `rol.rules.ts` | `descendientesDeCategoria()`, `rolPuede()` |
+| Puerto | `domain/` | `catalogo.gateway.ts` | `CatalogoGateway`, clase abstracta |
+| Facade | `application/` | `carrito.facade.ts` | `CarritoFacade` |
+| Guard | `application/` | `pagina-informativa.guard.ts`, `permiso.guard.ts` | `contactoHabilitadoGuard`, `permisoGuard` |
+| Adaptador del BFF | `data/` | `bff-catalogo.gateway.ts` | `BffCatalogoGateway` |
+| Página | `presentation/` | `detalle-producto.page.ts` | `DetalleProductoPage` |
+| Diálogo | `presentation/` | `agregar-al-carrito.dialog.ts` | `AgregarAlCarritoDialog` |
+| Componente | `presentation/`, `layout/`, `shared/ui/` | `tarjeta-producto.component.ts` | `TarjetaProductoComponent` |
+| Layout | `layout/` | `app.layout.ts` | `AppLayout` |
+| Rutas | raíz de la feature | `cuenta.routes.ts` | `cuentaRoutes` |
+| Prueba unitaria | junto al código | `categoria.rules.spec.mjs` | — |
+
+- Las piezas sin vocabulario de negocio van en inglés técnico: `EmptyStateComponent`, `RevealDirective`, `BffRequestError`, `bearer()`.
+- **Pendiente de migrar** (como hizo IdShield en su reorganización): siguen en inglés los métodos, propiedades y signals de las clases (`add()`, `products()`, `isEmpty`), las constantes y funciones auxiliares internas y los campos y rutas del contrato HTTP (`/bff/catalog/products`, `price`, `stock`). No se toman como ejemplo para código nuevo.
+
+## 5. Integración con el BFF
+
+- Los adaptadores `Bff<Concepto>Gateway` usan `HttpClient` contra `/bff`, que el servidor de desarrollo reenvía al BFF con [`proxy.conf.json`](proxy.conf.json).
+- Sesiones: el cliente guarda un token opaco en `sessionStorage` y lo envía como `Bearer`. Los guards son UX; la autorización la repite el BFF.
+- El carrito guarda solo id y cantidad en `localStorage`; precio y stock se toman siempre del catálogo vigente.
+- Contrato: [`backend/docs/BFF-CONTRACT.md`](../backend/docs/BFF-CONTRACT.md).
+
+## 6. Pruebas
+
+| Nivel | Herramienta | Qué se prueba |
+|---|---|---|
+| Unitarias de `domain/` | `node:test`, archivos `*.spec.mjs` junto al código (`npm test`) | Árbol de categorías del storefront y tarifas de envío del Admin |
+| Límites de arquitectura | `node:test` con la API de ESLint ([`tests/architecture/`](tests/architecture/), `npm run test:architecture`) | Que Sheriff y `no-restricted-imports` rechazan lo prohibido y aceptan lo permitido, sin escribir en `src/` |
+| Estructura y contrato | [`tools/validate-structure.mjs`](../tools/validate-structure.mjs) y el smoke test del BFF (`npm run validate:contract` desde la raíz) | Rutas, guards, CMS compartido, roles y el contrato HTTP completo |
+| E2E | Playwright ([`tests/e2e/`](tests/e2e/), [`playwright.config.ts`](playwright.config.ts)), `npm run test:e2e` | Recorridos derivados de la [matriz de trazabilidad](../docs/planning/TRACEABILITY.md) contra el BFF de prueba real: navegación y 404, catálogo y ficha, carrito con IGV, compra como invitado, cuenta de cliente, libro de reclamaciones, CMS y acceso al Admin por rol |
+| QA visual e interacción | Scripts CDP de [`tools/qa/`](tools/qa/) con Chrome headless | Capturas, consola sin errores e interacciones clave |
+
+- Las e2e levantan sus propios servidores en puertos dedicados (BFF 3400, Storefront 4400 y Admin 4500, con [`proxy.e2e.conf.json`](proxy.e2e.conf.json)) y no interfieren con los de desarrollo. El BFF arranca con un archivo de estado temporal que crea desde el seed; nunca usa `backend/data.json`.
+- Cada spec se nombra `storefront-*.spec.ts` o `admin-*.spec.ts`: el prefijo elige el proyecto de Playwright y su `baseURL`. Los recorridos comparten el estado del BFF y se ejecutan en serie.
+- Las aserciones usan roles y textos visibles, no clases CSS, y esperan con las aserciones de Playwright, sin pausas fijas. Las e2e solo leen la interfaz: no necesitan cambios en `src/` ni en `projects/`.
+- En local usan el Google Chrome instalado (`channel: 'chrome'`) y no descargan navegadores; la CI instala Chromium con `npx playwright install --with-deps chromium` en el job `e2e`.
+- Herramientas decididas en [ADR-0009](../docs/adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md).
+
+**Pendiente:** pruebas de componentes (requieren configurar un entorno DOM).

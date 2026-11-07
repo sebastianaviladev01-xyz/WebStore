@@ -1,0 +1,92 @@
+/*
+ * Paleta B "Azul cobalto": única fuente de color para la tienda y el admin.
+ * Las variantes fuerte/suave se derivan de --ws-primary y --ws-accent, así el
+ * color configurado desde el admin (Contenido) sigue funcionando sin romper contrastes.
+ */
+:root {
+  --ws-font: 'Source Sans 3 Variable';
+  --ws-font-display: var(--ws-font);
+
+  --ws-primary: #1d4ed8;
+  --ws-primary-strong: color-mix(in srgb, var(--ws-primary) 62%, #0f172a);
+  --ws-primary-soft: color-mix(in srgb, var(--ws-primary) 10%, #ffffff);
+  --ws-accent: #c2410c;
+  --ws-accent-strong: color-mix(in srgb, var(--ws-accent) 78%, #0f172a);
+  --ws-accent-soft: color-mix(in srgb, var(--ws-accent) 9%, #ffffff);
+
+  --ws-bg: #f3f5f8;
+  --ws-surface: #ffffff;
+  --ws-surface-subtle: #f6f8fa;
+  --ws-surface-soft: #e9edf3;
+  --ws-ink: #0f172a;
+  --ws-text: #1e293b;
+  --ws-muted-strong: #3b4759;
+  --ws-muted: #526075;
+  --ws-border: #dde3ec;
+  --ws-border-strong: #8a96a8;
+  --ws-disabled: #e6e9ee;
+  --ws-disabled-text: #5a6577;
+  --ws-dot: #b9c8f2;
+
+  --ws-footer: #0f1b33;
+  --ws-footer-text: #c5cedd;
+  --ws-footer-rule: #22314f;
+
+  --ws-danger: #b42318;
+  --ws-danger-soft: #fef3f2;
+  --ws-danger-line: #fecdca;
+  --ws-warning: #8a4b08;
+  --ws-warning-soft: #fff6e5;
+
+  --ws-focus: color-mix(in srgb, var(--ws-primary) 18%, transparent);
+  --ws-radius: 10px;
+  --ws-radius-lg: 14px;
+  --ws-radius-xl: 16px;
+  --ws-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  --ws-shadow-lg: 0 26px 68px rgba(15, 23, 42, 0.14);
+  /* Distancia desde arriba de los paneles que acompañan al scroll (filtros, resumen del pedido):
+     la cabecera fija mide 123 px en escritorio y se deja aire debajo. */
+  --ws-sticky-top: 150px;
+
+  --mat-sys-primary: var(--ws-primary);
+  --mat-sys-on-primary: #ffffff;
+  --mat-sys-primary-container: var(--ws-primary-soft);
+  --mat-sys-on-primary-container: var(--ws-primary-strong);
+  --mat-sys-surface: var(--ws-surface);
+  --mat-sys-on-surface: var(--ws-ink);
+  --mat-sys-on-surface-variant: var(--ws-muted);
+  --mat-sys-outline: var(--ws-border-strong);
+  --mat-sys-outline-variant: var(--ws-border);
+  --mat-sys-error: var(--ws-danger);
+  color-scheme: light;
+}
+
+/* Nombres semánticos para Tailwind: las plantillas usan bg-primary, text-muted, border-line… nunca grises crudos. */
+@theme inline {
+  --color-primary: var(--ws-primary);
+  --color-primary-strong: var(--ws-primary-strong);
+  --color-primary-soft: var(--ws-primary-soft);
+  --color-accent: var(--ws-accent);
+  --color-accent-strong: var(--ws-accent-strong);
+  --color-accent-soft: var(--ws-accent-soft);
+  --color-canvas: var(--ws-bg);
+  --color-surface: var(--ws-surface);
+  --color-subtle: var(--ws-surface-subtle);
+  --color-soft: var(--ws-surface-soft);
+  --color-ink: var(--ws-ink);
+  --color-body: var(--ws-text);
+  --color-muted: var(--ws-muted);
+  --color-muted-strong: var(--ws-muted-strong);
+  --color-line: var(--ws-border);
+  --color-line-strong: var(--ws-border-strong);
+  --color-footer: var(--ws-footer);
+  --color-footer-text: var(--ws-footer-text);
+  --color-footer-rule: var(--ws-footer-rule);
+  --color-danger: var(--ws-danger);
+  --color-danger-soft: var(--ws-danger-soft);
+  --color-danger-line: var(--ws-danger-line);
+  --color-warning: var(--ws-warning);
+  --color-warning-soft: var(--ws-warning-soft);
+  --font-sans:
+    var(--ws-font), 'Source Sans 3', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
+}

@@ -1,0 +1,11 @@
+# LF en el índice y en la copia de trabajo, también en Windows: Prettier usa LF y así los diffs no cambian
+# por el sistema operativo de quien edita.
+* text=auto eol=lf
+
+# Binarios explícitos.
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary
+*.woff2 binary
+*.pdf binary
