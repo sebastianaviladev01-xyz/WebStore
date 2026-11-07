@@ -14,6 +14,8 @@ const {
   variacionPorcentual,
   calcularIndicadores,
   serieDelMes,
+  distritosConMasPedidos,
+  ultimosPedidos,
 } = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 test('la fecha de Lima de un instante no depende de la zona del equipo', () => {
@@ -198,4 +200,62 @@ test('la serie cubre febrero, bisiesto y diciembre, y sin pedidos queda toda en 
   assert.equal(largo('2026-12-31T17:00:00Z'), 31);
   assert.equal(largo('2026-12-01T04:30:00Z'), 30, 'el 01/12 04:30 Z todavía es el 30/11 en Lima');
   assert.ok(serieDelMes([], ahora).every((punto) => punto.pedidos === 0 && punto.clientesNuevos === 0));
+});
+
+const enDistrito = (district, status = 'delivered') => ({ district, status });
+
+test('los distritos con más pedidos van de mayor a menor, con cancelados y empate por nombre', () => {
+  const pedidos = [
+    enDistrito('Miraflores'),
+    enDistrito('miraflores'),
+    enDistrito(' MIRAFLORES '),
+    enDistrito('Surco'),
+    enDistrito('Surco', 'cancelled'),
+    enDistrito('surco'),
+    enDistrito('San Isidro'),
+    enDistrito('Barranco'),
+    enDistrito('San Isidro'),
+    enDistrito('Barranco'),
+    enDistrito('Lince'),
+    enDistrito('Comas'),
+    enDistrito('Ate'),
+  ];
+  assert.deepEqual(distritosConMasPedidos(pedidos), [
+    { distrito: 'Miraflores', pedidos: 3 }, // «miraflores» y «Miraflores» son uno; se muestra la primera forma escrita
+    { distrito: 'Surco', pedidos: 3 }, // empata con Miraflores: por nombre; el cancelado cuenta
+    { distrito: 'Barranco', pedidos: 2 },
+    { distrito: 'San Isidro', pedidos: 2 },
+    { distrito: 'Ate', pedidos: 1 }, // de Ate, Comas y Lince solo cabe uno: el primero por nombre
+  ]);
+  assert.equal(distritosConMasPedidos(pedidos, 2).length, 2, 'el límite se puede cambiar');
+  assert.deepEqual(distritosConMasPedidos([enDistrito('Surco'), enDistrito('Lince')]), [
+    { distrito: 'Lince', pedidos: 1 },
+    { distrito: 'Surco', pedidos: 1 },
+  ]);
+  assert.deepEqual(distritosConMasPedidos([]), []);
+});
+
+test('los últimos pedidos van del más nuevo al más antiguo aunque el arreglo llegue desordenado', () => {
+  const pedido = (id, createdAt) => ({ id, createdAt });
+  const pedidos = [
+    pedido('P-3', '2026-11-03T15:00:00Z'),
+    pedido('P-7', '2026-11-07T15:00:00Z'),
+    pedido('P-1', '2026-11-01T15:00:00Z'),
+    pedido('P-6', '2026-11-06T15:00:00Z'),
+    pedido('P-5', '2026-11-05T15:00:00Z'),
+    pedido('P-2', '2026-11-02T15:00:00Z'),
+    pedido('P-4', '2026-11-04T15:00:00Z'),
+  ];
+  const copia = [...pedidos];
+  assert.deepEqual(
+    ultimosPedidos(pedidos).map((p) => p.id),
+    ['P-7', 'P-6', 'P-5', 'P-4', 'P-3'],
+  );
+  assert.deepEqual(pedidos, copia, 'no reordena el arreglo recibido');
+  assert.deepEqual(
+    ultimosPedidos(pedidos.slice(0, 2)).map((p) => p.id),
+    ['P-7', 'P-3'],
+    'con menos de 5, todos',
+  );
+  assert.deepEqual(ultimosPedidos([]), []);
 });

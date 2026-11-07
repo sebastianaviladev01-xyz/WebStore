@@ -1,4 +1,4 @@
-import type { DiaDelMes, FechaLima, IndicadoresResumen, TramoMes } from './resumen.model';
+import type { DiaDelMes, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
 import type { Cliente, Pedido } from './tienda.model';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
@@ -136,4 +136,30 @@ export function serieDelMes(pedidos: readonly Pedido[], ahora: Date): DiaDelMes[
     if (delMes(fecha)) serie[fecha.dia - 1].clientesNuevos++;
   }
   return serie;
+}
+
+const claveDistrito = (distrito: string) => distrito.trim().toLocaleLowerCase('es-PE');
+
+/**
+ * Los distritos con más pedidos, de mayor a menor, contando todos los pedidos (también los cancelados).
+ * Agrupa sin distinguir mayúsculas ni espacios y muestra la primera forma escrita; en empate, por nombre.
+ */
+export function distritosConMasPedidos(pedidos: readonly Pedido[], limite = 5): PedidosDistrito[] {
+  const grupos = new Map<string, PedidosDistrito>();
+  for (const { district } of pedidos) {
+    const clave = claveDistrito(district);
+    const grupo = grupos.get(clave);
+    if (grupo) grupos.set(clave, { ...grupo, pedidos: grupo.pedidos + 1 });
+    else grupos.set(clave, { distrito: district.trim(), pedidos: 1 });
+  }
+  return [...grupos.values()]
+    .sort((a, b) => b.pedidos - a.pedidos || a.distrito.localeCompare(b.distrito, 'es-PE'))
+    .slice(0, limite);
+}
+
+/** Los pedidos más recientes por `createdAt`, del más nuevo al más antiguo, sin depender del orden recibido. */
+export function ultimosPedidos(pedidos: readonly Pedido[], limite = 5): Pedido[] {
+  return [...pedidos]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, limite);
 }

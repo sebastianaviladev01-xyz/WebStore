@@ -45,3 +45,8 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-05 | | Verde de TEST-06 | Mismo comando: `pass 9`, `fail 0`. 30 días en noviembre de 2026, 28 en febrero de 2026, 29 en febrero de 2028 y 31 en diciembre de 2026; pedidos y clientes nuevos por día de Lima (00:00 y 23:30 de Lima, 03:00 Z del 01/11 cuenta como 31/10); pedidos de otros meses ignorados; sin pedidos, todo en 0 | |
 | TASK-05 | | `npm run verify` | Código de salida 0 (arquitectura 22 pass, unitarias frontend 17 pass y backend 3 pass, builds y smoke del contrato) | |
 | TASK-05 | | Prettier | `prettier --write` sobre `resumen.rules.ts` y `resumen.rules.spec.mjs` | |
+| TASK-06 | (se rellena al cerrar la fase) | Ejecución | Hecha por el agente principal, sin delegar | Claude Code (app de escritorio), `claude-sonnet-5-5`, esfuerzo alto (nivel estándar · alto del catálogo) |
+| TASK-06 | | Rojo de TEST-07 y TEST-08 | `node --test …/resumen.rules.spec.mjs`: `pass 9`, `fail 2`; las dos pruebas nuevas fallan con `AssertionError` (stubs que devolvían `[]`) | |
+| TASK-06 | | Verde de TEST-07 y TEST-08 | Mismo comando: `pass 11`, `fail 0`. TEST-07: top 5 de mayor a menor con cancelados, empate por nombre (Miraflores antes que Surco; Barranco antes que San Isidro), «miraflores» = «Miraflores» (se muestra la primera forma), menos de 5 y vacío. TEST-08: 5 más recientes con el arreglo desordenado, sin reordenar la entrada, con menos de 5 y vacío | |
+| TASK-06 | | `npm run verify` | Código de salida 0 (arquitectura 22 pass, unitarias frontend 19 pass y backend 3 pass, builds y smoke del contrato) | |
+| TASK-06 | | Prettier | `prettier --write` sobre `resumen.rules.ts` y `resumen.rules.spec.mjs` | |
