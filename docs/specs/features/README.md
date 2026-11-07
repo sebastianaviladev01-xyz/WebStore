@@ -4,7 +4,7 @@ Añade una fila al crear la carpeta de una feature. Al avanzar de etapa, actuali
 
 | NNN | Slug | Historia | Estado | Bloqueos y siguiente paso | Última revisión |
 |---|---|---|---|---|---|
-| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | planificada | [Plan](001-reorganizar-resumen-del-admin/planning.md) aprobado por Sebastián Avila el 2026-11-07, con gráfico propio con CSS y tokens. Sin ADR y sin cambios en el contrato del BFF. Sin bloqueos. Siguiente: `sdd-tasks`, en una sesión nueva, tras el merge del PR del plan | 2026-11-07 |
+| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | desglosada | [Tareas](001-reorganizar-resumen-del-admin/tasks.md): 14 tareas en 3 fases y 4 bloques. Ninguna bloqueada; las que levantan servidores piden permiso antes de detener los del checkout principal. ⚠ TASK-12 (cambio visual pedido) espera la revisión humana del bloque 2. Siguiente: aprobar el desglose y, tras el merge, `sdd-implement` del bloque 1 (TASK-01 a TASK-07) en una sesión nueva sobre el worktree | 2026-11-07 |
 
 Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia está en la [trazabilidad](../../planning/TRACEABILITY.md) y en la [validación](../../../frontend/docs/VALIDATION.md), no en este índice.
 
