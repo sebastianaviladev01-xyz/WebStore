@@ -4,7 +4,7 @@ Añade una fila al crear la carpeta de una feature. Al avanzar de etapa, actuali
 
 | NNN | Slug | Historia | Estado | Bloqueos y siguiente paso | Última revisión |
 |---|---|---|---|---|---|
-| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | especificada | Alcance aprobado por Sebastián Avila el 2026-11-07 (D1 a D10). Sin bloqueos. Siguiente: `sdd-plan`, en una sesión nueva, tras el merge del PR de alcance | 2026-11-07 |
+| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | planificada | [Plan](001-reorganizar-resumen-del-admin/planning.md) aprobado por Sebastián Avila el 2026-11-07, con gráfico propio con CSS y tokens. Sin ADR y sin cambios en el contrato del BFF. Sin bloqueos. Siguiente: `sdd-tasks`, en una sesión nueva, tras el merge del PR del plan | 2026-11-07 |
 
 Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia está en la [trazabilidad](../../planning/TRACEABILITY.md) y en la [validación](../../../frontend/docs/VALIDATION.md), no en este índice.
 
