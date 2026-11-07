@@ -16,6 +16,7 @@ const {
   serieDelMes,
   distritosConMasPedidos,
   ultimosPedidos,
+  distribucionPorEstado,
 } = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 test('la fecha de Lima de un instante no depende de la zona del equipo', () => {
@@ -258,4 +259,50 @@ test('los últimos pedidos van del más nuevo al más antiguo aunque el arreglo 
     'con menos de 5, todos',
   );
   assert.deepEqual(ultimosPedidos([]), []);
+});
+
+const conEstados = (...estados) => estados.map((status) => ({ status }));
+const porcentajes = (pedidos) => {
+  const { completados, enProceso, otros } = distribucionPorEstado(pedidos);
+  return [completados, enProceso, otros];
+};
+const repetir = (status, veces) => Array.from({ length: veces }, () => status);
+
+test('los cinco estados se agrupan en completados, en proceso y otros', () => {
+  assert.deepEqual(
+    porcentajes(conEstados('delivered', 'confirmed', 'processing', 'shipped', 'cancelled')),
+    [20, 60, 20],
+    'Entregado; Confirmado, En preparación y Enviado; Cancelado',
+  );
+});
+
+test('los porcentajes suman siempre 100 con el método del mayor resto', () => {
+  const suman100 = (pedidos) => porcentajes(pedidos).reduce((suma, valor) => suma + valor, 0) === 100;
+  const iguales = conEstados('delivered', 'confirmed', 'cancelled');
+  assert.deepEqual(
+    porcentajes(iguales),
+    [34, 33, 33],
+    '1/1/1: redondear daría 99; el empate de restos favorece al primero',
+  );
+  const sumaria101 = conEstados('delivered', 'confirmed', ...repetir('cancelled', 4));
+  assert.deepEqual(porcentajes(sumaria101), [17, 17, 66], '1/1/4: redondear daría 17+17+67 = 101');
+  const sumaria101Otra = conEstados(
+    ...repetir('delivered', 2),
+    ...repetir('shipped', 5),
+    ...repetir('cancelled', 5),
+  );
+  assert.deepEqual(porcentajes(sumaria101Otra), [17, 42, 41], '2/5/5: redondear daría 17+42+42 = 101');
+  const restoEnLosUltimos = conEstados('delivered', ...repetir('processing', 3), ...repetir('cancelled', 3));
+  assert.deepEqual(
+    porcentajes(restoEnLosUltimos),
+    [14, 43, 43],
+    '1/3/3: el resto mayor está en los dos últimos',
+  );
+  for (const pedidos of [iguales, sumaria101, sumaria101Otra, restoEnLosUltimos])
+    assert.ok(suman100(pedidos));
+  assert.deepEqual(porcentajes(conEstados('cancelled', 'cancelled')), [0, 0, 100]);
+});
+
+test('sin pedidos la distribución es 0, 0 y 0', () => {
+  assert.deepEqual(distribucionPorEstado([]), { completados: 0, enProceso: 0, otros: 0 });
 });

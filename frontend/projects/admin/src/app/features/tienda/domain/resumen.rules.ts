@@ -1,5 +1,7 @@
-import type { DiaDelMes, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
-import type { Cliente, Pedido } from './tienda.model';
+// Cada import cabe en una línea: resumen.rules.spec.mjs borra las líneas que empiezan por «import» antes de transpilar.
+// prettier-ignore
+import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
+import type { Cliente, EstadoPedido, Pedido } from './tienda.model';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',
@@ -162,4 +164,27 @@ export function ultimosPedidos(pedidos: readonly Pedido[], limite = 5): Pedido[]
   return [...pedidos]
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, limite);
+}
+
+/** Posición del grupo de un estado en `DistribucionEstados`: completados, en proceso y otros (D8). */
+const grupoDelEstado = (estado: EstadoPedido): 0 | 1 | 2 =>
+  estado === 'delivered' ? 0 : estado === 'cancelled' ? 2 : 1;
+
+/**
+ * Porcentaje entero de pedidos por grupo de estado (D8): completados = Entregado; en proceso = Confirmado,
+ * En preparación y Enviado; otros = Cancelado. Suma exactamente 100 con el método del mayor resto (en empate de
+ * restos, en el orden completados, en proceso y otros); sin pedidos, 0, 0 y 0.
+ */
+export function distribucionPorEstado(pedidos: readonly Pedido[]): DistribucionEstados {
+  const cuentas = [0, 0, 0];
+  for (const { status } of pedidos) cuentas[grupoDelEstado(status)]++;
+  const total = pedidos.length;
+  if (total === 0) return { completados: 0, enProceso: 0, otros: 0 };
+  // Aritmética entera: cuenta × 100 = parte entera × total + resto.
+  const porcentajes = cuentas.map((cuenta) => Math.floor((cuenta * 100) / total));
+  const restos = cuentas.map((cuenta) => (cuenta * 100) % total);
+  const orden = [0, 1, 2].sort((a, b) => restos[b] - restos[a] || a - b);
+  const faltan = 100 - porcentajes.reduce((suma, valor) => suma + valor, 0);
+  for (const indice of orden.slice(0, faltan)) porcentajes[indice]++;
+  return { completados: porcentajes[0], enProceso: porcentajes[1], otros: porcentajes[2] };
 }
