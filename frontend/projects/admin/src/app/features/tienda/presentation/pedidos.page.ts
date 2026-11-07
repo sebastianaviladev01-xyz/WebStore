@@ -1,5 +1,13 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
@@ -154,7 +162,9 @@ export class PedidosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_PEDIDO) as EstadoPedido[];
   protected readonly statusFilter = signal<EstadoPedido | ''>('');
-  protected readonly selectedId = signal<string | null>(null);
+  /** Id del pedido que pide la URL (`?pedido=<id>`); si no existe, el detalle es el más reciente. */
+  readonly pedido = input<string>();
+  protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);
   protected readonly filtered = computed(() => {
     const status = this.statusFilter();
     return status ? this.admin.orders().filter((order) => order.status === status) : this.admin.orders();
