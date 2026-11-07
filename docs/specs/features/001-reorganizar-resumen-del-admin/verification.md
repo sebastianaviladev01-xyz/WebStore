@@ -30,3 +30,8 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-02 | | Verde de TEST-02 | Mismo comando: `pass 2`, `fail 0`. Cinco casos: 15/11 contra 1–15/10; 31/03/2026 contra 1–28/02; 31/03/2028 contra 1–29/02; 15/01 contra 1–15/12 del año anterior; día 1 contra solo el día 1 | |
 | TASK-02 | | `npm run verify` | Código de salida 0 (arquitectura 22 pass, unitarias frontend 10 pass y backend 3 pass, builds y smoke del contrato) | |
 | TASK-02 | | Prettier | `prettier --write` sobre `resumen.rules.ts` y `resumen.rules.spec.mjs` | |
+| TASK-03 | (se rellena al cerrar la fase) | Ejecución | Hecha por el agente principal, sin delegar | Claude Code (app de escritorio), `claude-sonnet-5-5`, esfuerzo alto (nivel estándar · alto del catálogo) |
+| TASK-03 | | Rojo de TEST-05 (clientes nuevos) | `node --test …/resumen.rules.spec.mjs`: `pass 2`, `fail 1`; falla con `AssertionError` (el stub devolvía un mapa vacío; se esperaban ana, luis y rosa) | |
+| TASK-03 | | Verde de TEST-05 (clientes nuevos) | Mismo comando: `pass 3`, `fail 0`. Primer pedido por correo con mayúsculas y espacios (ana, con el arreglo desordenado), pedidos siguientes sin contar, 23:30 de Lima (luis: 9/11 y no 10/11), primer pedido cancelado que cuenta (rosa) y cliente sin pedidos ausente. La prueba ordena las entradas por correo para no depender del orden del mapa | |
+| TASK-03 | | `npm run verify` | Código de salida 0 (arquitectura 22 pass, unitarias frontend 11 pass y backend 3 pass, builds y smoke del contrato) | |
+| TASK-03 | | Prettier | `prettier --write` sobre `resumen.rules.ts` y `resumen.rules.spec.mjs` | |

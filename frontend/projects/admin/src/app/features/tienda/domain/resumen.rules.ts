@@ -1,4 +1,5 @@
 import type { FechaLima, TramoMes } from './resumen.model';
+import type { Pedido } from './tienda.model';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',
@@ -35,4 +36,21 @@ export function tramosDeComparacion(hoy: FechaLima): { actual: TramoMes; anterio
       hasta: Math.min(hoy.dia, diasDelMes(anioAnterior, mesAnterior)),
     },
   };
+}
+
+const normalizarCorreo = (correo: string) => correo.trim().toLowerCase();
+
+/**
+ * Fecha de Lima del primer pedido (el de menor `createdAt`) de cada cliente, por correo normalizado como
+ * en el BFF. Cuenta también los pedidos cancelados (D6 no los excluye). Los clientes sin pedidos no aparecen.
+ */
+export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, FechaLima> {
+  const primeros = new Map<string, number>();
+  for (const pedido of pedidos) {
+    const correo = normalizarCorreo(pedido.customerEmail);
+    const instante = new Date(pedido.createdAt).getTime();
+    const previo = primeros.get(correo);
+    if (previo === undefined || instante < previo) primeros.set(correo, instante);
+  }
+  return new Map([...primeros].map(([correo, instante]) => [correo, fechaEnLima(new Date(instante))]));
 }

@@ -7,7 +7,7 @@ const source = await readFile(new URL('./resumen.rules.ts', import.meta.url), 'u
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { fechaEnLima, tramosDeComparacion } = await import(
+const { fechaEnLima, tramosDeComparacion, clientesNuevosPorFecha } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -42,4 +42,27 @@ test('los tramos de comparación van del día 1 a hoy y cubren el mes anterior m
     actual: tramo(2026, 11, 1),
     anterior: tramo(2026, 10, 1),
   });
+});
+
+test('un cliente es nuevo el día de su primer pedido, por correo sin mayúsculas ni espacios', () => {
+  const pedido = (customerEmail, createdAt, status = 'confirmed') => ({ customerEmail, createdAt, status });
+  const nuevos = clientesNuevosPorFecha([
+    pedido('ana@correo.pe', '2026-11-05T15:00:00Z'),
+    pedido('  ANA@correo.pe ', '2026-11-03T15:00:00Z'),
+    pedido('ana@correo.pe', '2026-11-08T15:00:00Z'),
+    pedido('luis@correo.pe', '2026-11-10T04:30:00Z'),
+    pedido('rosa@correo.pe', '2026-11-02T15:00:00Z', 'cancelled'),
+    pedido('rosa@correo.pe', '2026-11-08T15:00:00Z', 'delivered'),
+  ]);
+  assert.deepEqual(
+    [...nuevos].sort(([a], [b]) => a.localeCompare(b)),
+    [
+      ['ana@correo.pe', { anio: 2026, mes: 11, dia: 3 }],
+      ['luis@correo.pe', { anio: 2026, mes: 11, dia: 9 }],
+      ['rosa@correo.pe', { anio: 2026, mes: 11, dia: 2 }],
+    ],
+    'ana: el primer pedido aunque llegue desordenado; luis: 23:30 de Lima; rosa: el cancelado también cuenta',
+  );
+  assert.equal(nuevos.has('sin-pedidos@correo.pe'), false, 'un cliente sin pedidos no aparece');
+  assert.equal(clientesNuevosPorFecha([]).size, 0);
 });
