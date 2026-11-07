@@ -58,6 +58,10 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await expect(page.getByRole('heading', { level: 1, name: 'Pedidos' })).toBeVisible();
   await expect(page.getByRole('main')).toContainText(nombre);
 
+  // Sin parámetro, el detalle muestra el pedido más reciente: el que se acaba de crear.
+  await expect(page.getByRole('main').getByRole('heading', { level: 2, name: pedido })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('complementary')).toContainText(correo);
+
   await page
     .getByRole('navigation', { name: 'Administración' })
     .getByRole('link', { name: 'Clientes' })

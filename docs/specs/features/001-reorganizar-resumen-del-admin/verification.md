@@ -68,3 +68,8 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-09 | | Diff | Solo mueve la constante: `STATUS_LABELS` sale de `pedidos.page.ts` y entra en `tienda.model.ts` como `ETIQUETAS_ESTADO_PEDIDO` (`Readonly<Record<EstadoPedido, string>>`, mismas cinco etiquetas y mismo orden); `pedidos.page.ts` la importa en sus dos usos. Plantilla y estilos sin cambios (por eso sin capturas) | |
 | TASK-09 | | `npm run verify` | Código de salida 0 (arquitectura 22 pass, unitarias frontend 22 pass y backend 3 pass, builds y smoke del contrato) | |
 | TASK-09 | | Prettier | `prettier --write` sobre `tienda.model.ts` y `pedidos.page.ts`: sin cambios | |
+| TASK-10 | | Ejecución | Hecha por el agente principal, sin delegar | Claude Code (app de escritorio), `claude-sonnet-5-5`, esfuerzo medio (nivel estándar · medio del catálogo) |
+| TASK-10 | | Diff | Solo añade pasos en `storefront-checkout.spec.ts`, tras la comprobación de Pedidos: sin parámetro, el detalle (`h2` del `main`) es el pedido recién creado y el panel muestra su correo. No cambia ni quita aserciones. Un primer intento falló por un selector ambiguo (`complementary` resolvía a dos elementos: la barra lateral y el detalle); se acotó a `main` | |
+| TASK-10 | | TEST-10 en verde antes de TASK-11 | `npm run test:e2e -- storefront-checkout` desde `frontend/`: `1 passed (28.1s)`, código de salida 0, sobre la página de Pedidos sin tocar (todavía sin `?pedido=`) | |
+| TASK-10 | | `npm run verify` | Código de salida 0 (arquitectura 22 pass, unitarias frontend 22 pass y backend 3 pass, builds y smoke del contrato) | |
+| TASK-10 | | Prettier | `prettier --write` sobre `storefront-checkout.spec.ts`: sin cambios | |
