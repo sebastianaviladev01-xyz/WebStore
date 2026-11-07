@@ -1,5 +1,5 @@
-import type { FechaLima, TramoMes } from './resumen.model';
-import type { Pedido } from './tienda.model';
+import type { FechaLima, IndicadoresResumen, TramoMes } from './resumen.model';
+import type { Cliente, Pedido } from './tienda.model';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',
@@ -53,4 +53,68 @@ export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, 
     if (previo === undefined || instante < previo) primeros.set(correo, instante);
   }
   return new Map([...primeros].map(([correo, instante]) => [correo, fechaEnLima(new Date(instante))]));
+}
+
+const redondearMonto = (valor: number) => Math.round(valor * 100) / 100;
+
+/** Ventas: suma del `total` (productos y envío) de los pedidos no cancelados, a céntimos. */
+const sumarVentas = (pedidos: readonly Pedido[]) =>
+  redondearMonto(pedidos.filter((p) => p.status !== 'cancelled').reduce((suma, p) => suma + p.total, 0));
+
+const estaEnTramo = (fecha: FechaLima, tramo: TramoMes) =>
+  fecha.anio === tramo.anio &&
+  fecha.mes === tramo.mes &&
+  fecha.dia >= tramo.desde &&
+  fecha.dia <= tramo.hasta;
+
+/** Variación en % entero de `actual` respecto de `anterior`; `null` si `anterior` es 0 (nunca Infinity ni NaN). */
+export function variacionPorcentual(actual: number, anterior: number): number | null {
+  if (anterior === 0) return null;
+  const variacion = Math.round(((actual - anterior) / anterior) * 100);
+  // Math.round devuelve -0 para cambios menores a medio punto.
+  return variacion === 0 ? 0 : variacion;
+}
+
+/** Pedidos y ventas (sin cancelados) de un tramo, y los clientes nuevos de ese tramo. */
+function cifrasDelTramo(
+  pedidos: readonly { fecha: FechaLima; pedido: Pedido }[],
+  nuevos: readonly FechaLima[],
+  tramo: TramoMes,
+) {
+  const delTramo = pedidos.filter(({ fecha }) => estaEnTramo(fecha, tramo)).map(({ pedido }) => pedido);
+  return {
+    pedidos: delTramo.length,
+    ventas: sumarVentas(delTramo),
+    clientes: nuevos.filter((fecha) => estaEnTramo(fecha, tramo)).length,
+  };
+}
+
+/**
+ * Cifras de las tarjetas del Resumen. El total es histórico (pedidos con cancelados, ventas con el `total` de los
+ * no cancelados, todos los clientes); la variación compara el mes en curso con el mismo tramo del mes anterior.
+ */
+export function calcularIndicadores(
+  pedidos: readonly Pedido[],
+  clientes: readonly Cliente[],
+  ahora: Date,
+): IndicadoresResumen {
+  const { actual, anterior } = tramosDeComparacion(fechaEnLima(ahora));
+  const conFecha = pedidos.map((pedido) => ({ fecha: fechaEnLima(pedido.createdAt), pedido }));
+  const nuevos = [...clientesNuevosPorFecha(pedidos).values()];
+  const ahoraTramo = cifrasDelTramo(conFecha, nuevos, actual);
+  const antesTramo = cifrasDelTramo(conFecha, nuevos, anterior);
+  return {
+    pedidos: {
+      total: pedidos.length,
+      variacion: variacionPorcentual(ahoraTramo.pedidos, antesTramo.pedidos),
+    },
+    ventas: {
+      total: sumarVentas(pedidos),
+      variacion: variacionPorcentual(ahoraTramo.ventas, antesTramo.ventas),
+    },
+    clientes: {
+      total: clientes.length,
+      variacion: variacionPorcentual(ahoraTramo.clientes, antesTramo.clientes),
+    },
+  };
 }

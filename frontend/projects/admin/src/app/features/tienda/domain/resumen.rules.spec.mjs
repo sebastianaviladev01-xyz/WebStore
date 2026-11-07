@@ -7,9 +7,8 @@ const source = await readFile(new URL('./resumen.rules.ts', import.meta.url), 'u
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { fechaEnLima, tramosDeComparacion, clientesNuevosPorFecha } = await import(
-  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
-);
+const { fechaEnLima, tramosDeComparacion, clientesNuevosPorFecha, variacionPorcentual, calcularIndicadores } =
+  await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 test('la fecha de Lima de un instante no depende de la zona del equipo', () => {
   assert.deepEqual(fechaEnLima('2026-11-01T03:00:00Z'), { anio: 2026, mes: 10, dia: 31 }, '22:00 del 31/10');
@@ -65,4 +64,94 @@ test('un cliente es nuevo el día de su primer pedido, por correo sin mayúscula
   );
   assert.equal(nuevos.has('sin-pedidos@correo.pe'), false, 'un cliente sin pedidos no aparece');
   assert.equal(clientesNuevosPorFecha([]).size, 0);
+});
+
+const venta = (createdAt, total, customerEmail, status = 'delivered') => ({
+  id: `P-${createdAt}-${customerEmail}`,
+  createdAt,
+  total,
+  customerEmail,
+  status,
+});
+const clientesDe = (cantidad) => Array.from({ length: cantidad }, (_, i) => ({ id: `c-${i + 1}` }));
+// 15/11/2026 12:00 en Lima: el mes en curso va del 1 al 15/11 y el anterior, del 1 al 15/10.
+const ahora = new Date('2026-11-15T17:00:00Z');
+
+test('los totales cuentan todos los pedidos, las ventas sin cancelados y todos los clientes', () => {
+  const { pedidos, ventas, clientes } = calcularIndicadores(
+    [
+      venta('2026-11-02T15:00:00Z', 100.1, 'ana@correo.pe', 'confirmed'),
+      venta('2026-11-03T15:00:00Z', 50.2, 'ana@correo.pe'),
+      venta('2026-10-10T15:00:00Z', 30, 'luis@correo.pe', 'cancelled'),
+      venta('2025-09-01T15:00:00Z', 20.05, 'rosa@correo.pe'),
+    ],
+    clientesDe(4),
+    ahora,
+  );
+  assert.equal(pedidos.total, 4, 'el pedido cancelado cuenta como pedido');
+  assert.equal(ventas.total, 170.35, 'suma el total sin cancelados y redondea a céntimos');
+  assert.equal(clientes.total, 4, 'incluye al cliente sin pedidos');
+});
+
+test('la variación es el cambio en % entero y no existe cuando el tramo anterior vale 0', () => {
+  assert.equal(variacionPorcentual(3, 2), 50, 'subida');
+  assert.equal(variacionPorcentual(1, 4), -75, 'bajada');
+  assert.equal(variacionPorcentual(2, 2), 0, 'igual');
+  assert.equal(variacionPorcentual(1, 3), -67, 'redondea al entero más cercano');
+  assert.equal(variacionPorcentual(0, 7), -100, 'actual 0 con anterior mayor que 0');
+  assert.equal(variacionPorcentual(5, 0), null, 'anterior 0: sin porcentaje');
+  assert.equal(variacionPorcentual(0, 0), null);
+  assert.ok(Object.is(variacionPorcentual(1999, 2000), 0), 'un cambio menor a medio punto es 0, no -0');
+});
+
+test('las variaciones comparan el mes en curso con el mismo tramo del mes anterior', () => {
+  const { pedidos, ventas, clientes } = calcularIndicadores(
+    [
+      venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe', 'confirmed'),
+      venta('2026-11-03T15:00:00Z', 50, 'ana@correo.pe'),
+      venta('2026-11-04T15:00:00Z', 40, 'luis@correo.pe', 'cancelled'),
+      venta('2026-11-20T15:00:00Z', 999, 'zeta@correo.pe'),
+      venta('2026-10-05T15:00:00Z', 60, 'ana@correo.pe'),
+      venta('2026-10-06T15:00:00Z', 500, 'bea@correo.pe', 'cancelled'),
+      venta('2026-10-20T15:00:00Z', 1000, 'ana@correo.pe'),
+    ],
+    clientesDe(5),
+    ahora,
+  );
+  assert.equal(pedidos.variacion, 50, '3 pedidos del 1 al 15/11 contra 2 del 1 al 15/10');
+  assert.equal(ventas.variacion, 150, '150 contra 60: los cancelados no cuentan en las ventas');
+  assert.equal(clientes.variacion, -50, 'luis es el único nuevo del tramo actual; ana y bea, del anterior');
+});
+
+test('sin pedidos en el tramo anterior no hay variación; sin pedidos en el actual es -100', () => {
+  const soloNoviembre = calcularIndicadores(
+    [venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe')],
+    clientesDe(1),
+    ahora,
+  );
+  assert.deepEqual(
+    [soloNoviembre.pedidos.variacion, soloNoviembre.ventas.variacion, soloNoviembre.clientes.variacion],
+    [null, null, null],
+  );
+  const soloOctubre = calcularIndicadores(
+    [venta('2026-10-02T15:00:00Z', 100, 'ana@correo.pe')],
+    clientesDe(1),
+    ahora,
+  );
+  assert.deepEqual(
+    [soloOctubre.pedidos.variacion, soloOctubre.ventas.variacion, soloOctubre.clientes.variacion],
+    [-100, -100, -100],
+  );
+  const igual = calcularIndicadores(
+    [venta('2026-10-02T15:00:00Z', 80, 'ana@correo.pe'), venta('2026-11-02T15:00:00Z', 80, 'bea@correo.pe')],
+    clientesDe(2),
+    ahora,
+  );
+  assert.deepEqual([igual.pedidos.variacion, igual.ventas.variacion, igual.clientes.variacion], [0, 0, 0]);
+  const vacio = calcularIndicadores([], [], ahora);
+  assert.deepEqual(vacio, {
+    pedidos: { total: 0, variacion: null },
+    ventas: { total: 0, variacion: null },
+    clientes: { total: 0, variacion: null },
+  });
 });
