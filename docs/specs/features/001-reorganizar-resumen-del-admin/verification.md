@@ -105,3 +105,9 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-13 | | E2E completo | `npm run test:e2e` desde `frontend/`, en segundo plano: `34 passed (1.1m)`, código de salida 0 (`admin-acceso.spec.ts` incluido) | |
 | TASK-13 | | `npm run verify` | Código de salida 0 | |
 | TASK-13 | | Prettier | `prettier --write` sobre `admin-resumen.spec.ts` y `storefront-checkout.spec.ts` | |
+| TASK-14 | | Ejecución | Hecha por el agente principal, sin delegar | Claude Code (app de escritorio), `claude-sonnet-5-5`, esfuerzo bajo (nivel estándar · bajo del catálogo) |
+| TASK-14 | | Documentos | Glosario: fila «Resumen» ampliada y filas nuevas «Total de ventas», «Cliente nuevo» y «Variación», con su nombre en el código. `TRACEABILITY.md`: filas del Resumen reorganizado y de `?pedido=`, con sus TEST. `frontend/architecture.md` §6: las unitarias de `domain/` incluyen los indicadores del Resumen. Índice de features actualizado | |
+| TASK-14 | | Backlog | PBI-0029 (propuesta, `technical-debt`): que `verify` compruebe los tipos de todos los archivos de `domain/`; origen, el TS2540 de `serieDelMes` en TASK-12 | |
+| TASK-14 | | Contrato (TEST-15) | `npm run validate:contract`: «Smoke test BFF: OK». `git diff --stat origin/dev -- backend/`: vacío | |
+| TASK-14 | | `npm run verify` (TEST-14) | Código de salida 0 | |
+| TASK-14 | | E2E | No se repite: TASK-14 no toca código y el e2e completo de TASK-13 dio `34 passed (1.1m)` | |

@@ -63,7 +63,10 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Sesión administrativa | Acceso autenticado al Admin, con token opaco enviado como `Bearer`. | `SesionFacade`, `SesionGateway`, `SesionConcedida`, `sesionGuard` | `adminSessions`; `/bff/admin/sessions` |
 | Rol | Conjunto fijo de permisos de un usuario administrativo. Se asigna, no se crea ni se edita. Valores en [Rol](#rol-rol). | `Rol`, `DefinicionRol`, `ROLES`, `rolPuede()` | `role`; `ADMIN_ROLES`, `can()` en `domain/sesion/rol.rules.mjs` |
 | Permiso | Operación que un rol puede hacer en el Admin, por ejemplo `products.edit` o `orders.manage`. | `Permiso`, `permisoGuard(permiso)` | `ADMIN_PERMISSIONS`; `403 INSUFFICIENT_ROLE` |
-| Resumen | Pantalla inicial del Admin, visible para los tres roles. Las fuentes la llaman también «Dashboard». | `ResumenPage` | Permiso `dashboard.view` |
+| Resumen | Pantalla inicial del Admin, visible para los tres roles: cuatro tarjetas con «Ver más», gráfico por día del mes, pedidos por distrito, alertas de inventario, últimos pedidos y pedidos por estado. Las fuentes la llaman también «Dashboard». Sus bloques de pedidos y de clientes dependen de `orders.manage` y `customers.manage`. | `ResumenPage`, `TarjetaIndicadorComponent`, `GraficoPedidosComponent`; reglas en `resumen.rules.ts` | Permiso `dashboard.view`; datos del snapshot `/bff/admin/snapshot`, sin endpoint nuevo |
+| Total de ventas | Suma del `total` (productos y envío) de los pedidos que no están cancelados, redondeada a céntimos. | `calcularIndicadores` (`Indicador`) | `orders[].total` |
+| Cliente nuevo | Cliente cuyo primer pedido, incluidos los cancelados, cae en la fecha de Lima considerada. El cliente no tiene fecha de alta: se toma la de su primer pedido, buscado por correo sin espacios ni mayúsculas. | `clientesNuevosPorFecha`, `DiaDelMes.clientesNuevos` | `orders[].customerEmail`, `orders[].createdAt` |
+| Variación | Porcentaje entero del mes en curso frente al mismo tramo del mes anterior; `null` («—») si el tramo anterior vale 0. | `variacionPorcentual`, `tramosDeComparacion`, `Indicador.variacion` | — |
 
 ## Contenido y reclamos
 

@@ -129,7 +129,7 @@ El nombre del archivo indica su rol con un sufijo. La parte de negocio va en esp
 
 | Nivel | Herramienta | Qué se prueba |
 |---|---|---|
-| Unitarias de `domain/` | `node:test`, archivos `*.spec.mjs` junto al código (`npm test`) | Árbol de categorías del storefront y tarifas de envío del Admin |
+| Unitarias de `domain/` | `node:test`, archivos `*.spec.mjs` junto al código (`npm test`) | Árbol de categorías del storefront, tarifas de envío del Admin e indicadores del Resumen del Admin (`resumen.rules.spec.mjs`: variación, clientes nuevos, serie del mes, distritos, últimos pedidos y estados) |
 | Límites de arquitectura | `node:test` con la API de ESLint ([`tests/architecture/`](tests/architecture/), `npm run test:architecture`) | Que Sheriff y `no-restricted-imports` rechazan lo prohibido y aceptan lo permitido, sin escribir en `src/` |
 | Estructura y contrato | [`tools/validate-structure.mjs`](../tools/validate-structure.mjs) y el smoke test del BFF (`npm run validate:contract` desde la raíz) | Rutas, guards, CMS compartido, roles y el contrato HTTP completo |
 | E2E | Playwright ([`tests/e2e/`](tests/e2e/), [`playwright.config.ts`](playwright.config.ts)), `npm run test:e2e` | Recorridos derivados de la [matriz de trazabilidad](../docs/planning/TRACEABILITY.md) contra el BFF de prueba real: navegación y 404, catálogo y ficha, carrito con IGV, compra como invitado, cuenta de cliente, libro de reclamaciones, CMS y acceso al Admin por rol |

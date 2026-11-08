@@ -4,7 +4,7 @@ Añade una fila al crear la carpeta de una feature. Al avanzar de etapa, actuali
 
 | NNN | Slug | Historia | Estado | Bloqueos y siguiente paso | Última revisión |
 |---|---|---|---|---|---|
-| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | en implementación | [Tareas](001-reorganizar-resumen-del-admin/tasks.md): fases 1 y 2 hechas (bloques 1 y 2: reglas puras del Resumen con TDD, capturas de antes, `?pedido=` en Pedidos), en la rama `feature/001-reorganizar-resumen-del-admin` sin push. Ninguna bloqueada. ⚠ TASK-12 (Resumen reorganizado) hecha en el bloque 3, sin commit, con su paquete de revisión. Siguiente: aprobación del paquete ⚠ por la persona y `sdd-implement` del bloque 4 (commit de TASK-12, TASK-13 y TASK-14) en una sesión nueva sobre el worktree | 2026-11-07 |
+| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | en implementación | [Tareas](001-reorganizar-resumen-del-admin/tasks.md): las tres fases hechas (TASK-01 a TASK-14: reglas puras del Resumen con TDD, `?pedido=` en Pedidos, Resumen reorganizado aprobado, e2e y documentos), en la rama `feature/001-reorganizar-resumen-del-admin` sin push. Ninguna bloqueada. Siguiente: `sdd-verify` en una sesión nueva y después el PR de entrega hacia `dev` | 2026-11-07 |
 
 Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia está en la [trazabilidad](../../planning/TRACEABILITY.md) y en la [validación](../../../frontend/docs/VALIDATION.md), no en este índice.
 
