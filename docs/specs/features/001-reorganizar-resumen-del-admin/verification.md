@@ -131,7 +131,7 @@ Ejecuciones finales de `sdd-verify` sobre la punta `f9598f3`, el 2026-11-07. Las
 | `npm run verify` completo | Sí | Sí | Sí: código de salida 0 |
 | Capturas antes y después | Sí (plan, [tabla de capturas](planning.md#capturas-antes-y-después)) | Sí (script de CDP de un solo uso, mismos roles, rutas, anchos y copias) | Sí: comparación final repetida; ver [Capturas antes y después](#capturas-antes-y-después) |
 | Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`. Las dependencias no cambian en el diff |
-| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml)) | Sí | No ejecutado: la rama no tiene push; corre al abrir el PR |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml)) | Sí | Sí: en el [PR #4](https://github.com/sebastianaviladev01-xyz/WebStore/pull/4), «Verificar» y «E2E» en verde sobre `cb997e4`; después del merge, el CI de `dev` también en verde sobre `304dcc5` y `8b0fcbe` |
 | Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: `sdd-verify` no la pide. Aunque se hiciera, no contaría como evidencia |
 
 ## Resultados de las pruebas
@@ -216,8 +216,8 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - [x] Documentación coherente con la implementación. No hace falta ADR (plan aprobado sin ADR, PR #2).
 - [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
 - [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia: las specs usan datos de prueba y las copias de datos y las capturas no se versionan. `backend/data.json` no se modificó.
-- [x] Los controles no ejecutados figuran como tales (CI y revisión ciega). El hallazgo de los commits, ya corregido, figura en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
-- [ ] Revisión humana del hito correspondiente registrada. Las del bloque 2 y de ⚠ TASK-12 están registradas. **Falta la del hito de entrega**, que se acepta después del merge.
+- [x] Los controles no ejecutados figuran como tales (revisión ciega). El CI se ejecutó en el PR #4 y en `dev`. El hallazgo de los commits, ya corregido, figura en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [x] Revisión humana del hito correspondiente registrada: la del bloque 2, la de ⚠ TASK-12 y la del [hito de entrega](#hito-de-entrega).
 
 ## Riesgos remanentes y excepciones
 
@@ -227,9 +227,22 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - **Comentario desplazado.** En `tienda.model.ts`, el comentario «Etiquetas visibles…» ahora queda sobre `ETIQUETAS_ESTADO_PEDIDO` y `ETIQUETAS_ESTADO_RECLAMO` se quedó sin él. Es cosmético y no afecta al comportamiento.
 - **`ahora` fijo.** El Resumen fija `ahora` al abrirse: si la página queda abierta al cambiar de día o de mes, los tramos y el gráfico no se mueven hasta volver a entrar. Es lo previsto en el plan y en la especificación (sin tiempo real).
 - **Typecheck.** `verify` no comprueba los tipos de los archivos de `domain/` que ninguna página importa (PBI-0029, propuesta). En esta verificación se comprobaron a mano con `tsc`.
-- **CI no ejecutado.** Corre al abrir el PR.
+- **CI.** Se ejecutó en el PR #4 y en `dev`, en verde.
 - **Ejecutado con.** Todas las tareas lo registraron (herramienta, modelo real y esfuerzo). No falta ninguna fila.
 
 ## Hito de entrega
 
-pendiente
+Aceptado por Sebastián Avila el 2026-11-07 («si ya para cerrar todo»), después de fusionar el [PR #4](https://github.com/sebastianaviladev01-xyz/WebStore/pull/4) en `dev` (`304dcc5`).
+
+Evidencia revisada antes de aceptar, en la sesión principal:
+
+- `npm run verify` (código de salida 0), `npm run audit:all` (0 vulnerabilidades) y `npm run test:e2e` (`34 passed`) sobre `dev` en `8b0fcbe`, con el CI de GitHub en verde en los PR #1 a #5 y en `dev`.
+- Prueba funcional del Resumen en ejecución sobre una copia de `data-capturas.json`: cifras iguales a los valores esperados de TASK-08, los cuatro «Ver más» con su destino, «Ver» del tercer pedido abre ese pedido en Pedidos, el cambio de un pedido a «Entregado» se refleja en el Resumen (56 / 22 / 22 %), el vendedor a 375 px no ve bloques de clientes ni desborda la página, y la consola queda sin errores.
+- Lectura del código de `resumen.page.ts`, `tarjeta-indicador.component.ts`, `grafico-pedidos.component.ts` y `resumen.rules.ts`; barra lateral y cabecera idénticas píxel a píxel en las capturas de antes y después.
+
+Limitaciones y riesgos remanentes:
+
+- Bloques de OpenCart sustituidos por falta de datos en el BFF: personas en línea (PBI-0027) y actividad reciente (PBI-0028). El mapa mundial se sustituyó por pedidos por distrito (D4).
+- `verify` no comprueba los tipos de `domain/` que nada importa (PBI-0029).
+- La fecha de «Últimos pedidos» usa la zona del navegador ([Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones)).
+- Daniel, que pidió la feature, todavía no la ha revisado. Si pide cambios, entran como una feature nueva.
