@@ -35,6 +35,8 @@ QA es una etapa, no una rama: QA certifica una `release/x.y.z` concreta ([certif
 
 WebStore todavía no tiene ambientes desplegados: el despliegue es una decisión abierta ([alcance](../planning/SCOPE.md#fase-posterior)). Mientras no exista un ambiente de QA, QA certifica el commit de la release levantado en local según el [entorno local](../development/local-environment.md), y la certificación lo dice.
 
+**Rama por defecto en GitHub: `dev`.** A diferencia de IdShield, que usa `main`, en WebStore la rama por defecto del repositorio es `dev`. Así, «Compare & pull request» y los pull request nuevos proponen `dev` como destino, y un clon empieza donde se integra el trabajo. El modelo no cambia: las ramas `feature/*` nacen según [Transición](#transición) y `main` solo recibe una `release/x.y.z` certificada o un `hotfix/*`. Se cambió el 2026-11-07, después de que se abriera por error un pull request de `dev` hacia `main` (#6, cerrado sin fusionar). El plan actual del repositorio privado no permite proteger ramas; si llega a permitirlo (GitHub Pro o una organización con plan de pago), conviene proteger `main` y `dev`: exigir pull request y la CI en verde, y bloquear el push forzado y el borrado.
+
 ### Política de pull requests
 
 | Rama origen | Rama destino | Tratamiento |
