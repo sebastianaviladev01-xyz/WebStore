@@ -124,20 +124,18 @@ export function calcularIndicadores(
 /** Un punto por día del mes en curso de Lima, con los pedidos creados y los clientes nuevos de ese día. */
 export function serieDelMes(pedidos: readonly Pedido[], ahora: Date): DiaDelMes[] {
   const { anio, mes } = fechaEnLima(ahora);
-  const serie: DiaDelMes[] = Array.from({ length: diasDelMes(anio, mes) }, (_, i) => ({
-    dia: i + 1,
-    pedidos: 0,
-    clientesNuevos: 0,
-  }));
+  const dias = diasDelMes(anio, mes);
+  const pedidosPorDia = new Array<number>(dias).fill(0);
+  const clientesPorDia = new Array<number>(dias).fill(0);
   const delMes = (fecha: FechaLima) => fecha.anio === anio && fecha.mes === mes;
   for (const pedido of pedidos) {
     const fecha = fechaEnLima(pedido.createdAt);
-    if (delMes(fecha)) serie[fecha.dia - 1].pedidos++;
+    if (delMes(fecha)) pedidosPorDia[fecha.dia - 1]++;
   }
   for (const fecha of clientesNuevosPorFecha(pedidos).values()) {
-    if (delMes(fecha)) serie[fecha.dia - 1].clientesNuevos++;
+    if (delMes(fecha)) clientesPorDia[fecha.dia - 1]++;
   }
-  return serie;
+  return pedidosPorDia.map((total, i) => ({ dia: i + 1, pedidos: total, clientesNuevos: clientesPorDia[i] }));
 }
 
 const claveDistrito = (distrito: string) => distrito.trim().toLocaleLowerCase('es-PE');
