@@ -9,10 +9,11 @@
 
 | Dato | Valor |
 |---|---|
-| Rama y commit | `feature/001-reorganizar-resumen-del-admin` (pendiente de `sdd-verify`) |
-| Fecha | Pendiente de `sdd-verify` |
-| Entorno | Windows 10 Pro, Node v24.20.0, npm 11.19.0 (bloque 1, sin navegador ni e2e hasta TASK-07) |
-| Datos | El bloque 1 no usa archivo de estado: las reglas puras de `domain/` no leen el BFF |
+| Rama y commit | `feature/001-reorganizar-resumen-del-admin`, punta verificada `a26a7df`, base `origin/dev` `8cacac1`. El commit de esta verificación solo toca documentación |
+| Fecha | 2026-11-07 (`sdd-verify`, ~19:15–19:45 de Lima) |
+| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (`node --version` y `npm --version`). E2E con Google Chrome (`channel: 'chrome'`, headless) de Playwright; capturas con Chrome 156 headless por CDP |
+| Datos | E2E: archivo temporal propio de Playwright (`webstore-e2e-<marca>.json` en el directorio temporal). Capturas: copias `backend/data-capturas.json` y `backend/data-vacio.json` del worktree con `WEBSTORE_DATA_FILE` (ignoradas por git). `backend/data.json` no existe en el worktree y el del checkout principal no se tocó |
+| Ejecutado con | `sdd-verify`: Claude Code (app de escritorio), `claude-opus-5-5`, agente principal (nivel avanzado), sin delegar. El esfuerzo de la sesión lo fija la persona y no se puede leer desde la sesión |
 
 ## Ejecución por tarea
 
@@ -111,3 +112,124 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-14 | `b82a534` | Contrato (TEST-15) | `npm run validate:contract`: «Smoke test BFF: OK». `git diff --stat origin/dev -- backend/`: vacío | |
 | TASK-14 | `b82a534` | `npm run verify` (TEST-14) | Código de salida 0 | |
 | TASK-14 | `b82a534` | E2E | No se repite: TASK-14 no toca código y el e2e completo de TASK-13 dio `34 passed (1.1m)` | |
+
+## Estado de los controles
+
+Ejecuciones finales de `sdd-verify` sobre la punta `a26a7df`, el 2026-11-07. Las de cada tarea están en «Ejecución por tarea».
+
+| Control | Documentado | Configurado | Ejecutado |
+|---|---|---|---|
+| Agentes (`check:agents`) | Sí ([ADR-0008](../../../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)) | Sí (`tools/check-agents.mjs`, en `verify`) | Sí: «catálogo 1.0.0, 2 herramientas, 10 skills, 10 referencias a niveles y 3 CLAUDE.md revisados» |
+| Sintaxis del BFF (`check:syntax`) | Sí | Sí (en `verify`) | Sí: «Sintaxis correcta en 50 archivos» |
+| Formato (`format:check`) | Sí | Sí (en `verify`) | Sí: «All matched files use Prettier code style!» en la raíz y en `frontend/` |
+| Lint y límites de arquitectura | Sí ([`frontend/architecture.md`](../../../../frontend/architecture.md)) | Sí (ESLint, Sheriff y `test:architecture`, en `verify`) | Sí: `eslint src projects` sin errores; `test:architecture` `pass 22`, `fail 0`. Sin reglas desactivadas en el diff |
+| Pruebas unitarias | Sí (plan, TEST-01 a TEST-09) | Sí (`npm test`, en `verify`) | Sí: frontend `pass 22`, `fail 0` (las 14 de `resumen.rules.spec.mjs` incluidas); backend `pass 3`, `fail 0`. Además, `TZ=Asia/Tokyo node --test …/resumen.rules.spec.mjs`: `pass 14`, `fail 0` |
+| Typecheck del Admin | Sí (riesgo de TASK-12; PBI-0029) | No en `verify` (PBI-0029): lo cubre el build, que solo compila lo que se importa | Sí, a mano: `npx tsc -p projects/admin/tsconfig.app.json --noEmit` desde `frontend/`, código de salida 0 |
+| Pruebas de integración y contrato del BFF | Sí ([contrato](../../../../backend/docs/BFF-CONTRACT.md)) | Sí (`validate:contract`, en `verify`) | Sí: estructura «OK» y «Smoke test BFF: OK» (10 bloques). `git diff --stat origin/dev...HEAD -- backend/`: vacío (TEST-15) |
+| Pruebas E2E | Sí (plan, TEST-10 a TEST-12) | Sí (`playwright.config.ts`: BFF 3400, Storefront 4400, Admin 4500, estado temporal) | Sí: `npm run test:e2e` desde `frontend/`, en segundo plano: `34 passed (1.3m)`, código de salida 0 |
+| Build de Storefront y Admin | Sí | Sí (`build:all`, en `verify`, con presupuestos) | Sí: los dos builds completos, sin avisos de presupuesto |
+| `npm run verify` completo | Sí | Sí | Sí: código de salida 0 |
+| Capturas antes y después | Sí (plan, [tabla de capturas](planning.md#capturas-antes-y-después)) | Sí (script de CDP de un solo uso, mismos roles, rutas, anchos y copias) | Sí: comparación final repetida; ver [Capturas antes y después](#capturas-antes-y-después) |
+| Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`. Las dependencias no cambian en el diff |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml)) | Sí | No ejecutado: la rama no tiene push; corre al abrir el PR |
+| Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: `sdd-verify` no la pide. Aunque se hiciera, no contaría como evidencia |
+
+## Resultados de las pruebas
+
+| ID | AC | Comando | Resultado | Evidencia |
+|---|---|---|---|---|
+| TEST-01 | AC-04, AC-06 | `npm test --prefix frontend` (en `verify`) | Pasa | «la fecha de Lima de un instante no depende de la zona del equipo»; también con `TZ=Asia/Tokyo` |
+| TEST-02 | AC-03 | Ídem | Pasa | «los tramos de comparación van del día 1 a hoy y cubren el mes anterior más corto» |
+| TEST-03 | AC-02 | Ídem | Pasa | «los totales cuentan todos los pedidos, las ventas sin cancelados y todos los clientes» |
+| TEST-04 | AC-03, AC-13 | Ídem | Pasa | «la variación es el cambio en % entero…», «sin pedidos en el tramo anterior no hay variación…» |
+| TEST-05 | AC-03, AC-04 | Ídem | Pasa | «un cliente es nuevo el día de su primer pedido…», «las variaciones comparan el mes en curso…» |
+| TEST-06 | AC-06, AC-13 | Ídem | Pasa | Las dos pruebas de la serie del mes (noviembre, febrero normal y bisiesto, diciembre, vacío) |
+| TEST-07 | AC-07, AC-13 | Ídem | Pasa | «los distritos con más pedidos van de mayor a menor…» |
+| TEST-08 | AC-09 | Ídem | Pasa | «los últimos pedidos van del más nuevo al más antiguo…» |
+| TEST-09 | AC-11, AC-13 | Ídem | Pasa | Las tres pruebas de la distribución por estado (mayor resto, 0/0/0) |
+| TEST-10 | AC-10 | `npm run test:e2e` desde `frontend/` | Pasa | `storefront-checkout.spec.ts` («un invitado compra, consulta su pedido y el Admin lo recibe») en `34 passed` |
+| TEST-11 | AC-09, AC-10 | Ídem | Pasa | Misma spec: el pedido nuevo encabeza «Últimos pedidos», «Ver» abre `/pedidos?pedido=<id>`, `?pedido=` con un pedido que no es el primero y `NO-EXISTE` |
+| TEST-12 | AC-01, AC-05 a AC-09, AC-11, AC-12 | Ídem | Pasa | `admin-resumen.spec.ts`: las tres pruebas en `34 passed` |
+| TEST-13 | AC-12, AC-13, AC-14 | Script de CDP de un solo uso (`capturar-admin.mjs`) | Pasa | Ver [Capturas antes y después](#capturas-antes-y-después) |
+| TEST-14 | — (STD-01, STD-03) | `npm run verify` | Pasa | Código de salida 0; Sheriff y ESLint sin reglas desactivadas; builds sin avisos de presupuesto |
+| TEST-15 | — (STD-05) | `npm run validate:contract` (en `verify`) y `git diff --stat origin/dev...HEAD -- backend/` | Pasa | «Smoke test BFF: OK»; diff de `backend/` vacío |
+
+La salida del e2e incluye errores NG02953 y avisos NG02952 del Storefront (`NgOptimizedImage`). Ya existían y están en el backlog como PBI-0026. No vienen de esta feature.
+
+## Capturas antes y después
+
+Toma final del 2026-11-07, ~19:35 de Lima, el mismo día que las de antes (TASK-08), así que el mes del gráfico es el mismo. Mismo script, roles, rutas, anchos y copias. Admin servido desde el worktree (`npm run start:admin`) y BFF con `WEBSTORE_DATA_FILE` en las copias. El código de la aplicación no cambia entre `94ce624` (TASK-12) y la punta: `git diff --stat 94ce624 HEAD -- frontend/projects frontend/src` está vacío. Carpeta `frontend/output/visual-qa/001-reorganizar-resumen-del-admin/verify` (no versionada).
+
+| Pantalla o ruta | Anchos | Resultado | Evidencia |
+|---|---|---|---|
+| Admin, Resumen (`/`), superadmin | 1440 y 375 | Cambios pedidos (AC-01 a AC-03, AC-05 a AC-09, AC-11, AC-14) | PNG idénticos byte a byte a los de después de TASK-12, aprobados en el hito ⚠. Frente a `antes`: las diferencias que lista TASK-12, todas con su AC. `scrollWidth` = `clientWidth` (1425 con barra vertical y 375): sin desborde. Consola sin errores |
+| Admin, Resumen (`/`), vendedor | 1440 y 375 | Cambios pedidos (AC-12) | Idénticos byte a byte a los de TASK-12; sin «Total de clientes» ni «Clientes nuevos». Sin desborde y consola sin errores |
+| Admin, Resumen (`/`) sin pedidos (`data-vacio.json`), superadmin | 1440 | Cambios pedidos (AC-13) | Idéntica byte a byte a la de TASK-12. Consola sin errores |
+| Admin, Pedidos (`/pedidos`), superadmin | 1440 y 375 | Iguales | Idénticos byte a byte a `antes` (TASK-08) y a TASK-12. Sin desborde y consola sin errores |
+| Admin, barra lateral y cabecera | 1440 y 375 | Iguales | Comparación de píxeles de TASK-12, sobre las mismas imágenes que la toma final reproduce byte a byte |
+| Storefront | — | No aplica | El diff no toca `frontend/src/` |
+
+Una primera toma final lanzó Chrome con `--hide-scrollbars`, y las tres capturas de 375 px con tablas desplazables no coincidieron. La diferencia de píxeles se limitó al indicador de desplazamiento horizontal superpuesto, que esa opción oculta (`pedidos` 375: 1224 píxeles entre x 0–198 e y 120–979). Era un cambio del método, no de la interfaz. Se repitió la toma sin esa opción, como en TASK-08 y TASK-12, y las seis capturas con datos salieron idénticas byte a byte.
+
+## Cumplimiento TDD
+
+| Área | TDD obligatorio | Prueba antes del código | Evidencia |
+|---|---|---|---|
+| Admin `domain/` (`resumen.rules.ts`, TASK-01 a TASK-07) | Sí (STD-18) | Sí | Rojo con `AssertionError` contra un stub y después verde, registrado en cada tarea («Ejecución por tarea»). Hay un commit por tarea con la prueba y el código juntos, así que la evidencia del orden está en este documento y no en el historial. Los dos rojos por `ReferenceError` y `SyntaxError` (TASK-05, TASK-07) se descartaron y se repitieron |
+| Admin `domain/` (`tienda.model.ts`, TASK-09) | Sí | No aplica | Solo mueve una constante, sin comportamiento nuevo. `verify` en verde |
+| Admin `presentation/` (`pedidos.page.ts`, TASK-10 y TASK-11) | No (código existente sin pruebas: caracterización obligatoria) | Sí | La caracterización TEST-10 (`b6efefc`) está en verde antes del cambio (`b92cf98`). El rojo de TEST-11 está registrado en TASK-11 |
+| Admin `presentation/` (Resumen, TASK-12) | No (los componentes derivan de los AC) | No aplica | Las reglas que usa ya estaban probadas (TEST-01 a TEST-09). La cubren TEST-12 y TEST-13 |
+| E2E (TASK-13) | No | No aplica | STD-18 permite escribir el e2e junto al código. Se registró como tal en TASK-13 |
+
+## Trazabilidad
+
+| REQ | AC | TASK | Commit o PR | TEST | Resultado |
+|---|---|---|---|---|---|
+| REQ-01, REQ-03 | AC-01 | TASK-12, TASK-13 | `94ce624`, `1488025` | TEST-12, TEST-13 | Pasa |
+| REQ-01, REQ-02 | AC-02 | TASK-04, TASK-12 | `77a177f`, `94ce624` | TEST-03, TEST-13 (cifras contra los valores de TASK-08) | Pasa |
+| REQ-02 | AC-03 | TASK-02, TASK-04 | `3a66a43`, `77a177f` | TEST-02, TEST-04, TEST-05 | Pasa |
+| REQ-02, REQ-04 | AC-04 | TASK-01, TASK-03 | `9597b75`, `0425f5b` | TEST-01, TEST-05 | Pasa |
+| REQ-03 | AC-05 | TASK-12, TASK-13 | `94ce624`, `1488025` | TEST-12 | Pasa |
+| REQ-04 | AC-06 | TASK-01, TASK-05, TASK-12 | `9597b75`, `b0c6b0c`, `94ce624` | TEST-01, TEST-06, TEST-12 | Pasa |
+| REQ-05 | AC-07 | TASK-06, TASK-12 | `da17596`, `94ce624` | TEST-07, TEST-12 | Pasa |
+| REQ-06 | AC-08 | TASK-12 | `94ce624` | TEST-12, TEST-13 | Pasa |
+| REQ-07 | AC-09 | TASK-06, TASK-09, TASK-12, TASK-13 | `da17596`, `08decd1`, `94ce624`, `1488025` | TEST-08, TEST-11, TEST-12 | Pasa |
+| REQ-07 | AC-10 | TASK-10, TASK-11, TASK-13 | `b6efefc`, `b92cf98`, `1488025` | TEST-10, TEST-11 | Pasa |
+| REQ-08 | AC-11 | TASK-07, TASK-12 | `1af854d`, `94ce624` | TEST-09, TEST-12 | Pasa |
+| REQ-09 | AC-12 | TASK-12, TASK-13 | `94ce624`, `1488025` | TEST-12, TEST-13 | Pasa |
+| REQ-11 | AC-13 | TASK-04 a TASK-07, TASK-12 | `77a177f`, `b0c6b0c`, `da17596`, `1af854d`, `94ce624` | TEST-04, TEST-06, TEST-07, TEST-09, TEST-13 (vacío) | Pasa |
+| REQ-10 | AC-14 | TASK-08, TASK-11, TASK-12 | `4ec5f9e`, `b92cf98`, `94ce624` | TEST-13 | Pasa |
+| — (STD-01, STD-03, STD-05) | — | TASK-14 | `b82a534` | TEST-14, TEST-15 | Pasa |
+
+Los documentos afectados están actualizados: glosario, [`TRACEABILITY.md`](../../../planning/TRACEABILITY.md), `frontend/architecture.md` §6, backlog (PBI-0029) e índice de features. `BFF-CONTRACT.md` no cambia porque el contrato no cambia. Los enlaces relativos de los siete documentos modificados, de la especificación y del plan resuelven, anclas incluidas (comprobación con un script de un solo uso: 0 enlaces con problema).
+
+## Definition of Done
+
+Marca solo lo que se cumple ([criterios](../../../development/definition-of-done.md)).
+
+- [x] AC aplicables demostrados (AC-01 a AC-14), con el comportamiento normal, los límites (fin de mes, bisiesto, medianoche de Lima, mayor resto) y los fallos (tramo anterior en 0, tienda sin pedidos, BFF caído) cubiertos.
+- [x] En `domain/`, las pruebas existían antes del código. La evidencia está en «Ejecución por tarea» y en [Cumplimiento TDD](#cumplimiento-tdd).
+- [x] `npm run verify` ejecutado desde la raíz sobre `a26a7df` (código de salida 0), `npm run test:e2e` desde `frontend/` (`34 passed`) y `npm run audit:all` (0 vulnerabilidades).
+- [x] No cambia el contrato HTTP: el diff de `backend/` está vacío y el smoke test del contrato está en verde (TEST-15).
+- [x] Autorización, confidencialidad y accesibilidad revisadas para el cambio. El BFF no cambia y sigue enviando cada colección solo al rol que la gestiona. El Resumen oculta los bloques con `can()`, que es UX. Accesibilidad revisada en el código: `h2` por bloque, enlaces con nombre (`Ver más (<tarjeta>)`, `Ver el pedido <id>`), `role="img"` con texto alternativo y tabla `sr-only` en el gráfico, y marcas ▲/▼ con lectura `sr-only`. No se ejecutó ninguna auditoría automática de accesibilidad ni prueba de teclado.
+- [x] Capturas antes y después a 1440 y 375 px, sin cambios visuales no pedidos (STD-12).
+- [x] Documentación coherente con la implementación. No hace falta ADR (plan aprobado sin ADR, PR #2).
+- [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
+- [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia: las specs usan datos de prueba y las copias de datos y las capturas no se versionan. `backend/data.json` no se modificó.
+- [x] Los controles no ejecutados figuran como tales (CI y revisión ciega). El hallazgo de los commits figura en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [ ] Revisión humana del hito correspondiente registrada. Las del bloque 2 y de ⚠ TASK-12 están registradas. **Falta la del hito de entrega**, que se acepta después del merge.
+
+## Riesgos remanentes y excepciones
+
+- **Hallazgo abierto: firmas de IA en commits.** Cinco commits de la fase 2 (`4ec5f9e`, `08decd1`, `b6efefc`, `b92cf98` y `2f793c0`) terminan con `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>`. Eso incumple [conventional-commits.md](../../../git/conventional-commits.md) («No añadas `Co-Authored-By` ni firmas de herramientas de IA») y el punto «Flujo y título» de la [revisión de PR](../../../development/pull-request-checklist.md). No se corrigió en esta verificación. Pendiente de decisión de la persona antes del PR.
+- **Convención menor.** Los commits de las fases 2 y 3 no llevan la nota al pie `Refs: 001-reorganizar-resumen-del-admin/TASK-NN` que sí llevan los de la fase 1.
+- **Fecha de «Últimos pedidos».** La columna Fecha usa `DatePipe` con la zona del navegador, igual que la página de Pedidos. El gráfico y los tramos cuentan en hora de Lima. Con un navegador fuera de la zona de Lima, un pedido de las 23:30 podría mostrar en la tabla el día siguiente al que cuenta el gráfico. AC-09 no fija la zona, y en Lima son iguales. No se considera defecto.
+- **Comentario desplazado.** En `tienda.model.ts`, el comentario «Etiquetas visibles…» ahora queda sobre `ETIQUETAS_ESTADO_PEDIDO` y `ETIQUETAS_ESTADO_RECLAMO` se quedó sin él. Es cosmético y no afecta al comportamiento.
+- **`ahora` fijo.** El Resumen fija `ahora` al abrirse: si la página queda abierta al cambiar de día o de mes, los tramos y el gráfico no se mueven hasta volver a entrar. Es lo previsto en el plan y en la especificación (sin tiempo real).
+- **Typecheck.** `verify` no comprueba los tipos de los archivos de `domain/` que ninguna página importa (PBI-0029, propuesta). En esta verificación se comprobaron a mano con `tsc`.
+- **CI no ejecutado.** Corre al abrir el PR.
+- **Ejecutado con.** Todas las tareas lo registraron (herramienta, modelo real y esfuerzo). No falta ninguna fila.
+
+## Hito de entrega
+
+pendiente

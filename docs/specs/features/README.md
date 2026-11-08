@@ -4,7 +4,7 @@ Añade una fila al crear la carpeta de una feature. Al avanzar de etapa, actuali
 
 | NNN | Slug | Historia | Estado | Bloqueos y siguiente paso | Última revisión |
 |---|---|---|---|---|---|
-| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | en implementación | [Tareas](001-reorganizar-resumen-del-admin/tasks.md): las tres fases hechas (TASK-01 a TASK-14: reglas puras del Resumen con TDD, `?pedido=` en Pedidos, Resumen reorganizado aprobado, e2e y documentos), en la rama `feature/001-reorganizar-resumen-del-admin` sin push. Ninguna bloqueada. Siguiente: `sdd-verify` en una sesión nueva y después el PR de entrega hacia `dev` | 2026-11-07 |
+| 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | verificada | [Verificación](001-reorganizar-resumen-del-admin/verification.md): `verify`, e2e (`34 passed`) y `audit:all` en verde sobre `a26a7df`; capturas finales idénticas a las aprobadas en ⚠ TASK-12; trazabilidad AC-01 a AC-14 completa. Pendiente: decidir qué hacer con las firmas `Co-Authored-By` de cinco commits de la fase 2 (hallazgo abierto en la verificación), abrir el PR de entrega hacia `dev` con `pr-create` y el hito de entrega después del merge | 2026-11-07 |
 
 Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia está en la [trazabilidad](../../planning/TRACEABILITY.md) y en la [validación](../../../frontend/docs/VALIDATION.md), no en este índice.
 
