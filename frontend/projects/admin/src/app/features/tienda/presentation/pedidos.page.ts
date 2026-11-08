@@ -1,17 +1,17 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  linkedSignal,
+  signal,
+} from '@angular/core';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
-import { Pedido, EstadoPedido } from '../domain/tienda.model';
-
-const STATUS_LABELS: Record<EstadoPedido, string> = {
-  confirmed: 'Confirmado',
-  processing: 'En preparación',
-  shipped: 'Enviado',
-  delivered: 'Entregado',
-  cancelled: 'Cancelado',
-};
+import { ETIQUETAS_ESTADO_PEDIDO, Pedido, EstadoPedido } from '../domain/tienda.model';
 
 const PAYMENT_LABELS: Record<string, string> = {
   card: 'Tarjeta',
@@ -160,9 +160,11 @@ const PAYMENT_LABELS: Record<string, string> = {
 })
 export class PedidosPage {
   protected readonly admin = inject(TiendaFacade);
-  protected readonly statuses = Object.keys(STATUS_LABELS) as EstadoPedido[];
+  protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_PEDIDO) as EstadoPedido[];
   protected readonly statusFilter = signal<EstadoPedido | ''>('');
-  protected readonly selectedId = signal<string | null>(null);
+  /** Id del pedido que pide la URL (`?pedido=<id>`); si no existe, el detalle es el más reciente. */
+  readonly pedido = input<string>();
+  protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);
   protected readonly filtered = computed(() => {
     const status = this.statusFilter();
     return status ? this.admin.orders().filter((order) => order.status === status) : this.admin.orders();
@@ -172,7 +174,7 @@ export class PedidosPage {
   );
 
   protected label(status: EstadoPedido): string {
-    return STATUS_LABELS[status];
+    return ETIQUETAS_ESTADO_PEDIDO[status];
   }
 
   protected payment(method: string): string {
