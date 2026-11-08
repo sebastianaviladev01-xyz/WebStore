@@ -62,6 +62,15 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await expect(page.getByRole('main').getByRole('heading', { level: 2, name: pedido })).toBeVisible();
   await expect(page.getByRole('main').getByRole('complementary')).toContainText(correo);
 
+  // El Resumen lo muestra al frente de «Últimos pedidos» y su «Ver» abre ese pedido en Pedidos.
+  await page.goto(`${urls.admin}/`);
+  const ultimos = page.getByRole('region', { name: 'Últimos pedidos' });
+  const primeraFila = ultimos.getByRole('row').nth(1);
+  await expect(primeraFila).toContainText(pedido);
+  await primeraFila.getByRole('link', { name: `Ver el pedido ${pedido}` }).click();
+  await expect(page).toHaveURL(`${urls.admin}/pedidos?pedido=${encodeURIComponent(pedido)}`);
+  await expect(page.getByRole('main').getByRole('heading', { level: 2, name: pedido })).toBeVisible();
+
   // Con un segundo pedido, el primero ya no encabeza el listado: así `?pedido=` se distingue de lo de hoy.
   const respuesta = await page.request.post(`${urls.bff}/bff/checkout/orders`, {
     data: {
