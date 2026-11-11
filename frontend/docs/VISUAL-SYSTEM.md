@@ -67,6 +67,8 @@ El color principal y el de acento siguen siendo configurables desde **Admin → 
 
 ## Movimiento
 
+**Criterio del equipo (reunión, notas del 2026-11-11):** la rapidez va antes que el efecto. Daniel advirtió que las animaciones y cargas lentas frustran al cliente, que "quiere comprar rápido", aunque se vean bonitas. Las animaciones deben ser cortas y limpias, y en el camino de compra (agregar al carrito, carrito y checkout) no deben hacer esperar.
+
 - Hero: transición cruzada de 480 ms y texto escalonado. Como en la propuesta B, lleva dos botones (principal y "Ver todos los productos" en blanco) y debajo los puntos: la píldora activa se llena en 8 s y los inactivos son puntos de 6 px, con área táctil de 44 px. Junto a ellos va el botón de pausa (necesario por el avance automático). El número de diapositiva se anuncia solo a lectores de pantalla.
 - Mega-menú, drawer y filtros: entradas cortas (180–260 ms) sin animar el resto de la página.
 - Aparición al hacer scroll (`RevealDirective`, `[wsReveal]`): categorías, destacados, colecciones, campañas y beneficios entran con un desplazamiento de 24 px hacia arriba (40 px en horizontal) y opacidad, en 560–680 ms, escalonados 80 ms por elemento (máximo 320 ms).
