@@ -4,7 +4,7 @@
 - Historia de usuario: ninguna. Sale de [PBI-0030](../../../planning/backlog.md) (`priorizada`), con lo decidido en las reuniones del equipo (Daniel, Walther y Sebastián), notas pegadas el 2026-11-11 y registradas en `dev` con el PR #10 (`8238209`), y en [decisiones pendientes](../../../planning/PENDING-DECISIONS.md): «Confirmación de la paleta»
 - Estado: borrador
 - Fecha: 2026-11-11
-- Hito de alcance: pendiente
+- Hito de alcance: pendiente de aprobación, con las siete [decisiones del hito](#decisiones-del-hito-de-alcance) tomadas
 
 ## Problema y actores
 
@@ -17,7 +17,7 @@ Actores:
 - `superadmin`: gestiona los temas y elige el activo. Es el único rol que configura la tienda (Daniel, reunión del 11/11).
 - `admin` y `vendedor`: trabajan en el Admin con el tema activo; no gestionan temas.
 - Comprador (invitado o con cuenta): ve la tienda con el tema activo.
-- Quien prueba la demo (equipo o cliente potencial): cambia de tema en vivo con el botón flotante del modo demo.
+- Quien prueba la demo (equipo o cliente potencial): ve otro tema en vivo con el botón flotante del modo demo, solo en su navegador.
 
 Aplicaciones afectadas: **Storefront**, **Admin** y **BFF**.
 
@@ -31,9 +31,11 @@ Aplicaciones afectadas: **Storefront**, **Admin** y **BFF**.
 - Un tema activo, que la tienda y el Admin aplican.
 - Una página de temas en la configuración del Admin, solo para el `superadmin`: lista de temas, crear, editar y borrar temas propios, y marcar uno como activo.
 - Que los tres predefinidos no se puedan editar ni borrar.
-- La revisión del contraste (WCAG) de los predefinidos y el aviso cuando un tema propio no tiene contraste suficiente.
+- La revisión del contraste (WCAG) de los predefinidos y, en los temas propios, el bloqueo cuando el texto no se lee sobre los fondos y el aviso en el resto de pares (D7).
 - La persistencia de los temas propios y del tema activo en el BFF, y que el BFF haga cumplir el permiso.
-- El modo demo: un botón flotante (una tuerca) en la tienda y en el Admin para cambiar de tema en vivo. En la instalación de un cliente no existe.
+- Quitar los colores de Contenido y migrar los que una tienda haya personalizado a un tema propio (D3).
+- B como tema activo al instalar, en la demo y en toda instalación nueva (D6).
+- El modo demo, que se enciende con una variable de entorno del BFF y está apagado por defecto (D4): un botón flotante (una tuerca) en la tienda y en el Admin para ver otro tema en vivo, solo en el navegador de quien lo usa (D5). En la instalación de un cliente no existe.
 
 **Excluye:**
 
@@ -41,6 +43,7 @@ Aplicaciones afectadas: **Storefront**, **Admin** y **BFF**.
 - El logo y las imágenes: el tema no los cambia. El logo rojo de Ecom no se toca.
 - La tipografía, los radios, las sombras y el espaciado por tema: un tema solo cambia colores.
 - Un modo oscuro automático (`prefers-color-scheme`) y un tema por usuario o por navegador fuera del modo demo.
+- Un mecanismo para elegir el tema predeterminado de una instalación (D6).
 - Importar o exportar temas entre tiendas.
 - Elegir entre multi-tenant e instalación por cliente ([PBI-0004](../../../planning/backlog.md)): la feature trabaja sobre la tienda que sirve el BFF.
 - Aclarar el fondo de la tienda ([PBI-0037](../../../planning/backlog.md)) y el panel del checkout (PBI-0038): son tareas aparte que, cuando se decidan, cambiarán los valores de los temas, no esta especificación.
@@ -62,12 +65,14 @@ Aplicaciones afectadas: **Storefront**, **Admin** y **BFF**.
 | REQ-08 | El `superadmin` marca un tema, predefinido o propio, como activo | PBI-0030; reunión del 11/11 | Alta |
 | REQ-09 | Solo el `superadmin` gestiona temas. El BFF lo hace cumplir aunque la petición no venga de la interfaz | Reunión del 11/11; regla de roles del [contrato](../../../../backend/docs/BFF-CONTRACT.md#roles-fijos-acordados-el-0511): el BFF es la autoridad | Alta |
 | REQ-10 | Los temas propios y el tema activo se guardan en el BFF y sobreviven a un reinicio | PBI-0030 (la tienda los gestiona «sin depender del equipo») | Alta |
-| REQ-11 | En modo demo, la tienda y el Admin muestran un botón flotante con una tuerca que permite cambiar de tema en vivo, sin recargar la página | Reunión del 11/11 | Alta |
-| REQ-12 | Fuera del modo demo, el botón flotante no existe | Reunión del 11/11 | Alta |
-| REQ-13 | Cada tema predefinido cumple WCAG 2.1 AA en sus pares de texto y fondo | Sistema visual (todos los pares de B cumplen AA); propuesto para A y C | Alta |
-| REQ-14 | Al crear o editar un tema propio, el Admin muestra el contraste de sus pares de texto y fondo y avisa cuando uno no alcanza AA | Encargo de la etapa; política exacta en la pregunta 7 | Media |
+| REQ-11 | En modo demo, la tienda y el Admin muestran un botón flotante con una tuerca que permite ver otro tema en vivo, sin recargar la página. Es una vista previa local: se recuerda en ese navegador, no afecta a otras personas y no cambia el tema activo guardado | Reunión del 11/11; D5 | Alta |
+| REQ-12 | El modo demo se enciende con una variable de entorno del BFF, apagada por defecto (también en producción), y el BFF publica si la instalación es demo. Fuera del modo demo, el botón flotante no existe y no se puede encender desde el Admin | Reunión del 11/11; D4 | Alta |
+| REQ-13 | Cada tema predefinido cumple WCAG 2.1 AA en sus pares de texto y fondo | Sistema visual (todos los pares de B cumplen AA); medido para A y C en [Paletas presentadas](#paletas-presentadas) | Alta |
+| REQ-14 | Al crear o editar un tema propio, el Admin muestra el contraste de sus pares de texto y fondo. No deja guardar si el color de contraste no alcanza 4.5:1 sobre el fondo principal o sobre el secundario; en el resto de pares solo avisa | Encargo de la etapa; D7 | Alta |
 | REQ-15 | El tema no cambia el logo ni las imágenes de la tienda | Contexto del producto: el logo rojo de Ecom es marca registrada | Alta |
 | REQ-16 | Cambiar de tema no hace esperar al comprador: el cambio es inmediato y no añade animaciones ni cargas en el camino de compra | Sistema visual, «Movimiento»: rapidez antes que efecto | Media |
+| REQ-18 | Contenido deja de tener el color principal y el secundario: el color vive solo en los temas. Al migrar, si los colores guardados en Contenido difieren de los de B, se crea con ellos un tema propio «Colores de Contenido» y se marca como activo | D3 | Alta |
+| REQ-19 | En la demo y en toda instalación nueva, el tema activo es B. Para Ecom, C se activa en la puesta en marcha de su instalación, y ese paso queda documentado | D6 | Alta |
 
 ## Criterios de aceptación
 
@@ -194,14 +199,18 @@ Ningún AC sale de una historia de usuario. Los que salen de PBI-0030 o de las d
 **Cuando** se mide el contraste de sus pares de texto y fondo (texto sobre los dos fondos, texto sobre el principal y sobre el secundario, texto secundario y enlaces)
 **Entonces** cada par alcanza 4.5:1 en texto normal y 3:1 en texto grande y en los contornos de foco, y la medida queda registrada en el [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md).
 
-### AC-14 — Aviso de contraste en un tema propio
+### AC-14 — Contraste de un tema propio
 
 - Cubre: REQ-14
-- Origen: encargo de la etapa; si avisa o bloquea depende de la pregunta 7
+- Origen: encargo de la etapa; D7
 
 **Dado** el `superadmin` editando un tema propio
-**Cuando** un par de texto y fondo queda por debajo de AA
-**Entonces** el formulario indica qué par falla y su relación de contraste (por ejemplo, «Texto sobre el color principal: 2.1:1, mínimo 4.5:1»), antes de guardar.
+**Cuando** el color de contraste queda por debajo de 4.5:1 sobre el fondo principal o sobre el secundario
+**Entonces** el formulario indica el par y su relación (por ejemplo, «Texto sobre el fondo principal: 2.1:1, mínimo 4.5:1») y no deja guardar. El BFF también rechaza ese tema y no guarda nada.
+
+**Dado** el `superadmin` editando un tema propio
+**Cuando** otro par de texto y fondo queda por debajo de AA (por ejemplo, el texto secundario derivado)
+**Entonces** el formulario avisa con el par y su relación, y deja guardar.
 
 ### AC-20 — Un principal claro sigue siendo legible
 
@@ -215,20 +224,60 @@ Ningún AC sale de una historia de usuario. Los que salen de PBI-0030 o de las d
 ### AC-15 — Botón de temas en modo demo
 
 - Cubre: REQ-11, REQ-16
-- Origen: reunión del 11/11; la posición y el detalle del panel son **propuesto**
+- Origen: reunión del 11/11; D5. La posición, el detalle del panel y la opción de volver al tema activo son **propuesto**
 
 **Dado** que la instalación está en modo demo
 **Cuando** alguien abre cualquier página de la tienda o del Admin
-**Entonces** ve un botón flotante con una tuerca, con nombre accesible («Cambiar tema»), que abre un panel con los temas disponibles; al elegir uno, la página lo aplica al momento, sin recargar. El botón no tapa el carrito, el botón de pago ni los controles del Admin, y se maneja con teclado.
+**Entonces** ve un botón flotante con una tuerca, con nombre accesible («Cambiar tema»), que abre un panel con los temas disponibles y la opción de volver al tema activo; al elegir uno, la página lo aplica al momento, sin recargar. El botón no tapa el carrito, el botón de pago ni los controles del Admin, y se maneja con teclado.
 
 ### AC-16 — Sin botón fuera del modo demo
 
 - Cubre: REQ-12
-- Origen: reunión del 11/11
+- Origen: reunión del 11/11; D4
 
-**Dado** que la instalación no está en modo demo
+**Dado** que la variable de entorno del modo demo no está definida, o está apagada
 **Cuando** alguien abre cualquier página de la tienda o del Admin
-**Entonces** el botón flotante no aparece ni existe en la página.
+**Entonces** el botón flotante no aparece ni existe en la página, y ninguna opción del Admin lo enciende.
+
+### AC-21 — La tuerca solo cambia el navegador de quien la usa
+
+- Cubre: REQ-11
+- Origen: D5
+
+**Dado** que dos personas ven la demo a la vez y el tema activo es B
+**Cuando** una elige C con la tuerca
+**Entonces** esa persona ve C, también al recargar o al pasar de la tienda al Admin en el mismo navegador; la otra sigue viendo B, y el tema activo guardado en el BFF sigue siendo B.
+
+### AC-22 — Contenido sin colores
+
+- Cubre: REQ-18
+- Origen: D3
+
+**Dado** un `superadmin` o un `admin` en Admin → Contenido
+**Cuando** abre la página
+**Entonces** ya no ve los selectores del color principal ni del secundario, y el BFF ignora o rechaza esos campos si llegan en una petición.
+
+### AC-23 — Migración de los colores de Contenido
+
+- Cubre: REQ-18
+- Origen: D3
+
+**Dado** un estado guardado por una versión anterior, con colores de Contenido distintos de los de B
+**Cuando** el BFF arranca con la versión nueva
+**Entonces** existe un tema propio «Colores de Contenido» con esos dos colores como principal y secundario y los otros tres de B, está marcado como activo, y la tienda se ve con los mismos colores que antes de la migración.
+
+**Dado** un estado guardado con los colores de B en Contenido
+**Cuando** el BFF arranca con la versión nueva
+**Entonces** no se crea ningún tema propio y el tema activo es B.
+
+### AC-24 — Tema activo al instalar
+
+- Cubre: REQ-19
+- Origen: D6
+
+**Dado** un BFF sin estado guardado, en la demo o en una instalación nueva
+**Cuando** arranca y se abren la tienda y el Admin
+**Entonces** el tema activo es B.
 
 ### AC-17 — El tema no toca el logo ni las imágenes
 
@@ -273,11 +322,13 @@ El modelo de datos y el contrato HTTP se deciden en `sdd-plan` y `sdd-decide`. A
 | Listar temas | Con sesión del Admin | `superadmin`; los otros roles solo necesitan el activo | REQ-05 |
 | Crear, editar y borrar temas propios | Rechaza los predefinidos y el borrado del activo | `superadmin` | REQ-06, REQ-07, AC-09 |
 | Marcar el tema activo | Cualquier tema existente | `superadmin` | REQ-08 |
-| Saber si la instalación está en modo demo | Lo leen la tienda y el Admin sin sesión | Todos | REQ-11, REQ-12; mecanismo en la pregunta 4 |
+| Saber si la instalación está en modo demo | Lo leen la tienda y el Admin sin sesión. Sale de una variable de entorno del BFF (por ejemplo, `WEBSTORE_DEMO_MODE`), apagada si no está definida; el nombre exacto se fija en `sdd-plan` | Todos | REQ-12, D4 |
+| Tema elegido con la tuerca | Solo en el navegador; no viaja al BFF | — | REQ-11, D5 |
+| `primaryColor` y `secondaryColor` de Contenido | Se retiran; la migración los lleva a un tema propio si difieren de B | — | REQ-18, D3 |
 
 Lo que cambia respecto a hoy, para que el plan lo resuelva:
 
-- El estado del BFF no guarda temas: `config` tiene `primaryColor` y `secondaryColor` ([`seed.mjs`](../../../../backend/src/infrastructure/persistencia/seed.mjs)), que la tienda aplica a `--ws-primary` y `--ws-accent` ([`contenido.facade.ts`](../../../../frontend/src/app/features/contenido/application/contenido.facade.ts)). Qué pasa con esos dos campos es la pregunta 3.
+- El estado del BFF no guarda temas: `config` tiene `primaryColor` y `secondaryColor` ([`seed.mjs`](../../../../backend/src/infrastructure/persistencia/seed.mjs)), que la tienda aplica a `--ws-primary` y `--ws-accent` ([`contenido.facade.ts`](../../../../frontend/src/app/features/contenido/application/contenido.facade.ts)). Se retiran y se migran (D3); el BFF ya tiene precedente de migración de colores (`LEGACY_DEFAULT_COLORS` en [`normalizar-estado.mjs`](../../../../backend/src/infrastructure/persistencia/normalizar-estado.mjs)).
 - No existe un permiso para temas. `content.manage` lo tienen `superadmin` y `admin` ([`rol.rules.mjs`](../../../../backend/src/domain/sesion/rol.rules.mjs)); los temas son solo del `superadmin`, así que hace falta un permiso propio o una regla equivalente.
 - El snapshot del Admin (`/bff/admin/snapshot`) y los ajustes públicos (`/bff/content/settings`) son los candidatos para leer y guardar temas. Persistir temas y el tema activo cambia el [contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md) y su estado, con su migración: se decide en `sdd-plan` y `sdd-decide`.
 - Los nombres del contrato siguen la convención vigente del BFF y el vocabulario del [glosario](../../../architecture/glosario.md). «Tema», «Tema predefinido», «Tema propio», «Tema activo» y «Modo demo» son términos nuevos: se añaden al glosario al implementarlos.
@@ -326,8 +377,8 @@ La B implementada difiere un poco de la presentada. El primario oscuro se deriva
 | Todas las pantallas de la tienda | Colores del tema activo. Con B, iguales a hoy | Sí, con A, C y temas propios |
 | Todas las pantallas del Admin, incluido el acceso | Colores del tema activo. Hoy el Admin no aplica ni los colores de Contenido | Sí, con A, C y temas propios |
 | Admin: página nueva de temas (grupo «Tienda» del menú, solo `superadmin`; **propuesto**) | Lista, formulario con selectores de color, vista previa y aviso de contraste | Sí, página nueva |
-| Admin: Contenido | Depende de la pregunta 3 | Por decidir |
-| Tienda y Admin en modo demo | Botón flotante con una tuerca y su panel | Sí, solo en modo demo |
+| Admin: Contenido | Sin los selectores del color principal y del secundario (D3) | Sí, se quitan dos campos |
+| Tienda y Admin en modo demo | Botón flotante con una tuerca y su panel; vista previa local (D5) | Sí, solo en modo demo |
 | `meta theme-color` de la tienda y del Admin | Hoy fija en `#1d4ed8`; sigue al color principal del tema activo (**propuesto**) | Sí |
 
 Hoy los colores salen casi todos de [`tokens.css`](../../../../frontend/src/styles/tokens.css): unos 25 tokens `--ws-*` con nombres semánticos de Tailwind. Quedan fuera algunos valores fijos que el plan debe llevar a tokens: el blanco del texto sobre el principal en `storefront.css`, `styles.css` y `home.css`, las sombras con `rgba(15, 23, 42, …)`, el `theme-color` de los dos `index.html` y unos 22 usos de `bg-white`, `text-white` o `border-white` en las plantillas.
@@ -337,7 +388,7 @@ Hoy los colores salen casi todos de [`tokens.css`](../../../../frontend/src/styl
 Las rutas y los anchos se fijan en `sdd-tasks`. Como mínimo, en escritorio y en móvil:
 
 - Tienda: inicio, catálogo, ficha de producto, carrito y checkout.
-- Admin: acceso, Resumen, Productos, Pedidos y la página de temas.
+- Admin: acceso, Resumen, Productos, Pedidos, Contenido y la página de temas.
 - Cada ruta con los tres temas predefinidos: B frente a `dev` (iguales, AC-01) y A y C frente a B (solo cambian los colores, AC-02).
 - La tienda y el Admin con el modo demo activo (botón y panel abiertos) y sin él (AC-15, AC-16).
 
@@ -356,10 +407,15 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 | Se borra el tema activo | No se permite | AC-09 |
 | Nombre repetido o vacío | No se guarda | AC-11 |
 | Color con formato inválido | `400`, sin cambios | AC-12 |
-| Tema propio con contraste insuficiente | Aviso con el par y la relación; si se puede guardar, en la pregunta 7 | AC-14 |
-| Color principal claro (por ejemplo, el amarillo de C) con texto blanco encima | El texto sobre el principal debe seguir siendo legible: no puede ser siempre blanco | REQ-13, AC-13; pregunta 2 |
+| Tema propio cuyo texto no alcanza 4.5:1 sobre un fondo | No se guarda, ni desde el Admin ni con una petición directa | AC-14 |
+| Tema propio con otro par por debajo de AA | Aviso con el par y la relación; se puede guardar | AC-14 |
+| Color principal claro (por ejemplo, el amarillo de C) con texto blanco encima | El texto sobre el principal usa el color de contraste; los enlaces y el foco, también | REQ-17, AC-20 |
 | Dos `superadmin` guardan a la vez | El segundo recibe el aviso de datos desactualizados | AC-19 |
-| Varias personas usan a la vez la demo pública y una cambia de tema con la tuerca | Depende de la pregunta 5 | REQ-11 |
+| Varias personas usan a la vez la demo pública y una cambia de tema con la tuerca | Solo cambia su navegador | AC-21 |
+| El tema recordado por la tuerca ya no existe (un tema propio borrado) o el modo demo se apaga | El navegador vuelve al tema activo (**propuesto**) | REQ-11, REQ-12 |
+| La variable del modo demo tiene un valor no reconocido | Se trata como apagada (**propuesto**) | REQ-12 |
+| Ya existe un tema propio llamado «Colores de Contenido» al migrar | El plan fija cómo se desambigua el nombre; la migración no falla | AC-23 |
+| Se edita en Contenido con un Admin anterior que aún envía los colores | El BFF no los aplica | AC-22 |
 | Movimiento reducido (`prefers-reduced-motion`) | El cambio de tema y el panel no se animan | REQ-16 |
 
 ## Hechos, supuestos y decisiones pendientes
@@ -371,7 +427,7 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 - El pie de página usa un azul marino fijo (`--ws-footer: #0F1B33`), y error y alerta usan rojo y ámbar fijos (`--ws-danger`, `--ws-warning`). Ninguno es uno de los cinco colores.
 - Desde Admin → Contenido se cambian `primaryColor` y `secondaryColor` ([`contenido.page.ts`](../../../../frontend/projects/admin/src/app/features/tienda/presentation/contenido.page.ts)). Solo la tienda los aplica; el Admin siempre se ve con B.
 - Contenido lo editan `superadmin` y `admin` (`content.manage`).
-- Hasta esta especificación, el repositorio no tenía los valores de las paletas A y C. El [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md#dirección), [`PRODUCT.md`](../../../planning/PRODUCT.md) y las decisiones pendientes solo las nombran. Los valores están ahora en [Paletas presentadas](#paletas-presentadas) (D1).
+- Hasta esta especificación, el repositorio no tenía los valores de las paletas A y C. El [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md#dirección), [`PRODUCT.md`](../../../planning/PRODUCT.md) y las decisiones pendientes solo las nombran. Los valores están ahora en [Paletas presentadas](#paletas-presentadas) (D1), y la sesión principal de Sebastián los comparó el 2026-11-11 con los originales de la presentación: coinciden los 30.
 - Las paletas presentadas tienen entre 10 y 13 valores cada una, no cinco, y el papel «secundario» no significa lo mismo en todas: en A y B es un tinte claro del primario, y en C, el grafito. En Contenido, `secondaryColor` es el acento (`--ws-accent`).
 - El 06/11 Daniel prefería la tercera paleta y luego la primera; quedó B por mayoría (2–1) con un solo tema. El 11/11 se decidió implementar los tres.
 - El BFF ya tiene un interruptor por variable de entorno con un valor por defecto según `NODE_ENV`: `WEBSTORE_EXPOSE_TEST_CODES` ([`config.mjs`](../../../../backend/src/infrastructure/config.mjs)).
@@ -386,30 +442,28 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 
 **Decisiones pendientes:**
 
-- Persistencia de los temas y del tema activo, permiso nuevo y cambios del contrato y del estado del BFF: `sdd-plan` y `sdd-decide`.
+- Persistencia de los temas y del tema activo, permiso nuevo, cambios del contrato y del estado del BFF, migración de los colores de Contenido y nombre de la variable del modo demo: `sdd-plan` y `sdd-decide`.
+- Dónde se documenta la puesta en marcha de la instalación de Ecom con C (D6): `sdd-plan`.
 - Dependencia de [PBI-0043](../../../planning/backlog.md): Daniel define la arquitectura y el modelo de datos base ([decisiones pendientes](../../../planning/PENDING-DECISIONS.md): «Arquitectura y modelo de datos base»). Los temas son configuración de la tienda y no forman parte del «cascarón» anunciado (usuarios, pedidos, ventas y direcciones), así que no bloquean el alcance; el plan debe dejar el almacenamiento de temas fácil de alinear con ese modelo cuando llegue.
 - Multi-tenant o instalación por cliente ([PBI-0004](../../../planning/backlog.md)): no bloquea esta feature.
 
 ## Preguntas abiertas
 
-Se presentan de una en una en el hito de alcance. Ninguna reabre lo decidido en las reuniones.
-
-1. ~~¿Cuáles son los valores exactos de las paletas A y C?~~ Resuelta: D1.
-2. ~~¿Cómo se reparten las paletas presentadas en los cinco colores, y qué es «contraste»?~~ Resuelta: D2.
-3. **¿Qué pasa con el color principal y el secundario de Contenido**, que hoy edita también el `admin` y que solo aplica la tienda?
-4. **¿Cómo se activa el modo demo?** Variable de entorno, ajuste del Admin o build distinto.
-5. **¿A quién afecta el cambio de tema con la tuerca?** Solo al navegador de quien la usa, o a todos los que ven la demo.
-6. **¿Qué tema está activo al instalar?** En la demo y en una instalación nueva; Ecom usará C.
-7. **¿Un tema propio sin contraste suficiente se puede guardar?** Solo aviso, o bloqueo.
+Ninguna. Las siete preguntas del hito están resueltas en [Decisiones del hito de alcance](#decisiones-del-hito-de-alcance) (D1 a D7).
 
 ## Decisiones del hito de alcance
 
-Las preguntas se presentan de una en una, desde el 2026-11-11, con sus alternativas, la recomendación y la evidencia.
+Las preguntas se presentaron de una en una el 2026-11-11, con sus alternativas, la recomendación y la evidencia. Sebastián Avila respondió D1 y D2 en esta sesión; D3 a D7 llegaron desde su sesión principal, que además verificó D1 y D2.
 
 | ID | Pregunta | Decisión | Alternativas descartadas |
 |---|---|---|---|
 | D1 | ¿De dónde salen los valores de las paletas A y C? | De la presentación del 05/11: Sebastián Avila transcribió el 2026-11-11 los valores del PDF «WebStore — 3 paletas de inicio» ([Paletas presentadas](#paletas-presentadas)) | Proponer valores nuevos; seguir solo con B |
 | D2 | ¿Cómo se reparten las paletas presentadas en los cinco colores, y qué es «contraste»? | Principal = primario; secundario = acento (el `secondaryColor` de Contenido); fondo principal = fondo; fondo secundario = superficie; contraste = texto. Los predefinidos guardan además el resto de sus valores presentados. En los temas propios, el resto se deriva: el texto sobre un color es blanco o el de contraste, el que contraste más, y los enlaces y el foco usan el principal solo si alcanza el contraste necesario; si no, el de contraste | Todos los temas solo con cinco colores derivando el resto (A y C no quedarían como se presentaron y B podría cambiar); ampliar a más de cinco colores (reabre lo decidido) |
+| D3 | ¿Qué pasa con el color principal y el secundario de Contenido? | Se quitan de Contenido: el color vive solo en los temas. Al migrar, si difieren de B, se crea con ellos un tema propio «Colores de Contenido» y se marca como activo (REQ-18) | Mantenerlos como ajuste encima del tema (dos fuentes y el `admin` cambiaría colores); dejarlos de solo lectura en Contenido |
+| D4 | ¿Cómo se activa el modo demo? | Con una variable de entorno del BFF, apagada por defecto, también en producción. El BFF publica si la instalación es demo, como con `WEBSTORE_EXPOSE_TEST_CODES`. Mismo build para demo y clientes, y el cliente no lo enciende desde el Admin. El nombre se fija en `sdd-plan` (REQ-12) | Ajuste del Admin (un cliente podría encenderlo); build distinto del frontend (dos builds) |
+| D5 | ¿A quién afecta el cambio de tema con la tuerca? | Solo al navegador de quien la usa: vista previa local, recordada en ese navegador, que no cambia el tema activo guardado. Igual en la tienda y en el Admin; el tema activo real solo lo cambia el `superadmin` en la página de temas (REQ-11) | Cambiar el tema activo para todos (en la demo pública, uno se lo cambiaría a los demás); vista local con opción de guardarla como activo |
+| D6 | ¿Qué tema está activo al instalar? | B, en la demo y en toda instalación nueva (conserva AC-01). Para Ecom, C se activa en la puesta en marcha de su instalación, que queda documentada. Sin mecanismo extra para elegir el predeterminado (REQ-19) | C activo en la semilla de la demo; un ajuste de instalación para elegir el predeterminado |
+| D7 | ¿Un tema propio sin contraste suficiente se puede guardar? | Bloqueo parcial: no se guarda si el color de contraste no alcanza 4.5:1 sobre el fondo principal o el secundario; en el resto de pares, solo aviso con el par y la relación, porque D2 ya corrige el texto sobre colores, los enlaces y el foco (REQ-14) | Solo aviso en todos los pares (la tienda podría quedar ilegible); bloquear cualquier par por debajo de AA |
 
 ## Referencias
 
