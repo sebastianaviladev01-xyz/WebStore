@@ -52,8 +52,9 @@ Aplicaciones afectadas: **Storefront**, **Admin** y **BFF**.
 | ID | Requisito | Origen | Prioridad |
 |---|---|---|---|
 | REQ-01 | Existen tres temas predefinidos, A «Violeta tienda», B «Azul cobalto» y C «Grafito y ámbar», cada uno con sus cinco colores. B conserva los valores de la paleta actual | PBI-0030; reunión del 11/11 | Alta |
-| REQ-02 | Un tema tiene un nombre y cinco colores: principal, secundario, fondo principal, fondo secundario y contraste | PBI-0030; reunión del 11/11 | Alta |
-| REQ-03 | Todo componente de la tienda y del Admin toma sus colores del tema activo. Los colores que la interfaz necesita y no son uno de los cinco se derivan de ellos | Reunión del 11/11: «componentes temables desde el inicio» | Alta |
+| REQ-02 | Un tema tiene un nombre y cinco colores: principal, secundario (el acento), fondo principal, fondo secundario (la superficie) y contraste (el texto) | PBI-0030; reunión del 11/11; D2 | Alta |
+| REQ-03 | Todo componente de la tienda y del Admin toma sus colores del tema activo. Los predefinidos aplican además los valores presentados que no son uno de los cinco; en un tema propio, esos valores se derivan de los cinco (D2) | Reunión del 11/11: «componentes temables desde el inicio»; D2 | Alta |
+| REQ-17 | En el texto sobre un color, en los enlaces y en el foco, la interfaz usa un color que alcanza el contraste necesario: el texto sobre el principal y sobre el secundario es blanco o el de contraste, y los enlaces y el foco usan el principal solo si contrasta lo suficiente con los fondos; si no, el de contraste | D2; contraste medido de C en [Paletas presentadas](#paletas-presentadas) | Alta |
 | REQ-04 | Hay un único tema activo para la tienda. La tienda y el Admin lo aplican al cargar | PBI-0030: «elegir el activo» | Alta |
 | REQ-05 | El `superadmin` ve en la configuración del Admin la lista de temas, con los predefinidos y los propios, y cuál está activo | PBI-0030; reunión del 11/11 | Alta |
 | REQ-06 | Los temas predefinidos no se editan ni se borran | PBI-0030; reunión del 11/11 | Alta |
@@ -186,7 +187,7 @@ Ningún AC sale de una historia de usuario. Los que salen de PBI-0030 o de las d
 
 ### AC-13 — Contraste de los predefinidos
 
-- Cubre: REQ-13
+- Cubre: REQ-13, REQ-17
 - Origen: sistema visual para B; **propuesto** para A y C
 
 **Dado** cada tema predefinido
@@ -201,6 +202,15 @@ Ningún AC sale de una historia de usuario. Los que salen de PBI-0030 o de las d
 **Dado** el `superadmin` editando un tema propio
 **Cuando** un par de texto y fondo queda por debajo de AA
 **Entonces** el formulario indica qué par falla y su relación de contraste (por ejemplo, «Texto sobre el color principal: 2.1:1, mínimo 4.5:1»), antes de guardar.
+
+### AC-20 — Un principal claro sigue siendo legible
+
+- Cubre: REQ-03, REQ-17
+- Origen: D2
+
+**Dado** un tema, predefinido o propio, cuyo color principal no alcanza 4.5:1 con el blanco ni con los fondos (por ejemplo, el amarillo `#F2B705` de C)
+**Cuando** se muestran un botón principal, un enlace y un campo con el foco
+**Entonces** el texto del botón usa el color de contraste, y el enlace y el contorno de foco usan el color de contraste en lugar del principal.
 
 ### AC-15 — Botón de temas en modo demo
 
@@ -257,6 +267,7 @@ El modelo de datos y el contrato HTTP se deciden en `sdd-plan` y `sdd-decide`. A
 | Tema: nombre | Obligatorio, único sin distinguir mayúsculas ni espacios de los extremos; los predefinidos tienen el nombre fijo | — | REQ-02, AC-11 |
 | Tema: tipo | Predefinido o propio | — | REQ-06 |
 | Tema: cinco colores | Principal, secundario, fondo principal, fondo secundario y contraste. Hexadecimal `#RRGGBB` | — | REQ-02, AC-12 |
+| Tema predefinido: valores presentados | Además de los cinco: primario oscuro, tinte o secundario de la presentación con su texto, texto sobre el primario y el acento, texto secundario y pie con su texto. Fijos, no editables | — | REQ-03, D2 |
 | Tema activo | Un único tema; siempre existe | — | REQ-04 |
 | Leer el tema activo y sus colores | Público: la tienda lo necesita sin sesión | Todos | REQ-04 |
 | Listar temas | Con sesión del Admin | `superadmin`; los otros roles solo necesitan el activo | REQ-05 |
@@ -370,7 +381,7 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 
 - La feature trabaja sobre una sola tienda por BFF. Si se elige multi-tenant (PBI-0004), cada tienda tendrá sus temas.
 - La tienda y el Admin usan el mismo tema activo.
-- El resto de la paleta (tinta, texto secundario, bordes, superficies suaves, pie de página y variantes fuerte y suave) se deriva de los cinco colores. Los colores de estado (error y alerta) se mantienen fijos en todos los temas, salvo que fallen el contraste con un fondo.
+- Los colores de estado (error y alerta) se mantienen fijos en todos los temas, salvo que fallen el contraste con un fondo. Los bordes y las superficies suaves, que la presentación no define, se derivan de los fondos y del color de contraste.
 - Si PBI-0037 aclara el fondo de la tienda, cambiará el fondo principal de los predefinidos; no cambia esta especificación.
 
 **Decisiones pendientes:**
@@ -384,7 +395,7 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 Se presentan de una en una en el hito de alcance. Ninguna reabre lo decidido en las reuniones.
 
 1. ~~¿Cuáles son los valores exactos de las paletas A y C?~~ Resuelta: D1.
-2. **¿Cómo se reparten los valores de las paletas presentadas en los cinco colores de un tema, y qué es «contraste»?** Las paletas tienen entre 10 y 13 valores, «secundario» cambia de papel entre A, B y C, y el amarillo de C no sirve para enlaces ni para el foco.
+2. ~~¿Cómo se reparten las paletas presentadas en los cinco colores, y qué es «contraste»?~~ Resuelta: D2.
 3. **¿Qué pasa con el color principal y el secundario de Contenido**, que hoy edita también el `admin` y que solo aplica la tienda?
 4. **¿Cómo se activa el modo demo?** Variable de entorno, ajuste del Admin o build distinto.
 5. **¿A quién afecta el cambio de tema con la tuerca?** Solo al navegador de quien la usa, o a todos los que ven la demo.
@@ -398,6 +409,7 @@ Las preguntas se presentan de una en una, desde el 2026-11-11, con sus alternati
 | ID | Pregunta | Decisión | Alternativas descartadas |
 |---|---|---|---|
 | D1 | ¿De dónde salen los valores de las paletas A y C? | De la presentación del 05/11: Sebastián Avila transcribió el 2026-11-11 los valores del PDF «WebStore — 3 paletas de inicio» ([Paletas presentadas](#paletas-presentadas)) | Proponer valores nuevos; seguir solo con B |
+| D2 | ¿Cómo se reparten las paletas presentadas en los cinco colores, y qué es «contraste»? | Principal = primario; secundario = acento (el `secondaryColor` de Contenido); fondo principal = fondo; fondo secundario = superficie; contraste = texto. Los predefinidos guardan además el resto de sus valores presentados. En los temas propios, el resto se deriva: el texto sobre un color es blanco o el de contraste, el que contraste más, y los enlaces y el foco usan el principal solo si alcanza el contraste necesario; si no, el de contraste | Todos los temas solo con cinco colores derivando el resto (A y C no quedarían como se presentaron y B podría cambiar); ampliar a más de cinco colores (reabre lo decidido) |
 
 ## Referencias
 
