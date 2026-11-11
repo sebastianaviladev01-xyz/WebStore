@@ -2,9 +2,9 @@
 
 - Feature: `002-temas-configurables`
 - Historia de usuario: ninguna. Sale de [PBI-0030](../../../planning/backlog.md) (`priorizada`), con lo decidido en las reuniones del equipo (Daniel, Walther y Sebastián), notas pegadas el 2026-11-11 y registradas en `dev` con el PR #10 (`8238209`), y en [decisiones pendientes](../../../planning/PENDING-DECISIONS.md): «Confirmación de la paleta»
-- Estado: borrador
+- Estado: aprobada
 - Fecha: 2026-11-11
-- Hito de alcance: pendiente de aprobación, con las siete [decisiones del hito](#decisiones-del-hito-de-alcance) tomadas
+- Hito de alcance: aprobado por Sebastián Avila el 2026-11-11, con las siete [decisiones del hito](#decisiones-del-hito-de-alcance) y los AC marcados como propuestos
 
 ## Problema y actores
 
@@ -76,7 +76,7 @@ Aplicaciones afectadas: **Storefront**, **Admin** y **BFF**.
 
 ## Criterios de aceptación
 
-Ningún AC sale de una historia de usuario. Los que salen de PBI-0030 o de las decisiones de la reunión del 11/11 citan ese origen; los demás están marcados como **propuesto** hasta el hito de alcance.
+Ningún AC sale de una historia de usuario. Los que salen de PBI-0030 o de las decisiones de la reunión del 11/11 citan ese origen; los demás están marcados como **propuesto** y quedaron aprobados con el hito de alcance del 2026-11-11.
 
 ### AC-01 — Con el tema B, nada cambia
 
