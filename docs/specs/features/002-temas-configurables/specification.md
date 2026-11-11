@@ -271,6 +271,41 @@ Lo que cambia respecto a hoy, para que el plan lo resuelva:
 - El snapshot del Admin (`/bff/admin/snapshot`) y los ajustes públicos (`/bff/content/settings`) son los candidatos para leer y guardar temas. Persistir temas y el tema activo cambia el [contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md) y su estado, con su migración: se decide en `sdd-plan` y `sdd-decide`.
 - Los nombres del contrato siguen la convención vigente del BFF y el vocabulario del [glosario](../../../architecture/glosario.md). «Tema», «Tema predefinido», «Tema propio», «Tema activo» y «Modo demo» son términos nuevos: se añaden al glosario al implementarlos.
 
+## Paletas presentadas
+
+Valores de las tres paletas que se presentaron el 05/11 («WebStore — 3 paletas de inicio», PDF de seis páginas). Sebastián Avila los transcribió el 2026-11-11 (D1). El PDF es de imágenes y no está en el repositorio.
+
+| Papel en la presentación | A · Violeta tienda | B · Azul cobalto | C · Grafito y ámbar |
+|---|---|---|---|
+| Primario | `#4C2A92` | `#1D4ED8` | `#F2B705`, con texto `#1F2328` |
+| Primario oscuro | `#2E1A5C` | `#1E3A8A` | — |
+| Secundario | `#EFE9FB`, con texto `#3A1F72` | `#E8EEFC`, con texto `#1E3A8A` | Grafito `#1F2328`, con texto blanco |
+| Tinte | — | — | Ámbar `#FFF6D6`, con texto `#8A5A00` |
+| Acento | `#F5A524`, con texto `#2B1700` | `#C2410C`, con texto blanco | `#1F2328`, con texto `#F2B705` |
+| Fondo | `#F4F4F6` | `#F3F5F8` | `#F2F3F5` |
+| Superficie | `#FFFFFF` | `#FFFFFF` | `#FFFFFF` |
+| Texto | `#17151C` | `#0F172A` | `#1F2328`, también para los enlaces |
+| Texto secundario | `#5B5866` | `#526075` | `#555B65` |
+| Pie de página | `#1E1530`, con texto `#CFC8E0` | `#0F1B33`, con texto `#C5CEDD` | `#16181C`, con texto `#C9CDD3` |
+
+Contraste medido con la fórmula de WCAG 2.1 el 2026-11-11 (relación con el color de texto que indica la presentación):
+
+| Par | A | B | C |
+|---|---:|---:|---:|
+| Texto sobre fondo / sobre superficie | 16.5 / 18.1 | 16.4 / 17.9 | 14.2 / 15.8 |
+| Texto secundario sobre fondo / sobre superficie | 6.3 / 6.9 | 5.9 / 6.4 | 6.2 / 6.8 |
+| Texto sobre el primario | 10.2 (blanco) | 6.7 (blanco) | 8.7 (`#1F2328`) |
+| Texto sobre el primario oscuro | 14.8 | 10.4 | — |
+| Texto sobre el secundario | 11.0 | 8.9 | 15.8 |
+| Texto sobre el tinte | — | — | 5.5 |
+| Texto sobre el acento | 8.4 | 5.2 | 8.7 |
+| Texto del pie sobre el pie | 10.8 | 10.8 | 11.1 |
+| Primario como enlace o foco sobre superficie / sobre fondo | 10.2 / 9.3 | 6.7 / 6.1 | **1.8 / 1.6** |
+
+Todos los pares que define la presentación cumplen AA. El amarillo de C no sirve como color de texto, de enlace ni de contorno de foco sobre fondos claros (1.8:1, por debajo incluso del 3:1 de los elementos de interfaz), y tampoco admite texto blanco encima (1.8:1). Por eso C usa el texto `#1F2328` para los enlaces. Hoy la interfaz usa `--ws-primary` para enlaces, foco y navegación activa ([sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md#paleta-y-tokens)): con C eso debe cambiar.
+
+La B implementada difiere un poco de la presentada. El primario oscuro se deriva con `color-mix()` (≈ `#183996`, no `#1E3A8A`) y el tinte, ≈ `#E8EDFB`, no `#E8EEFC`. AC-01 pide que B no cambie, así que el tema B conserva los valores implementados.
+
 ## Interfaz
 
 **La feature cambia la interfaz.** Es un cambio visual pedido (PBI-0030, reunión del 11/11), que se contrasta con el [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md). Con el tema B la interfaz no cambia (AC-01); con A y C cambian los colores, no la estructura, la tipografía ni el espaciado.
@@ -325,7 +360,8 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 - El pie de página usa un azul marino fijo (`--ws-footer: #0F1B33`), y error y alerta usan rojo y ámbar fijos (`--ws-danger`, `--ws-warning`). Ninguno es uno de los cinco colores.
 - Desde Admin → Contenido se cambian `primaryColor` y `secondaryColor` ([`contenido.page.ts`](../../../../frontend/projects/admin/src/app/features/tienda/presentation/contenido.page.ts)). Solo la tienda los aplica; el Admin siempre se ve con B.
 - Contenido lo editan `superadmin` y `admin` (`content.manage`).
-- El repositorio **no tiene los valores** de las paletas A y C. El [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md#dirección), [`PRODUCT.md`](../../../planning/PRODUCT.md) y las decisiones pendientes solo las nombran; `docs/changelog/` y `docs/specs/` no las mencionan, y el historial de git solo las cita en los commits de documentación. Las capturas de `frontend/output/premium-palette/` son del 04/11, anteriores a la presentación del 05/11.
+- Hasta esta especificación, el repositorio no tenía los valores de las paletas A y C. El [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md#dirección), [`PRODUCT.md`](../../../planning/PRODUCT.md) y las decisiones pendientes solo las nombran. Los valores están ahora en [Paletas presentadas](#paletas-presentadas) (D1).
+- Las paletas presentadas tienen entre 10 y 13 valores cada una, no cinco, y el papel «secundario» no significa lo mismo en todas: en A y B es un tinte claro del primario, y en C, el grafito. En Contenido, `secondaryColor` es el acento (`--ws-accent`).
 - El 06/11 Daniel prefería la tercera paleta y luego la primera; quedó B por mayoría (2–1) con un solo tema. El 11/11 se decidió implementar los tres.
 - El BFF ya tiene un interruptor por variable de entorno con un valor por defecto según `NODE_ENV`: `WEBSTORE_EXPOSE_TEST_CODES` ([`config.mjs`](../../../../backend/src/infrastructure/config.mjs)).
 - Hoy hay una demo pública del equipo servida desde un checkout local con túneles, que comparten varias personas a la vez.
@@ -335,7 +371,6 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 - La feature trabaja sobre una sola tienda por BFF. Si se elige multi-tenant (PBI-0004), cada tienda tendrá sus temas.
 - La tienda y el Admin usan el mismo tema activo.
 - El resto de la paleta (tinta, texto secundario, bordes, superficies suaves, pie de página y variantes fuerte y suave) se deriva de los cinco colores. Los colores de estado (error y alerta) se mantienen fijos en todos los temas, salvo que fallen el contraste con un fondo.
-- El nombre de A, «Violeta tienda», es el del encargo de esta etapa. Las notas anteriores la llaman «A violeta».
 - Si PBI-0037 aclara el fondo de la tienda, cambiará el fondo principal de los predefinidos; no cambia esta especificación.
 
 **Decisiones pendientes:**
@@ -348,13 +383,21 @@ Ninguna externa. El BFF de prueba guarda los temas y el tema activo y publica si
 
 Se presentan de una en una en el hito de alcance. Ninguna reabre lo decidido en las reuniones.
 
-1. **¿Cuáles son los valores exactos de las paletas A y C?** El repositorio no los tiene. Bloquea AC-02, AC-13 y las capturas.
-2. **¿Qué es el quinto color, «contraste»?** Puede ser el color del texto sobre los fondos, el del texto sobre el principal o un acento. En C, el texto sobre el amarillo no puede ser blanco.
+1. ~~¿Cuáles son los valores exactos de las paletas A y C?~~ Resuelta: D1.
+2. **¿Cómo se reparten los valores de las paletas presentadas en los cinco colores de un tema, y qué es «contraste»?** Las paletas tienen entre 10 y 13 valores, «secundario» cambia de papel entre A, B y C, y el amarillo de C no sirve para enlaces ni para el foco.
 3. **¿Qué pasa con el color principal y el secundario de Contenido**, que hoy edita también el `admin` y que solo aplica la tienda?
 4. **¿Cómo se activa el modo demo?** Variable de entorno, ajuste del Admin o build distinto.
 5. **¿A quién afecta el cambio de tema con la tuerca?** Solo al navegador de quien la usa, o a todos los que ven la demo.
 6. **¿Qué tema está activo al instalar?** En la demo y en una instalación nueva; Ecom usará C.
 7. **¿Un tema propio sin contraste suficiente se puede guardar?** Solo aviso, o bloqueo.
+
+## Decisiones del hito de alcance
+
+Las preguntas se presentan de una en una, desde el 2026-11-11, con sus alternativas, la recomendación y la evidencia.
+
+| ID | Pregunta | Decisión | Alternativas descartadas |
+|---|---|---|---|
+| D1 | ¿De dónde salen los valores de las paletas A y C? | De la presentación del 05/11: Sebastián Avila transcribió el 2026-11-11 los valores del PDF «WebStore — 3 paletas de inicio» ([Paletas presentadas](#paletas-presentadas)) | Proponer valores nuevos; seguir solo con B |
 
 ## Referencias
 
