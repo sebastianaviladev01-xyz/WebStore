@@ -12,6 +12,8 @@ Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia e
 
 **Por decidir por el equipo.** Un agente no lo elige: pregunta a la persona.
 
+Orientación de la reunión del equipo (notas pegadas el 2026-11-11): lo primero son los temas configurables ([PBI-0030](../../planning/backlog.md)), antes de la gestión de banners; después vienen los ajustes priorizados del Admin y de la tienda (PBI-0031, PBI-0032 y PBI-0035 a PBI-0038). El orden exacto y el cronograma los fija el equipo.
+
 Para decidirlo, el equipo revisa:
 
 - Las [decisiones pendientes](../../planning/PENDING-DECISIONS.md), entre ellas la priorización de alcance y precio, que actualiza las historias de usuario.
