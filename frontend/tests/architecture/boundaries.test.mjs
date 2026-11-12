@@ -28,6 +28,12 @@ const files = {
   rolRules: 'projects/admin/src/app/features/sesion/domain/rol.rules.ts',
 };
 const contents = new Map(Object.values(files).map((file) => [file, readFileSync(root + file, 'utf8')]));
+// Feature `temas` (TEST-16). La facade del Admin se sondea por su ruta aunque todavía no exista.
+const temas = {
+  facadeAdmin: 'projects/admin/src/app/features/temas/application/temas.facade.ts',
+  modeloAdmin: 'projects/admin/src/app/features/temas/domain/tema.model.ts',
+  modeloTienda: 'src/app/features/temas/domain/tema.model.ts',
+};
 
 async function lint(file, imports) {
   const code = imports.map((path, index) => `import * as m${index} from '${path}';`).join('\n');
@@ -76,6 +82,40 @@ describe('Sheriff rechaza las dependencias prohibidas', () => {
     ]);
     assert.deepEqual(messages, []);
   });
+});
+
+describe('feature temas (TEST-16)', () => {
+  test('en el Admin, temas puede depender de sesion', async () => {
+    const messages = await lint(temas.facadeAdmin, [
+      '../../sesion/application/sesion.facade',
+      '../../sesion/domain/rol.rules',
+      '../domain/temas.gateway',
+    ]);
+    assert.deepEqual(messages, []);
+  });
+  const prohibidas = [
+    [
+      'temas de la tienda → temas del Admin',
+      temas.modeloTienda,
+      '../../../../../projects/admin/src/app/features/temas/domain/tema.model',
+    ],
+    [
+      'temas del Admin → temas de la tienda',
+      temas.modeloAdmin,
+      '../../../../../../../src/app/features/temas/domain/tema.model',
+    ],
+    [
+      'temas → tienda en el Admin (no declarada)',
+      temas.facadeAdmin,
+      '../../tienda/application/tienda.facade',
+    ],
+    ['sesion → temas en el Admin (sin ciclos)', files.rolRules, '../../temas/domain/tema.model'],
+  ];
+  for (const [name, file, path] of prohibidas) {
+    test(`${name}: ${file} no puede importar ${path}`, async () => {
+      assert.equal(byRule(await lint(file, [path]), dependencyRule).length, 1);
+    });
+  }
 });
 
 describe('no-restricted-imports limita las librerías externas', () => {

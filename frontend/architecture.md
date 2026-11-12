@@ -62,7 +62,7 @@ Sheriff impone la regla 1; `no-restricted-imports` impone la parte de las reglas
 ```text
 Storefront                                   Admin
 vitrina  → catalogo, carrito, contenido      tienda → sesion
-carrito  → catalogo
+carrito  → catalogo                          temas  → sesion
 checkout → carrito, catalogo, cuenta, envios, pedidos
 pedidos  → carrito, catalogo, cuenta, envios
 envios   → contenido
@@ -77,15 +77,18 @@ src/app/                                  projects/admin/src/app/
 │                 y errores)               ├── layout/      (AppLayout)
 ├── layout/      (AppLayout, menú de       └── features/
 │                 categorías, 404)             ├── sesion/  (login, roles y permisos, guards)
-├── shared/ui/   (empty-state, reveal)         └── tienda/  (resumen, productos, inventario,
-└── features/                                                categorías, marcas, clientes, usuarios,
-    ├── catalogo/  productos y categorías                    pedidos, banners, contenido, tarifas,
-    ├── vitrina/   inicio, /inicio-anterior,                 reclamaciones)
-    │              listado, ficha y tarjeta
-    ├── carrito/   ├── checkout/  ├── pedidos/
+├── shared/ui/   (empty-state, reveal)         ├── tienda/  (resumen, productos, inventario,
+└── features/                                  │             categorías, marcas, clientes, usuarios,
+    ├── catalogo/  productos y categorías      │             pedidos, banners, contenido, tarifas,
+    ├── vitrina/   inicio, /inicio-anterior,   │             reclamaciones)
+    │              listado, ficha y tarjeta    └── temas/   (apariencia, tema visible y gestión
+    ├── carrito/   ├── checkout/  ├── pedidos/                de los temas del superadmin)
     ├── cuenta/    ├── envios/    ├── contenido/ (CMS y páginas informativas)
-    └── reclamos/  (libro de reclamaciones)
+    ├── reclamos/  (libro de reclamaciones)
+    └── temas/     (apariencia y tema visible)
 ```
+
+`temas` existe en las dos aplicaciones, sin código compartido: cada una tiene su modelo, su puerto, su regla `temaVisible` y su `TemasFacade`, que carga la apariencia del BFF y aplica los tokens del tema visible a `<html>`. La de la tienda no depende de ninguna feature y solo la usa la raíz (`App`). La del Admin depende de `sesion` para el token y, además, gestiona los temas del `superadmin`: ante `STALE_THEMES` avisa y recarga la lista, sin reintentar.
 
 `vitrina` agrupa la presentación que combina catálogo, carrito y contenido (inicio, listado, ficha de producto, tarjeta y diálogo de agregar al carrito). Así `catalogo` no depende de `carrito`, que sí depende de `catalogo`.
 

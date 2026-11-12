@@ -37,6 +37,7 @@ export const config: SheriffConfig = {
     'feature:envios': ['feature:contenido'],
     // Admin.
     'feature:tienda': ['feature:sesion'],
+    'feature:temas': ['feature:sesion'],
     'layer:routes': ['layer:presentation', 'layer:application'],
     'layer:domain': ['layer:domain'],
     'layer:application': ['layer:application', 'layer:domain', 'layer:core'],

@@ -8,6 +8,8 @@ import { SesionGateway } from './features/sesion/domain/sesion.gateway';
 import { TiendaGateway } from './features/tienda/domain/tienda.gateway';
 import { BffSesionGateway } from './features/sesion/data/bff-sesion.gateway';
 import { BffTiendaGateway } from './features/tienda/data/bff-tienda.gateway';
+import { TemasGateway } from './features/temas/domain/temas.gateway';
+import { BffTemasGateway } from './features/temas/data/bff-temas.gateway';
 
 export const adminConfig: ApplicationConfig = {
   providers: [
@@ -19,5 +21,6 @@ export const adminConfig: ApplicationConfig = {
     { provide: IMAGE_CONFIG, useValue: { disableImageSizeWarning: true } },
     { provide: SesionGateway, useClass: BffSesionGateway },
     { provide: TiendaGateway, useClass: BffTiendaGateway },
+    { provide: TemasGateway, useClass: BffTemasGateway },
   ],
 };
