@@ -61,7 +61,7 @@ Usa `curl.exe`: en Windows PowerShell 5.1, `curl` es un alias de `Invoke-WebRequ
 
 ### Modo demo
 
-El modo demo muestra la tuerca «Cambiar tema» en la tienda y en el Admin, para enseñar los temas sin activarlos para nadie más ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Lo enciende el BFF con `WEBSTORE_DEMO_MODE=true`; los frontends no cambian. Solo `true` lo enciende (sin distinguir mayúsculas ni espacios en los extremos): sin la variable, o con `false`, `1` o `sí`, está apagado. Una instalación para un cliente no la define.
+El modo demo muestra la tuerca «Cambiar tema» en la tienda y en el Admin, para enseñar los temas sin activarlos para nadie más ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Lo enciende el BFF con `WEBSTORE_DEMO_MODE=true`; los frontends no cambian. Solo `true` lo enciende (sin distinguir mayúsculas ni espacios en los extremos): sin la variable, o con `false`, `1` o `sí`, está apagado. Una instalación para un cliente no la define ([puesta en marcha](puesta-en-marcha.md)).
 
 En PowerShell, en la terminal del BFF:
 

@@ -19,6 +19,7 @@ WebStore es una tienda en línea: Storefront (tienda pública) y Admin (backoffi
 | Definition of Ready, Definition of Done, revisión de PR y excepciones | [`docs/development/`](docs/development/) |
 | Convenciones de commits, ramas, pull requests y versiones | [`docs/git/conventional-commits.md`](docs/git/conventional-commits.md) y [`docs/git/conventional-pull-requests.md`](docs/git/conventional-pull-requests.md) |
 | Entorno local: requisitos, servidores, datos del BFF y QA visual | [`docs/development/local-environment.md`](docs/development/local-environment.md) |
+| Puesta en marcha de la instalación de un cliente: sin modo demo, contraseñas propias, logo y tema activo | [`docs/development/puesta-en-marcha.md`](docs/development/puesta-en-marcha.md) |
 | Arquitectura del frontend: capas, reglas de dependencia y convenciones | [`frontend/architecture.md`](frontend/architecture.md) |
 | Reglas para agentes en el frontend | [`frontend/AGENTS.md`](frontend/AGENTS.md) |
 | Arquitectura del BFF de prueba | [`backend/architecture.md`](backend/architecture.md) |
