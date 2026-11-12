@@ -223,7 +223,7 @@ Ejecuciones finales de `sdd-verify` del 2026-11-12. `npm run verify`, sobre `e5d
 | Capturas antes y después | Sí ([capturas del plan](planning.md#capturas-antes-y-después)) | Sí (`capturar.mjs`, `capturar-task20.mjs` y `capturar-temas.mjs`, con Playwright y el Chrome instalado, mismos datos, rutas, anchos y sesión) | Sí: comparación final repetida; ver [Capturas antes y después](#capturas-antes-y-después) |
 | Rendimiento (TEST-24) | Sí | Sí (`medir-hoja.mjs` y `medir-fcp.mjs`) | Sí, en ⚠ TASK-20 sobre `127f862`. No se repitió: el código no cambia después |
 | Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`. Ningún `package.json` ni `package-lock.json` cambia en el diff |
-| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | No ejecutado: la rama no está publicada. Se ejecuta al abrir el PR |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | Sí: en el [PR #15](https://github.com/sebastianaviladev01-xyz/WebStore/pull/15), «Verificar» y «E2E» en verde sobre `c1a330e`; después del merge, el CI de `dev` también en verde sobre `399b9af` |
 | Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: ni `sdd-verify` ni la guía la piden en esta etapa. Aunque se hiciera, no contaría como evidencia |
 
 ## Resultados de las pruebas
@@ -340,12 +340,12 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - [x] Documentación, ADR y diagramas coherentes con la implementación. Los ADR-0010 a ADR-0012 no se editaron. La opción `data-beasties-skip` está en `frontend/architecture.md` §5, como pidió la aprobación de las tareas.
 - [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
 - [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las únicas contraseñas del diff son las de la semilla local documentadas en el `README.md` y valores de prueba. Las copias de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó.
-- [x] Los controles no ejecutados figuran como tales: el CI, porque la rama no está publicada, y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [x] Los controles no ejecutados figuran como tales: la revisión ciega. El CI se ejecutó en el PR #15 y en `dev`. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
 - [x] Revisión humana del hito correspondiente registrada: los ocho bloques, las siete tareas ⚠ y el [hito de entrega](#hito-de-entrega), aprobados por Sebastián Avila.
 
 ## Riesgos remanentes y excepciones
 
-- **CI no ejecutado.** La rama no tiene upstream. El CI («Verificar» y «E2E») se ejecuta al abrir el PR único de la implementación.
+- **CI.** Se ejecutó en el [PR #15](https://github.com/sebastianaviladev01-xyz/WebStore/pull/15) y en `dev`, en verde.
 - **Ruido de las fotos en las capturas.** Las fotos de la tienda dan de 1 a 5 niveles de diferencia entre tomas del mismo código, y la foto de la ficha a 1440 puede salir con hasta 28 niveles en algunas cargas. Se descarta repitiendo la toma y comprobando que la diferencia cae dentro de la foto. Con A, la ficha a 1440 dio 27 niveles en las tres tomas de la verificación, frente a la toma aprobada, todos dentro de la foto.
 - **Riesgos aceptados en el diseño.** Si el BFF no responde, `theme.css` bloquea el primer pintado hasta que el navegador la abandona (`frontend/architecture.md` §5, ADR-0010). Con túneles de `trycloudflare.com`, la cookie de la vista previa no se comparte entre la tienda y el Admin si van por hosts distintos (`local-environment.md`).
 - **Decisiones de ejecución aceptadas por Sebastián Avila** y registradas en los [ajustes](tasks.md#ajustes-respecto-al-plan) y en el Traspaso:
@@ -378,4 +378,6 @@ Evidencia revisada antes de aprobar, en la sesión principal:
 
 Con la aprobación aceptó como excepción que los 23 commits sin la nota `Refs:` no se reescriban, para no cambiar los SHA que citan `tasks.md` y este documento ([riesgos](#riesgos-remanentes-y-excepciones)).
 
-Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones). El CI se ejecuta en el PR.
+Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+
+Entrega: el [PR #15](https://github.com/sebastianaviladev01-xyz/WebStore/pull/15) se fusionó en `dev` el 2026-11-12 (`399b9af`), con «Verificar» y «E2E» en verde en el PR y en `dev`. La rama local y el worktree se cerraron con `post-merge`.
