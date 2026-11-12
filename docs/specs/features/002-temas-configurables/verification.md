@@ -9,10 +9,10 @@
 
 | Dato | Valor |
 |---|---|
-| Rama y commit | `feature/002-temas-configurables`, desde `origin/dev` (`dec89f3`) |
-| Fecha | 2026-11-11 |
-| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0; Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas |
-| Datos | Capturas: copia `backend/data-capturas.json` (semilla) y `backend/data-migracion-v2.json` (estado v2 con colores propios, usado solo a través de copias de trabajo). Pruebas del BFF: archivos temporales. Nunca `backend/data.json` |
+| Rama y commit | `feature/002-temas-configurables`, desde `origin/dev` (`dec89f3`). Implementación del 2026-11-11 al 2026-11-12, de `c66e717` a `e5d8dc3`. `sdd-verify` sobre `6f66e19` (el comentario de TEST-16 corregido), sin push |
+| Fecha | Implementación: 2026-11-11 y 2026-11-12. Verificación: 2026-11-12 |
+| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas y el e2e |
+| Datos | Capturas: copia `backend/data-capturas.json` (semilla) y `backend/data-migracion-v2.json` (estado v2 con colores propios, usado solo a través de copias de trabajo); en la verificación, la copia de trabajo `backend/data-capturas-trabajo.json`, borrada al terminar. Pruebas del BFF, smoke test y e2e: archivos temporales. Nunca `backend/data.json`: su sha256 en el checkout principal sigue en `4095284…e9345f` |
 
 ## Ejecución por tarea
 
@@ -201,3 +201,171 @@ Medidos por TEST-03 con `medirPares` sobre los mapas reales de `temas-predefinid
 | Texto deshabilitado | 4.84 | 5.09 | 4.53 | 4.8 · 5.1 · 4.5 |
 
 Coinciden con la medida previa salvo B «texto secundario sobre fondo»: 5.85 frente a 5.9 (5.846 redondea a 5.8), una diferencia de redondeo que no cambia el resultado. El texto deshabilitado de C queda en 4.53, sobre el mínimo, así que no hace falta el valor explícito que preveía el plan.
+
+⚠ TASK-20 añadió el par 15, «Texto de la barra superior» (`onTopbar/topbar`, solo aviso): B 10.17, A 14.80 y C 15.80 ([ajustes](tasks.md#ajustes-respecto-al-plan)). La tabla por tema con los 15 pares está en [`VISUAL-SYSTEM.md`](../../../../frontend/docs/VISUAL-SYSTEM.md).
+
+## Estado de los controles
+
+Ejecuciones finales de `sdd-verify` del 2026-11-12. `npm run verify`, sobre `e5d8dc3` y, otra vez, sobre `6f66e19` (que solo cambia un comentario de una prueba). El e2e, la auditoría, el typecheck y las capturas, sobre `6f66e19`. El código de producción no cambia desde `127f862` (⚠ TASK-20): `git diff --stat 127f862 HEAD -- frontend backend tools` solo muestra `backend/architecture.md`, `frontend/architecture.md`, `frontend/docs/VISUAL-SYSTEM.md` y el comentario de `boundaries.test.mjs`. Las ejecuciones de cada tarea están en «Ejecución por tarea».
+
+| Control | Documentado | Configurado | Ejecutado |
+|---|---|---|---|
+| Agentes (`check:agents`) | Sí ([ADR-0008](../../../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)) | Sí (`tools/check-agents.mjs`, en `verify`) | Sí: «catálogo 1.0.0, 2 herramientas, 10 skills, 10 referencias a niveles y 3 CLAUDE.md revisados» |
+| Sintaxis del BFF (`check:syntax`) | Sí | Sí (en `verify`) | Sí: «Sintaxis correcta en 68 archivos» |
+| Formato (`format:check`) | Sí | Sí (en `verify`; no revisa los `.md`, por la decisión (32)) | Sí: «All matched files use Prettier code style!» en la raíz y en `frontend/` |
+| Lint y límites de arquitectura | Sí ([`frontend/architecture.md`](../../../../frontend/architecture.md) §2.2, `temas → sesion`) | Sí (ESLint, Sheriff y `test:architecture`, en `verify`) | Sí: `eslint src projects` sin errores; `test:architecture` `pass 27`, `fail 0` (TEST-16). El diff no añade `eslint-disable`, `@ts-ignore` ni `@ts-expect-error` |
+| Pruebas unitarias | Sí ([estrategia del plan](planning.md#estrategia-de-pruebas), TEST-01 a TEST-10, TEST-14 y TEST-15) | Sí (`npm test`, en `verify`) | Sí: frontend `pass 72`, `fail 0`; BFF `pass 110`, `fail 0` (unitarias e integración) |
+| Typecheck de la tienda y del Admin | Sí (PBI-0029) | No en `verify` (PBI-0029): lo cubre el build, que solo compila lo que se importa | Sí, a mano, desde `frontend/`: `npx tsc -p tsconfig.app.json --noEmit` y `npx tsc -p projects/admin/tsconfig.app.json --noEmit`, código de salida 0 en los dos |
+| Pruebas de integración y contrato del BFF | Sí ([contrato](../../../../backend/docs/BFF-CONTRACT.md), «Apariencia y temas», «Contenido» y «Roles fijos») | Sí (`validate:contract`, en `verify`) | Sí: estructura «OK» con TEST-18 (a), (b) y (c); TEST-11 y TEST-12 en `npm test` del BFF; «Smoke test BFF: OK», con la línea «Temas: apariencia pública, theme.css con ETag y 304, themes.manage y STALE_THEMES» |
+| Pruebas E2E | Sí (TEST-19 a TEST-22 y TEST-25) | Sí (`playwright.config.ts`: BFF 3400 en modo demo, tienda 4400, Admin 4500, estado temporal) | Sí: `npm run test:e2e` desde `frontend/`, en segundo plano: `59 passed (2.7m)`, código de salida 0. Después, puertos 3400, 4400 y 4500 libres |
+| Build de la tienda y del Admin | Sí (TEST-17) | Sí (`build:all`, en `verify`, con presupuestos) | Sí: los dos builds sin avisos. Bundle inicial: tienda 426,78 kB (110,54 kB transferidos) y Admin 367,81 kB (100,25 kB) |
+| `npm run verify` completo | Sí | Sí | Sí: código de salida 0 sobre `e5d8dc3` y sobre `6f66e19` |
+| Capturas antes y después | Sí ([capturas del plan](planning.md#capturas-antes-y-después)) | Sí (`capturar.mjs`, `capturar-task20.mjs` y `capturar-temas.mjs`, con Playwright y el Chrome instalado, mismos datos, rutas, anchos y sesión) | Sí: comparación final repetida; ver [Capturas antes y después](#capturas-antes-y-después) |
+| Rendimiento (TEST-24) | Sí | Sí (`medir-hoja.mjs` y `medir-fcp.mjs`) | Sí, en ⚠ TASK-20 sobre `127f862`. No se repitió: el código no cambia después |
+| Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`. Ningún `package.json` ni `package-lock.json` cambia en el diff |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | No ejecutado: la rama no está publicada. Se ejecuta al abrir el PR |
+| Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: ni `sdd-verify` ni la guía la piden en esta etapa. Aunque se hiciera, no contaría como evidencia |
+
+## Resultados de las pruebas
+
+| ID | AC | Comando | Resultado | Evidencia |
+|---|---|---|---|---|
+| TEST-01 | AC-13, AC-14 | `npm test --prefix backend` (en `verify`) | Pasa | `contraste.rules.test.mjs`, con los casos de `casos-tema.json`. Rojo y verde en TASK-02 (`632e056`) |
+| TEST-02 | AC-01, AC-03, AC-13 | Ídem | Pasa | `temas-predefinidos.test.mjs`: ids, nombres, cinco colores, valores presentados y mapa completo (30 tokens desde ⚠ TASK-20). TASK-03 (`0c4d65d`) |
+| TEST-03 | AC-13, AC-20 | Ídem | Pasa | Los 15 pares de A, B y C en AA ([tabla](#pares-de-contraste-de-a-b-y-c-task-03)); en C, `on-primary`, `link` y `focus-ring` son `#1F2328` |
+| TEST-04 | AC-20, AC-23 | Ídem | Pasa | `tema.rules.test.mjs`: `#FFD400`, `#123456` y la base oscura. TASK-03; la franja, en ⚠ TASK-20 (`127f862`) |
+| TEST-05 | AC-14 | Ídem | Pasa | `tema.rules.test.mjs`: bloqueo con el par y la relación, aviso que no bloquea y redondeo hacia abajo. TASK-04 (`ed29522`) |
+| TEST-06 | AC-05, AC-09, AC-11, AC-12 | Ídem | Pasa | `tema-propio.rules.test.mjs`, 21 casos. TASK-05 (`ef0165a`) |
+| TEST-07 | AC-05 a AC-10, AC-19 | Ídem | Pasa | `temas.use-cases.test.mjs`, con un almacén en memoria. TASK-06 (`eaf355a`) |
+| TEST-08 | AC-15, AC-16, AC-21, AC-24 | Ídem | Pasa | `temas.queries.test.mjs`. TASK-06 |
+| TEST-09 | AC-04 | `npm test --prefix backend` y `npm test --prefix frontend` | Pasa | `rol.rules.test.mjs` (BFF) y `rol.rules.spec.mjs` (Admin), con la caracterización previa. ⚠ TASK-07 (`d23ba7e`) |
+| TEST-10 | AC-23, AC-24 | `npm test --prefix backend` | Pasa | `normalizar-estado.test.mjs`, con la caracterización en verde sobre `1390d10`. ⚠ TASK-09 (`f895ea9`) |
+| TEST-11 | AC-23, AC-24 | Ídem (integración, BFF real) | Pasa | `migracion-temas.test.mjs`: la parte sin rutas en ⚠ TASK-09 y la de `/bff/appearance` en ⚠ TASK-11 (`282c422`) |
+| TEST-12 | AC-10, AC-16, AC-18, AC-21 | Ídem (integración, BFF real) | Pasa | `modo-demo.test.mjs`, 7 pruebas. ⚠ TASK-11 |
+| TEST-13 | AC-04, AC-05, AC-09, AC-11, AC-12, AC-14, AC-19, AC-22 | `npm run test:contract --prefix backend` (en `verify`) | Pasa | «Smoke test BFF: OK»: la parte de Contenido (⚠ TASK-09) y el bloque «Temas» (⚠ TASK-11) |
+| TEST-14 | AC-07, AC-11, AC-14, AC-20 | `npm test --prefix frontend` | Pasa | `tema.rules.spec.mjs` del Admin recorre `casos-tema.json` (28 pruebas) y solo importa tipos. TASK-08 (`2f28cd7`); la franja, en ⚠ TASK-20 |
+| TEST-15 | AC-16, AC-21 | Ídem | Pasa | `tema-visible.rules.spec.mjs`, idéntico en la tienda y en el Admin. TASK-10 (`2a6c8c6`) |
+| TEST-16 | — (STD-01) | `npm run lint` y `npm run test:architecture` (en `verify`) | Pasa | `boundaries.test.mjs`, `pass 27`: `temas → sesion` aceptada en el Admin; rechazadas la `temas` de la tienda → la del Admin y al revés, `temas → tienda` y `sesion → temas`. TASK-13 (`52499b3`) |
+| TEST-17 | AC-18 | `npm run build:all` (en `verify`) | Pasa | Los dos builds sin avisos de beasties ni de presupuesto, con el `<link>` de `theme.css` y `data-beasties-skip`. TASK-15 (`6156d86`) |
+| TEST-18 | AC-01, AC-02 | `npm run validate:structure` (en `verify`) | Pasa | «✓ TEST-18 (a)», «✓ TEST-18 (b)» y «✓ TEST-18 (c)». ⚠ TASK-14 (`04296c6`) y TASK-15 |
+| TEST-19 | AC-03 a AC-11, AC-14, AC-19 | `npm run test:e2e` desde `frontend/` | Pasa | `admin-temas.spec.ts`, 10 pruebas, en `59 passed`. TASK-19 (`1f9ea57`) |
+| TEST-20 | AC-02, AC-08, AC-17 | Ídem | Pasa | `storefront-temas.spec.ts`, bloque «TEST-20», 5 pruebas, en `59 passed`. ⚠ TASK-20 |
+| TEST-21 | AC-15, AC-16, AC-21 | Ídem | Pasa | `storefront-modo-demo.spec.ts` y `admin-modo-demo.spec.ts`, 8 pruebas, en `59 passed`. TASK-17 (`3868cc9`) |
+| TEST-22 | AC-18 | Ídem | Pasa | `storefront-temas.spec.ts`, 2 pruebas (hoja retrasada 800 ms y abortada), en `59 passed`. TASK-15 |
+| TEST-23 | AC-01, AC-02, AC-15, AC-16, AC-17 | Capturas con Playwright y el Chrome instalado | Pasa | Ver [Capturas antes y después](#capturas-antes-y-después) |
+| TEST-24 | AC-18, REQ-16 | `medir-hoja.mjs` y `medir-fcp.mjs` | Pasa, con una tanda atípica | (a) `theme.css`: B 1048 bytes, A 1185 y C 1218, por debajo de 4 kB; `304` en las recargas; mediana de 7,7 a 12,5 ms. (b) FCP de `/`: base 532 ms, límite 585 ms; tres rondas intercaladas de C (512, 528 y 520 ms) y de B (512, 524 y 512 ms), dentro del margen. Una primera tanda de C dio 772 ms y se informa tal cual. ⚠ TASK-20 |
+| TEST-25 | AC-15 | `npm run test:e2e` desde `frontend/` | Pasa | `59 passed (2.7m)` con el BFF en modo demo y la tuerca en pantalla, código de salida 0 |
+
+La salida del e2e trae `NG02953` (5), `NG02952` (1) y `NG02955` (1) de `NgOptimizedImage` en la tienda. Ya existían antes de la feature y están en el backlog (PBI-0026).
+
+## Capturas antes y después
+
+Toma final del 2026-11-12 sobre `6f66e19`, con el mismo método que las tomas de la implementación: `capturar-task20.mjs` (las 20 rutas de `capturar.mjs` y Admin `/temas`) y `capturar-temas.mjs`, con Playwright y el Chrome instalado. BFF del worktree en 3400 sin modo demo, sobre una copia de trabajo de `data-capturas.json`; tienda en 4400 y Admin en 4500 con `proxy.e2e.conf.json`; sesión del `superadmin` sembrado; 1440 × 1200 y 390 × 844 px, página completa. A y C se activaron por la API del Admin (`activar-tema.mjs`) y al terminar se volvió a B. La comparación es píxel a píxel (`comparar.mjs`). La base es la toma «antes» de TASK-01 sobre `dec89f3`, la base de la rama, así que no hizo falta cambiar de revisión. Carpetas en `frontend/output/visual-qa/002-temas-configurables/`: `verify-b`, `verify-a`, `verify-c`, `verify-temas`, sus repeticiones `verify-{b,a,c}-repeticion` (solo la tienda) y `verify-a-diagnostico`.
+
+| Pantalla o ruta | Anchos | Resultado | Evidencia |
+|---|---|---|---|
+| Con B, tienda: `/`, `/catalogo`, la ficha, `/carrito` y `/checkout` | 1440 y 390 | Iguales | Frente a `antes`: cada ruta tiene al menos una de las dos tomas idéntica a la base, salvo `/carrito` a 390, que difiere en 5 píxeles a 1 nivel dentro de la foto del televisor, la diferencia aceptada desde ⚠ TASK-09. En la otra toma hay ruido de 1 a 5 niveles dentro de fotos: `/` a 1440 (4 niveles), `/` a 390 (1), `/catalogo` a 390 (2) y la ficha a 1440 (5), cada uno en una sola de las dos tomas |
+| Con B, Admin: `/login`, `/`, `/productos` y `/pedidos` | 1440 y 390 | Cambios pedidos (enlace «Temas» del menú, REQ-05 y AC-03) | A 390 y `/login` a 1440, idénticas a `antes`. A 1440, `/`, `/productos` y `/pedidos` solo cambian en la barra lateral, filas 663 a 800: el enlace «Temas» y los enlaces que bajan, la diferencia aprobada en ⚠ TASK-18 |
+| Con B, Admin `/contenido` | 1440 y 390 | Cambios pedidos (AC-22) | Sin los dos selectores de color, con los campos siguientes más arriba y el subtítulo sin «colores»; además, el enlace «Temas» a 1440. Las diferencias aprobadas en ⚠ TASK-09 y ⚠ TASK-18 |
+| Con B, frente a la toma aprobada en ⚠ TASK-20 (`despues-task20-topbar-b`, 22 rutas con `/temas`) | 1440 y 390 | Iguales | 21 de 22 idénticas; `/` a 1440 con el ruido de 4 niveles de la primera toma, idéntica a `antes` en la repetición |
+| Con A, frente a la toma aprobada en ⚠ TASK-20 (`despues-task20-topbar-a`) | 1440 y 390 | Iguales | 21 de 22 idénticas en la primera toma. La ficha a 1440 difiere en las tres tomas (`verify-a`, `verify-a-repeticion` y `verify-a-diagnostico`, las dos últimas idénticas entre sí): 99 569 píxeles, máximo 27 niveles, todos dentro de la foto principal (x 150–664, y 375–701; la foto ocupa x 120–687, y 314–739, `caja-diferencia-foto.mjs`). Es el artefacto de remuestreo de la foto ya documentado en TASK-12 y ⚠ TASK-20. En la repetición, `/catalogo` a 1440 tiene 13 niveles en las tarjetas, igual en la primera toma |
+| Con C, frente a la toma aprobada en ⚠ TASK-20 (`despues-task20-topbar-c`) | 1440 y 390 | Iguales | 21 de 22 idénticas. `/` a 1440 difiere en 4 niveles dentro de las fotos (filas 319 a 3002) en las dos tomas, el mismo ruido que registró ⚠ TASK-20. En la repetición, la ficha a 1440 sale con el artefacto de 27 niveles de la foto, idéntica en la primera toma |
+| A y C frente a B (AC-02 y AC-17) | 1440 y 390 | Cambios pedidos (solo colores) | Comparación de ⚠ TASK-20 (`sonda-temas.mjs`): 0 diferencias de cajas, tipografía, espaciado o forma de las sombras en las 20 rutas; ningún color de B visible; `src` y tamaño natural de las imágenes iguales. Aprobada por Sebastián Avila con ⚠ TASK-20. Las tomas finales de A y C reproducen las aprobadas |
+| Admin `/temas`: lista, lista con un propio, diálogo, bloqueo y aviso | 1440 y 390 | Iguales | `capturar-temas.mjs` frente a `despues-task18-temas-arreglo`, la toma aprobada en ⚠ TASK-18: 16 de 16 idénticas |
+| Tuerca del modo demo, cerrada y abierta | 1440 y 390 | Cambios pedidos (AC-15) | Comparación de ⚠ TASK-16 (`despues-task16-demo` frente a `antes-task16-demo`), aprobada. No se repitió: el código de la tuerca no cambia desde `ab789eb`. Sin modo demo, la tuerca no existe y las tomas finales de B la confirman (AC-16) |
+| Tienda migrada desde v2 (AC-23) | 1440 y 390 | Iguales | Comparación de TASK-15 (`despues-task15-migracion-v2-repeticion` frente a `antes-migracion-v2`). No se repitió: la migración y la hoja no cambian desde `6156d86` |
+
+Consola en las tomas finales: la tienda a 1440 con 2 mensajes, el Admin a 1440 con 1, la tienda a 390 con 2 y el Admin a 390 con 0, en los tres temas. Son los mismos que la base: el 404 del favicon, `NG0913` en la ficha y `NG02955` en `/carrito` a 390. Sin `pageerror`. Después: copia de trabajo borrada, sha256 de `data-capturas.json` (`c88a678d…`) y de `data-migracion-v2.json` (`8dd280d2…`) sin cambios, B activo, servidores del worktree detenidos por su PID, tras comprobar su línea de órdenes, y puertos libres.
+
+## Cumplimiento TDD
+
+| Área | TDD obligatorio | Prueba antes del código | Evidencia |
+|---|---|---|---|
+| BFF `domain/temas/` (contraste, tokens, predefinidos, pares y validación; TASK-02 a TASK-05) | Sí (STD-18) | Sí | Rojo y verde de TEST-01 a TEST-06 registrados en cada tarea, primero por `ERR_MODULE_NOT_FOUND` y después contra esbozos que lanzan «Sin implementar». Hay un commit por tarea con la prueba y el código juntos, así que el orden está en este documento y no en el historial |
+| BFF `application/temas/` (TASK-06) | Sí | Sí | Rojo de TEST-07 (`fail 12`) y TEST-08 (`fail 11`) con los módulos sin implementar, y después verde |
+| BFF `domain/sesion/` y réplica del Admin (⚠ TASK-07) | Sí | Sí | La caracterización de la réplica, en verde sobre el código anterior, y después TEST-09 en rojo (`fail 2` en el BFF y en el Admin) antes de añadir `themes.manage` |
+| BFF `infrastructure/` y `domain/admin/` (migración v3, ⚠ TASK-09) | Sí para `sinColoresDeContenido` (`domain/`); TEST-10, por ser ⚠ | Sí | TEST-10 de caracterización en verde sobre `1390d10`, y después en rojo (10 de 15) antes de la migración. La prueba de `sinColoresDeContenido`, en rojo (`fail 5`) antes de la función |
+| Contrato del BFF (`api/`, ⚠ TASK-09 y ⚠ TASK-11) | Sí | Sí | El smoke test en rojo antes del cambio: «Contenido no debe traer primaryColor ni secondaryColor» y `GET /bff/appearance: 404`. TEST-12 (`fail 7`) y el resto de TEST-11 (`fail 2`), en rojo antes de las rutas |
+| Admin `domain/temas/` (TASK-08) | Sí | Sí | TEST-14 en rojo (`pass 3`, `fail 25`) contra esqueletos y después en verde; la réplica se comparó con el BFF en 5000 temas aleatorios, con 0 diferencias |
+| Tienda y Admin `domain/temas/` (TASK-10) | Sí | Sí | TEST-15 en rojo (`fail 5` en cada aplicación) y después en verde |
+| Franja superior en el BFF y en la réplica (⚠ TASK-20) | Sí | Sí | Rojo: BFF 10 de 28 y Admin 7 de 28, por los tokens y el par que faltaban; después 28/28 en los dos |
+| Límites de arquitectura (TASK-13) | No (STD-18 no lo exige) | Sí | TEST-16 en rojo («Tag feature:temas has no clearance…») antes de declarar `feature:temas` en Sheriff |
+| Estructura (`tools/`, ⚠ TASK-14 y TASK-15) | No | Sí | TEST-18 (a) y (b) en rojo sobre `b2ae660` (6 tokens que faltaban y 48 colores fijos); (c) en rojo sin el `<link>` |
+| Admin `application/` (facade, TASK-13) | No (recomendada; PBI-0025) | No aplica | `temas.facade.spec.mjs` se escribió con la facade. Se comprobó que detecta el reintento: con uno añadido a propósito, fallan 4 de 6 |
+| Tienda y Admin `data/`, `application/` y `presentation/` (TASK-12, ⚠ TASK-16 y ⚠ TASK-18) | No (los componentes derivan de los AC) | No aplica | Las reglas que usan ya estaban probadas (TEST-14 y TEST-15). Los cubren TEST-19 a TEST-21 y las capturas |
+| E2E (TASK-15, TASK-17, TASK-19 y ⚠ TASK-20) | No | No aplica | STD-18 permite escribir el e2e junto al código. TEST-20 y TEST-21 se comprobaron con fallos provocados y deshechos después (`5 failed` con un color de B puesto a propósito; 6 fallos sin modo demo y 1 con la tuerca descartada) |
+
+## Trazabilidad
+
+| REQ | AC | TASK | Commit | TEST | Resultado |
+|---|---|---|---|---|---|
+| REQ-01, REQ-03, REQ-04 | AC-01 | TASK-01, TASK-03, ⚠ TASK-14, TASK-15 | `c66e717`, `0c4d65d`, `04296c6`, `6156d86` | TEST-02, TEST-18, TEST-23 | Pasa |
+| REQ-03, REQ-04 | AC-02 | TASK-12, ⚠ TASK-14, ⚠ TASK-20 | `ec89ec2`, `04296c6`, `127f862` | TEST-20, TEST-23 | Pasa |
+| REQ-05 | AC-03 | TASK-03, ⚠ TASK-18, TASK-19 | `0c4d65d`, `9eefeb8`, `1f9ea57` | TEST-02, TEST-19 | Pasa |
+| REQ-09 | AC-04 | ⚠ TASK-07, ⚠ TASK-11, ⚠ TASK-18, TASK-19 | `d23ba7e`, `282c422`, `9eefeb8`, `1f9ea57` | TEST-09, TEST-13, TEST-19 | Pasa |
+| REQ-06 | AC-05 | TASK-05, TASK-06, ⚠ TASK-11, ⚠ TASK-18 | `ef0165a`, `eaf355a`, `282c422`, `9eefeb8` | TEST-06, TEST-07, TEST-13, TEST-19 | Pasa |
+| REQ-02, REQ-07 | AC-06 | TASK-06, TASK-13, ⚠ TASK-18, TASK-19 | `eaf355a`, `52499b3`, `9eefeb8`, `1f9ea57` | TEST-07, TEST-19 | Pasa |
+| REQ-07 | AC-07 | TASK-08, ⚠ TASK-18, TASK-19 | `2f28cd7`, `9eefeb8`, `1f9ea57` | TEST-14, TEST-19 | Pasa |
+| REQ-07 | AC-08 | TASK-06, TASK-13, ⚠ TASK-18, TASK-19 | `eaf355a`, `52499b3`, `9eefeb8`, `1f9ea57` | TEST-07, TEST-19 | Pasa |
+| REQ-07 | AC-09 | TASK-05, TASK-06, ⚠ TASK-11, ⚠ TASK-18 | `ef0165a`, `eaf355a`, `282c422`, `9eefeb8` | TEST-06, TEST-07, TEST-13, TEST-19 | Pasa |
+| REQ-04, REQ-08, REQ-10 | AC-10 | TASK-06, ⚠ TASK-11, TASK-12, TASK-13 | `eaf355a`, `282c422`, `ec89ec2`, `52499b3` | TEST-07, TEST-12, TEST-19 | Pasa |
+| REQ-02 | AC-11 | TASK-05, TASK-08, ⚠ TASK-11, ⚠ TASK-18 | `ef0165a`, `2f28cd7`, `282c422`, `9eefeb8` | TEST-06, TEST-13, TEST-14, TEST-19 | Pasa |
+| REQ-02 | AC-12 | TASK-05, ⚠ TASK-11 | `ef0165a`, `282c422` | TEST-06, TEST-13 | Pasa |
+| REQ-13, REQ-17 | AC-13 | TASK-02, TASK-03, ⚠ TASK-20, TASK-21 | `632e056`, `0c4d65d`, `127f862`, `ec0d278` | TEST-01, TEST-02, TEST-03 | Pasa |
+| REQ-14 | AC-14 | TASK-04, TASK-05, TASK-08, ⚠ TASK-18 | `ed29522`, `ef0165a`, `2f28cd7`, `9eefeb8` | TEST-05, TEST-06, TEST-13, TEST-14, TEST-19 | Pasa |
+| REQ-03, REQ-17 | AC-20 | TASK-03, TASK-08, ⚠ TASK-14 | `0c4d65d`, `2f28cd7`, `04296c6` | TEST-03, TEST-04, TEST-14 | Pasa |
+| REQ-11, REQ-16 | AC-15 | ⚠ TASK-16, TASK-17 | `ab789eb`, `3868cc9` | TEST-08, TEST-21, TEST-23, TEST-25 | Pasa |
+| REQ-12 | AC-16 | TASK-10, ⚠ TASK-11, ⚠ TASK-16, TASK-17 | `2a6c8c6`, `282c422`, `ab789eb`, `3868cc9` | TEST-08, TEST-12, TEST-13, TEST-15, TEST-21 | Pasa |
+| REQ-11 | AC-21 | TASK-10, TASK-12, ⚠ TASK-16, TASK-17 | `2a6c8c6`, `ec89ec2`, `ab789eb`, `3868cc9` | TEST-08, TEST-12, TEST-15, TEST-21 | Pasa |
+| REQ-18 | AC-22 | ⚠ TASK-09 | `f895ea9` | TEST-13 y la prueba de `sinColoresDeContenido` | Pasa |
+| REQ-18 | AC-23 | TASK-01, ⚠ TASK-09, TASK-15 | `c66e717`, `f895ea9`, `6156d86` | TEST-04, TEST-10, TEST-11, TEST-23 | Pasa |
+| REQ-19 | AC-24 | ⚠ TASK-09, ⚠ TASK-11, TASK-19 | `f895ea9`, `282c422`, `1f9ea57` | TEST-08, TEST-10, TEST-11 | Pasa |
+| REQ-15 | AC-17 | ⚠ TASK-16, ⚠ TASK-20 | `ab789eb`, `127f862` | TEST-20, TEST-23 | Pasa |
+| REQ-04, REQ-16 | AC-18 | TASK-01, TASK-15, ⚠ TASK-20 | `c66e717`, `6156d86`, `127f862` | TEST-12, TEST-17, TEST-22, TEST-24 | Pasa |
+| REQ-10 | AC-19 | TASK-06, ⚠ TASK-11, TASK-13, ⚠ TASK-18 | `eaf355a`, `282c422`, `52499b3`, `9eefeb8` | TEST-07, TEST-13, TEST-19 | Pasa |
+| — (STD-01) | — | TASK-13 | `52499b3`, `6f66e19` (comentario) | TEST-16 | Pasa |
+
+Los 19 REQ y los 24 AC tienen al menos una tarea, un commit y una prueba en verde. Los documentos afectados están actualizados: [`BFF-CONTRACT.md`](../../../../backend/docs/BFF-CONTRACT.md) («Apariencia y temas», «Contenido», «Roles fijos» y «Producción»), [`TRACEABILITY.md`](../../../planning/TRACEABILITY.md) (12 filas), el [glosario](../../../architecture/glosario.md), [`VISUAL-SYSTEM.md`](../../../../frontend/docs/VISUAL-SYSTEM.md), [`frontend/architecture.md`](../../../../frontend/architecture.md), [`backend/architecture.md`](../../../../backend/architecture.md), [`docs/architecture/README.md`](../../../architecture/README.md), [`local-environment.md`](../../../development/local-environment.md), [`puesta-en-marcha.md`](../../../development/puesta-en-marcha.md) (enlazado desde `AGENTS.md`) y el índice de features. Los enlaces relativos de los 13 documentos modificados, de la especificación y del plan resuelven, anclas incluidas: 352 enlaces, 0 rotos (comprobación con un script de un solo uso, `links.mjs`, fuera del repositorio).
+
+## Definition of Done
+
+Marca solo lo que se cumple ([criterios](../../../development/definition-of-done.md)).
+
+- [x] AC aplicables demostrados (AC-01 a AC-24), con el comportamiento normal, los límites (nombre de 40 y 41 caracteres, redondeo hacia abajo, principal claro, base oscura, nombre migrado ya tomado, `activeThemeId` desconocido, valores de `WEBSTORE_DEMO_MODE`) y los fallos (`theme.css` abortada, revisión vieja sin reintento, petición directa de `admin` y `vendedor`, borrado del activo, cookie de un tema borrado) cubiertos.
+- [x] En las áreas con TDD obligatorio, las pruebas existían antes del código. La evidencia está en «Ejecución por tarea» y en [Cumplimiento TDD](#cumplimiento-tdd).
+- [x] `npm run verify` ejecutado desde la raíz sobre `e5d8dc3` y `6f66e19` (código de salida 0), `npm run test:e2e` desde `frontend/` (`59 passed`) y `npm run audit:all` (0 vulnerabilidades), aunque las dependencias no cambian.
+- [x] El contrato HTTP cambia, y en el mismo commit de cada cambio están `BFF-CONTRACT.md`, el smoke test y los adaptadores: ⚠ TASK-07 (roles), ⚠ TASK-09 (Contenido sin colores, cambio incompatible marcado con `feat!` y `BREAKING CHANGE`) y ⚠ TASK-11 (rutas de temas), con `BffAparienciaGateway` y `BffTemasGateway` en TASK-12 y TASK-13.
+- [x] Autorización, validación, confidencialidad y accesibilidad revisadas. Las cinco rutas del Admin exigen `themes.manage` antes de leer el cuerpo (`temas.routes.mjs`), y el smoke test comprueba `401` sin sesión y `403` con `admin` y `vendedor`. El BFF valida nombre, colores y contraste (`exigirTemaValido`). La cookie se lee solo en modo demo. `theme.css` solo contiene declaraciones `--ws-*` calculadas de colores `#RRGGBB` validados, nunca el nombre del tema. Fuera del modo demo, `/bff/appearance` solo publica el tema activo. Accesibilidad: los pares de A, B y C en AA; la tuerca y el diálogo, con teclado, foco atrapado y devuelto, nombres accesibles, `role="status"` y `role="alert"`, y sin animación con `prefers-reduced-motion` (⚠ TASK-16 y ⚠ TASK-18).
+- [x] Capturas antes y después a 1440 y 390 px, sin cambios visuales no pedidos (STD-12): con B, solo las diferencias pedidas por AC-22 y por el enlace «Temas», y el ruido de fotos descrito.
+- [x] Documentación, ADR y diagramas coherentes con la implementación. Los ADR-0010 a ADR-0012 no se editaron. La opción `data-beasties-skip` está en `frontend/architecture.md` §5, como pidió la aprobación de las tareas.
+- [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
+- [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las únicas contraseñas del diff son las de la semilla local documentadas en el `README.md` y valores de prueba. Las copias de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó.
+- [x] Los controles no ejecutados figuran como tales: el CI, porque la rama no está publicada, y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [ ] Revisión humana del hito correspondiente registrada. Están los ocho bloques y las siete tareas ⚠, aprobados por Sebastián Avila; falta el [hito de entrega](#hito-de-entrega).
+
+## Riesgos remanentes y excepciones
+
+- **CI no ejecutado.** La rama no tiene upstream. El CI («Verificar» y «E2E») se ejecuta al abrir el PR único de la implementación.
+- **Ruido de las fotos en las capturas.** Las fotos de la tienda dan de 1 a 5 niveles de diferencia entre tomas del mismo código, y la foto de la ficha a 1440 puede salir con hasta 28 niveles en algunas cargas. Se descarta repitiendo la toma y comprobando que la diferencia cae dentro de la foto. Con A, la ficha a 1440 dio 27 niveles en las tres tomas de la verificación, frente a la toma aprobada, todos dentro de la foto.
+- **Riesgos aceptados en el diseño.** Si el BFF no responde, `theme.css` bloquea el primer pintado hasta que el navegador la abandona (`frontend/architecture.md` §5, ADR-0010). Con túneles de `trycloudflare.com`, la cookie de la vista previa no se comparte entre la tienda y el Admin si van por hosts distintos (`local-environment.md`).
+- **Decisiones de ejecución aceptadas por Sebastián Avila** y registradas en los [ajustes](tasks.md#ajustes-respecto-al-plan) y en el Traspaso:
+  - la sombra de 1 px de la cabecera con `color-mix(… 5.9 %, transparent)`, para que B salga idéntica (23);
+  - `primary-strong` como texto o icono pasa a `on-primary-soft` (24);
+  - la tuerca carga con `@defer` en un chunk aparte, y por debajo de 768 px es una pestaña de 28 × 44 px pegada al borde (28 y 29);
+  - la franja superior en tokens propios, `--ws-topbar` y `--ws-on-topbar`, con el par «Texto de la barra superior» (39);
+  - en C, el elemento activo del menú del Admin se queda con el tinte ámbar (40);
+  - las fotos conservan el `mix-blend-mode: multiply` sobre el fondo de su tarjeta (41).
+- **TEST-24 (b).** Una primera tanda de C dio un FCP de 772 ms, fuera del margen de 585 ms. Tres rondas intercaladas de C y de B quedaron dentro. Se informa tal cual.
+- **Pruebas de componentes.** `frontend/architecture.md` §6 sigue con «Pendiente: pruebas de componentes», que no es de la 002: viene de la base (`fca1421`) y ya está en el backlog como PBI-0025, con su origen. No se resuelve aquí. La facade del Admin se probó transpilada, con dobles de Angular (decisión 22).
+- **Typecheck.** `verify` no comprueba los tipos de los archivos de `domain/` que nada importa (PBI-0029). En esta verificación se comprobaron a mano las dos aplicaciones con `tsc`.
+- **Convención menor de los commits.** 23 de los 36 commits de la rama, de ⚠ TASK-07 (`d23ba7e`) a la aprobación del bloque 8 (`e5d8dc3`), salvo `1390d10`, `127f862`, `ec0d278` y `38e6a48`, no llevan la nota al pie `Refs: 002-temas-configurables/TASK-NN` que pide [conventional-commits.md](../../../git/conventional-commits.md). La traza está en este documento y en `tasks.md`. La historia no se reescribe. Ningún commit lleva `Co-Authored-By`, y los títulos siguen Conventional Commits.
+- **Comentario de TEST-16.** El comentario de `boundaries.test.mjs` decía que la facade de `temas` del Admin «todavía no existe». Se corrigió en esta verificación (`6f66e19`), sin cambiar la prueba.
+- **Ejecutado con.** Todas las tareas registraron la herramienta y el modelo. Excepciones:
+  - El esfuerzo de las tareas que hizo el agente principal sin delegar (⚠ TASK-07, ⚠ TASK-09, ⚠ TASK-11, TASK-13, ⚠ TASK-14, TASK-15, ⚠ TASK-16, TASK-17, ⚠ TASK-18, TASK-19 y ⚠ TASK-20) es el que pide el catálogo y no se puede verificar desde la sesión.
+  - TASK-17 se ejecutó con Opus 5.5, un nivel por encima del catálogo (estándar · alto, Sonnet 5.5).
+  - En TASK-08, la revisión con Opus 5.5 no dice el esfuerzo. La fila de TASK-21 dice «Sonnet 5.5» sin el `modelId`, y la del `verify` conjunto de TASK-12 y TASK-13 no dice el esfuerzo.
+- **Avisos de la consola de la base.** El 404 del favicon, `NG0913` en la ficha, `NG02955` en `/carrito` a 390 y los `NG0295x` del e2e (PBI-0026) ya estaban antes de la feature.
+
+## Hito de entrega
+
+pendiente. Se presenta a Sebastián Avila el 2026-11-12 con esta verificación, antes de publicar la rama y abrir el PR único de la implementación hacia `dev`.
