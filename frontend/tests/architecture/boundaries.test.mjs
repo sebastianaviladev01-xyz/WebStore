@@ -28,7 +28,7 @@ const files = {
   rolRules: 'projects/admin/src/app/features/sesion/domain/rol.rules.ts',
 };
 const contents = new Map(Object.values(files).map((file) => [file, readFileSync(root + file, 'utf8')]));
-// Feature `temas` (TEST-16). La facade del Admin se sondea por su ruta aunque todavía no exista.
+// Feature `temas` (TEST-16). Se sondea con la ruta de su facade del Admin y de los modelos de cada aplicación.
 const temas = {
   facadeAdmin: 'projects/admin/src/app/features/temas/application/temas.facade.ts',
   modeloAdmin: 'projects/admin/src/app/features/temas/domain/tema.model.ts',
