@@ -1,25 +1,449 @@
 {
   "$comment": "Casos compartidos de las reglas de temas: los leen las pruebas del BFF y la réplica del Admin (TEST-14). Solo datos.",
   "contraste": [
-    { "a": "#FFFFFF", "b": "#000000", "relacion": 21, "decimales": 2 },
-    { "a": "#000000", "b": "#FFFFFF", "relacion": 21, "decimales": 2 },
-    { "a": "#1D4ED8", "b": "#FFFFFF", "relacion": 6.7, "decimales": 2 },
-    { "a": "#FFFFFF", "b": "#1D4ED8", "relacion": 6.7, "decimales": 2 },
-    { "a": "#F2B705", "b": "#FFFFFF", "relacion": 1.8, "decimales": 1 },
-    { "a": "#FFFFFF", "b": "#F2B705", "relacion": 1.8, "decimales": 1 },
-    { "a": "#1d4ed8", "b": "#ffffff", "relacion": 6.7, "decimales": 2 }
+    {
+      "a": "#FFFFFF",
+      "b": "#000000",
+      "relacion": 21,
+      "decimales": 2
+    },
+    {
+      "a": "#000000",
+      "b": "#FFFFFF",
+      "relacion": 21,
+      "decimales": 2
+    },
+    {
+      "a": "#1D4ED8",
+      "b": "#FFFFFF",
+      "relacion": 6.7,
+      "decimales": 2
+    },
+    {
+      "a": "#FFFFFF",
+      "b": "#1D4ED8",
+      "relacion": 6.7,
+      "decimales": 2
+    },
+    {
+      "a": "#F2B705",
+      "b": "#FFFFFF",
+      "relacion": 1.8,
+      "decimales": 1
+    },
+    {
+      "a": "#FFFFFF",
+      "b": "#F2B705",
+      "relacion": 1.8,
+      "decimales": 1
+    },
+    {
+      "a": "#1d4ed8",
+      "b": "#ffffff",
+      "relacion": 6.7,
+      "decimales": 2
+    }
   ],
   "mezcla": [
-    { "a": "#1D4ED8", "peso": 0.62, "b": "#0F172A", "resultado": "#183996" },
-    { "a": "#1D4ED8", "peso": 0.1, "b": "#FFFFFF", "resultado": "#E8EDFB" },
-    { "a": "#1d4ed8", "peso": 1, "b": "#0F172A", "resultado": "#1D4ED8" },
-    { "a": "#1D4ED8", "peso": 0, "b": "#0f172a", "resultado": "#0F172A" },
-    { "a": "#1d4ed8", "peso": 0.62, "b": "#0f172a", "resultado": "#183996" }
+    {
+      "a": "#1D4ED8",
+      "peso": 0.62,
+      "b": "#0F172A",
+      "resultado": "#183996"
+    },
+    {
+      "a": "#1D4ED8",
+      "peso": 0.1,
+      "b": "#FFFFFF",
+      "resultado": "#E8EDFB"
+    },
+    {
+      "a": "#1d4ed8",
+      "peso": 1,
+      "b": "#0F172A",
+      "resultado": "#1D4ED8"
+    },
+    {
+      "a": "#1D4ED8",
+      "peso": 0,
+      "b": "#0f172a",
+      "resultado": "#0F172A"
+    },
+    {
+      "a": "#1d4ed8",
+      "peso": 0.62,
+      "b": "#0f172a",
+      "resultado": "#183996"
+    }
   ],
   "textoMasLegible": [
-    { "fondo": "#1D4ED8", "candidatos": ["#FFFFFF", "#0F172A"], "resultado": "#FFFFFF" },
-    { "fondo": "#F2B705", "candidatos": ["#FFFFFF", "#1F2328"], "resultado": "#1F2328" },
-    { "fondo": "#777777", "candidatos": ["#ffffff", "#FFFFFF"], "resultado": "#ffffff" },
-    { "fondo": "#1D4ED8", "candidatos": ["#ffffff"], "resultado": "#ffffff" }
+    {
+      "fondo": "#1D4ED8",
+      "candidatos": ["#FFFFFF", "#0F172A"],
+      "resultado": "#FFFFFF"
+    },
+    {
+      "fondo": "#F2B705",
+      "candidatos": ["#FFFFFF", "#1F2328"],
+      "resultado": "#1F2328"
+    },
+    {
+      "fondo": "#777777",
+      "candidatos": ["#ffffff", "#FFFFFF"],
+      "resultado": "#ffffff"
+    },
+    {
+      "fondo": "#1D4ED8",
+      "candidatos": ["#ffffff"],
+      "resultado": "#ffffff"
+    }
+  ],
+  "predefinidos": [
+    {
+      "id": "a",
+      "name": "Violeta tienda",
+      "colors": {
+        "primary": "#4C2A92",
+        "secondary": "#F5A524",
+        "background": "#F4F4F6",
+        "surface": "#FFFFFF",
+        "contrast": "#17151C"
+      },
+      "tokens": {
+        "--ws-primary": "#4C2A92",
+        "--ws-primary-strong": "#2E1A5C",
+        "--ws-primary-soft": "#EFE9FB",
+        "--ws-on-primary": "#FFFFFF",
+        "--ws-on-primary-soft": "#3A1F72",
+        "--ws-accent": "#F5A524",
+        "--ws-accent-strong": "color-mix(in srgb, #F5A524 78%, #17151C)",
+        "--ws-accent-soft": "color-mix(in srgb, #F5A524 9%, #FFFFFF)",
+        "--ws-on-accent": "#2B1700",
+        "--ws-link": "#4C2A92",
+        "--ws-focus-ring": "#4C2A92",
+        "--ws-bg": "#F4F4F6",
+        "--ws-surface": "#FFFFFF",
+        "--ws-surface-subtle": "color-mix(in srgb, #17151C 3%, #FFFFFF)",
+        "--ws-surface-soft": "color-mix(in srgb, #17151C 9%, #FFFFFF)",
+        "--ws-ink": "#17151C",
+        "--ws-text": "#17151C",
+        "--ws-muted-strong": "color-mix(in srgb, #17151C 82%, #FFFFFF)",
+        "--ws-muted": "#5B5866",
+        "--ws-border": "color-mix(in srgb, #17151C 14%, #FFFFFF)",
+        "--ws-border-strong": "color-mix(in srgb, #17151C 50%, #FFFFFF)",
+        "--ws-disabled": "color-mix(in srgb, #17151C 10%, #FFFFFF)",
+        "--ws-disabled-text": "color-mix(in srgb, #17151C 68%, #FFFFFF)",
+        "--ws-dot": "color-mix(in srgb, #4C2A92 30%, #FFFFFF)",
+        "--ws-footer": "#1E1530",
+        "--ws-footer-text": "#CFC8E0",
+        "--ws-footer-rule": "color-mix(in srgb, #FFFFFF 15%, #17151C)",
+        "--ws-footer-heading": "#FFFFFF"
+      }
+    },
+    {
+      "id": "b",
+      "name": "Azul cobalto",
+      "colors": {
+        "primary": "#1D4ED8",
+        "secondary": "#C2410C",
+        "background": "#F3F5F8",
+        "surface": "#FFFFFF",
+        "contrast": "#0F172A"
+      },
+      "tokens": {
+        "--ws-primary": "#1d4ed8",
+        "--ws-primary-strong": "color-mix(in srgb, var(--ws-primary) 62%, #0f172a)",
+        "--ws-primary-soft": "color-mix(in srgb, var(--ws-primary) 10%, #ffffff)",
+        "--ws-on-primary": "#ffffff",
+        "--ws-on-primary-soft": "var(--ws-primary-strong)",
+        "--ws-accent": "#c2410c",
+        "--ws-accent-strong": "color-mix(in srgb, var(--ws-accent) 78%, #0f172a)",
+        "--ws-accent-soft": "color-mix(in srgb, var(--ws-accent) 9%, #ffffff)",
+        "--ws-on-accent": "#ffffff",
+        "--ws-link": "var(--ws-primary)",
+        "--ws-focus-ring": "var(--ws-primary)",
+        "--ws-bg": "#f3f5f8",
+        "--ws-surface": "#ffffff",
+        "--ws-surface-subtle": "#f6f8fa",
+        "--ws-surface-soft": "#e9edf3",
+        "--ws-ink": "#0f172a",
+        "--ws-text": "#1e293b",
+        "--ws-muted-strong": "#3b4759",
+        "--ws-muted": "#526075",
+        "--ws-border": "#dde3ec",
+        "--ws-border-strong": "#8a96a8",
+        "--ws-disabled": "#e6e9ee",
+        "--ws-disabled-text": "#5a6577",
+        "--ws-dot": "#b9c8f2",
+        "--ws-footer": "#0f1b33",
+        "--ws-footer-text": "#c5cedd",
+        "--ws-footer-rule": "#22314f",
+        "--ws-footer-heading": "#ffffff"
+      }
+    },
+    {
+      "id": "c",
+      "name": "Grafito y ámbar",
+      "colors": {
+        "primary": "#F2B705",
+        "secondary": "#1F2328",
+        "background": "#F2F3F5",
+        "surface": "#FFFFFF",
+        "contrast": "#1F2328"
+      },
+      "tokens": {
+        "--ws-primary": "#F2B705",
+        "--ws-primary-strong": "color-mix(in srgb, #F2B705 88%, #1F2328)",
+        "--ws-primary-soft": "#FFF6D6",
+        "--ws-on-primary": "#1F2328",
+        "--ws-on-primary-soft": "#8A5A00",
+        "--ws-accent": "#1F2328",
+        "--ws-accent-strong": "color-mix(in srgb, #1F2328 78%, #1F2328)",
+        "--ws-accent-soft": "color-mix(in srgb, #1F2328 9%, #FFFFFF)",
+        "--ws-on-accent": "#F2B705",
+        "--ws-link": "#1F2328",
+        "--ws-focus-ring": "#1F2328",
+        "--ws-bg": "#F2F3F5",
+        "--ws-surface": "#FFFFFF",
+        "--ws-surface-subtle": "color-mix(in srgb, #1F2328 3%, #FFFFFF)",
+        "--ws-surface-soft": "color-mix(in srgb, #1F2328 9%, #FFFFFF)",
+        "--ws-ink": "#1F2328",
+        "--ws-text": "#1F2328",
+        "--ws-muted-strong": "color-mix(in srgb, #1F2328 82%, #FFFFFF)",
+        "--ws-muted": "#555B65",
+        "--ws-border": "color-mix(in srgb, #1F2328 14%, #FFFFFF)",
+        "--ws-border-strong": "color-mix(in srgb, #1F2328 50%, #FFFFFF)",
+        "--ws-disabled": "color-mix(in srgb, #1F2328 10%, #FFFFFF)",
+        "--ws-disabled-text": "color-mix(in srgb, #1F2328 68%, #FFFFFF)",
+        "--ws-dot": "color-mix(in srgb, #F2B705 30%, #FFFFFF)",
+        "--ws-footer": "#16181C",
+        "--ws-footer-text": "#C9CDD3",
+        "--ws-footer-rule": "color-mix(in srgb, #FFFFFF 15%, #1F2328)",
+        "--ws-footer-heading": "#FFFFFF"
+      }
+    }
+  ],
+  "paresPredefinidos": {
+    "a": {
+      "contrast/background": 16.47,
+      "contrast/surface": 18.1,
+      "muted/background": 6.3,
+      "muted/surface": 6.92,
+      "onPrimary/primary": 10.23,
+      "onPrimary/primaryStrong": 14.8,
+      "onPrimarySoft/primarySoft": 10.95,
+      "onAccent/accent": 8.4,
+      "link/background": 9.31,
+      "link/surface": 10.23,
+      "focusRing/background": 9.31,
+      "focusRing/surface": 10.23,
+      "footerText/footer": 10.78,
+      "disabledText/disabled": 5.09
+    },
+    "b": {
+      "contrast/background": 16.35,
+      "contrast/surface": 17.85,
+      "muted/background": 5.85,
+      "muted/surface": 6.39,
+      "onPrimary/primary": 6.7,
+      "onPrimary/primaryStrong": 10.17,
+      "onPrimarySoft/primarySoft": 8.69,
+      "onAccent/accent": 5.18,
+      "link/background": 6.14,
+      "link/surface": 6.7,
+      "focusRing/background": 6.14,
+      "focusRing/surface": 6.7,
+      "footerText/footer": 10.81,
+      "disabledText/disabled": 4.84
+    },
+    "c": {
+      "contrast/background": 14.23,
+      "contrast/surface": 15.8,
+      "muted/background": 6.16,
+      "muted/surface": 6.84,
+      "onPrimary/primary": 8.69,
+      "onPrimary/primaryStrong": 7.02,
+      "onPrimarySoft/primarySoft": 5.48,
+      "onAccent/accent": 8.69,
+      "link/background": 14.23,
+      "link/surface": 15.8,
+      "focusRing/background": 14.23,
+      "focusRing/surface": 15.8,
+      "footerText/footer": 11.14,
+      "disabledText/disabled": 4.53
+    }
+  },
+  "tokensDelTema": [
+    {
+      "nombre": "principal claro sobre la base de B: texto, enlace y foco pasan al contraste",
+      "colores": {
+        "primary": "#FFD400",
+        "secondary": "#C2410C",
+        "background": "#F3F5F8",
+        "surface": "#FFFFFF",
+        "contrast": "#0F172A"
+      },
+      "heredaDe": "b",
+      "tokens": {
+        "--ws-primary": "#FFD400",
+        "--ws-primary-strong": "color-mix(in srgb, #FFD400 88%, #0F172A)",
+        "--ws-primary-soft": "color-mix(in srgb, #FFD400 10%, #FFFFFF)",
+        "--ws-on-primary": "#0F172A",
+        "--ws-on-primary-soft": "#0F172A",
+        "--ws-accent": "#C2410C",
+        "--ws-accent-strong": "color-mix(in srgb, #C2410C 78%, #0F172A)",
+        "--ws-accent-soft": "color-mix(in srgb, #C2410C 9%, #FFFFFF)",
+        "--ws-on-accent": "#FFFFFF",
+        "--ws-link": "#0F172A",
+        "--ws-focus-ring": "#0F172A",
+        "--ws-bg": "#f3f5f8",
+        "--ws-surface": "#ffffff",
+        "--ws-surface-subtle": "#f6f8fa",
+        "--ws-surface-soft": "#e9edf3",
+        "--ws-ink": "#0f172a",
+        "--ws-text": "#1e293b",
+        "--ws-muted-strong": "#3b4759",
+        "--ws-muted": "#526075",
+        "--ws-border": "#dde3ec",
+        "--ws-border-strong": "#8a96a8",
+        "--ws-disabled": "#e6e9ee",
+        "--ws-disabled-text": "#5a6577",
+        "--ws-dot": "#b9c8f2",
+        "--ws-footer": "#0f1b33",
+        "--ws-footer-text": "#c5cedd",
+        "--ws-footer-rule": "#22314f",
+        "--ws-footer-heading": "#ffffff"
+      },
+      "pares": {
+        "contrast/background": 16.35,
+        "contrast/surface": 17.85,
+        "muted/background": 5.85,
+        "muted/surface": 6.39,
+        "onPrimary/primary": 12.47,
+        "onPrimary/primaryStrong": 9.79,
+        "onPrimarySoft/primarySoft": 17.17,
+        "onAccent/accent": 5.18,
+        "link/background": 16.35,
+        "link/surface": 17.85,
+        "focusRing/background": 16.35,
+        "focusRing/surface": 17.85,
+        "footerText/footer": 10.81,
+        "disabledText/disabled": 4.84
+      }
+    },
+    {
+      "nombre": "#123456 sobre la base de B (mayúsculas distintas) hereda la escala neutra de B",
+      "colores": {
+        "primary": "#123456",
+        "secondary": "#C2410C",
+        "background": "#f3f5f8",
+        "surface": "#ffffff",
+        "contrast": "#0f172a"
+      },
+      "heredaDe": "b",
+      "tokens": {
+        "--ws-primary": "#123456",
+        "--ws-primary-strong": "color-mix(in srgb, #123456 62%, #0F172A)",
+        "--ws-primary-soft": "color-mix(in srgb, #123456 10%, #FFFFFF)",
+        "--ws-on-primary": "#FFFFFF",
+        "--ws-on-primary-soft": "color-mix(in srgb, #123456 62%, #0F172A)",
+        "--ws-accent": "#C2410C",
+        "--ws-accent-strong": "color-mix(in srgb, #C2410C 78%, #0F172A)",
+        "--ws-accent-soft": "color-mix(in srgb, #C2410C 9%, #FFFFFF)",
+        "--ws-on-accent": "#FFFFFF",
+        "--ws-link": "#123456",
+        "--ws-focus-ring": "#123456",
+        "--ws-bg": "#f3f5f8",
+        "--ws-surface": "#ffffff",
+        "--ws-surface-subtle": "#f6f8fa",
+        "--ws-surface-soft": "#e9edf3",
+        "--ws-ink": "#0f172a",
+        "--ws-text": "#1e293b",
+        "--ws-muted-strong": "#3b4759",
+        "--ws-muted": "#526075",
+        "--ws-border": "#dde3ec",
+        "--ws-border-strong": "#8a96a8",
+        "--ws-disabled": "#e6e9ee",
+        "--ws-disabled-text": "#5a6577",
+        "--ws-dot": "#b9c8f2",
+        "--ws-footer": "#0f1b33",
+        "--ws-footer-text": "#c5cedd",
+        "--ws-footer-rule": "#22314f",
+        "--ws-footer-heading": "#ffffff"
+      },
+      "pares": {
+        "contrast/background": 16.35,
+        "contrast/surface": 17.85,
+        "muted/background": 5.85,
+        "muted/surface": 6.39,
+        "onPrimary/primary": 12.72,
+        "onPrimary/primaryStrong": 14.72,
+        "onPrimarySoft/primarySoft": 12.27,
+        "onAccent/accent": 5.18,
+        "link/background": 11.64,
+        "link/surface": 12.72,
+        "focusRing/background": 11.64,
+        "focusRing/surface": 12.72,
+        "footerText/footer": 10.81,
+        "disabledText/disabled": 4.84
+      }
+    },
+    {
+      "nombre": "base oscura sin predefinido: escala derivada; el texto sobre el principal queda bajo 4.5",
+      "colores": {
+        "primary": "#3B82F6",
+        "secondary": "#F97316",
+        "background": "#111318",
+        "surface": "#1B1E25",
+        "contrast": "#F5F7FA"
+      },
+      "heredaDe": null,
+      "tokens": {
+        "--ws-primary": "#3B82F6",
+        "--ws-primary-strong": "#3B82F6",
+        "--ws-primary-soft": "color-mix(in srgb, #3B82F6 10%, #1B1E25)",
+        "--ws-on-primary": "#FFFFFF",
+        "--ws-on-primary-soft": "#F5F7FA",
+        "--ws-accent": "#F97316",
+        "--ws-accent-strong": "color-mix(in srgb, #F97316 78%, #F5F7FA)",
+        "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
+        "--ws-on-accent": "#FFFFFF",
+        "--ws-link": "#3B82F6",
+        "--ws-focus-ring": "#3B82F6",
+        "--ws-bg": "#111318",
+        "--ws-surface": "#1B1E25",
+        "--ws-surface-subtle": "color-mix(in srgb, #F5F7FA 3%, #1B1E25)",
+        "--ws-surface-soft": "color-mix(in srgb, #F5F7FA 9%, #1B1E25)",
+        "--ws-ink": "#F5F7FA",
+        "--ws-text": "#F5F7FA",
+        "--ws-muted-strong": "color-mix(in srgb, #F5F7FA 82%, #1B1E25)",
+        "--ws-muted": "color-mix(in srgb, #F5F7FA 68%, #1B1E25)",
+        "--ws-border": "color-mix(in srgb, #F5F7FA 14%, #1B1E25)",
+        "--ws-border-strong": "color-mix(in srgb, #F5F7FA 50%, #1B1E25)",
+        "--ws-disabled": "color-mix(in srgb, #F5F7FA 10%, #1B1E25)",
+        "--ws-disabled-text": "color-mix(in srgb, #F5F7FA 68%, #1B1E25)",
+        "--ws-dot": "color-mix(in srgb, #3B82F6 30%, #1B1E25)",
+        "--ws-footer": "#F5F7FA",
+        "--ws-footer-text": "color-mix(in srgb, #1B1E25 78%, #F5F7FA)",
+        "--ws-footer-rule": "color-mix(in srgb, #1B1E25 15%, #F5F7FA)",
+        "--ws-footer-heading": "#1B1E25"
+      },
+      "pares": {
+        "contrast/background": 17.31,
+        "contrast/surface": 15.54,
+        "muted/background": 8.73,
+        "muted/surface": 7.84,
+        "onPrimary/primary": 3.68,
+        "onPrimary/primaryStrong": 3.68,
+        "onPrimarySoft/primarySoft": 13.78,
+        "onAccent/accent": 2.8,
+        "link/background": 5.05,
+        "link/surface": 4.54,
+        "focusRing/background": 5.05,
+        "focusRing/surface": 4.54,
+        "footerText/footer": 7.77,
+        "disabledText/disabled": 5.86
+      }
+    }
   ]
 }

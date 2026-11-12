@@ -30,3 +30,27 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-02 | | TEST-01 rojo | `node --test tests/unit/domain/temas/contraste.rules.test.mjs` (desde `backend/`): primero `ERR_MODULE_NOT_FOUND`; con las tres funciones sin implementar, `# tests 4`, `# pass 1`, `# fail 3`, los tres por `Error: Sin implementar` (pasa el de formato inválido, porque el esbozo también lanza) | ídem |
 | TASK-02 | | TEST-01 verde | `# tests 4`, `# pass 4`, `# fail 0`. Casos en `casos-tema.json`: blanco y negro 21; `#1D4ED8` sobre blanco 6.70 (6.7016); `#F2B705` sobre blanco 1.8 (1.8180); simetría; minúsculas; `mezclarSrgb` `#183996` y `#E8EDFB`, pesos 1 y 0; `textoMasLegible` con empate | ídem |
 | TASK-02 | | `npm run verify` | Exit 0: agentes, sintaxis (52 archivos), formato, lint, arquitectura, build, estructura OK, frontend 22/22, BFF 7/7 y smoke test OK. Prettier sobre los tres archivos: sin cambios | ídem |
+| TASK-03 | | Ejecución | Sin delegar. Los valores esperados de `casos-tema.json` (mapas de A, B y C, pares y los tres casos de TEST-04) salieron de un cálculo independiente del código de producción, hecho a partir de la tabla de tokens del plan | Claude Code, Opus 5.5 (`claude-opus-5-5`), esfuerzo alto, no delegada |
+| TASK-03 | | TEST-04 rojo | `node --test tests/unit/domain/temas/tema.rules.test.mjs`: primero `ERR_MODULE_NOT_FOUND`; con las exportaciones sin implementar, `# tests 10`, `# pass 1`, `# fail 9` (pasa la de valores no calculables, porque el esbozo también lanza) | ídem |
+| TASK-03 | | TEST-04 verde | `# tests 10`, `# pass 10`: principal claro `#FFD400` sobre la base de B (texto, enlace y foco en `#0F172A`); `#123456` sobre la base de B en minúsculas (escala neutra de B y `primary-strong` = `color-mix(in srgb, #123456 62%, #0F172A)`); base oscura `#111318`/`#1B1E25`/`#F5F7FA` con principal `#3B82F6` (texto sobre el principal 3.68, bajo el mínimo; contraste sobre los fondos 17.31 y 15.54) | ídem |
+| TASK-03 | | TEST-02 y TEST-03 rojo | `node --test tests/unit/domain/temas/temas-predefinidos.test.mjs` con `TEMAS_PREDEFINIDOS` vacío: `# tests 10`, `# pass 1`, `# fail 9` (pasa la de lista congelada) | ídem |
+| TASK-03 | | TEST-02 y TEST-03 verde | `# tests 10`, `# pass 10`: ids, nombres y cinco colores; valores presentados de A y C; B literal de `tokens.css`; mapa completo de 28 tokens en orden; igual a `casos-tema.json`; los 14 pares de A, B y C en AA ([tabla](#pares-de-contraste-de-a-b-y-c-task-03)); en C, `on-primary`, `link` y `focus-ring` calculan `#1F2328`. BFF: 27/27 | ídem |
+| TASK-03 | | `npm run verify` | Exit 0: sintaxis (56 archivos), formato, lint, arquitectura, build, estructura OK, frontend 22/22, BFF 27/27 y smoke test OK. Prettier sobre los archivos tocados | ídem |
+
+### Pares de contraste de A, B y C (TASK-03)
+
+Medidos por TEST-03 con `medirPares` sobre los mapas reales de `temas-predefinidos.mjs`, resolviendo las `var()` y `color-mix()` de B. Fórmula de WCAG 2.1, con dos decimales. El texto de contraste es `--ws-ink`, que es el color de contraste del tema. Todos alcanzan su mínimo: 4.5, o 3 en el foco.
+
+| Par | B | A | C | Medida previa del plan (B / A / C) |
+|---|---:|---:|---:|---|
+| Contraste sobre fondo / superficie | 16.35 / 17.85 | 16.47 / 18.10 | 14.23 / 15.80 | 16.4 / 17.9 · 16.5 / 18.1 · 14.2 / 15.8 (especificación) |
+| Texto secundario sobre fondo / superficie | 5.85 / 6.39 | 6.30 / 6.92 | 6.16 / 6.84 | 5.9 / 6.4 · 6.3 / 6.9 · 6.2 / 6.8 |
+| Texto sobre el principal / el principal fuerte | 6.70 / 10.17 | 10.23 / 14.80 | 8.69 / 7.02 | 6.7 / 10.2 · 10.2 / 14.8 · 8.7 / 7.0 |
+| Texto sobre el tinte | 8.69 | 10.95 | 5.48 | 8.7 · 11.0 · 5.5 |
+| Texto sobre el acento | 5.18 | 8.40 | 8.69 | 5.2 · 8.4 · 8.7 |
+| Enlace sobre fondo / superficie | 6.14 / 6.70 | 9.31 / 10.23 | 14.23 / 15.80 | 6.1 / 6.7 · 9.3 / 10.2 · 14.2 / 15.8 |
+| Foco sobre fondo / superficie (mínimo 3) | 6.14 / 6.70 | 9.31 / 10.23 | 14.23 / 15.80 | igual que el enlace |
+| Pie | 10.81 | 10.78 | 11.14 | 10.8 · 10.8 · 11.1 |
+| Texto deshabilitado | 4.84 | 5.09 | 4.53 | 4.8 · 5.1 · 4.5 |
+
+Coinciden con la medida previa salvo B «texto secundario sobre fondo»: 5.85 frente a 5.9 (5.846 redondea a 5.8), una diferencia de redondeo que no cambia el resultado. El texto deshabilitado de C queda en 4.53, sobre el mínimo, así que no hace falta el valor explícito que preveía el plan.
