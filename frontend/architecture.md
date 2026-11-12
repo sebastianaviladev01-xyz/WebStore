@@ -128,11 +128,13 @@ El nombre del archivo indica su rol con un sufijo. La parte de negocio va en esp
 - El carrito guarda solo id y cantidad en `localStorage`; precio y stock se toman siempre del catálogo vigente.
 - Contrato: [`backend/docs/BFF-CONTRACT.md`](../backend/docs/BFF-CONTRACT.md).
 
-**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de implementar.** Hasta que se implemente, los colores siguen saliendo solo de `tokens.css` y de Contenido. Las tareas que lo implementen actualizarán §1 a §6 con el estado real.
+Temas (feature [002](../docs/specs/features/002-temas-configurables/planning.md)):
 
-- Tema activo ([ADR-0010](../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)): los dos `index.html` cargarán `/bff/appearance/theme.css`, que bloquea el primer pintado. `tokens.css` queda como la paleta B y el respaldo. **Riesgo aceptado:** si el BFF acepta la conexión y no responde, la página espera la hoja hasta el tiempo límite del navegador; si la rechaza o responde con error, se ve B.
+- Tema activo ([ADR-0010](../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)): los dos `index.html` cargan `/bff/appearance/theme.css` con un `<link rel="stylesheet">` que bloquea el primer pintado. La hoja redefine los tokens del tema en un bloque `:root:root`, que gana a `tokens.css`. `tokens.css` es la paleta B y el respaldo, y las plantillas y los estilos solo usan tokens (lo comprueba `tools/validate-structure.mjs`, TEST-18). Durante la sesión, `TemasFacade` aplica los cambios con `style.setProperty` sobre `<html>`.
+- Build: el `<link>` lleva `data-beasties-skip`. La optimización de CSS crítico de `@angular/build` (beasties) intenta leer del disco las hojas de `index.html` y avisa «Unable to locate stylesheet /bff/appearance/theme.css». Con el atributo, la deja fuera: el build no avisa y la hoja sigue bloqueando el pintado (sin `media="print"`). Lo comprueba TEST-18 (c).
+- **Riesgo aceptado:** si el BFF acepta la conexión y no responde, la página espera la hoja hasta el tiempo límite del navegador. Si la rechaza o responde con error, se ve B (TEST-22).
 - Cálculo ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)): el BFF calcula los tokens y el contraste. El dominio de la feature `temas` del Admin los replica solo para la vista previa, y la tienda no calcula nada.
-- Vista previa en modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): la tuerca guardará el id del tema en la cookie `ws_tema_vista_previa`, que comparten la tienda y el Admin y que el BFF lee solo en modo demo.
+- Vista previa en modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): `TemasFacade.verTema` guarda el id del tema en la cookie `ws_tema_vista_previa` (`Path=/`, `SameSite=Lax`, 30 días, `Secure` con `https`), que comparten la tienda y el Admin y que el BFF lee solo en modo demo para servir `theme.css`. La tuerca que la usa llega con la tarea 16.
 
 ## 6. Pruebas
 

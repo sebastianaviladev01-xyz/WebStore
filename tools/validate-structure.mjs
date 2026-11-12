@@ -202,5 +202,18 @@ informar(
   ),
 );
 
+// (c) Los dos index.html cargan theme.css antes de que arranque Angular, con un <link> que bloquea el pintado:
+// sin media ni async, y fuera de la optimización de CSS crítico (data-beasties-skip, frontend/architecture.md §5).
+const LINK_DEL_TEMA = /<link rel="stylesheet" href="\/bff\/appearance\/theme\.css" data-beasties-skip \/>/;
+informar(
+  'TEST-18 (c): los dos index.html cargan /bff/appearance/theme.css',
+  ['frontend/src/index.html', 'frontend/projects/admin/src/index.html']
+    .filter((archivo) => !LINK_DEL_TEMA.test(read(archivo)))
+    .map(
+      (archivo) =>
+        `${archivo}: falta <link rel="stylesheet" href="/bff/appearance/theme.css" data-beasties-skip />`,
+    ),
+);
+
 if (failed) process.exit(1);
 console.log('\nEstructura contractual WebStore: OK');
