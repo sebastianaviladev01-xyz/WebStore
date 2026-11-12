@@ -13,6 +13,7 @@ import { enviosRoutes } from './api/routes/envios.routes.mjs';
 import { pedidosRoutes } from './api/routes/pedidos.routes.mjs';
 import { reclamosRoutes } from './api/routes/reclamos.routes.mjs';
 import { saludRoutes } from './api/routes/salud.routes.mjs';
+import { temasRoutes } from './api/routes/temas.routes.mjs';
 import { createRequestHandler } from './api/router.mjs';
 import { createAdminSesionesUseCases } from './application/admin/admin-sesiones.use-cases.mjs';
 import { createSnapshotUseCases } from './application/admin/snapshot.use-cases.mjs';
@@ -23,6 +24,8 @@ import { createCuentasUseCases } from './application/cuentas/cuentas.use-cases.m
 import { createEnviosQueries } from './application/envios/envios.queries.mjs';
 import { createPedidosUseCases } from './application/pedidos/pedidos.use-cases.mjs';
 import { createReclamosUseCases } from './application/reclamos/reclamos.use-cases.mjs';
+import { createTemasQueries } from './application/temas/temas.queries.mjs';
+import { createTemasUseCases } from './application/temas/temas.use-cases.mjs';
 import { readConfig } from './infrastructure/config.mjs';
 import { createJsonStateStore } from './infrastructure/persistencia/json-state-store.mjs';
 import { hashPassword, passwordMatches } from './infrastructure/seguridad/password-hasher.mjs';
@@ -46,6 +49,12 @@ const routes = [
   ...checkoutRoutes(createCheckoutUseCases({ store, security })),
   ...pedidosRoutes(createPedidosUseCases({ store, security })),
   ...adminRoutes(adminSesiones, createSnapshotUseCases({ store, security })),
+  ...temasRoutes({
+    consultas: createTemasQueries({ store }),
+    casosDeUso: createTemasUseCases({ store, security }),
+    adminSesiones,
+    modoDemo: config.demoMode,
+  }),
 ];
 
 const server = createServer(createRequestHandler({ routes, allowedOrigins: config.allowedOrigins }));

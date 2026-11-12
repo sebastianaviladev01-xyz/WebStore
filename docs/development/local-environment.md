@@ -59,6 +59,27 @@ Usa `curl.exe`: en Windows PowerShell 5.1, `curl` es un alias de `Invoke-WebRequ
 2. Abre `http://localhost:4300/login` y entra con un usuario de demostración de cada rol ([accesos de demostración](../../README.md#accesos-de-demostración)). El menú cambia según el rol.
 3. Si vas a comprar, registrar cuentas o cambiar datos en el Admin, trabaja sobre una [copia de los datos](#trabajar-sobre-una-copia).
 
+### Modo demo
+
+El modo demo muestra la tuerca «Cambiar tema» en la tienda y en el Admin, para enseñar los temas sin activarlos para nadie más ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Lo enciende el BFF con `WEBSTORE_DEMO_MODE=true`; los frontends no cambian. Solo `true` lo enciende (sin distinguir mayúsculas ni espacios en los extremos): sin la variable, o con `false`, `1` o `sí`, está apagado. Una instalación para un cliente no la define.
+
+En PowerShell, en la terminal del BFF:
+
+```powershell
+$env:WEBSTORE_DEMO_MODE = "true"
+npm run start:bff
+```
+
+La variable sigue activa en esa ventana. Para apagar el modo demo: `Remove-Item Env:WEBSTORE_DEMO_MODE` y reinicia el BFF.
+
+En Bash: `WEBSTORE_DEMO_MODE=true npm run start:bff`.
+
+- Comprobación: `curl.exe -s http://localhost:3000/bff/appearance` responde `"demoMode":true` y trae los tres temas predefinidos y los propios.
+- El tema que se elige con la tuerca se recuerda en la cookie `ws_tema_vista_previa` del navegador. El BFF solo la lee en modo demo, para servir `/bff/appearance/theme.css` con ese tema; no la guarda y no cambia el tema activo de la tienda.
+- En `localhost`, la tienda (4200) y el Admin (4300) comparten la cookie, porque las cookies no distinguen puertos: el tema elegido en la tienda se ve también en el Admin.
+- **Limitación con túneles:** si la demo se publica con túneles de `trycloudflare.com`, la tienda y el Admin reciben subdominios distintos de un dominio que está en la [Public Suffix List](https://publicsuffix.org/list/public_suffix_list.dat). El navegador no permite una cookie compartida para ese dominio, así que cada aplicación recuerda su propia vista previa. Compartirla entre la tienda y el Admin solo funciona en `localhost` y en un despliegue con dominio propio y subdominios.
+- La suite e2e arranca su BFF en modo demo ([`frontend/playwright.config.ts`](../../frontend/playwright.config.ts)).
+
 ### Apagar
 
 - Ctrl+C en cada una de las tres terminales.
@@ -118,6 +139,29 @@ Con los tres servidores levantados, desde `frontend/`:
 - Las capturas van a `frontend/output/`, que no se versiona. Para comparar, guarda las de antes en una carpeta propia con `VISUAL_QA_OUTPUT` antes de cambiar el código.
 - Usa un perfil temporal (`--user-data-dir`), no tu perfil personal, y mantén el puerto en `127.0.0.1`.
 - Los anchos de referencia son los de la [validación](../../frontend/docs/VALIDATION.md#responsive-y-revisión-visual): 1440, 1280, 1024, 768, 390 y 360 px.
+
+### Puertos de las capturas
+
+Cuando los puertos 3000, 4200 y 4300 están ocupados por otra demo que no se debe detener (por ejemplo, la demo pública del equipo desde el checkout principal), las capturas y el QA manual de un worktree usan los puertos de la suite e2e: BFF en 3400, tienda en 4400 y Admin en 4500, con el proxy de [`frontend/proxy.e2e.conf.json`](../../frontend/proxy.e2e.conf.json). En PowerShell, desde la raíz del worktree y cada uno en su terminal:
+
+```powershell
+$env:PORT = "3400"
+$env:WEBSTORE_DATA_FILE = "$PWD\backend\data-capturas-trabajo.json"
+$env:WEBSTORE_ALLOWED_ORIGINS = "http://localhost:4400,http://localhost:4500"
+$env:WEBSTORE_DEMO_MODE = "true"   # solo si la captura es del modo demo
+node backend/src/main.mjs
+```
+
+```powershell
+cd frontend
+npx ng serve storefront --port 4400 --proxy-config proxy.e2e.conf.json
+npx ng serve admin --port 4500 --proxy-config proxy.e2e.conf.json
+```
+
+En Bash: `PORT=3400 WEBSTORE_DATA_FILE="$PWD/backend/data-capturas-trabajo.json" WEBSTORE_ALLOWED_ORIGINS=http://localhost:4400,http://localhost:4500 node backend/src/main.mjs`, con `WEBSTORE_DEMO_MODE=true` delante si hace falta.
+
+- `WEBSTORE_DATA_FILE` lleva una ruta absoluta a una copia de trabajo, nunca `backend/data.json` ([trabajar sobre una copia](#trabajar-sobre-una-copia)). El BFF migra y reescribe el archivo con el que arranca, así que la copia de referencia no se abre directamente.
+- Nunca a la vez que `npm run test:e2e`, que levanta sus propios servidores en esos puertos: detenlos antes de la suite.
 
 ## Problemas frecuentes
 

@@ -19,7 +19,8 @@ function problemFor(error) {
 
 /**
  * Handler de node:http. Las rutas se evalúan en orden; la primera que coincide en método y ruta responde.
- * Cada ruta es `{ method, path, handle({ req, url, path }) }` y `handle` devuelve `{ status, body }`.
+ * Cada ruta es `{ method, path, handle({ req, url, path }) }` y `handle` devuelve `{ status, body }`, o
+ * `{ status, headers, text }` para una respuesta que no es JSON (`css()`).
  */
 export function createRequestHandler({ routes, allowedOrigins }) {
   const respond = createResponder(allowedOrigins);
@@ -34,6 +35,7 @@ export function createRequestHandler({ routes, allowedOrigins }) {
       );
       if (!route) throw new HttpError(404, 'ROUTE_NOT_FOUND', 'Ruta no encontrada.');
       const result = await route.handle({ req, url, path });
+      if ('text' in result) return respond.text(res, result);
       return result.status === 204
         ? respond.empty(req, res)
         : respond.json(req, res, result.status, result.body);

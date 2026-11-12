@@ -1,7 +1,7 @@
 /**
- * TEST-11 (parte sin rutas nuevas): levanta el BFF real con un archivo de estado temporal (nunca
- * `backend/data.json`) y comprueba la migración `schemaVersion: 3` en el archivo guardado y por HTTP.
- * La parte de `/bff/appearance` llega con sus rutas (TASK-11).
+ * TEST-11: levanta el BFF real con un archivo de estado temporal (nunca `backend/data.json`) y comprueba la
+ * migración `schemaVersion: 3` en el archivo guardado y por HTTP: `/bff/content/settings` sin colores y
+ * `/bff/appearance` con el tema migrado activo (o `b` si no había archivo).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -54,8 +54,10 @@ test('un estado v2 con colores propios se migra a «Colores de Contenido» activ
   );
   try {
     let publicas;
+    let apariencia;
     await conBff(3109, dataFile, async (base) => {
       publicas = await (await fetch(`${base}/bff/content/settings`)).json();
+      apariencia = await (await fetch(`${base}/bff/appearance`)).json();
     });
     assert.equal(publicas.storeName, 'Tienda migrada');
     assert.ok(!('primaryColor' in publicas) && !('secondaryColor' in publicas));
@@ -75,6 +77,10 @@ test('un estado v2 con colores propios se migra a «Colores de Contenido» activ
     });
     assert.equal(guardado.appearance.activeThemeId, tema.id);
     assert.equal(guardado.appearance.revision, 0);
+    assert.equal(apariencia.activeThemeId, tema.id);
+    assert.equal(apariencia.themes.length, 1);
+    assert.equal(apariencia.themes[0].name, 'Colores de Contenido');
+    assert.equal(apariencia.themes[0].tokens['--ws-primary'], '#123456');
 
     const hashTrasMigrar = await sha256(dataFile);
     await conBff(3109, dataFile);
@@ -93,9 +99,12 @@ test('un BFF sin archivo de estado arranca con B activo y Contenido sin colores'
   await unlink(dataFile).catch(() => {});
   try {
     let publicas;
+    let apariencia;
     await conBff(3110, dataFile, async (base) => {
       publicas = await (await fetch(`${base}/bff/content/settings`)).json();
+      apariencia = await (await fetch(`${base}/bff/appearance`)).json();
     });
+    assert.equal(apariencia.activeThemeId, 'b');
     assert.ok(!('primaryColor' in publicas) && !('secondaryColor' in publicas));
     const guardado = JSON.parse(await readFile(dataFile, 'utf8'));
     assert.deepEqual(guardado.appearance, { revision: 0, activeThemeId: 'b', customThemes: [] });

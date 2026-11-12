@@ -52,12 +52,12 @@ Variables de entorno, leídas una vez en [`src/infrastructure/config.mjs`](src/i
 | `WEBSTORE_NON_WORKING_DATES` | Feriados adicionales para el plazo de reclamos (`AAAA-MM-DD`, separados por coma) | vacío |
 | `WEBSTORE_ALLOWED_ORIGINS` | Orígenes CORS | `http://localhost:4200,http://localhost:4300` |
 | `WEBSTORE_OWNER_PASSWORD`, `WEBSTORE_ADMIN_PASSWORD`, `WEBSTORE_CATALOG_PASSWORD` | Contraseñas de los usuarios de demostración sembrados | las del [README](../README.md#accesos-de-demostración) |
+| `WEBSTORE_DEMO_MODE` | Modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): `/bff/appearance` trae todos los temas y `theme.css` sirve la vista previa de la cookie `ws_tema_vista_previa`. Solo `true` lo enciende, sin distinguir mayúsculas ni espacios en los extremos; cualquier otro valor (`false`, `1`, `sí`) lo deja apagado. Se expone como `demoMode` | apagado, también en producción |
 
 `backend/data.json` no se versiona: contiene hashes, sesiones y datos de clientes de prueba. Si no existe, el BFF lo crea desde el seed.
 
-**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de implementar:**
+**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de documentar:**
 
-- La variable `WEBSTORE_DEMO_MODE` encenderá el modo demo. Solo el valor `true` lo enciende, y por defecto está apagado, también en producción ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Pasará a la tabla anterior cuando `config.mjs` la lea.
 - La capacidad `temas`, con `appearance` en el estado y `SCHEMA_VERSION = 3`, se describirá en §1 y §2 con su implementación ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)).
 
 ## 4. Pruebas

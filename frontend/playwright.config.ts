@@ -61,6 +61,9 @@ export default defineConfig({
         WEBSTORE_EXPOSE_TEST_CODES: 'true',
         WEBSTORE_NON_WORKING_DATES: '',
         WEBSTORE_ALLOWED_ORIGINS: `${storefrontUrl},${adminUrl}`,
+        // Las e2e corren en modo demo (decisión 9 del plan de la feature 002): la tuerca está en todas las
+        // pantallas y no debe tapar ningún control (AC-15).
+        WEBSTORE_DEMO_MODE: 'true',
       },
     },
     {

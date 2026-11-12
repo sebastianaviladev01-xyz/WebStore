@@ -23,6 +23,12 @@ export function readConfig(env) {
       (env.NODE_ENV !== 'production' && env.WEBSTORE_EXPOSE_TEST_CODES !== 'false'),
     nonWorkingDates: csvSet(env.WEBSTORE_NON_WORKING_DATES ?? ''),
     allowedOrigins: csvSet(env.WEBSTORE_ALLOWED_ORIGINS ?? 'http://localhost:4200,http://localhost:4300'),
+    // Modo demo (D4, ADR-0012): solo `true`, sin distinguir mayúsculas ni espacios en los extremos. Cualquier
+    // otro valor, o ninguno, lo deja apagado, también fuera de producción.
+    demoMode:
+      String(env.WEBSTORE_DEMO_MODE ?? '')
+        .trim()
+        .toLowerCase() === 'true',
     // Contraseñas de las cuentas demo por rol, usadas al crear o migrar sus credenciales.
     demoPasswords: {
       superadmin: env.WEBSTORE_OWNER_PASSWORD ?? 'WebStore#2026',
