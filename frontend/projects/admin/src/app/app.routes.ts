@@ -100,6 +100,12 @@ export const adminRoutes: Routes = [
           import('./features/tienda/presentation/reclamaciones.page').then((m) => m.ReclamacionesPage),
         title: 'WebStore Admin | Reclamaciones',
       },
+      {
+        // Sin `permisoGuard`: la abren los tres roles; sin sesión, el `sesionGuard` del padre lleva a /login.
+        path: 'perfil',
+        loadComponent: () => import('./features/sesion/presentation/perfil.page').then((m) => m.PerfilPage),
+        title: 'WebStore Admin | Perfil',
+      },
     ],
   },
 ];

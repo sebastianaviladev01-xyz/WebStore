@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
+import { cuentasAdmin, desplegarGrupo, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
  * Libro de reclamaciones: el formulario público registra la solicitud con una constancia `REC-*` y el Admin
@@ -35,6 +35,8 @@ test('registrar un reclamo y verlo en la bandeja del Admin', async ({ page }) =>
   await expect(page.getByRole('button', { name: 'Registrar solicitud' })).toBeVisible();
 
   await ingresarAlAdmin(page, cuentasAdmin.superadmin, urls.admin);
+  // Al entrar solo está desplegado «General» (feature 003).
+  await desplegarGrupo(page, 'Ventas');
   await page
     .getByRole('navigation', { name: 'Administración' })
     .getByRole('link', { name: 'Reclamaciones' })

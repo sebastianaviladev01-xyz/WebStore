@@ -140,6 +140,7 @@ Particularidades aceptadas:
 - Hero: `clamp(36px, 4vw, 52px)`, peso 600, interletrado −0.03em. Secciones: `clamp(1.5rem, 2.2vw, 2rem)`. Títulos del Admin: 30 px.
 - Precios y cantidades usan números tabulares.
 - No hay etiquetas en mayúsculas sobre los títulos ("eyebrows"). Se quitaron las del Admin y la del 404. La etiqueta de campaña del CMS se muestra junto al botón.
+- Excepción: el rol del botón del menú de usuario del Admin va en mayúsculas (`uppercase`, solo de presentación). No es una etiqueta sobre un título, sino la segunda línea del botón, bajo el nombre; en el panel del menú y en Perfil, el rol se escribe tal cual.
 
 ## Forma, ritmo y estados
 
@@ -156,6 +157,7 @@ Particularidades aceptadas:
 
 - Hero: transición cruzada de 480 ms y texto escalonado. Como en la propuesta B, lleva dos botones (principal y "Ver todos los productos" en blanco) y debajo los puntos: la píldora activa se llena en 8 s y los inactivos son puntos de 6 px, con área táctil de 44 px. Junto a ellos va el botón de pausa (necesario por el avance automático). El número de diapositiva se anuncia solo a lectores de pantalla.
 - Mega-menú, drawer y filtros: entradas cortas (180–260 ms) sin animar el resto de la página.
+- Plegables del Admin (grupos del menú lateral y bloques del Resumen): la región se pliega y el indicador gira en 200 ms; con `prefers-reduced-motion`, sin transición.
 - Aparición al hacer scroll (`RevealDirective`, `[wsReveal]`): categorías, destacados, colecciones, campañas y beneficios entran con un desplazamiento de 24 px hacia arriba (40 px en horizontal) y opacidad, en 560–680 ms, escalonados 80 ms por elemento (máximo 320 ms).
   - Lo que ya está en pantalla al cargar no se anima.
   - Sin JavaScript, con `prefers-reduced-motion` o sin `IntersectionObserver`, el contenido se ve directamente.
@@ -175,7 +177,13 @@ La versión anterior a esta alineación sigue disponible en `/inicio-anterior` p
 ## Admin
 
 - La barra lateral es clara (superficie blanca y borde) y está agrupada en General, Catálogo, Ventas, Tienda y Accesos. Solo muestra los módulos que el rol puede abrir.
-- La cabecera muestra el nombre del usuario y el nombre del rol en español.
+- En escritorio, cada título de grupo es un botón plegable con un indicador: un chevron de 14 px, en el `muted` del título, que apunta abajo plegado y arriba desplegado. Al entrar solo está desplegado el grupo de la página actual, y navegar sin recargar conserva lo plegado. En móvil (por debajo de `lg:`) el menú sigue siendo la tira horizontal, con todos los enlaces y sin títulos de grupo.
+- Los cinco bloques del Resumen con título (no la fila de tarjetas) se pliegan con un botón en el propio título y un chevron de 16 px en `muted`, junto al texto y no en el borde derecho. Un bloque plegado conserva su encabezado y no se estira al alto de la fila. El estado del menú y de los bloques no se guarda en el navegador: al recargar o volver a iniciar sesión, vuelve al inicial.
+- Los indicadores usan el `muted` del tema activo, como los títulos de grupo, en A, B y C.
+- Los plegables usan las clases `ws-plegable`, `ws-plegable-lg`, `ws-plegable-contenido` y `ws-plegable-indicador` del `styles.css` del Admin: la región pasa de `1fr` a `0fr` y, plegada, queda con `visibility: hidden`, fuera del orden de tabulación.
+- La cabecera muestra «Actualizar» y el menú de usuario (`ws-admin-menu-usuario`). El botón lleva un círculo de 32 px con las iniciales (`bg-primary`), el nombre recortado con puntos suspensivos y el rol en mayúsculas debajo, y un chevron. A 375 px solo se ven las iniciales y el chevron; el nombre y el rol quedan para lectores de pantalla.
+- El panel del menú de usuario (`ws-menu-usuario-panel`) es un `MatMenu` con los tokens del tema: superficie, borde, radio de 14 px y `shadow-lg`. Muestra el nombre, el correo y el rol, un separador, «Perfil» y «Cerrar sesión», y cabe en la pantalla a 375 px.
+- Perfil (`/perfil`) es una tarjeta de solo lectura con el nombre, el correo y el rol con su descripción, en dos columnas desde `sm:` y en una en móvil.
 - Tablas con encabezado `subtle`, filas con borde `line` y la fila seleccionada en `primary-soft`.
 - Los mensajes de error del BFF (por ejemplo, "Debe quedar al menos un superadministrador activo") se muestran tal cual en el aviso del panel.
 

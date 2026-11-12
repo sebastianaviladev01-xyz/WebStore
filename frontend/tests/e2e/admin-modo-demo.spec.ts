@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
+import { botonMenuUsuario, cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 import {
   ANCHOS,
   elegirCConTeclado,
@@ -95,11 +95,7 @@ for (const { ancho, alto } of ANCHOS) {
     for (const ruta of ['/', '/productos', '/contenido']) {
       await page.goto(ruta);
       await sinCruceConLaTuerca(page, menu(page), `Menú del Admin en ${ruta}`);
-      await sinCruceConLaTuerca(
-        page,
-        page.getByRole('button', { name: 'Cerrar sesión' }),
-        `«Cerrar sesión» en ${ruta}`,
-      );
+      await sinCruceConLaTuerca(page, botonMenuUsuario(page), `Menú de usuario en ${ruta}`);
     }
   });
 }

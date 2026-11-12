@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
+import { cerrarSesionAdmin, cuentasAdmin, desplegarTodos, ingresarAlAdmin } from './apoyo/entorno';
 
 /**
  * Acceso al Admin y roles fijos: el superadministrador entra y recorre cada módulo desde el menú; el vendedor
@@ -42,6 +42,8 @@ test('el acceso rechaza una contraseña incorrecta', async ({ page }) => {
 test('el superadministrador recorre todos los módulos del panel', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   await expect(page.getByRole('banner')).toContainText(cuentasAdmin.superadmin.nombre);
+  // Con los grupos plegados (feature 003) sus enlaces no se ven; el recorrido los conserva desplegados.
+  await desplegarTodos(page);
   await expect(menu(page).getByRole('link')).toHaveCount(modulos.length);
 
   for (const { enlace, titulo, encabezado } of modulos) {
@@ -53,12 +55,13 @@ test('el superadministrador recorre todos los módulos del panel', async ({ page
   await expect(page.getByRole('heading', { level: 2, name: 'Superadministrador' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Vendedor' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Cerrar sesión' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Acceso administrativo' })).toBeVisible();
+  await cerrarSesionAdmin(page);
 });
 
 test('el vendedor no ve Usuarios ni los módulos comerciales', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
+  // Las ausencias se comprueban con todo desplegado: con un grupo plegado pasarían siempre.
+  await desplegarTodos(page);
 
   await expect(menu(page).getByRole('link', { name: 'Resumen' })).toBeVisible();
   await expect(menu(page).getByRole('link', { name: 'Inventario' })).toBeVisible();
