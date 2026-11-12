@@ -7,10 +7,10 @@
 
 | Dato | Valor |
 |---|---|
-| Rama y commit | `feature/003-ajustes-del-admin`, base `f8278e9` (`dev`). Commit final: se rellena en `sdd-verify` |
-| Fecha | 2026-11-12 (inicio de la implementación) |
-| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas y el e2e |
-| Datos | Capturas: copia `backend/data-capturas.json` (creada desde la semilla), con el BFF del worktree en 3400. E2E: archivo temporal de Playwright. Nunca `backend/data.json`: su sha256 en el checkout principal es `38154861…ab530c1` antes y después de TASK-01 |
+| Rama y commit | `feature/003-ajustes-del-admin`, base `f8278e9` (`dev`). Punta verificada: `a57ed48` («docs: marcar PBI-0032 como en curso»), que la sesión principal añadió sobre `e8c419c` (SHA de la fase 4); árbol limpio, sin push. El código de producción no cambia desde `9f40c04` (⚠ TASK-06): `git diff bbe67c7 a57ed48 -- frontend backend tools` solo toca `frontend/architecture.md` y `frontend/docs/VISUAL-SYSTEM.md` |
+| Fecha | 2026-11-12 (implementación y `sdd-verify`) |
+| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`, también en `sdd-verify`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas y el e2e |
+| Datos | Capturas: copia `backend/data-capturas.json` (creada desde la semilla), con el BFF del worktree en 3400. E2E: archivo temporal de Playwright. Nunca `backend/data.json`: su sha256 en el checkout principal es `38154861…ab530c1` antes y después de TASK-01, y también antes y después de `sdd-verify` |
 
 ## Ejecución por tarea
 
@@ -86,3 +86,132 @@ Durante la implementación, cada tarea añade aquí una fila breve en su mismo c
 | TASK-08 | `abcf76b` | Ejecución | Sin delegar: la hizo la sesión del bloque 6 (el catálogo permitía delegarla en `sonnet` con esfuerzo medio) | Claude Code, Opus 5.5 (`claude-opus-5-5`); el esfuerzo de la sesión no se pudo leer (el catálogo pide estándar · medio); sin delegar |
 | TASK-08 | | Documentos afectados | `frontend/architecture.md` (§3: `MenuUsuarioComponent` en `layout/` y Perfil en `sesion/`; §6: `usuario-admin.rules.spec.mjs` y las e2e `admin-menu-lateral`, `admin-resumen` y `admin-menu-usuario`); `frontend/docs/VISUAL-SYSTEM.md` (excepción del rol en mayúsculas, plegables en Movimiento y en Admin, menú de usuario y Perfil); [glosario](../../../architecture/glosario.md) («Perfil» e `inicialesDeUsuario` en «Usuario administrativo»); [trazabilidad](../../../planning/TRACEABILITY.md) (seis filas de la feature 003); [backlog](../../../planning/backlog.md) (PBI-0031 y PBI-0032 `en curso`, no `hecha`: solo están en la rama); [índice de features](../README.md) (003 `en implementación`, siguiente paso `sdd-verify`). Diff solo de documentación; enlaces nuevos comprobados a mano | ídem |
 | TASK-08 | | `npm run verify` | Desde la raíz, sobre el árbol del commit: exit 0. Formato, lint, arquitectura `29 pass`, build de Storefront y Admin, `validate-structure` OK, frontend `83 pass`, BFF `110 pass` y smoke test del contrato OK | ídem |
+
+## Estado de los controles
+
+Ejecuciones finales de `sdd-verify` del 2026-11-12, todas sobre `a57ed48` con el árbol limpio, en el worktree `.worktrees/003-ajustes-del-admin`. Ejecutado con Claude Code, Opus 5.5 (`claude-opus-5-5`); el esfuerzo de la sesión no se puede leer desde ella; sin delegar. Logs completos en el directorio temporal de la sesión.
+
+| Control | Documentado | Configurado | Ejecutado |
+|---|---|---|---|
+| Agentes (`check:agents`) | Sí ([ADR-0008](../../../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)) | Sí (`tools/check-agents.mjs`, en `verify`) | Sí: «catálogo 1.0.0, 2 herramientas, 10 skills, 10 referencias a niveles y 3 CLAUDE.md revisados» |
+| Sintaxis del BFF (`check:syntax`) | Sí | Sí (en `verify`) | Sí: «Sintaxis correcta en 68 archivos». El BFF no cambia en la rama (`git diff f8278e9 a57ed48 -- backend` vacío) |
+| Formato (`format:check`) | Sí | Sí (en `verify`; no revisa los `.md`) | Sí: «All matched files use Prettier code style!» en la raíz y en `frontend/` |
+| Lint y límites de arquitectura | Sí ([`frontend/architecture.md`](../../../../frontend/architecture.md) §2 y §3; TEST-02 y TEST-03) | Sí (ESLint con `templateAccessibility`, Sheriff y `test:architecture`, en `verify`) | Sí: `eslint src projects` sin errores ni avisos (TEST-03); `test:architecture` `tests 29`, `pass 29`, `fail 0`, con «layout del Admin (TEST-02, feature 003)». El diff no añade `eslint-disable`, `localStorage`, `sessionStorage`, cookies, `::ng-deep`, `HttpClient` ni colores fijos en `frontend/projects` y `frontend/src` |
+| Pruebas unitarias | Sí ([estrategia del plan](planning.md#estrategia-de-pruebas), TEST-01) | Sí (`npm test`, en `verify`) | Sí: frontend `tests 83`, `pass 83`, `fail 0` (incluye las 11 de TEST-01); BFF `tests 110`, `pass 110`, `fail 0` (unitarias e integración) |
+| Typecheck del Storefront y del Admin | Sí (PBI-0029) | No en `verify` (PBI-0029): lo cubre el build, que solo compila lo que se importa | Sí, a mano, desde `frontend/`: `npx tsc -p tsconfig.app.json --noEmit` y `npx tsc -p projects/admin/tsconfig.app.json --noEmit`, código de salida 0 en los dos |
+| Pruebas de integración y contrato del BFF | Sí ([contrato](../../../../backend/docs/BFF-CONTRACT.md); la feature no lo cambia, REQ-10) | Sí (`validate:contract`, en `verify`) | Sí: «Estructura contractual WebStore: OK» (TEST-08) y «Smoke test BFF: OK», con los 11 recorridos en verde. Ni `BFF-CONTRACT.md` ni el smoke test cambian en la rama |
+| Pruebas E2E | Sí (TEST-04 a TEST-07 y la caracterización de TASK-01) | Sí (`playwright.config.ts`: BFF 3400, Storefront 4400, Admin 4500, estado temporal) | Sí: `npm run test:e2e` desde la raíz (`playwright test` en `frontend/`), en segundo plano, con los servidores del worktree detenidos y los puertos 3400, 4400 y 4500 libres antes: `89 passed (3.7m)`, 0 fallos, código de salida 0, las mismas 89 de ⚠ TASK-06 y ⚠ TASK-07. Por spec del Admin: `admin-menu-lateral` 12, `admin-resumen` 9, `admin-menu-usuario` 12, `admin-acceso` 4, `admin-temas` 10 y `admin-modo-demo` 4. Después, puertos libres y sha256 de `backend/data.json` sin cambios |
+| Build de Storefront y Admin | Sí | Sí (`build:all`, en `verify`, con presupuestos) | Sí: «Application bundle generation complete» en los dos, sin avisos |
+| `npm run verify` completo | Sí | Sí | Sí: código de salida 0 |
+| Capturas antes y después | Sí ([capturas del plan](planning.md#capturas-antes-y-después)) | Sí (`capturar.mjs`, `comparar.mjs`, `zonas.mjs` y `temas-lado-a-lado.mjs`, con Playwright y el Chrome instalado, mismos datos, rutas, anchos y sesión) | Sí: la comparación final con la base, con A, B y C, es la de ⚠ TASK-07; en `sdd-verify` se repitió con B sobre la punta. Ver [Capturas antes y después](#capturas-antes-y-después) |
+| Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`, exit 0. Ningún `package.json` ni `package-lock.json` cambia en la rama |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | No ejecutado: la rama no está publicada y el PR todavía no existe; lo abre la sesión principal con `pr-create` |
+| Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: ni `sdd-verify` ni la guía la piden en esta etapa. Aunque se hiciera, no contaría como evidencia |
+
+## Resultados de las pruebas
+
+Resultados de `sdd-verify` sobre `a57ed48`, salvo donde se indica.
+
+| ID | AC | Comando | Resultado | Evidencia |
+|---|---|---|---|---|
+| TEST-01 | AC-08, AC-11 | `npm test --prefix frontend` (en `verify`) | Pasa | `usuario-admin.rules.spec.mjs`: 11 casos en verde dentro de `pass 83`. Rojo y verde reproducidos en `sdd-verify`, ver [Cumplimiento TDD](#cumplimiento-tdd) |
+| TEST-02 | — | `npm run test:architecture` (en `verify`) | Pasa | `pass 29`; las dos pruebas de «layout del Admin». Sensibilidad comprobada en TASK-02 (`fd0a6d7`) con la importación prohibida |
+| TEST-03 | AC-01, AC-05 | `npm run lint` (en `verify`) | Pasa | `eslint src projects` sin errores, con `templateAccessibility` y Sheriff |
+| TEST-04 | AC-01, AC-02, AC-03, AC-05, AC-07, AC-13 | `npm run test:e2e` | Pasa | `admin-menu-lateral.spec.ts` (⚠ TASK-03, `f1473cb`): 12 pruebas en verde dentro de `89 passed`, con las de TEST-07 |
+| TEST-05 | AC-04, AC-05, AC-07, AC-13 | `npm run test:e2e` | Pasa | `admin-resumen.spec.ts` (⚠ TASK-04, `d3a0727`): 9 pruebas en verde, con las aserciones previas sin cambios |
+| TEST-06 | AC-08, AC-09, AC-10, AC-12, AC-13 | `npm run test:e2e` | Pasa | `admin-menu-usuario.spec.ts` (⚠ TASK-05, `9ac29eb`, y ⚠ TASK-06, `9f40c04`): 12 pruebas en verde, con el cierre de sesión con el `DELETE` abortado |
+| TEST-07 | AC-06 | `npm run test:e2e` | Pasa | En `admin-menu-lateral.spec.ts`, «Animación del plegado (AC-06)»: `0s` con `reducedMotion: 'reduce'` y 200 ms sin él, en el menú y en `bloque-distritos` |
+| TEST-08 | AC-14 | `npm run validate:structure` (en `verify`) | Pasa | «Estructura contractual WebStore: OK»: ningún color fijo fuera de `tokens.css` |
+| TEST-09 | AC-13, AC-14, AC-15 | `capturar.mjs`, `comparar.mjs`, `zonas.mjs` y `temas-lado-a-lado.mjs` | Pasa (solo cambios pedidos) | ⚠ TASK-07 (`a331ecc`), aprobada por Sebastián Avila; repetición con B en `sdd-verify`. Ver [Capturas antes y después](#capturas-antes-y-después) |
+| Caracterización | AC-15 | `npm run test:e2e` | Pasa | Línea base `59 passed` sobre `f8278e9` (TASK-01, `9a69180`); las specs previas del Admin siguen en la suite, con los ajustes que lista el [plan](planning.md#pruebas-existentes-afectadas) |
+
+## Capturas antes y después
+
+Método, copia de datos (`backend/data-capturas.json`), sesión de `superadmin` y anchos (1440 × 900 y 375 × 812, página completa, `reducedMotion: 'reduce'`) de TASK-01, en todas las tomas. «Antes»: `antes/{a,b,c}`, sobre `f8278e9`. «Después»: `despues/{a,b,c}`, sobre `bbe67c7` (⚠ TASK-07), con el mismo código de producción que la punta. Todo en `frontend/output/visual-qa/003-ajustes-del-admin/` (ignorada por git), con un `LEEME.md` por toma.
+
+| Pantalla o ruta | Anchos | Resultado | Evidencia |
+|---|---|---|---|
+| `/login` | 1440 y 375 | Iguales, con A, B y C (AC-15) | `diferencias/<tema>/comparacion.json`: 0 píxeles distintos |
+| `/` (Resumen), estado inicial | 1440 | Cambios pedidos: cabecera x 1018–1403, y 12–51 (menú de usuario, AC-08); menú lateral x 31–212, y 93–800 (títulos de grupo con indicador, solo «General» desplegado, AC-01 y AC-02); en el contenido, solo los indicadores de los cinco bloques (AC-04). Mismo alto | `diferencias/<tema>/`, `zonas.jsonl` |
+| `/` (Resumen), estado inicial | 375 | Cambios pedidos: la tira del menú igual (filas 0–168, AC-13); cabecera en dos líneas en lugar de tres, la página 52 px más corta (aprobado en ⚠ TASK-06); los indicadores de los cinco bloques y «Ver todos los pedidos →» en una segunda línea, +28 px (aprobado en ⚠ TASK-04). Todo lo demás empareja con −52 y −24 px | `zonas.jsonl`, `comparar-desplazado.mjs` |
+| `/productos` | 1440 | Cambios pedidos: la misma cabecera; menú lateral x 20–226, y 93–800 («Catálogo» desplegado); contenido iguales | `diferencias/<tema>/` |
+| `/productos` | 375 | Cambios pedidos: tira igual; cabecera en dos líneas y, desde y = 262 de «antes», todo igual con −52 px. Desborde horizontal igual que en la base | `zonas.jsonl` |
+| `/` con dos bloques plegados, `/` con el menú de usuario abierto y `/perfil` | 1440 y 375 | Nuevas (solo «después»), aprobadas en ⚠ TASK-04, ⚠ TASK-06 y ⚠ TASK-05; del mismo tamaño en A, B y C | `despues/{a,b,c}`, `despues-task05/b/<rol>/` |
+| Temas (AC-14) | 1440 y 375 | Círculo de las iniciales con `primary` de cada tema; panel y indicadores con las superficies y el texto atenuado del tema (indicadores en `--ws-muted`, decidido por Sebastián en ⚠ TASK-07) | `diferencias/temas-menu-1440.png`, `temas-menu-375.png` y `temas-indicadores-1440.png` |
+| Repetición de `sdd-verify` sobre la punta, con B | 1440 y 375 | Iguales: las 12 capturas (`login`, `resumen`, `resumen-plegado`, `resumen-menu`, `productos` y `perfil`, en los dos anchos), 0 píxeles distintos frente a las aprobadas en ⚠ TASK-07. Mismo método, copia (B activo antes y después) y sesión de `superadmin`, con el BFF en 3400 y el Admin en 4500 levantados desde el worktree y detenidos al terminar. Consola: solo el `404` de `login-1440` | `verificacion/b/` frente a `despues/b`, `diferencias-verificacion/b/comparacion.json` |
+
+Consola: en los tres temas, igual que la base; solo el `404` de un recurso en `login-1440`. Desborde horizontal: solo `productos-375`, como en la base.
+
+## Cumplimiento TDD
+
+| Área | TDD obligatorio | Prueba antes del código | Evidencia |
+|---|---|---|---|
+| Admin `features/sesion/domain/` (`inicialesDeUsuario`) | Sí ([STD-18](../../../architecture/standards.md)) | Sí | TASK-02 (`fd0a6d7`): la fila de TEST-01 registra el rojo con un esqueleto que devuelve `''` (`tests 11`, `pass 1`, `fail 10`, los 10 por aserción) antes del verde (`pass 11`). Prueba y código van en el mismo commit, así que el historial no lo muestra por sí solo. En `sdd-verify` se reprodujo en una copia dentro de `frontend/output/verify-tdd/` (ignorada por git), sin tocar el código: con el spec de la punta y el mismo esqueleto, `tests 11`, `pass 1`, `fail 10` (`actual: ''`); con el `usuario-admin.rules.ts` de la punta, `pass 11`, `fail 0`. Un esqueleto que pasara todo indicaría pruebas que no prueban nada: no es el caso |
+| Admin `layout/` (`AppLayout`, `MenuUsuarioComponent`) | No (no es área de STD-18) | No aplica | E2E derivadas de los AC, escritas junto al código (TEST-04, TEST-06 y TEST-07). La caracterización previa es el e2e completo de TASK-01 (`9a69180`), `59 passed` sobre `f8278e9`, antes de tocar código |
+| Admin `features/tienda/presentation/` (`ResumenPage`) | No | No aplica | TEST-05 y la parte del Resumen de TEST-07 en ⚠ TASK-04 (`d3a0727`), con el rojo registrado antes de tocar `resumen.page.ts` (`8 failed, 13 passed`); caracterización de TASK-01 |
+| Admin `features/sesion/presentation/` (`PerfilPage`) y rutas | No | No aplica | Parte de Perfil de TEST-06 en ⚠ TASK-05 (`9ac29eb`), con el rojo registrado antes de la ruta y la página (`3 failed, 1 passed`) |
+| BFF | No cambia | No aplica | `git diff f8278e9 a57ed48 -- backend` vacío |
+
+## Trazabilidad
+
+Los SHA son los de «Ejecución por tarea». TASK-08 (`abcf76b`) documenta REQ-01 a REQ-12 en [`TRACEABILITY.md`](../../../planning/TRACEABILITY.md), `frontend/architecture.md`, `frontend/docs/VISUAL-SYSTEM.md` y el [glosario](../../../architecture/glosario.md).
+
+| REQ | AC | TASK | Commit o PR | TEST | Resultado |
+|---|---|---|---|---|---|
+| REQ-01, REQ-04 | AC-01 | ⚠ TASK-03 | `f1473cb` | TEST-03, TEST-04 | Pasa |
+| REQ-02 | AC-02 | ⚠ TASK-03 | `f1473cb` | TEST-04 | Pasa |
+| REQ-01, REQ-11 | AC-03 | ⚠ TASK-03 | `f1473cb` | TEST-04 | Pasa |
+| REQ-03, REQ-04 | AC-04 | ⚠ TASK-04 | `d3a0727` | TEST-05 | Pasa |
+| REQ-04 | AC-05 | ⚠ TASK-03, ⚠ TASK-04 | `f1473cb`, `d3a0727` | TEST-03, TEST-04, TEST-05 | Pasa |
+| REQ-04 | AC-06 | ⚠ TASK-03, ⚠ TASK-04 | `f1473cb`, `d3a0727` | TEST-07 | Pasa |
+| REQ-12 | AC-07 | ⚠ TASK-03, ⚠ TASK-04 | `f1473cb`, `d3a0727` | TEST-04, TEST-05 | Pasa |
+| REQ-05, REQ-09 | AC-08 | TASK-02, ⚠ TASK-06 | `fd0a6d7`, `9f40c04` | TEST-01, TEST-06 | Pasa |
+| REQ-06, REQ-10 | AC-09 | ⚠ TASK-06 | `9f40c04` | TEST-06 | Pasa |
+| REQ-07 | AC-10 | ⚠ TASK-06 | `9f40c04` | TEST-06 | Pasa |
+| REQ-09 | AC-11 | TASK-02 | `fd0a6d7` | TEST-01 | Pasa |
+| REQ-08, REQ-10 | AC-12 | ⚠ TASK-05, ⚠ TASK-06 | `9ac29eb`, `9f40c04` | TEST-06 | Pasa |
+| REQ-01, REQ-05, REQ-11 | AC-13 | ⚠ TASK-03 a ⚠ TASK-07 | `f1473cb`, `d3a0727`, `9ac29eb`, `9f40c04`, `a331ecc` | TEST-04, TEST-05, TEST-06, TEST-09 | Pasa |
+| REQ-11 | AC-14 | ⚠ TASK-06, ⚠ TASK-07 | `9f40c04`, `a331ecc` | TEST-08, TEST-09 | Pasa |
+| REQ-11 | AC-15 | TASK-01, ⚠ TASK-07 | `9a69180`, `a331ecc` | TEST-09 | Pasa (solo cambios pedidos) |
+
+Los doce REQ tienen al menos un AC, una tarea y un TEST. TEST-02 no cubre un AC: protege la separación entre el menú de usuario (`layout/`) y la página Perfil.
+
+## Definition of Done
+
+Marca solo lo que se cumple ([criterios](../../../development/definition-of-done.md)).
+
+- [x] AC aplicables demostrados (AC-01 a AC-15), con el comportamiento normal, los límites (nombre vacío o de espacios, tildes descompuestas, letras fuera del BMP, grupos de un solo enlace, todos los bloques plegados, 375 px, el `vendedor` sin bloques ni grupos que no ve) y los fallos (cierre de sesión con el `DELETE` abortado, `/perfil` sin sesión).
+- [x] En el área con TDD obligatorio (`inicialesDeUsuario`), la prueba existía antes del código. La evidencia está en «Ejecución por tarea» y en [Cumplimiento TDD](#cumplimiento-tdd), con el rojo reproducido en `sdd-verify`.
+- [x] `npm run verify` ejecutado desde la raíz sobre `a57ed48` (código de salida 0), `npm run test:e2e` (`89 passed`) y `npm run audit:all` (0 vulnerabilidades), aunque las dependencias no cambian.
+- [x] No aplica el cambio de contrato: la feature no toca el BFF, `BFF-CONTRACT.md`, el smoke test ni los adaptadores `Bff*Gateway` (REQ-10).
+- [x] Autorización, validación, confidencialidad y accesibilidad revisadas. Sin rutas nuevas del BFF: los datos del menú y de Perfil salen de la sesión actual. `/perfil` es hija del layout y la protege el `sesionGuard` del padre, sin `permisoGuard` porque solo muestra la cuenta propia (TEST-06, sin sesión → `/login`). El plegado no guarda nada en el navegador (STD-08). Botones nativos con `aria-expanded` y `aria-controls`, teclado, foco visible, Escape que devuelve el foco y `prefers-reduced-motion` (TEST-03 a TEST-07).
+- [x] Capturas antes y después a 1440 y 375 px, con A, B y C, sin cambios visuales no pedidos (STD-12): solo los de la [tabla del plan](planning.md#capturas-antes-y-después) y las dos diferencias aprobadas por Sebastián Avila (a 375 px, la cabecera en dos líneas y «Ver todos los pedidos →» en una segunda línea; indicadores en el gris atenuado del tema).
+- [x] Documentación, ADR y diagramas coherentes con la implementación: `frontend/architecture.md` §3 y §6, `frontend/docs/VISUAL-SYSTEM.md`, glosario, `TRACEABILITY.md`, backlog e índice de features (TASK-08). Sin ADR necesarios. Los 174 enlaces relativos de los `.md` que cambian en la rama resuelven, también sus anclas.
+- [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
+- [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las cuentas de las e2e y de los guiones de captura son las de la semilla local; las copias de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó (sha256 `38154861…ab530c1` antes y después).
+- [x] Los controles no ejecutados figuran como tales: el CI y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [x] Revisión humana del hito correspondiente registrada: los seis bloques, las cinco tareas ⚠ y el [hito de entrega](#hito-de-entrega), aprobados por Sebastián Avila el 2026-11-12.
+
+## Riesgos remanentes y excepciones
+
+- **CI.** No ejecutado: la rama no está publicada. Se ejecuta en el PR único que abre la sesión principal con `pr-create`.
+- **Fallos de la base, fuera de la feature.** En `f8278e9` ya estaban, y siguen igual: `/productos` del Admin desborda en horizontal a 375 px en los tres temas, y `/login` a 1440 px da un `404` de un recurso en la consola. Anotados en el [backlog](../../../planning/backlog.md) como `bug`, con el estado `propuesta`: PBI-0045 (desborde) y PBI-0046 (`404`), aprobado por Sebastián Avila con el hito de entrega.
+- **Diferencias visuales aceptadas por Sebastián Avila**, registradas en sus tareas: a 375 px, «Ver todos los pedidos →» pasa a una segunda línea (⚠ TASK-04) y la cabecera pasa de tres líneas a dos (⚠ TASK-06); los indicadores de plegado van en el gris atenuado del tema, `--ws-muted` (⚠ TASK-07, AC-14).
+- **TDD en un solo commit.** TEST-01 y `inicialesDeUsuario` entraron juntos en `fd0a6d7`. El rojo está registrado en su fila y se reprodujo en `sdd-verify`; el historial por sí solo no lo muestra.
+- **Ejecutado con.** Todas las tareas registraron la herramienta y el modelo. Excepciones:
+  - El esfuerzo de la sesión no se pudo leer en TASK-01, TASK-02, ⚠ TASK-06, ⚠ TASK-07 y TASK-08, ni en esta verificación. Las filas dicen el que pide el catálogo.
+  - TASK-08 se ejecutó con Opus 5.5, un nivel por encima del catálogo (estándar · medio, Sonnet 5.5), en la sesión del bloque 6.
+- **Pruebas de componentes.** Sigue sin entorno de pruebas de componentes de Angular (PBI-0025): el layout, las páginas y el menú se prueban con e2e.
+- **Typecheck.** `verify` no comprueba los tipos de los archivos que nada importa (PBI-0029). En esta verificación se comprobaron a mano las dos aplicaciones con `tsc`.
+- **Traspaso.** Decía que la punta era el commit de los SHA de la fase 4 (`e8c419c`); la punta es `a57ed48`. Se corrigió en `tasks.md` en esta verificación.
+- **Commits.** Los 12 commits de la rama llevan `Refs: 003-ajustes-del-admin/TASK-NN` y ninguno lleva `Co-Authored-By` ni firmas de herramientas.
+
+## Hito de entrega
+
+Aprobado por Sebastián Avila el 2026-11-12 («Sí, apruébalo», desde su sesión principal, a la pregunta «¿Apruebo el hito de entrega y anoto los dos fallos de la base en el backlog?»), antes de publicar la rama y abrir el PR único de la implementación hacia `dev`.
+
+Evidencia presentada antes de aprobar: la de esta verificación sobre `a57ed48`. `npm run verify` y `npm run audit:all` en verde, el e2e completo con `89 passed`, las capturas de la punta con B iguales a las aprobadas, el rojo y el verde de TEST-01 reproducidos y la trazabilidad completa.
+
+Con la aprobación, los dos fallos de la base pasan al backlog como PBI-0045 y PBI-0046.
+
+Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones). El CI se ejecuta en el PR.
