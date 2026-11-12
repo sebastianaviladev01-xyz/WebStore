@@ -87,8 +87,25 @@ test('coloresCalculados rechaza un valor que no sabe calcular', () => {
   assert.throws(() => coloresCalculados({ '--ws-link': 'var(--ws-link)' }));
 });
 
-test('se miden 14 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco pide 3:1', () => {
-  assert.equal(PARES_DE_CONTRASTE.length, 14);
+test('la barra superior de un tema propio es su principal fuerte, con el texto más legible entre blanco y el contraste', () => {
+  const claro = tokensDelTema(caso('principal claro').colores, casos.predefinidos);
+  assert.equal(claro['--ws-topbar'], claro['--ws-primary-strong']);
+  assert.equal(claro['--ws-on-topbar'], '#0F172A');
+  const oscuro = tokensDelTema(caso('#123456').colores, casos.predefinidos);
+  assert.equal(oscuro['--ws-topbar'], 'color-mix(in srgb, #123456 62%, #0F172A)');
+  assert.equal(oscuro['--ws-on-topbar'], '#FFFFFF');
+  const pares = PARES_DE_CONTRASTE.find(({ par }) => par === 'onTopbar/topbar');
+  assert.deepEqual(pares, {
+    par: 'onTopbar/topbar',
+    texto: '--ws-on-topbar',
+    fondo: '--ws-topbar',
+    minimo: 4.5,
+    bloquea: false,
+  });
+});
+
+test('se miden 15 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco pide 3:1', () => {
+  assert.equal(PARES_DE_CONTRASTE.length, 15);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
@@ -107,7 +124,7 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve siempre los 14 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
+test('revisarContraste devuelve siempre los 15 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));

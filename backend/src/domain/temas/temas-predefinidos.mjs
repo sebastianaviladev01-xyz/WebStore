@@ -3,7 +3,8 @@ import { tokensDelTema } from './tema.rules.mjs';
 /**
  * Temas predefinidos (D1): constantes del dominio, no se guardan en el estado ni se editan.
  * A y C toman los valores presentados el 05/11 y derivan el resto con la fórmula de los temas propios
- * (D2). B copia `frontend/src/styles/tokens.css` al pie de la letra (AC-01).
+ * (D2). B copia `frontend/src/styles/tokens.css` al pie de la letra (AC-01). La franja superior
+ * (`--ws-topbar`) de A y C es la presentada: `#2E1A5C` y el grafito `#1F2328`, con texto blanco.
  */
 const predefinido = (id, name, colors, tokens) =>
   Object.freeze({ id, name, colors: Object.freeze(colors), tokens: Object.freeze(tokens) });
@@ -40,6 +41,8 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-on-primary': '#FFFFFF',
     '--ws-on-primary-soft': '#3A1F72',
     '--ws-on-accent': '#2B1700',
+    '--ws-topbar': '#2E1A5C',
+    '--ws-on-topbar': '#FFFFFF',
     '--ws-muted': '#5B5866',
     '--ws-footer': '#1E1530',
     '--ws-footer-text': '#CFC8E0',
@@ -57,6 +60,8 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-on-accent': '#ffffff',
     '--ws-link': 'var(--ws-primary)',
     '--ws-focus-ring': 'var(--ws-primary)',
+    '--ws-topbar': 'var(--ws-primary-strong)',
+    '--ws-on-topbar': '#ffffff',
     '--ws-bg': '#f3f5f8',
     '--ws-surface': '#ffffff',
     '--ws-surface-subtle': '#f6f8fa',
@@ -83,6 +88,9 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-on-accent': '#F2B705',
     '--ws-link': '#1F2328',
     '--ws-focus-ring': '#1F2328',
+    // La franja superior presentada el 05/11 es grafito con texto blanco, no el ámbar oscuro derivado.
+    '--ws-topbar': '#1F2328',
+    '--ws-on-topbar': '#FFFFFF',
     '--ws-muted': '#555B65',
     '--ws-footer': '#16181C',
     '--ws-footer-text': '#C9CDD3',

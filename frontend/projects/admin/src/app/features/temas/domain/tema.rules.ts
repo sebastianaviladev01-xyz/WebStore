@@ -89,6 +89,8 @@ export const TOKENS_DEL_TEMA: readonly NombreToken[] = Object.freeze<NombreToken
   '--ws-on-accent',
   '--ws-link',
   '--ws-focus-ring',
+  '--ws-topbar',
+  '--ws-on-topbar',
   '--ws-bg',
   '--ws-surface',
   '--ws-surface-subtle',
@@ -192,6 +194,9 @@ function tokensDeMarca({
     '--ws-on-accent': textoMasLegible(S, [BLANCO, C]),
     '--ws-link': legibleSobreFondos(TEXTO_MINIMO) ? P : C,
     '--ws-focus-ring': legibleSobreFondos(INTERFAZ_MINIMO) ? P : C,
+    // Franja superior de la tienda: en un tema propio, el principal fuerte; A y C la fijan como se presentó.
+    '--ws-topbar': principalFuerte,
+    '--ws-on-topbar': textoMasLegible(colorFuerte, [BLANCO, C]),
   };
 }
 
@@ -313,6 +318,13 @@ export const PARES_DE_CONTRASTE: readonly DefinicionDePar[] = Object.freeze<Defi
     bloquea: false,
   },
   {
+    par: 'onTopbar/topbar',
+    texto: '--ws-on-topbar',
+    fondo: '--ws-topbar',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
     par: 'disabledText/disabled',
     texto: '--ws-disabled-text',
     fondo: '--ws-disabled',
@@ -333,7 +345,7 @@ export function medirPares(tokens: ValoresDeToken): Record<string, number> {
 }
 
 /**
- * Revisión de contraste de un tema (AC-14, D7): los 14 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
+ * Revisión de contraste de un tema (AC-14, D7): los 15 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
  * sobre los tokens que derivan de sus cinco colores. `bloquea` dice si ese par impide guardar cuando queda
  * bajo su mínimo y no depende de la medida.
  *

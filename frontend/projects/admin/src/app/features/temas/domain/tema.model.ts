@@ -20,6 +20,8 @@ export type NombreToken =
   | '--ws-on-accent'
   | '--ws-link'
   | '--ws-focus-ring'
+  | '--ws-topbar'
+  | '--ws-on-topbar'
   | '--ws-bg'
   | '--ws-surface'
   | '--ws-surface-subtle'
@@ -66,6 +68,7 @@ export interface ParContraste {
     | 'focusRing/background'
     | 'focusRing/surface'
     | 'footerText/footer'
+    | 'onTopbar/topbar'
     | 'disabledText/disabled';
   /** Relación de contraste redondeada a un decimal hacia abajo. */
   readonly relacion: number;

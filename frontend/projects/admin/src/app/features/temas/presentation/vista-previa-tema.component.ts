@@ -14,7 +14,7 @@ import { TokensTema } from '../domain/tema.model';
   template: `
     <figure class="m-0 overflow-hidden rounded-xl border border-line bg-canvas text-body">
       <div aria-hidden="true">
-        <div class="bg-primary-strong px-4 py-1.5 text-xs font-medium text-on-primary">
+        <div class="bg-topbar px-4 py-1.5 text-xs font-medium text-on-topbar">
           Franja de avisos de la tienda
         </div>
         <div class="flex items-center justify-between gap-3 border-b border-line bg-surface px-4 py-3">

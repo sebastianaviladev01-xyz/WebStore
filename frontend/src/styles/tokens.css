@@ -18,6 +18,9 @@
   --ws-on-accent: #ffffff;
   --ws-link: var(--ws-primary);
   --ws-focus-ring: var(--ws-primary);
+  /* Franja superior de la tienda: en B, el principal oscuro; A y C la fijan como se presentó. */
+  --ws-topbar: var(--ws-primary-strong);
+  --ws-on-topbar: #ffffff;
 
   --ws-bg: #f3f5f8;
   --ws-surface: #ffffff;
@@ -85,6 +88,8 @@
   --color-on-accent: var(--ws-on-accent);
   --color-link: var(--ws-link);
   --color-focus-ring: var(--ws-focus-ring);
+  --color-topbar: var(--ws-topbar);
+  --color-on-topbar: var(--ws-on-topbar);
   --color-canvas: var(--ws-bg);
   --color-surface: var(--ws-surface);
   --color-subtle: var(--ws-surface-subtle);

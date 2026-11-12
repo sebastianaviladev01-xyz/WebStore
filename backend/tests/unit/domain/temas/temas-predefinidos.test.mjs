@@ -69,6 +69,8 @@ test('A conserva los valores presentados', () => {
     '--ws-on-primary-soft': '#3A1F72',
     '--ws-accent': '#F5A524',
     '--ws-on-accent': '#2B1700',
+    '--ws-topbar': '#2E1A5C',
+    '--ws-on-topbar': '#FFFFFF',
     '--ws-bg': '#F4F4F6',
     '--ws-surface': '#FFFFFF',
     '--ws-ink': '#17151C',
@@ -81,7 +83,7 @@ test('A conserva los valores presentados', () => {
   for (const [nombre, valor] of Object.entries(presentados)) assert.equal(tokens[nombre], valor, nombre);
 });
 
-test('C conserva los valores presentados y usa el grafito para texto, enlaces y foco', () => {
+test('C conserva los valores presentados y usa el grafito para texto, enlaces, foco y la barra superior', () => {
   const tokens = tema('c').tokens;
   const presentados = {
     '--ws-primary': '#F2B705',
@@ -92,6 +94,8 @@ test('C conserva los valores presentados y usa el grafito para texto, enlaces y 
     '--ws-on-accent': '#F2B705',
     '--ws-link': '#1F2328',
     '--ws-focus-ring': '#1F2328',
+    '--ws-topbar': '#1F2328',
+    '--ws-on-topbar': '#FFFFFF',
     '--ws-bg': '#F2F3F5',
     '--ws-surface': '#FFFFFF',
     '--ws-text': '#1F2328',
@@ -110,6 +114,8 @@ test('B copia los tokens de tokens.css, con var() y color-mix()', () => {
   assert.equal(tokens['--ws-primary-strong'], 'color-mix(in srgb, var(--ws-primary) 62%, #0f172a)');
   assert.equal(tokens['--ws-on-primary-soft'], 'var(--ws-primary-strong)');
   assert.equal(tokens['--ws-link'], 'var(--ws-primary)');
+  assert.equal(tokens['--ws-topbar'], 'var(--ws-primary-strong)');
+  assert.equal(tokens['--ws-on-topbar'], '#ffffff');
   assert.equal(tokens['--ws-footer-rule'], '#22314f');
 });
 

@@ -6,8 +6,8 @@
 }
 
 .ws-utility-bar {
-  background: var(--ws-primary-strong);
-  color: var(--ws-on-primary);
+  background: var(--ws-topbar);
+  color: var(--ws-on-topbar);
 }
 
 .ws-site-header {

@@ -57,6 +57,7 @@ const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
   'focusRing/background': 'Contorno de foco sobre el fondo principal',
   'focusRing/surface': 'Contorno de foco sobre el fondo secundario',
   'footerText/footer': 'Texto del pie de página',
+  'onTopbar/topbar': 'Texto de la barra superior',
   'disabledText/disabled': 'Texto deshabilitado',
 };
 

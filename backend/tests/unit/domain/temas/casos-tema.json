@@ -121,6 +121,8 @@
         "--ws-on-accent": "#2B1700",
         "--ws-link": "#4C2A92",
         "--ws-focus-ring": "#4C2A92",
+        "--ws-topbar": "#2E1A5C",
+        "--ws-on-topbar": "#FFFFFF",
         "--ws-bg": "#F4F4F6",
         "--ws-surface": "#FFFFFF",
         "--ws-surface-subtle": "color-mix(in srgb, #17151C 3%, #FFFFFF)",
@@ -162,6 +164,8 @@
         "--ws-on-accent": "#ffffff",
         "--ws-link": "var(--ws-primary)",
         "--ws-focus-ring": "var(--ws-primary)",
+        "--ws-topbar": "var(--ws-primary-strong)",
+        "--ws-on-topbar": "#ffffff",
         "--ws-bg": "#f3f5f8",
         "--ws-surface": "#ffffff",
         "--ws-surface-subtle": "#f6f8fa",
@@ -203,6 +207,8 @@
         "--ws-on-accent": "#F2B705",
         "--ws-link": "#1F2328",
         "--ws-focus-ring": "#1F2328",
+        "--ws-topbar": "#1F2328",
+        "--ws-on-topbar": "#FFFFFF",
         "--ws-bg": "#F2F3F5",
         "--ws-surface": "#FFFFFF",
         "--ws-surface-subtle": "color-mix(in srgb, #1F2328 3%, #FFFFFF)",
@@ -238,6 +244,7 @@
       "focusRing/background": 9.31,
       "focusRing/surface": 10.23,
       "footerText/footer": 10.78,
+      "onTopbar/topbar": 14.8,
       "disabledText/disabled": 5.09
     },
     "b": {
@@ -254,6 +261,7 @@
       "focusRing/background": 6.14,
       "focusRing/surface": 6.7,
       "footerText/footer": 10.81,
+      "onTopbar/topbar": 10.17,
       "disabledText/disabled": 4.84
     },
     "c": {
@@ -270,6 +278,7 @@
       "focusRing/background": 14.23,
       "focusRing/surface": 15.8,
       "footerText/footer": 11.14,
+      "onTopbar/topbar": 15.8,
       "disabledText/disabled": 4.53
     }
   },
@@ -296,6 +305,8 @@
         "--ws-on-accent": "#FFFFFF",
         "--ws-link": "#0F172A",
         "--ws-focus-ring": "#0F172A",
+        "--ws-topbar": "color-mix(in srgb, #FFD400 88%, #0F172A)",
+        "--ws-on-topbar": "#0F172A",
         "--ws-bg": "#f3f5f8",
         "--ws-surface": "#ffffff",
         "--ws-surface-subtle": "#f6f8fa",
@@ -328,6 +339,7 @@
         "focusRing/background": 16.35,
         "focusRing/surface": 17.85,
         "footerText/footer": 10.81,
+        "onTopbar/topbar": 9.79,
         "disabledText/disabled": 4.84
       }
     },
@@ -353,6 +365,8 @@
         "--ws-on-accent": "#FFFFFF",
         "--ws-link": "#123456",
         "--ws-focus-ring": "#123456",
+        "--ws-topbar": "color-mix(in srgb, #123456 62%, #0F172A)",
+        "--ws-on-topbar": "#FFFFFF",
         "--ws-bg": "#f3f5f8",
         "--ws-surface": "#ffffff",
         "--ws-surface-subtle": "#f6f8fa",
@@ -385,6 +399,7 @@
         "focusRing/background": 11.64,
         "focusRing/surface": 12.72,
         "footerText/footer": 10.81,
+        "onTopbar/topbar": 14.72,
         "disabledText/disabled": 4.84
       }
     },
@@ -410,6 +425,8 @@
         "--ws-on-accent": "#FFFFFF",
         "--ws-link": "#3B82F6",
         "--ws-focus-ring": "#3B82F6",
+        "--ws-topbar": "#3B82F6",
+        "--ws-on-topbar": "#FFFFFF",
         "--ws-bg": "#111318",
         "--ws-surface": "#1B1E25",
         "--ws-surface-subtle": "color-mix(in srgb, #F5F7FA 3%, #1B1E25)",
@@ -442,6 +459,7 @@
         "focusRing/background": 5.05,
         "focusRing/surface": 4.54,
         "footerText/footer": 7.77,
+        "onTopbar/topbar": 3.68,
         "disabledText/disabled": 5.86
       }
     }
@@ -467,7 +485,7 @@
       ]
     },
     {
-      "nombre": "la base oscura de TEST-04 solo avisa del texto sobre el principal y el acento: no bloquea",
+      "nombre": "la base oscura de TEST-04 solo avisa del texto sobre el principal, el acento y la barra superior: no bloquea",
       "colores": {
         "primary": "#3B82F6",
         "secondary": "#F97316",
@@ -478,7 +496,8 @@
       "bajoMinimo": [
         { "par": "onPrimary/primary", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
         { "par": "onPrimary/primaryStrong", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
-        { "par": "onAccent/accent", "relacion": 2.8, "minimo": 4.5, "bloquea": false }
+        { "par": "onAccent/accent", "relacion": 2.8, "minimo": 4.5, "bloquea": false },
+        { "par": "onTopbar/topbar", "relacion": 3.6, "minimo": 4.5, "bloquea": false }
       ]
     },
     {
