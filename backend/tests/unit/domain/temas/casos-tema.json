@@ -509,5 +509,27 @@
         { "par": "disabledText/disabled", "relacion": 2.3, "minimo": 4.5, "bloquea": false }
       ]
     }
+  ],
+  "nombresDeTema": [
+    {
+      "nombre": "  Tienda de verano  ",
+      "existentes": ["Mi tema"],
+      "resultado": "Tienda de verano"
+    },
+    { "nombre": "", "existentes": [], "error": "INVALID_THEME_NAME" },
+    { "nombre": "     ", "existentes": [], "error": "INVALID_THEME_NAME" },
+    {
+      "nombre": "Un nombre de tema que tiene cuarenta y 12",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
+    {
+      "nombre": "Un nombre de tema que tiene cuarenta y 1",
+      "existentes": [],
+      "resultado": "Un nombre de tema que tiene cuarenta y 1"
+    },
+    { "nombre": " azul COBALTO ", "existentes": [], "error": "THEME_NAME_TAKEN" },
+    { "nombre": "mi TEMA", "existentes": ["Mi tema"], "error": "THEME_NAME_TAKEN" },
+    { "nombre": "Grafito y Ámbar", "existentes": [], "error": "THEME_NAME_TAKEN" }
   ]
 }
