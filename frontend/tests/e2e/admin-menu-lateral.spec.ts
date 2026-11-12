@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import {
   correoUnico,
@@ -14,8 +14,9 @@ import {
  * Menú lateral plegable del Admin (feature 003). TEST-04: en escritorio, cada grupo se pliega desde su título
  * (AC-01); al entrar solo está desplegado el grupo de la página actual y al navegar se despliega el de la nueva
  * (AC-02); el vendedor solo ve sus grupos (AC-03); teclado y `aria-controls` (AC-05); el plegado dura al
- * navegar y no al recargar ni al volver a entrar (AC-07); en móvil la tira queda igual (AC-13). TEST-07, parte
- * del menú: sin animación con `prefers-reduced-motion` y entre 180 y 260 ms sin esa preferencia (AC-06).
+ * navegar y no al recargar ni al volver a entrar (AC-07); en móvil la tira queda igual (AC-13). TEST-07, del menú
+ * y de los bloques del Resumen: sin animación con `prefers-reduced-motion` y entre 180 y 260 ms sin esa
+ * preferencia (AC-06).
  */
 const titulo = (page: Page, grupo: string) =>
   menuAdmin(page).getByRole('button', { name: grupo, exact: true });
@@ -214,13 +215,25 @@ test.describe('Menú lateral en móvil (375 px)', () => {
 });
 
 test.describe('Animación del plegado (AC-06)', () => {
-  /** Duración de la primera transición de la región (la de `grid-template-rows`), en milisegundos. */
-  const duracion = async (page: Page) => {
-    const region = await regionDe(page, 'Catálogo');
+  /** Duración de la primera transición de una región (la de `grid-template-rows`), en milisegundos. */
+  const duracionDe = async (region: Locator) => {
     const valor = await region.evaluate((nodo) =>
       getComputedStyle(nodo).transitionDuration.split(',')[0]!.trim(),
     );
     return valor.endsWith('ms') ? Number.parseFloat(valor) : Number.parseFloat(valor) * 1000;
+  };
+  const duracion = async (page: Page) => duracionDe(await regionDe(page, 'Catálogo'));
+
+  /** Botón de «Pedidos por distrito» en el Resumen y duración de su región (TEST-07, parte del Resumen). */
+  const distritos = (page: Page) =>
+    page
+      .getByRole('main')
+      .getByRole('heading', { level: 2, name: 'Pedidos por distrito' })
+      .getByRole('button', { name: 'Pedidos por distrito' });
+  const duracionDelBloque = async (page: Page) => {
+    const id = await distritos(page).getAttribute('aria-controls');
+    expect(id).toBe('bloque-distritos');
+    return duracionDe(page.locator(`[id="${id}"]`));
   };
 
   test('con movimiento reducido el cambio es inmediato', async ({ page }) => {
@@ -241,5 +254,27 @@ test.describe('Animación del plegado (AC-06)', () => {
     const desplegado = await duracion(page);
     expect(desplegado).toBeGreaterThanOrEqual(180);
     expect(desplegado).toBeLessThanOrEqual(260);
+  });
+
+  test('con movimiento reducido, los bloques del Resumen tampoco se animan', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    expect(await duracionDelBloque(page)).toBe(0);
+    await distritos(page).click();
+    await expect(distritos(page)).toHaveAttribute('aria-expanded', 'false');
+    expect(await duracionDelBloque(page)).toBe(0);
+  });
+
+  test('sin esa preferencia, los bloques del Resumen se animan entre 180 y 260 ms', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const desplegado = await duracionDelBloque(page);
+    expect(desplegado).toBeGreaterThanOrEqual(180);
+    expect(desplegado).toBeLessThanOrEqual(260);
+    await distritos(page).click();
+    await expect(distritos(page)).toHaveAttribute('aria-expanded', 'false');
+    const plegado = await duracionDelBloque(page);
+    expect(plegado).toBeGreaterThanOrEqual(180);
+    expect(plegado).toBeLessThanOrEqual(260);
   });
 });
