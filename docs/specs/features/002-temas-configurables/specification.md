@@ -323,7 +323,7 @@ El modelo de datos y el contrato HTTP se deciden en `sdd-plan` y `sdd-decide`. A
 | Crear, editar y borrar temas propios | Rechaza los predefinidos y el borrado del activo | `superadmin` | REQ-06, REQ-07, AC-09 |
 | Marcar el tema activo | Cualquier tema existente | `superadmin` | REQ-08 |
 | Saber si la instalación está en modo demo | Lo leen la tienda y el Admin sin sesión. Sale de una variable de entorno del BFF (por ejemplo, `WEBSTORE_DEMO_MODE`), apagada si no está definida; el nombre exacto se fija en `sdd-plan` | Todos | REQ-12, D4 |
-| Tema elegido con la tuerca | Solo en el navegador; no viaja al BFF | — | REQ-11, D5 |
+| Tema elegido con la tuerca | Se recuerda solo en ese navegador, en la cookie `ws_tema_vista_previa`, y no se guarda en el BFF. En modo demo, el id viaja en esa cookie para que el BFF sirva la hoja de estilos de ese tema, sin guardarlo ni cambiar nada para otras personas. Es una aclaración del hito de arquitectura del 2026-11-11 ([plan, pregunta 3](planning.md#pregunta-3-dónde-se-recuerda-la-vista-previa-de-la-tuerca)); antes decía «no viaja al BFF» | — | REQ-11, D5 |
 | `primaryColor` y `secondaryColor` de Contenido | Se retiran; la migración los lleva a un tema propio si difieren de B | — | REQ-18, D3 |
 
 Lo que cambia respecto a hoy, para que el plan lo resuelva:
