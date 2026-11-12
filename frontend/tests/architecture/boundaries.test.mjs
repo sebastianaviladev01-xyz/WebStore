@@ -26,6 +26,7 @@ const files = {
   tiendaFacade: 'projects/admin/src/app/features/tienda/application/tienda.facade.ts',
   bffTiendaGateway: 'projects/admin/src/app/features/tienda/data/bff-tienda.gateway.ts',
   rolRules: 'projects/admin/src/app/features/sesion/domain/rol.rules.ts',
+  adminLayout: 'projects/admin/src/app/layout/app.layout.ts',
 };
 const contents = new Map(Object.values(files).map((file) => [file, readFileSync(root + file, 'utf8')]));
 // Feature `temas` (TEST-16). Se sondea con la ruta de su facade del Admin y de los modelos de cada aplicación.
@@ -116,6 +117,20 @@ describe('feature temas (TEST-16)', () => {
       assert.equal(byRule(await lint(file, [path]), dependencyRule).length, 1);
     });
   }
+});
+
+describe('layout del Admin (TEST-02, feature 003)', () => {
+  // El menú de usuario vive en `layout/` y la página Perfil en `features/sesion/presentation/`: la regla que
+  // obliga a separarlos es que el layout no puede importar la capa de presentación de una feature.
+  test('layout → presentation de sesion: el layout no puede importar features/sesion/presentation', async () => {
+    const messages = await lint(files.adminLayout, ['../features/sesion/presentation/login.page']);
+    assert.equal(byRule(messages, dependencyRule).length, 1);
+  });
+
+  test('el layout sí puede depender de la capa application de sesion', async () => {
+    const messages = await lint(files.adminLayout, ['../features/sesion/application/sesion.facade']);
+    assert.deepEqual(byRule(messages, dependencyRule), []);
+  });
 });
 
 describe('no-restricted-imports limita las librerías externas', () => {
