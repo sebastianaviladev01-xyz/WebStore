@@ -341,7 +341,7 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
 - [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las únicas contraseñas del diff son las de la semilla local documentadas en el `README.md` y valores de prueba. Las copias de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó.
 - [x] Los controles no ejecutados figuran como tales: el CI, porque la rama no está publicada, y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
-- [ ] Revisión humana del hito correspondiente registrada. Están los ocho bloques y las siete tareas ⚠, aprobados por Sebastián Avila; falta el [hito de entrega](#hito-de-entrega).
+- [x] Revisión humana del hito correspondiente registrada: los ocho bloques, las siete tareas ⚠ y el [hito de entrega](#hito-de-entrega), aprobados por Sebastián Avila.
 
 ## Riesgos remanentes y excepciones
 
@@ -358,7 +358,7 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - **TEST-24 (b).** Una primera tanda de C dio un FCP de 772 ms, fuera del margen de 585 ms. Tres rondas intercaladas de C y de B quedaron dentro. Se informa tal cual.
 - **Pruebas de componentes.** `frontend/architecture.md` §6 sigue con «Pendiente: pruebas de componentes», que no es de la 002: viene de la base (`fca1421`) y ya está en el backlog como PBI-0025, con su origen. No se resuelve aquí. La facade del Admin se probó transpilada, con dobles de Angular (decisión 22).
 - **Typecheck.** `verify` no comprueba los tipos de los archivos de `domain/` que nada importa (PBI-0029). En esta verificación se comprobaron a mano las dos aplicaciones con `tsc`.
-- **Convención menor de los commits.** 23 de los 36 commits de la rama, de ⚠ TASK-07 (`d23ba7e`) a la aprobación del bloque 8 (`e5d8dc3`), salvo `1390d10`, `127f862`, `ec0d278` y `38e6a48`, no llevan la nota al pie `Refs: 002-temas-configurables/TASK-NN` que pide [conventional-commits.md](../../../git/conventional-commits.md). La traza está en este documento y en `tasks.md`. La historia no se reescribe. Ningún commit lleva `Co-Authored-By`, y los títulos siguen Conventional Commits.
+- **Convención menor de los commits.** 23 de los 36 commits de la rama, de ⚠ TASK-07 (`d23ba7e`) a la aprobación del bloque 8 (`e5d8dc3`), salvo `1390d10`, `127f862`, `ec0d278` y `38e6a48`, no llevan la nota al pie `Refs: 002-temas-configurables/TASK-NN` que pide [conventional-commits.md](../../../git/conventional-commits.md). La traza está en este documento y en `tasks.md`. La historia no se reescribe, para no cambiar los SHA citados: excepción aceptada por Sebastián Avila con el hito de entrega. Ningún commit lleva `Co-Authored-By`, y los títulos siguen Conventional Commits.
 - **Comentario de TEST-16.** El comentario de `boundaries.test.mjs` decía que la facade de `temas` del Admin «todavía no existe». Se corrigió en esta verificación (`6f66e19`), sin cambiar la prueba.
 - **Ejecutado con.** Todas las tareas registraron la herramienta y el modelo. Excepciones:
   - El esfuerzo de las tareas que hizo el agente principal sin delegar (⚠ TASK-07, ⚠ TASK-09, ⚠ TASK-11, TASK-13, ⚠ TASK-14, TASK-15, ⚠ TASK-16, TASK-17, ⚠ TASK-18, TASK-19 y ⚠ TASK-20) es el que pide el catálogo y no se puede verificar desde la sesión.
@@ -368,4 +368,14 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 
 ## Hito de entrega
 
-pendiente. Se presenta a Sebastián Avila el 2026-11-12 con esta verificación, antes de publicar la rama y abrir el PR único de la implementación hacia `dev`.
+Aprobado por Sebastián Avila el 2026-11-12 («Sí, apruébalo», desde su sesión principal), antes de publicar la rama y abrir el PR único de la implementación hacia `dev`.
+
+Evidencia revisada antes de aprobar, en la sesión principal:
+
+- los commits de `sdd-verify`, `6f66e19` y `6e181d5`;
+- que ninguno de los 37 commits de la rama lleva `Co-Authored-By`;
+- `npm run verify` sobre `6e181d5`: código de salida 0, con frontend 72/72, BFF 110/110 y el smoke test OK.
+
+Con la aprobación aceptó como excepción que los 23 commits sin la nota `Refs:` no se reescriban, para no cambiar los SHA que citan `tasks.md` y este documento ([riesgos](#riesgos-remanentes-y-excepciones)).
+
+Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones). El CI se ejecuta en el PR.
