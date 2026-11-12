@@ -2,9 +2,9 @@
 
 - Feature: `002-temas-configurables`
 - Especificación: [specification.md](specification.md) (aprobada el 2026-11-11; 19 REQ, 24 AC, decisiones D1 a D7)
-- Estado: borrador
+- Estado: aprobado
 - Fecha: 2026-11-11
-- Hito de arquitectura: pendiente de aprobación. Sebastián Avila respondió las cuatro preguntas el 2026-11-11, desde su sesión principal: alternativa A en las cuatro, con los ajustes registrados en [Respuestas del hito](#respuestas-del-hito). Falta su aprobación del hito completo
+- Hito de arquitectura: aprobado por Sebastián Avila el 2026-11-11. Respondió las cuatro preguntas desde su sesión principal, con la alternativa A en las cuatro y los ajustes de [Respuestas del hito](#respuestas-del-hito), y aprobó el hito completo en la sesión de esta etapa
 
 ## Enfoque
 
@@ -271,7 +271,7 @@ Restricción de las pruebas del frontend: los `*.spec.mjs` transpilan el `.ts` y
   - Pregunta 2, el parpadeo: la hoja `theme.css` del BFF, con `ETag` y `no-cache`, y el riesgo aceptado del BFF colgado.
   - Pregunta 3, la vista previa: la cookie `ws_tema_vista_previa`, que el BFF lee solo en modo demo. Se aclaró la tabla de datos de la especificación, y queda anotada la limitación de la demo con túneles.
   - Pregunta 4, los tokens: se calculan en el BFF, y el Admin tiene una réplica que usa la misma tabla de casos.
-- **Condicionadas:** ninguna. Lo que falta para ejecutar es la aprobación del hito completo y los ADR de `sdd-decide`.
+- **Condicionadas:** ninguna. El hito está aprobado; para ejecutar faltan los ADR de `sdd-decide`.
 - **ADR necesarios** (`sdd-decide`):
   - **ADR-0010. Aplicar el tema activo con una hoja de estilos del BFF.** `theme.css` bloquea el primer pintado; `tokens.css` es el respaldo B; los nombres de los tokens forman un contrato entre el BFF y los frontends. Recoge las preguntas 2 y 4.
   - **ADR-0011. Guardar los temas como recurso propio del BFF.** Rutas y revisión propias, predefinidos en el código, permiso `themes.manage` (cambia la tabla de roles fijos del 05/11), migración v3 y alineación con PBI-0043. Recoge la pregunta 1.
@@ -459,4 +459,4 @@ Sebastián Avila pidió responder desde su sesión principal («respondele porfa
 | 3. Vista previa de la tuerca | **A. Cookie `ws_tema_vista_previa` que el BFF lee solo en modo demo para `theme.css`.** Sebastián acepta el matiz: el id viaja en la cookie, pero el BFF no lo guarda ni cambia nada para otras personas | B. Cookie que solo lee Angular (parpadeo al recargar con una vista previa); C. `localStorage` (no cumple AC-21 entre la tienda y el Admin) | La fila «Tema elegido con la tuerca» de la [tabla de datos de la especificación](specification.md#datos-y-contrato) se aclaró en esta rama y remite a esta decisión. La demo con túneles de `trycloudflare.com`, un dominio de la Public Suffix List, queda como limitación conocida ([riesgos](#dependencias-y-riesgos)) |
 | 4. Tokens y contraste | **A. Cálculo en el BFF, con una réplica en el dominio del Admin** | B. En los dos frontends (tres copias y sin `theme.css`); C. solo en el BFF con una ruta de vista previa (una petición por cambio de color) | Las dos copias usan la misma tabla de casos, un solo archivo de datos: TEST-14 |
 
-Queda pendiente la aprobación del hito completo por Sebastián. Al recibirla, se registra en la cabecera, con quién y cuándo.
+Sebastián Avila aprobó el hito de arquitectura completo el 2026-11-11. Siguiente etapa: `sdd-decide`, con ADR-0010 a ADR-0012.
