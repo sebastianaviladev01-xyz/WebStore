@@ -19,7 +19,8 @@ export type Permiso =
   | 'content.manage'
   | 'shipping.manage'
   | 'complaints.manage'
-  | 'store.reset';
+  | 'store.reset'
+  | 'themes.manage';
 
 export interface DefinicionRol {
   readonly id: Rol;
@@ -43,7 +44,15 @@ const ALL: readonly Permiso[] = [
   'shipping.manage',
   'complaints.manage',
   'store.reset',
+  'themes.manage',
 ];
+
+/** Permisos exclusivos del superadministrador: usuarios, reinicio de la demo y temas (feature 002). */
+const SOLO_SUPERADMIN: ReadonlySet<Permiso> = new Set<Permiso>([
+  'users.manage',
+  'store.reset',
+  'themes.manage',
+]);
 
 export const ROLES: readonly DefinicionRol[] = [
   {
@@ -56,7 +65,7 @@ export const ROLES: readonly DefinicionRol[] = [
     id: 'admin',
     label: 'Administrador',
     description: 'Opera toda la tienda: catálogo, contenido, envíos, pedidos y reclamaciones.',
-    permissions: ALL.filter((permission) => permission !== 'users.manage' && permission !== 'store.reset'),
+    permissions: ALL.filter((permission) => !SOLO_SUPERADMIN.has(permission)),
   },
   {
     id: 'vendedor',

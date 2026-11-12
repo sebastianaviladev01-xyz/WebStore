@@ -83,7 +83,7 @@ img {
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--ws-primary) 24%, white);
+  background: color-mix(in srgb, var(--ws-primary) 24%, var(--ws-surface));
   color: var(--ws-ink);
 }
 
@@ -149,7 +149,7 @@ img {
 .ws-btn-primary {
   border: 1px solid var(--ws-primary);
   background: var(--ws-primary);
-  color: white;
+  color: var(--ws-on-primary);
   box-shadow: none;
 }
 
@@ -161,8 +161,8 @@ img {
 }
 
 .ws-btn-on-dark {
-  border-color: #ffffff;
-  background: #ffffff;
+  border-color: var(--ws-on-media);
+  background: var(--ws-on-media);
   color: var(--ws-ink);
   box-shadow: none;
 }
@@ -180,33 +180,33 @@ img {
 }
 
 .ws-btn-secondary:hover {
-  border-color: var(--ws-primary);
+  border-color: var(--ws-link);
   background: var(--ws-primary-soft);
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
   transform: translateY(-1px);
 }
 
 .ws-btn-on-soft {
   border: 1px solid var(--ws-surface);
   background: var(--ws-surface);
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
 }
 
 .ws-btn-on-soft:hover {
-  border-color: var(--ws-primary);
+  border-color: var(--ws-link);
   transform: translateY(-1px);
 }
 
 .ws-btn-light {
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  border: 1px solid color-mix(in srgb, var(--ws-on-media) 30%, transparent);
+  background: color-mix(in srgb, var(--ws-on-media) 8%, transparent);
+  color: var(--ws-on-media);
   backdrop-filter: blur(10px);
 }
 
 .ws-btn-light:hover {
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.14);
+  border-color: color-mix(in srgb, var(--ws-on-media) 60%, transparent);
+  background: color-mix(in srgb, var(--ws-on-media) 14%, transparent);
 }
 
 .ws-btn-ghost {
@@ -243,7 +243,7 @@ a:focus-visible,
 button:focus-visible,
 input:focus-visible,
 summary:focus-visible {
-  outline: 2px solid var(--ws-primary);
+  outline: 2px solid var(--ws-focus-ring);
   outline-offset: 3px;
 }
 
@@ -302,7 +302,7 @@ summary:focus-visible {
 
 .ws-text-link {
   flex-shrink: 0;
-  color: var(--ws-primary);
+  color: var(--ws-link);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: underline;
@@ -311,7 +311,7 @@ summary:focus-visible {
 }
 
 .ws-text-link:hover {
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
 }
 
 .ws-icon-button {
@@ -357,7 +357,7 @@ summary:focus-visible {
 
 .ws-header-action:hover {
   background: var(--ws-surface-soft);
-  color: var(--ws-primary);
+  color: var(--ws-link);
 }
 
 .ws-carousel-control {
@@ -519,7 +519,7 @@ html.ws-product-switching::view-transition-new(root) {
 
 .ws-footer-title {
   margin: 0 0 1.1rem;
-  color: white;
+  color: var(--ws-footer-heading);
   font-size: 0.875rem;
   font-weight: 600;
   letter-spacing: 0;
@@ -538,7 +538,7 @@ html.ws-product-switching::view-transition-new(root) {
 }
 
 .ws-footer-links a:hover {
-  color: white;
+  color: var(--ws-footer-heading);
 }
 
 .ws-skip-link {
@@ -548,7 +548,7 @@ html.ws-product-switching::view-transition-new(root) {
   z-index: 100;
   transform: translateY(-160%);
   border-radius: 999px;
-  background: white;
+  background: var(--ws-on-media);
   padding: 0.75rem 1rem;
   color: var(--ws-ink);
   font-size: 0.875rem;

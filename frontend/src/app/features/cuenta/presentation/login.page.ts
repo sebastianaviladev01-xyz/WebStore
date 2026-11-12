@@ -33,7 +33,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
           {{ auth.pending() ? 'Ingresando…' : 'Ingresar' }}
         </button>
         <div class="mt-5 flex flex-wrap justify-between gap-3 text-sm font-semibold">
-          <a routerLink="/cuenta/registro" class="text-primary">Crear cuenta</a>
+          <a routerLink="/cuenta/registro" class="text-link">Crear cuenta</a>
           <a routerLink="/cuenta/recuperar">Olvidé mi contraseña</a>
         </div>
       </form>

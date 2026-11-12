@@ -12,7 +12,7 @@ import { TiendaFacade } from '../application/tienda.facade';
   template: `
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Contenido y configuración</h1>
     <p class="mt-3 max-w-3xl text-sm text-muted">
-      Edita logo gráfico, colores, información fija, navegación superior/lateral, accesos inferiores y páginas
+      Edita logo gráfico, información fija, navegación superior/lateral, accesos inferiores y páginas
       predeterminadas. La tipografía permanece bloqueada a una sola fuente por acuerdo del MVP.
     </p>
 
@@ -31,8 +31,7 @@ import { TiendaFacade } from '../application/tienda.facade';
             />
           } @else {
             <span
-              class="grid h-20 w-20 place-items-center rounded-3xl text-3xl font-semibold text-white"
-              [style.background-color]="form.controls.primaryColor.value"
+              class="grid h-20 w-20 place-items-center rounded-3xl bg-primary text-3xl font-semibold text-on-primary"
             >
               {{ form.controls.logoText.value || 'W' }}
             </span>
@@ -46,7 +45,7 @@ import { TiendaFacade } from '../application/tienda.facade';
           </p>
           <div class="mt-4 flex flex-wrap gap-3">
             <label
-              class="cursor-pointer rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white"
+              class="cursor-pointer rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary"
             >
               Cargar logo
               <input type="file" accept="image/*,.svg" class="sr-only" (change)="onLogoSelected($event)" />
@@ -76,14 +75,6 @@ import { TiendaFacade } from '../application/tienda.facade';
         <mat-form-field class="sm:col-span-2">
           <mat-label>URL/Data URL del logo</mat-label>
           <textarea matInput rows="2" formControlName="logoUrl"></textarea>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Color principal · Azul cobalto recomendado</mat-label>
-          <input matInput type="color" formControlName="primaryColor" />
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Color de acento · Naranja quemado (ofertas)</mat-label>
-          <input matInput type="color" formControlName="secondaryColor" />
         </mat-form-field>
         <mat-form-field>
           <mat-label>Tipografía</mat-label>
@@ -147,11 +138,14 @@ import { TiendaFacade } from '../application/tienda.facade';
       </div>
 
       <div class="mt-6 flex flex-wrap items-center gap-4">
-        <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+        <button
+          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+          type="submit"
+        >
           Guardar configuración
         </button>
         @if (saved()) {
-          <p class="text-sm text-primary-strong" role="status">Configuración publicada en la tienda.</p>
+          <p class="text-sm text-on-primary-soft" role="status">Configuración publicada en la tienda.</p>
         }
       </div>
     </form>
@@ -164,8 +158,6 @@ export class ContenidoPage {
     storeName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     logoText: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     logoUrl: new FormControl('', { nonNullable: true }),
-    primaryColor: new FormControl('#1D4ED8', { nonNullable: true }),
-    secondaryColor: new FormControl('#C2410C', { nonNullable: true }),
     contactEmail: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.email],

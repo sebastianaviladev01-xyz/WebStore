@@ -23,7 +23,7 @@ backend/src/
 | `api/` | Sus propios helpers; `domain/comun/domain-error.mjs` para traducir errores a HTTP | `infrastructure/` |
 | `main.mjs` | Todo | — |
 
-Dentro de cada capa hay una carpeta por capacidad de negocio, en español: `catalogo`, `checkout`, `contenido`, `cuentas`, `envios`, `pedidos`, `reclamos`, `sesion` y `admin`; `comun` agrupa lo transversal del dominio (errores, validación, reloj y revisión).
+Dentro de cada capa hay una carpeta por capacidad de negocio, en español: `catalogo`, `checkout`, `contenido`, `cuentas`, `envios`, `pedidos`, `reclamos`, `sesion`, `temas` y `admin`; `comun` agrupa lo transversal del dominio (errores, validación, reloj y revisión).
 
 ## 2. Convenciones
 
@@ -36,7 +36,11 @@ Dentro de cada capa hay una carpeta por capacidad de negocio, en español: `cata
 | Persistencia | `infrastructure/persistencia/` | `json-state-store.mjs` | carga, normaliza, migra y guarda el estado |
 | Rutas | `api/routes/` | `<capacidad>.routes.mjs` | método + ruta → caso de uso |
 
-- El estado se valida y migra al cargar (`SCHEMA_VERSION = 2`); los roles anteriores se traducen a los fijos (`owner` → `superadmin`, `catalog-maintainer` → `vendedor`).
+- El estado se valida y migra al cargar (`SCHEMA_VERSION = 3`); los roles anteriores se traducen a los fijos (`owner` → `superadmin`, `catalog-maintainer` → `vendedor`) y los colores de Contenido pasan a un tema propio, «Colores de Contenido», si difieren de los de B.
+- La capacidad `temas` ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)) guarda sus datos en `appearance` (`revision`, `activeThemeId` y `customThemes`), con una revisión propia, independiente de `state.revision`:
+  - `domain/temas/`: `tema.rules.mjs` (`TOKENS_DEL_TEMA`, `PARES_DE_CONTRASTE` y el cálculo de los tokens), `contraste.rules.mjs` (relación de contraste WCAG y mezcla sRGB), `tema-propio.rules.mjs` (validación y reglas de los temas propios) y `temas-predefinidos.mjs` (A, B y C).
+  - `application/temas/`: `temas.use-cases.mjs` (crear, editar, borrar y activar, con `STALE_THEMES` ante una revisión vieja) y `temas.queries.mjs` (la apariencia pública, la lista del Admin y la hoja `theme.css`).
+  - `api/routes/temas.routes.mjs`: `/bff/appearance`, `/bff/appearance/theme.css` (que lee la cookie `ws_tema_vista_previa` solo en modo demo) y `/bff/admin/themes`. Solo el `superadmin` tiene `themes.manage`.
 - Contraseñas con `scrypt` y sal; sesiones con token opaco, guardado como hash y con vencimiento.
 - Los nombres de rutas, campos y códigos de error del contrato siguen en inglés (`/bff/catalog/products`, `STALE_SNAPSHOT`).
 
@@ -52,13 +56,9 @@ Variables de entorno, leídas una vez en [`src/infrastructure/config.mjs`](src/i
 | `WEBSTORE_NON_WORKING_DATES` | Feriados adicionales para el plazo de reclamos (`AAAA-MM-DD`, separados por coma) | vacío |
 | `WEBSTORE_ALLOWED_ORIGINS` | Orígenes CORS | `http://localhost:4200,http://localhost:4300` |
 | `WEBSTORE_OWNER_PASSWORD`, `WEBSTORE_ADMIN_PASSWORD`, `WEBSTORE_CATALOG_PASSWORD` | Contraseñas de los usuarios de demostración sembrados | las del [README](../README.md#accesos-de-demostración) |
+| `WEBSTORE_DEMO_MODE` | Modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): `/bff/appearance` trae todos los temas y `theme.css` sirve la vista previa de la cookie `ws_tema_vista_previa`. Solo `true` lo enciende, sin distinguir mayúsculas ni espacios en los extremos; cualquier otro valor (`false`, `1`, `sí`) lo deja apagado. Se expone como `demoMode` | apagado, también en producción |
 
 `backend/data.json` no se versiona: contiene hashes, sesiones y datos de clientes de prueba. Si no existe, el BFF lo crea desde el seed.
-
-**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de implementar:**
-
-- La variable `WEBSTORE_DEMO_MODE` encenderá el modo demo. Solo el valor `true` lo enciende, y por defecto está apagado, también en producción ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Pasará a la tabla anterior cuando `config.mjs` la lea.
-- La capacidad `temas`, con `appearance` en el estado y `SCHEMA_VERSION = 3`, se describirá en §1 y §2 con su implementación ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)).
 
 ## 4. Pruebas
 
@@ -72,7 +72,7 @@ Las pruebas se dividen como en IdShield entre unitarias e integración. Las carp
 | Comando (desde `backend/`) | Qué comprueba |
 |---|---|
 | `npm run check:syntax` | `node --check` sobre todos los `.mjs` de `src/`, `tests/` y `tools/` |
-| `npm test` | `node:test` sobre `tests/unit/**/*.test.mjs` y `tests/integration/**/*.test.mjs` (3 pruebas): traducción de roles anteriores y permisos por rol (unitarias) y migración de un `data.json` con roles anteriores (integración) |
+| `npm test` | `node:test` sobre `tests/unit/**/*.test.mjs` y `tests/integration/**/*.test.mjs`: reglas y casos de uso (unitarias) y, por HTTP, la migración de un `data.json` con roles anteriores (`migracion-roles.test.mjs`), la migración v3 de los colores de Contenido a temas (`migracion-temas.test.mjs`) y el modo demo, la hoja `theme.css`, su `ETag` y la cookie de la vista previa (`modo-demo.test.mjs`) |
 | `npm run test:contract` | Smoke test del contrato completo ([`tests/integration/contrato.smoke.mjs`](tests/integration/contrato.smoke.mjs)) contra un servidor con un archivo de estado temporal |
 
 - Herramienta: `node:test` y `node:assert`, sin dependencias externas ([ADR-0009](../docs/adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md)).

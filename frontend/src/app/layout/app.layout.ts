@@ -86,14 +86,14 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
               <span class="sr-only">Buscar productos</span>
               <input
                 type="search"
-                class="h-12 w-full rounded-full border border-line bg-canvas pl-5 pr-14 text-sm outline-none transition placeholder:text-muted focus:border-primary focus:bg-surface focus:ring-4 focus:ring-primary/20"
+                class="h-12 w-full rounded-full border border-line bg-canvas pl-5 pr-14 text-sm outline-none transition placeholder:text-muted focus:border-link focus:bg-surface focus:ring-4 focus:ring-focus-ring/20"
                 placeholder="Buscar productos"
                 [value]="searchTerm()"
                 (input)="updateSearch($event)"
               />
               <button
                 type="submit"
-                class="absolute right-1.5 top-1.5 grid h-9 w-9 place-items-center rounded-full bg-primary text-white"
+                class="absolute right-1.5 top-1.5 grid h-9 w-9 place-items-center rounded-full bg-primary text-on-primary"
                 aria-label="Buscar"
               >
                 <svg
@@ -163,7 +163,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
               <span class="hidden xl:block">Carrito</span>
               @if (cart.itemCount() > 0) {
                 <span
-                  class="ws-cart-count absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-white"
+                  class="ws-cart-count absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-on-accent"
                 >
                   {{ cart.itemCount() }}
                 </span>
@@ -178,14 +178,14 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
               <span class="sr-only">Buscar productos</span>
               <input
                 type="search"
-                class="h-11 w-full rounded-full border border-line bg-canvas pl-4 pr-12 text-sm outline-none focus:border-primary focus:bg-surface"
+                class="h-11 w-full rounded-full border border-line bg-canvas pl-4 pr-12 text-sm outline-none focus:border-link focus:bg-surface"
                 [placeholder]="isPrevious() ? 'Buscar en la tienda' : 'Buscar productos'"
                 [value]="searchTerm()"
                 (input)="updateSearch($event)"
               />
               <button
                 type="submit"
-                class="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-full text-primary"
+                class="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-full text-link"
                 aria-label="Buscar"
               >
                 <svg
@@ -214,7 +214,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
       @if (sideOpen()) {
         <button
           type="button"
-          class="ws-drawer-backdrop fixed inset-0 z-50 bg-black/45 backdrop-blur-[2px]"
+          class="ws-drawer-backdrop fixed inset-0 z-50 bg-scrim backdrop-blur-[2px]"
           aria-label="Cerrar menú"
           (click)="sideOpen.set(false)"
         ></button>
@@ -229,7 +229,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
         >
           <div class="flex items-center justify-between gap-4 border-b border-line pb-5">
             <a routerLink="/" class="flex items-center gap-3 font-semibold" (click)="sideOpen.set(false)">
-              <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary text-white">
+              <span class="grid h-10 w-10 place-items-center rounded-xl bg-primary text-on-primary">
                 {{ content.settings().logoText }}
               </span>
               {{ content.settings().storeName }}
@@ -247,7 +247,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
           <nav class="mt-5" aria-label="Navegación móvil">
             <a
               routerLink="/catalogo"
-              class="mb-3 flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-white"
+              class="mb-3 flex min-h-12 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-on-primary"
               (click)="sideOpen.set(false)"
             >
               Ver todos los productos
@@ -266,7 +266,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
                   <a
                     routerLink="/catalogo"
                     [queryParams]="{ categoria: category.id }"
-                    class="rounded-xl px-3 py-2 text-sm font-semibold text-primary"
+                    class="rounded-xl px-3 py-2 text-sm font-semibold text-link"
                     (click)="sideOpen.set(false)"
                   >
                     Ver toda la categoría
@@ -320,7 +320,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
         <div class="ws-container ws-footer-inner">
           <div class="ws-footer-grid grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr_1fr]">
             <div class="ws-footer-brand">
-              <div class="flex items-center gap-3 text-white">
+              <div class="flex items-center gap-3 text-footer-heading">
                 @if (content.settings().logoUrl) {
                   <span class="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl bg-surface">
                     <img
@@ -342,7 +342,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
                 {{ content.settings().footerText }}
               </p>
               <p class="ws-footer-contact text-sm leading-6">
-                <a class="hover:text-white" [href]="'mailto:' + content.settings().contactEmail">
+                <a class="hover:text-footer-heading" [href]="'mailto:' + content.settings().contactEmail">
                   {{ content.settings().contactEmail }}
                 </a>
                 <br />

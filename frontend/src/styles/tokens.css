@@ -1,7 +1,7 @@
 /*
- * Paleta B "Azul cobalto": única fuente de color para la tienda y el admin.
- * Las variantes fuerte/suave se derivan de --ws-primary y --ws-accent, así el
- * color configurado desde el admin (Contenido) sigue funcionando sin romper contrastes.
+ * Paleta B "Azul cobalto": única fuente de color para la tienda y el admin, y respaldo si
+ * /bff/appearance/theme.css no llega (ADR-0010). El tema activo redefine los tokens del tema
+ * (TOKENS_DEL_TEMA del BFF); este bloque coincide con el mapa de B del BFF (TEST-18).
  */
 :root {
   --ws-font: 'Source Sans 3 Variable';
@@ -10,9 +10,17 @@
   --ws-primary: #1d4ed8;
   --ws-primary-strong: color-mix(in srgb, var(--ws-primary) 62%, #0f172a);
   --ws-primary-soft: color-mix(in srgb, var(--ws-primary) 10%, #ffffff);
+  --ws-on-primary: #ffffff;
+  --ws-on-primary-soft: var(--ws-primary-strong);
   --ws-accent: #c2410c;
   --ws-accent-strong: color-mix(in srgb, var(--ws-accent) 78%, #0f172a);
   --ws-accent-soft: color-mix(in srgb, var(--ws-accent) 9%, #ffffff);
+  --ws-on-accent: #ffffff;
+  --ws-link: var(--ws-primary);
+  --ws-focus-ring: var(--ws-primary);
+  /* Franja superior de la tienda: en B, el principal oscuro; A y C la fijan como se presentó. */
+  --ws-topbar: var(--ws-primary-strong);
+  --ws-on-topbar: #ffffff;
 
   --ws-bg: #f3f5f8;
   --ws-surface: #ffffff;
@@ -31,6 +39,11 @@
   --ws-footer: #0f1b33;
   --ws-footer-text: #c5cedd;
   --ws-footer-rule: #22314f;
+  --ws-footer-heading: #ffffff;
+
+  /* Fijos en todos los temas: no dependen de la paleta y no van en el mapa del tema. */
+  --ws-on-media: #ffffff;
+  --ws-scrim: rgb(0 0 0 / 0.45);
 
   --ws-danger: #b42318;
   --ws-danger-soft: #fef3f2;
@@ -42,16 +55,17 @@
   --ws-radius: 10px;
   --ws-radius-lg: 14px;
   --ws-radius-xl: 16px;
-  --ws-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
-  --ws-shadow-lg: 0 26px 68px rgba(15, 23, 42, 0.14);
+  --ws-shadow: 0 8px 22px color-mix(in srgb, var(--ws-ink) 8%, transparent);
+  --ws-shadow-lg: 0 26px 68px color-mix(in srgb, var(--ws-ink) 14%, transparent);
   /* Distancia desde arriba de los paneles que acompañan al scroll (filtros, resumen del pedido):
      la cabecera fija mide 123 px en escritorio y se deja aire debajo. */
   --ws-sticky-top: 150px;
 
-  --mat-sys-primary: var(--ws-primary);
-  --mat-sys-on-primary: #ffffff;
+  /* Material usa el primario también como color de texto (la etiqueta enfocada): va con el enlace. */
+  --mat-sys-primary: var(--ws-link);
+  --mat-sys-on-primary: var(--ws-on-primary);
   --mat-sys-primary-container: var(--ws-primary-soft);
-  --mat-sys-on-primary-container: var(--ws-primary-strong);
+  --mat-sys-on-primary-container: var(--ws-on-primary-soft);
   --mat-sys-surface: var(--ws-surface);
   --mat-sys-on-surface: var(--ws-ink);
   --mat-sys-on-surface-variant: var(--ws-muted);
@@ -69,6 +83,13 @@
   --color-accent: var(--ws-accent);
   --color-accent-strong: var(--ws-accent-strong);
   --color-accent-soft: var(--ws-accent-soft);
+  --color-on-primary: var(--ws-on-primary);
+  --color-on-primary-soft: var(--ws-on-primary-soft);
+  --color-on-accent: var(--ws-on-accent);
+  --color-link: var(--ws-link);
+  --color-focus-ring: var(--ws-focus-ring);
+  --color-topbar: var(--ws-topbar);
+  --color-on-topbar: var(--ws-on-topbar);
   --color-canvas: var(--ws-bg);
   --color-surface: var(--ws-surface);
   --color-subtle: var(--ws-surface-subtle);
@@ -82,6 +103,9 @@
   --color-footer: var(--ws-footer);
   --color-footer-text: var(--ws-footer-text);
   --color-footer-rule: var(--ws-footer-rule);
+  --color-footer-heading: var(--ws-footer-heading);
+  --color-on-media: var(--ws-on-media);
+  --color-scrim: var(--ws-scrim);
   --color-danger: var(--ws-danger);
   --color-danger-soft: var(--ws-danger-soft);
   --color-danger-line: var(--ws-danger-line);

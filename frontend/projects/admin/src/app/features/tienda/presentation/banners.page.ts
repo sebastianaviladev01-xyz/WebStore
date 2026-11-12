@@ -33,7 +33,7 @@ import { UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.mo
             <div>
               <div class="flex flex-wrap items-center gap-2">
                 <strong>{{ banner.title }}</strong>
-                <span class="rounded-full bg-primary-soft px-2 py-1 text-xs font-medium text-primary-strong">
+                <span class="rounded-full bg-primary-soft px-2 py-1 text-xs font-medium text-on-primary-soft">
                   {{ placementLabels[banner.placement] }}
                 </span>
               </div>
@@ -43,7 +43,7 @@ import { UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.mo
               </p>
             </div>
             <div class="flex gap-3 text-sm font-semibold">
-              <button type="button" class="text-primary" (click)="edit(banner.id)">Editar</button>
+              <button type="button" class="text-link" (click)="edit(banner.id)">Editar</button>
               <button type="button" class="text-danger" (click)="remove(banner.id)">Eliminar</button>
             </div>
           </article>
@@ -133,7 +133,10 @@ import { UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.mo
           </p>
         }
         <div class="mt-5 flex gap-3">
-          <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+          <button
+            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            type="submit"
+          >
             Guardar
           </button>
           @if (editing()) {

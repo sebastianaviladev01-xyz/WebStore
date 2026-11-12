@@ -72,7 +72,7 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 
 | Término | Definición | Código | Contrato y estado del BFF |
 |---|---|---|---|
-| Contenido (CMS) | Configuración de la tienda que publica el Admin: logo, colores, contacto, mensaje superior, navegación superior y lateral, pie de página, tipografía y textos de las páginas informativas. | `ConfiguracionTienda`, `ContenidoFacade`, `ContenidoPage` (Admin) | `config`; `/bff/content/settings` |
+| Contenido (CMS) | Configuración de la tienda que publica el Admin: logo, contacto, mensaje superior, navegación superior y lateral, pie de página, tipografía y textos de las páginas informativas. | `ConfiguracionTienda`, `ContenidoFacade`, `ContenidoPage` (Admin) | `config`; `/bff/content/settings` |
 | Página informativa | Contacto, Envíos, Privacidad o Términos. Su texto se edita en el CMS y se puede desactivar; desactivada, tampoco se abre por URL. | `ContactoPage`, `InformacionEnviosPage`, `PrivacidadPage`, `TerminosPage`; guards `contactoHabilitadoGuard`, `enviosHabilitadoGuard`, `privacidadHabilitadaGuard` y `terminosHabilitadosGuard` | Rutas `/info/*`; `contactPageEnabled`, `shippingPageEnabled`, `privacyPageEnabled` y `termsPageEnabled` en `config` |
 | Banner | Pieza promocional con imagen, texto, enlace y vigencia (inicio y fin). El hero muestra hasta tres. | `Banner`, `UbicacionBanner`, `CarruselBannersComponent`, `BannersPage` | `banners`; `/bff/content/banners` |
 | Inicio | Portada de la tienda. Hay una versión anterior publicada aparte para comparar. | `InicioPage`, `VarianteInicio` (`actual`, `anterior`) | Rutas `/` y `/inicio-anterior` |
@@ -81,6 +81,18 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Constancia del reclamo | Comprobante con el código `REC-AAAA-xxxxx` y la fecha límite de respuesta. | `ConstanciaReclamo` | `id`, `dueAt` |
 | Plazo de respuesta | 15 días hábiles desde el registro, contando de lunes a viernes y los feriados configurados. | — | `COMPLAINT_DUE_BUSINESS_DAYS`, `WEBSTORE_NON_WORKING_DATES` |
 | Respuesta del proveedor | Respuesta de la tienda al reclamo, registrada en el Admin. Su envío por correo está pendiente. | — | `providerResponse` |
+
+## Apariencia y temas
+
+| Término | Definición | Código | Contrato y estado del BFF |
+|---|---|---|---|
+| Tema | Conjunto de cinco colores con nombre (principal, secundario, fondo principal, fondo secundario y contraste) del que el BFF calcula el mapa de tokens `--ws-*` que aplican la tienda y el Admin. Es predefinido o propio. | `Tema`, `ColoresTema`, `TokensTema`; features `temas` de la tienda y del Admin; `domain/temas/` (BFF) | `appearance`; `/bff/appearance` y `/bff/admin/themes` |
+| Tema predefinido | Tema que viene con el sistema y no se edita ni se borra: A «Violeta tienda», B «Azul cobalto» (el de la instalación) y C «Grafito y ámbar». | `TEMAS_PREDEFINIDOS` (`temas-predefinidos.mjs`) | `kind: 'predefined'`; `PREDEFINED_THEME_READ_ONLY` |
+| Tema propio | Tema que el `superadmin` crea, edita y borra desde el Admin. Los tokens que no son uno de sus cinco colores se derivan de ellos. Su nombre es único; un contraste insuficiente bloquea o avisa al guardar. | `TemasPage`, `TemaDialog` (Admin); `tema-propio.rules.mjs` (BFF) | `appearance.customThemes`; `kind: 'custom'` |
+| Tema activo | Único tema que ven todas las personas. Siempre existe; si el guardado no existe, pasa a B. Lo elige el `superadmin` (permiso `themes.manage`). | `TemasFacade`; `temaVisible()` | `appearance.activeThemeId`; `/bff/appearance/theme.css` |
+| Modo demo | Instalación con la tuerca «Cambiar tema», que permite ver otro tema sin cambiar el activo. Se enciende con `WEBSTORE_DEMO_MODE=true`; apagado por defecto, también en producción. | `SelectorTemaComponent` (tienda y Admin) | `WEBSTORE_DEMO_MODE`; `demoMode` |
+| Vista previa del tema | Tema que una persona elige con la tuerca en el modo demo. Solo vale en su navegador y no cambia el tema activo. | `COOKIE_VISTA_PREVIA`, `TemasFacade.verTema` | Cookie `ws_tema_vista_previa` |
+| Revisión de temas | Número propio de los temas que impide guardar sobre una lista desactualizada. Es independiente de la revisión del snapshot. | `TemasDesactualizadosError` (Admin) | `appearance.revision`; `409 STALE_THEMES` |
 
 ## Valores
 

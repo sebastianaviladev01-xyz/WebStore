@@ -140,7 +140,7 @@ import { AgregarAlCarritoDialog } from './agregar-al-carrito.dialog';
                     +
                   </button>
                 </div>
-                <span class="text-sm font-semibold text-primary">{{ item.stock }} disponibles</span>
+                <span class="text-sm font-semibold text-link">{{ item.stock }} disponibles</span>
               </div>
               <div class="ws-pdp-actions mt-5 flex flex-col gap-3 sm:flex-row">
                 <span class="ws-pdp-mobile-price">

@@ -30,7 +30,7 @@ import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.ru
               </p>
             </div>
             <div class="flex gap-3 text-sm font-semibold">
-              <button class="text-primary" (click)="edit(entry.category.id)">Editar</button>
+              <button class="text-link" (click)="edit(entry.category.id)">Editar</button>
               <button class="text-danger" (click)="remove(entry.category.id)">Eliminar</button>
             </div>
           </div>
@@ -68,7 +68,10 @@ import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.ru
           </p>
         }
         <div class="mt-4 flex gap-3">
-          <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+          <button
+            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            type="submit"
+          >
             Guardar
           </button>
           @if (editing()) {

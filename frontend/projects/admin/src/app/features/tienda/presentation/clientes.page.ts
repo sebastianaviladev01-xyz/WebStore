@@ -22,7 +22,7 @@ import { TiendaFacade } from '../application/tienda.facade';
             </div>
             <span class="text-sm">{{ c.orders }} pedidos</span>
             <div class="flex gap-2 text-sm font-semibold">
-              <button class="text-primary" (click)="edit(c.id)">Editar</button>
+              <button class="text-link" (click)="edit(c.id)">Editar</button>
               <button
                 class="text-danger"
                 [attr.aria-label]="'Eliminar cliente ' + c.name"
@@ -50,7 +50,10 @@ import { TiendaFacade } from '../application/tienda.facade';
             <input matInput formControlName="document" />
           </mat-form-field>
         </div>
-        <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+        <button
+          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+          type="submit"
+        >
           Guardar
         </button>
       </form>

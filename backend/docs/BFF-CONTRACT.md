@@ -15,7 +15,9 @@ Base URL: `/bff` (proxy local a `http://localhost:3000`).
 
 Cada banner incluye `imageFit` (`cover` para fotos de ambiente, `contain` para producto completo) e `imageTone` (`light` u `dark`, por defecto `light`): con `dark` la tienda muestra los controles del carrusel oscuros, para que se lean sobre fotos oscuras. `imageFocusY` (0–100 o `null`) es la posición vertical de una foto de ambiente; sin valor, la tienda usa 31,5.
 
-Los ajustes públicos incluyen la identidad visual, navegación y el contenido configurable de Contacto, Envíos, Privacidad y Términos.
+Los ajustes públicos incluyen la identidad visual (nombre, logo y tipografía), navegación y el contenido configurable de Contacto, Envíos, Privacidad y Términos.
+
+**Cambio incompatible (`schemaVersion: 3`, feature 002):** los ajustes ya no traen `primaryColor` ni `secondaryColor`. El color vive solo en los temas (D3). Tampoco los trae la `config` del snapshot del Admin, y si un `PUT /admin/snapshot` los envía, se descartan sin error y no se publican.
 
 ## Envíos
 
@@ -79,11 +81,11 @@ Los productos tienen `gallery` (fotos adicionales). El catálogo público expone
 
 Los roles no se crean ni se editan; solo se asignan. La tabla vive en `backend/src/domain/sesion/rol.rules.mjs` y el Admin la replica en `frontend/projects/admin/src/app/features/sesion/domain/rol.rules.ts` solo para mostrar u ocultar opciones.
 
-| Rol          | Puede                                                                                                                                                |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `superadmin` | Todo, incluida la gestión de usuarios y el reinicio de la demo                                                                                       |
-| `admin`      | Toda la operación (catálogo, inventario, categorías, marcas, clientes, pedidos, banners, contenido, tarifas y reclamaciones), sin gestionar usuarios |
-| `vendedor`   | Resumen, ficha de productos existentes (nombre, descripción, imágenes, características, stock), inventario y estado de pedidos                       |
+| Rol          | Puede                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `superadmin` | Todo, incluida la gestión de usuarios, el reinicio de la demo y los temas (`themes.manage`)                                                                   |
+| `admin`      | Toda la operación (catálogo, inventario, categorías, marcas, clientes, pedidos, banners, contenido, tarifas y reclamaciones), sin gestionar usuarios ni temas |
+| `vendedor`   | Resumen, ficha de productos existentes (nombre, descripción, imágenes, características, stock), inventario y estado de pedidos                                |
 
 Reglas del servidor:
 
@@ -93,7 +95,37 @@ Reglas del servidor:
 - Debe quedar al menos un superadministrador activo (`409 LAST_SUPERADMIN`) y nadie puede eliminarse, desactivarse ni cambiarse el rol a sí mismo (`409 SELF_LOCKOUT`).
 - Un usuario eliminado o desactivado pierde sus sesiones abiertas.
 
-Migración: los datos guardados por versiones anteriores (sin `schemaVersion`) pasan `owner` → `superadmin` y `catalog-maintainer` → `vendedor`, y se agrega la cuenta demo `admin@webstore.demo` si no existe. Se ejecuta una sola vez (`schemaVersion: 2`).
+Migraciones de los datos guardados por versiones anteriores. Cada una se ejecuta una sola vez, al arrancar el BFF:
+
+- `schemaVersion: 2`: sin `schemaVersion`, los roles pasan `owner` → `superadmin` y `catalog-maintainer` → `vendedor`, y se agrega la cuenta demo `admin@webstore.demo` si no existe.
+- `schemaVersion: 3`: el estado gana `appearance` (`revision`, `activeThemeId` y `customThemes`), con B activo. Si los colores de Contenido difieren de los de B (`#1D4ED8` y `#C2410C`, sin distinguir mayúsculas), se crea con ellos el tema propio «Colores de Contenido» (con el fondo principal, el fondo secundario y el contraste de B) y queda activo; si el nombre ya existe, «Colores de Contenido (2)», «(3)»… Un color ausente, que no es `#RRGGBB` o el anterior por defecto (borgoña `#6E173C` o bronce `#8C6845`) cuenta como el de B. Después, `primaryColor` y `secondaryColor` se quitan de la configuración. Un tema activo que no existe pasa a B. `POST /admin/reset` vuelve a B, sin temas propios.
+
+## Apariencia y temas
+
+El BFF es la fuente de los temas ([ADR-0010](../../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md), [ADR-0011](../../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md) y [ADR-0012](../../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Los predefinidos A («Violeta tienda»), B («Azul cobalto») y C («Grafito y ámbar») viven en el código y no se editan ni se borran; los temas propios y el tema activo se guardan en `appearance`, con una revisión propia, independiente de la del snapshot: una venta no invalida un guardado de temas, ni un guardado de temas invalida el snapshot.
+
+| Método   | Ruta                           | Petición                                                                                       | Respuesta                                                                                                                                                | Errores (`code`)                                                                                                                                                                     | Roles                          |
+| -------- | ------------------------------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
+| `GET`    | `/appearance`                  | —                                                                                              | `200 Apariencia`: `{ demoMode, activeThemeId, themes }`. En modo demo, `themes` trae todos los temas; fuera de él, solo el activo                        | —                                                                                                                                                                                    | Público                        |
+| `GET`    | `/appearance/theme.css`        | Cookie `ws_tema_vista_previa`, que solo se lee en modo demo. Cabecera opcional `If-None-Match` | `200 text/css; charset=utf-8` con `Cache-Control: no-cache`, `ETag` y `Vary: Cookie`; `304` sin cuerpo si `If-None-Match` coincide con el `ETag` vigente | — (nunca falla por la cookie: si no es un tema, sirve el activo)                                                                                                                     | Público                        |
+| `GET`    | `/admin/themes`                | Bearer                                                                                         | `200 TemasAdmin`: `{ revision, activeThemeId, themes }`, con todos los temas                                                                             | `401 ADMIN_AUTHENTICATION_REQUIRED`, `403 INSUFFICIENT_ROLE`                                                                                                                         | `superadmin` (`themes.manage`) |
+| `POST`   | `/admin/themes`                | `{ revision, name, colors }`                                                                   | `201 TemasAdmin`. El tema nuevo no queda activo                                                                                                          | `400 INVALID_THEME_NAME`, `400 INVALID_THEME_COLOR` (`details.field`), `400 INSUFFICIENT_THEME_CONTRAST` (`details.pairs`), `409 THEME_NAME_TAKEN`, `409 STALE_THEMES`, `401`, `403` | `superadmin`                   |
+| `PUT`    | `/admin/themes/:id`            | `{ revision, name, colors }`                                                                   | `200 TemasAdmin`                                                                                                                                         | Los de `POST`, `404 THEME_NOT_FOUND` y `409 PREDEFINED_THEME_READ_ONLY`                                                                                                              | `superadmin`                   |
+| `DELETE` | `/admin/themes/:id?revision=N` | —                                                                                              | `200 TemasAdmin`                                                                                                                                         | `404 THEME_NOT_FOUND`, `409 PREDEFINED_THEME_READ_ONLY`, `409 ACTIVE_THEME_IN_USE`, `409 STALE_THEMES`, `401`, `403`                                                                 | `superadmin`                   |
+| `PUT`    | `/admin/active-theme`          | `{ revision, themeId }`                                                                        | `200 TemasAdmin`                                                                                                                                         | `404 THEME_NOT_FOUND`, `409 STALE_THEMES`, `401`, `403`                                                                                                                              | `superadmin`                   |
+
+Formas y reglas:
+
+- `Tema`: `{ id, name, kind: 'predefined' | 'custom', colors: { primary, secondary, background, surface, contrast }, tokens: { '--ws-primary': '#1D4ED8', … } }`. Los `tokens` se calculan al leer y no se guardan. Los colores de un tema propio se guardan en `#RRGGBB` en mayúsculas.
+- Orden de `themes`: A, B y C, y después los propios por nombre (`localeCompare('es')`).
+- Nombre: recortado, de 1 a 40 caracteres y único entre todos los temas, predefinidos incluidos, sin distinguir mayúsculas.
+- `details.pairs` de `INSUFFICIENT_THEME_CONTRAST`: `[{ pair: 'contrast/background' | 'contrast/surface', ratio: 2.1, minimum: 4.5 }]`, con la relación redondeada a un decimal hacia abajo, como la muestra el Admin. Solo esos dos pares bloquean; el resto son avisos que el Admin muestra y que no impiden guardar.
+- Cada `POST`, `PUT` y `DELETE` exige la `revision` vigente de los temas. Ausente o distinta, responde `409 STALE_THEMES` («Otra persona cambió los temas. Recarga la lista y vuelve a intentarlo.») y no cambia nada. El Admin no reintenta: avisa y recarga la lista.
+- `ACTIVE_THEME_IN_USE`: «Activa otro tema antes de borrar este.»
+- Las rutas del Admin validan la sesión y el permiso antes de leer el cuerpo.
+- `theme.css` es un único bloque `:root:root { --ws-…: …; }`, solo con declaraciones de variables, con el mapa del tema activo o, en modo demo, el de la vista previa de la cookie si es un tema existente. El selector repetido gana a `:root` de `tokens.css`, que se carga después. No lleva cabeceras CORS: se carga con `<link>` desde el mismo origen.
+- Caché de `theme.css`: el `ETag` es el SHA-256 recortado, entre comillas, del cuerpo que se sirve. Cambia al activar otro tema, al editar el activo, al cambiar la vista previa y si una versión nueva cambia los valores de un predefinido. `no-cache` obliga a revalidar en cada carga, y `Vary: Cookie` evita que un intermediario sirva la vista previa de una persona a otra.
+- Modo demo: lo enciende `WEBSTORE_DEMO_MODE=true` (solo `true`, sin distinguir mayúsculas ni espacios en los extremos). Sin él, `demoMode` es `false` y la cookie se ignora. La cookie no se guarda en el BFF ni afecta a nadie más.
 
 ## Convenciones y protección local
 
@@ -106,3 +138,5 @@ Migración: los datos guardados por versiones anteriores (sin `schemaVersion`) p
 ## Producción
 
 El endpoint snapshot es deliberadamente compacto para la demo. Un BFF productivo debe dividir comandos/queries, usar un proveedor de identidad, aplicar rate limiting y auditoría, proteger concurrencia de stock, incorporar idempotencia de checkout y usar persistencia transaccional.
+
+`/appearance/theme.css` bloquea el primer pintado de la tienda y del Admin ([ADR-0010](../../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)). Un BFF productivo debe servirla rápido y con caché: conservar el `ETag`, el `Cache-Control: no-cache` y el `Vary: Cookie`, responder el `304` sin recalcular el mapa (por ejemplo, con la hoja y su `ETag` en memoria hasta el siguiente cambio de temas) y, si hay CDN o proxy delante, que respete `Vary: Cookie` o que no guarde la hoja en modo demo.

@@ -9,8 +9,6 @@ const FALLBACK: ConfiguracionTienda = {
   logoUrl: '',
   contactEmail: 'contacto@webstore.demo',
   contactPhone: '+51 999 000 000',
-  primaryColor: '#1D4ED8',
-  secondaryColor: '#C2410C',
   fontFamily: 'Source Sans 3 Variable',
   headerMessage: 'Despachos en Lima. Consulta cobertura y tarifas.',
   footerText: 'Tecnología y electrohogar para tu casa.',
@@ -90,9 +88,8 @@ export class ContenidoFacade {
       const resolved = { ...FALLBACK, ...settings };
       this.settingsState.set(resolved);
       this.bannersState.set(banners);
+      // Contenido ya no trae colores (D3): el color de la tienda lo aplica el tema activo.
       if (typeof document !== 'undefined') {
-        document.documentElement.style.setProperty('--ws-primary', resolved.primaryColor);
-        document.documentElement.style.setProperty('--ws-accent', resolved.secondaryColor);
         // Un nombre de familia con dígitos (p. ej. 'Source Sans 3') solo es válido en CSS entre comillas.
         document.documentElement.style.setProperty(
           '--ws-font',

@@ -18,7 +18,7 @@ import { TiendaFacade } from '../application/tienda.facade';
               <p class="text-xs text-muted">{{ b.active ? 'Activa' : 'Inactiva' }}</p>
             </div>
             <div class="flex gap-3 text-sm font-semibold">
-              <button class="text-primary" (click)="edit(b.id)">Editar</button>
+              <button class="text-link" (click)="edit(b.id)">Editar</button>
               <button class="text-danger" (click)="remove(b.id)">Eliminar</button>
             </div>
           </div>
@@ -32,7 +32,7 @@ import { TiendaFacade } from '../application/tienda.facade';
         </mat-form-field>
         <mat-checkbox formControlName="active">Activa</mat-checkbox>
         <button
-          class="mt-5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white"
+          class="mt-5 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
           type="submit"
         >
           Guardar

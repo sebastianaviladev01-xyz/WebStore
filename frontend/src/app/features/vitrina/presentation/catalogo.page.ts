@@ -146,7 +146,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
             <div class="ws-card grid min-h-80 place-items-center p-8 text-center">
               <div class="max-w-md">
                 <div
-                  class="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-xl bg-soft text-primary"
+                  class="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-xl bg-soft text-link"
                   aria-hidden="true"
                 >
                   <svg class="h-7 w-7 fill-none stroke-current" viewBox="0 0 32 32">

@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto';
+
 /** Límite del cuerpo JSON (los logos y fotos del Admin viajan como data URL). */
 const MAX_BODY_BYTES = 2 * 1024 * 1024;
 
@@ -26,6 +28,48 @@ export const created = (body) => ({ status: 201, body });
 export const accepted = (body) => ({ status: 202, body });
 export const noContent = () => ({ status: 204 });
 
+/** `If-None-Match` coincide con `etag`: lista separada por comas, etiquetas débiles (`W/`) o `*`. */
+function coincideEtag(ifNoneMatch, etag) {
+  if (!ifNoneMatch) return false;
+  return ifNoneMatch
+    .split(',')
+    .map((valor) => valor.trim().replace(/^W\//, ''))
+    .some((valor) => valor === '*' || valor === etag);
+}
+
+/**
+ * Hoja de estilos con caché revalidable (ADR-0010): `ETag` con el SHA-256 recortado del cuerpo, `no-cache` para
+ * revalidar en cada carga y `Vary: Cookie` porque, en modo demo, la cookie de la vista previa cambia el cuerpo.
+ * Si `If-None-Match` coincide, responde `304` sin cuerpo. No lleva cabeceras CORS: se carga con `<link>`.
+ */
+export function css(texto, req) {
+  const etag = `"${createHash('sha256').update(texto).digest('base64url').slice(0, 22)}"`;
+  const headers = {
+    'content-type': 'text/css; charset=utf-8',
+    'cache-control': 'no-cache',
+    etag,
+    vary: 'Cookie',
+  };
+  return coincideEtag(req.headers['if-none-match'], etag)
+    ? { status: 304, headers, text: '' }
+    : { status: 200, headers, text: texto };
+}
+
+/** Valor de la cookie `nombre` de la petición, o `undefined` si no viene. */
+export function cookie(req, nombre) {
+  for (const parte of String(req.headers.cookie ?? '').split(';')) {
+    const separador = parte.indexOf('=');
+    if (separador < 0 || parte.slice(0, separador).trim() !== nombre) continue;
+    const valor = parte.slice(separador + 1).trim();
+    try {
+      return decodeURIComponent(valor);
+    } catch {
+      return valor;
+    }
+  }
+  return undefined;
+}
+
 function corsHeaders(req, allowedOrigins) {
   const origin = req.headers.origin;
   const headers = {
@@ -51,7 +95,12 @@ export function createResponder(allowedOrigins) {
   function problem(req, res, status, code, message, details = undefined) {
     return json(req, res, status, { message, error: { code, message, ...(details ? { details } : {}) } });
   }
-  return { json, empty, problem };
+  /** Respuesta de texto con sus propias cabeceras (`css()`). */
+  function text(res, { status, headers, text: cuerpo }) {
+    res.writeHead(status, headers);
+    res.end(cuerpo);
+  }
+  return { json, empty, problem, text };
 }
 
 export async function readJsonBody(req) {

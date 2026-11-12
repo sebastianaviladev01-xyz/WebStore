@@ -217,12 +217,12 @@ export const seed = {
   accountSessions: [],
   adminSessions: [],
   complaints: [],
+  // Temas (ADR-0011): B activo, sin temas propios. Los predefinidos son constantes del dominio y no se guardan.
+  appearance: { revision: 0, activeThemeId: 'b', customThemes: [] },
   config: {
     storeName: 'WebStore',
     logoText: 'W',
     logoUrl: '',
-    primaryColor: '#1D4ED8',
-    secondaryColor: '#C2410C',
     contactEmail: 'contacto@webstore.demo',
     contactPhone: '+51 999 000 000',
     fontFamily: 'Source Sans 3 Variable',

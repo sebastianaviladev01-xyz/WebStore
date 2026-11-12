@@ -284,10 +284,19 @@ try {
   if (!snapshot.complaints.some((item) => item.id === complaint.id))
     throw new Error('La reclamación no llegó al Admin');
 
+  // Contenido ya no tiene colores (D3, AC-22): ni la semilla ni el snapshot los traen.
+  const coloresDeContenido = (config) => ['primaryColor', 'secondaryColor'].filter((key) => key in config);
+  if (
+    coloresDeContenido(await request('/bff/content/settings')).length ||
+    coloresDeContenido(snapshot.config).length
+  )
+    throw new Error('Contenido no debe traer primaryColor ni secondaryColor');
+  // Un Admin anterior que aún envía los colores: se descartan sin error y no se publican.
   const settings = {
     ...snapshot.config,
     storeName: 'Tienda Smoke',
     primaryColor: '#123456',
+    secondaryColor: '#654321',
     logoUrl: 'data:image/svg+xml;base64,PHN2Zy8+',
     sideNavigation: 'TV y audio, Cocina',
     shippingPageEnabled: false,
@@ -302,10 +311,11 @@ try {
   const publicSettings = await request('/bff/content/settings');
   if (
     publicSettings.storeName !== 'Tienda Smoke' ||
-    publicSettings.primaryColor !== '#123456' ||
     publicSettings.privacyContent !== 'Privacidad contractual'
   )
     throw new Error('CMS Admin no llegó al Storefront');
+  if (coloresDeContenido(publicSettings).length || coloresDeContenido(snapshot.config).length)
+    throw new Error('El PUT del snapshot con primaryColor y secondaryColor no debe publicarlos (AC-22)');
   if (
     publicSettings.logoUrl !== settings.logoUrl ||
     publicSettings.sideNavigation !== 'TV y audio, Cocina' ||
@@ -413,6 +423,232 @@ try {
   });
   if (lockout.status !== 409) throw new Error('El BFF permitió quedarse sin superadministrador');
 
+  // Apariencia y temas (TEST-13): rutas públicas, rutas del Admin con `themes.manage`, revisión propia y caché.
+  const errorDe = async (response) => (await response.json()).error ?? {};
+  const esperarError = async (response, status, code, contexto) => {
+    const error = response.status === status ? await errorDe(response) : {};
+    if (response.status !== status || error.code !== code)
+      throw new Error(`${contexto}: se esperaba ${status} ${code} y llegó ${response.status} ${error.code}`);
+    return error;
+  };
+  const temas = (session, path = '', options = {}) =>
+    raw(`/bff/admin/${path || 'themes'}`, {
+      ...options,
+      headers: { ...(session ? authorization(session.token) : {}), ...(options.headers ?? {}) },
+    });
+  const coloresB = {
+    primary: '#1D4ED8',
+    secondary: '#C2410C',
+    background: '#F3F5F8',
+    surface: '#FFFFFF',
+    contrast: '#0F172A',
+  };
+  const hoja = (headers = {}) => raw('/bff/appearance/theme.css', { headers });
+
+  const aparienciaPublica = await request('/bff/appearance');
+  if (
+    aparienciaPublica.demoMode !== false ||
+    aparienciaPublica.activeThemeId !== 'b' ||
+    aparienciaPublica.themes.map((tema) => tema.id).join() !== 'b' ||
+    aparienciaPublica.themes[0].tokens['--ws-primary'].toUpperCase() !== '#1D4ED8'
+  )
+    throw new Error('Fuera del modo demo, /bff/appearance debe traer solo el tema activo (B)');
+
+  const primeraHoja = await hoja();
+  const etagB = primeraHoja.headers.get('etag');
+  const cuerpoB = await primeraHoja.text();
+  if (
+    primeraHoja.status !== 200 ||
+    primeraHoja.headers.get('content-type') !== 'text/css; charset=utf-8' ||
+    primeraHoja.headers.get('cache-control') !== 'no-cache' ||
+    !/(^|,\s*)Cookie(\s*,|$)/i.test(primeraHoja.headers.get('vary') ?? '') ||
+    !/^"[^"]+"$/.test(etagB ?? '')
+  )
+    throw new Error('theme.css debe responder text/css con no-cache, Vary: Cookie y un ETag entre comillas');
+  const declaraciones =
+    cuerpoB
+      .match(/^:root:root \{\n([\s\S]*)\}\n$/)?.[1]
+      .trim()
+      .split('\n') ?? [];
+  if (
+    !declaraciones.length ||
+    !declaraciones.every((linea) => /^ {0,2}--ws-[a-z0-9-]+: [^;{}]+;$/.test(linea.trim()))
+  )
+    throw new Error('theme.css debe ser un único bloque :root:root solo con declaraciones --ws-*');
+  if (!/--ws-primary: #1D4ED8;/i.test(cuerpoB)) throw new Error('theme.css no sirve el tema activo B');
+  const revalidada = await hoja({ 'if-none-match': etagB });
+  if (revalidada.status !== 304 || (await revalidada.text()) !== '')
+    throw new Error('theme.css con If-None-Match igual al ETag debe responder 304 sin cuerpo');
+  const conCookie = await hoja({ cookie: 'ws_tema_vista_previa=c' });
+  if (conCookie.headers.get('etag') !== etagB || (await conCookie.text()) !== cuerpoB)
+    throw new Error('Fuera del modo demo, theme.css debe ignorar la cookie de la vista previa');
+
+  // Sin sesión: 401 en las cinco rutas del Admin. Con `admin` y `vendedor`: 403 INSUFFICIENT_ROLE.
+  const rutasDeTemas = [
+    ['GET', 'themes'],
+    ['POST', 'themes'],
+    ['PUT', 'themes/x'],
+    ['DELETE', 'themes/x?revision=0'],
+    ['PUT', 'active-theme'],
+  ];
+  for (const [method, path] of rutasDeTemas) {
+    const body = method === 'POST' || method === 'PUT' ? '{}' : undefined;
+    await esperarError(
+      await temas(null, path, { method, body }),
+      401,
+      'ADMIN_AUTHENTICATION_REQUIRED',
+      `${method} /bff/admin/${path} sin sesión`,
+    );
+    for (const session of [manager, seller])
+      await esperarError(
+        await temas(session, path, { method, body }),
+        403,
+        'INSUFFICIENT_ROLE',
+        `${method} /bff/admin/${path} con ${session.user.role}`,
+      );
+  }
+
+  const listaInicial = await request('/bff/admin/themes', { headers: authorization(owner.token) });
+  if (
+    typeof listaInicial.revision !== 'number' ||
+    listaInicial.activeThemeId !== 'b' ||
+    listaInicial.themes
+      .slice(0, 3)
+      .map((tema) => `${tema.id}:${tema.kind}`)
+      .join() !== 'a:predefined,b:predefined,c:predefined'
+  )
+    throw new Error('GET /bff/admin/themes debe traer la revisión, el activo B y los predefinidos A, B y C');
+  const crearTema = (entrada) => temas(owner, 'themes', { method: 'POST', body: JSON.stringify(entrada) });
+  let revisionDeTemas = listaInicial.revision;
+
+  await esperarError(
+    await crearTema({ revision: revisionDeTemas, name: '   ', colors: coloresB }),
+    400,
+    'INVALID_THEME_NAME',
+    'Nombre vacío',
+  );
+  const colorInvalido = await esperarError(
+    await crearTema({
+      revision: revisionDeTemas,
+      name: 'Smoke',
+      colors: { ...coloresB, surface: 'rgb(0,0,0)' },
+    }),
+    400,
+    'INVALID_THEME_COLOR',
+    'Color inválido',
+  );
+  if (colorInvalido.details?.field !== 'surface') throw new Error('INVALID_THEME_COLOR no indica el campo');
+  const sinContraste = await esperarError(
+    await crearTema({
+      revision: revisionDeTemas,
+      name: 'Smoke',
+      colors: { ...coloresB, contrast: '#FFFFFF' },
+    }),
+    400,
+    'INSUFFICIENT_THEME_CONTRAST',
+    'Contraste insuficiente',
+  );
+  const parBloqueante = sinContraste.details?.pairs?.find((par) => par.pair === 'contrast/background');
+  if (!parBloqueante || parBloqueante.minimum !== 4.5 || !(parBloqueante.ratio < 4.5))
+    throw new Error('INSUFFICIENT_THEME_CONTRAST no trae el par, la relación y el mínimo');
+  await esperarError(
+    await crearTema({ revision: revisionDeTemas, name: ' azul COBALTO ', colors: coloresB }),
+    409,
+    'THEME_NAME_TAKEN',
+    'Nombre de un predefinido',
+  );
+
+  // Dos guardados sobre la misma revisión: el segundo recibe STALE_THEMES y no cambia nada.
+  const creado = await crearTema({ revision: revisionDeTemas, name: 'Tema smoke', colors: coloresB });
+  if (creado.status !== 201) throw new Error(`Crear un tema debe responder 201; llegó ${creado.status}`);
+  const trasCrear = await creado.json();
+  const propio = trasCrear.themes.find((tema) => tema.name === 'Tema smoke');
+  if (
+    !propio ||
+    propio.kind !== 'custom' ||
+    trasCrear.activeThemeId !== 'b' ||
+    trasCrear.revision !== revisionDeTemas + 1
+  )
+    throw new Error('El tema creado no aparece como propio, quedó activo o no subió la revisión');
+  await esperarError(
+    await crearTema({ revision: revisionDeTemas, name: 'Tema smoke 2', colors: coloresB }),
+    409,
+    'STALE_THEMES',
+    'Segundo guardado sobre la misma revisión',
+  );
+  const trasConflicto = await request('/bff/admin/themes', { headers: authorization(owner.token) });
+  if (
+    trasConflicto.revision !== trasCrear.revision ||
+    trasConflicto.themes.some((tema) => tema.name === 'Tema smoke 2')
+  )
+    throw new Error('Un guardado con STALE_THEMES cambió los temas');
+  revisionDeTemas = trasCrear.revision;
+
+  const editar = (id, entrada) =>
+    temas(owner, `themes/${id}`, { method: 'PUT', body: JSON.stringify(entrada) });
+  const editado = await editar(propio.id, {
+    revision: revisionDeTemas,
+    name: 'Tema smoke editado',
+    colors: { ...coloresB, primary: '#123456' },
+  });
+  if (editado.status !== 200)
+    throw new Error(`Editar un tema propio debe responder 200; llegó ${editado.status}`);
+  revisionDeTemas = (await editado.json()).revision;
+  await esperarError(
+    await editar('b', { revision: revisionDeTemas, name: 'Otro', colors: coloresB }),
+    409,
+    'PREDEFINED_THEME_READ_ONLY',
+    'Editar un predefinido',
+  );
+  await esperarError(
+    await editar('no-existe', { revision: revisionDeTemas, name: 'Otro', colors: coloresB }),
+    404,
+    'THEME_NOT_FOUND',
+    'Editar un tema inexistente',
+  );
+
+  const activar = (themeId, revision = revisionDeTemas) =>
+    temas(owner, 'active-theme', { method: 'PUT', body: JSON.stringify({ revision, themeId }) });
+  await esperarError(await activar('no-existe'), 404, 'THEME_NOT_FOUND', 'Activar un tema inexistente');
+  const activado = await activar(propio.id);
+  if (activado.status !== 200)
+    throw new Error(`Activar un tema debe responder 200; llegó ${activado.status}`);
+  const trasActivar = await activado.json();
+  if (trasActivar.activeThemeId !== propio.id) throw new Error('El tema propio no quedó activo');
+  revisionDeTemas = trasActivar.revision;
+
+  const hojaNueva = await hoja({ 'if-none-match': etagB });
+  const etagNuevo = hojaNueva.headers.get('etag');
+  if (hojaNueva.status !== 200 || !etagNuevo || etagNuevo === etagB)
+    throw new Error('Tras activar otro tema, theme.css debe responder 200 con otro ETag');
+  if (!(await hojaNueva.text()).includes('--ws-primary: #123456;'))
+    throw new Error('theme.css no sirve el tema recién activado');
+  if ((await request('/bff/appearance')).activeThemeId !== propio.id)
+    throw new Error('/bff/appearance no refleja el tema activado');
+
+  const borrar = (id, revision = revisionDeTemas) =>
+    temas(owner, `themes/${id}${revision === null ? '' : `?revision=${revision}`}`, { method: 'DELETE' });
+  const enUso = await esperarError(
+    await borrar(propio.id),
+    409,
+    'ACTIVE_THEME_IN_USE',
+    'Borrar el tema activo',
+  );
+  if (enUso.message !== 'Activa otro tema antes de borrar este.')
+    throw new Error('ACTIVE_THEME_IN_USE no pide activar otro tema antes');
+  await esperarError(await borrar('a'), 409, 'PREDEFINED_THEME_READ_ONLY', 'Borrar un predefinido');
+  await esperarError(await borrar('no-existe'), 404, 'THEME_NOT_FOUND', 'Borrar un tema inexistente');
+  await esperarError(await borrar(propio.id, null), 409, 'STALE_THEMES', 'Borrar sin revisión');
+
+  const vueltaAB = await activar('b');
+  if (vueltaAB.status !== 200) throw new Error('No se pudo volver a activar B');
+  revisionDeTemas = (await vueltaAB.json()).revision;
+  const borrado = await borrar(propio.id);
+  if (borrado.status !== 200 || (await borrado.json()).themes.some((tema) => tema.id === propio.id))
+    throw new Error('Borrar un tema propio que no es el activo debe responder 200 y quitarlo');
+  if ((await hoja({ 'if-none-match': etagB })).status !== 304)
+    throw new Error('Con B activo otra vez, theme.css debe volver al ETag de B');
+
   const rates = await request('/bff/shipping/rates');
   if (!rates.length) throw new Error('Tarifas compartidas vacías');
 
@@ -426,6 +662,7 @@ try {
   console.log('✓ Reclamaciones: registro persistente y recepción administrativa');
   console.log('✓ CMS: logo/navegación/toggles/contenido legal');
   console.log('✓ Campañas y envíos compartidos');
+  console.log('✓ Temas: apariencia pública, theme.css con ETag y 304, themes.manage y STALE_THEMES');
   console.log('\nSmoke test BFF: OK');
 } finally {
   child.kill();

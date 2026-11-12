@@ -41,7 +41,7 @@ const PAGE_SIZE = 25;
             </svg>
             <input
               type="search"
-              class="h-10 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm outline-none focus:border-primary"
+              class="h-10 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm outline-none focus:border-link"
               placeholder="Buscar distrito u origen"
               [value]="query()"
               (input)="search($any($event.target).value)"
@@ -90,7 +90,7 @@ const PAGE_SIZE = 25;
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex justify-end gap-3 font-medium">
-                    <button class="text-primary" type="button" (click)="edit(rate.id)">Editar</button>
+                    <button class="text-link" type="button" (click)="edit(rate.id)">Editar</button>
                     <button class="text-danger" type="button" (click)="remove(rate.id)">Eliminar</button>
                   </div>
                 </td>
@@ -162,7 +162,10 @@ const PAGE_SIZE = 25;
             </mat-form-field>
           </div>
           <div class="mt-4 flex flex-wrap gap-3">
-            <button class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+            <button
+              class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+              type="submit"
+            >
               {{
                 editing()
                   ? 'Guardar tarifa'
@@ -203,7 +206,7 @@ const PAGE_SIZE = 25;
             </mat-form-field>
           </div>
           <button
-            class="mt-2 rounded-lg border border-primary px-5 py-2.5 text-sm font-semibold text-primary"
+            class="mt-2 rounded-lg border border-link px-5 py-2.5 text-sm font-semibold text-link"
             type="submit"
           >
             Aplicar a {{ adjustmentScope() }} {{ adjustmentScope() === 1 ? 'tarifa' : 'tarifas' }}

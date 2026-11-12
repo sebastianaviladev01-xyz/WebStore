@@ -16,6 +16,7 @@ export const urls = {
 /** Cuentas del Admin sembradas por el BFF de prueba (README), solo para uso local. */
 export const cuentasAdmin = {
   superadmin: { email: 'owner@webstore.demo', password: 'WebStore#2026', nombre: 'Superadministrador Demo' },
+  admin: { email: 'admin@webstore.demo', password: 'Admin#2026' },
   vendedor: { email: 'catalogo@webstore.demo', password: 'Catalogo#2026' },
 } as const;
 

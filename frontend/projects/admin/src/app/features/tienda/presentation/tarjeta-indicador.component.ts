@@ -36,7 +36,7 @@ type Tendencia = 'sube' | 'baja' | 'igual' | 'sin-dato';
         }
       </div>
       <a
-        class="mt-4 flex items-center gap-1 border-t border-line pt-3 text-sm font-medium text-primary hover:text-primary-strong"
+        class="mt-4 flex items-center gap-1 border-t border-line pt-3 text-sm font-medium text-link hover:text-on-primary-soft"
         [routerLink]="enlace()"
       >
         Ver más
@@ -62,7 +62,7 @@ export class TarjetaIndicadorComponent {
   readonly alerta = input(false);
 
   protected readonly insignia: Readonly<Record<Tendencia, string>> = {
-    sube: 'bg-primary-soft text-primary-strong',
+    sube: 'bg-primary-soft text-on-primary-soft',
     baja: 'bg-danger-soft text-danger',
     igual: 'bg-soft text-body',
     'sin-dato': 'bg-soft text-muted',

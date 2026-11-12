@@ -1,3 +1,4 @@
+import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
 import { requireWritableCollections, REPLACEABLE_COLLECTIONS } from '../../domain/admin/snapshot.rules.mjs';
 import { requireValidAdminUsers } from '../../domain/admin/usuario-admin.rules.mjs';
 import { requireValidCategoryTree } from '../../domain/catalogo/categoria.rules.mjs';
@@ -47,6 +48,8 @@ function applyAdminChanges(state, next, user, security) {
   if (next.products !== undefined) applyProducts(state, next.products, user.role);
   if (next.categories !== undefined) requireValidCategoryTree(next.categories);
   for (const key of REPLACEABLE_COLLECTIONS) if (next[key] !== undefined) state[key] = next[key];
+  // Contenido ya no guarda colores (D3): si un Admin anterior los envía, se descartan sin error (AC-22).
+  if (next.config !== undefined) state.config = sinColoresDeContenido(next.config);
   if (next.users !== undefined) applyUsers(state, next.users, user, security);
   if (Array.isArray(next.orders)) applyOrderStatuses(state, next.orders);
 }
@@ -67,11 +70,16 @@ export function createSnapshotUseCases({ store, security }) {
     return buildAdminSnapshot(store.state, user.role);
   }
 
-  /** Vuelve a los datos de demostración; la revisión sigue avanzando para invalidar snapshots abiertos. */
+  /**
+   * Vuelve a los datos de demostración (con B activo y sin temas propios). Las dos revisiones siguen avanzando
+   * para invalidar los snapshots y las listas de temas abiertos.
+   */
   function reset(user) {
     const previousRevision = store.state.revision;
+    const previousThemesRevision = store.state.appearance.revision;
     store.state = store.initialState();
     store.state.revision = previousRevision + 1;
+    store.state.appearance.revision = previousThemesRevision + 1;
     store.save();
     return buildAdminSnapshot(store.state, user.role);
   }

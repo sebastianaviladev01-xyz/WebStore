@@ -84,7 +84,7 @@
 .ws-hero-description {
   max-width: 430px;
   margin: 16px 0 24px;
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
   font-size: 17px;
   line-height: 1.55;
 }
@@ -97,7 +97,7 @@
 }
 
 .ws-hero-action-row > span {
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
   font-size: 14px;
   font-weight: 500;
 }
@@ -145,7 +145,7 @@
 }
 
 .ws-hero-controls .ws-carousel-control {
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
 }
 
 .ws-hero-controls .ws-carousel-control:hover {
@@ -272,13 +272,13 @@
 
 .ws-category-access span {
   margin-top: 8px;
-  color: var(--ws-primary);
+  color: var(--ws-link);
   font-size: 13px;
   font-weight: 500;
 }
 
 .ws-category-access:hover {
-  border-color: var(--ws-primary);
+  border-color: var(--ws-link);
 }
 
 .ws-benefits {
@@ -310,7 +310,7 @@
   place-items: center;
   border-radius: 10px;
   background: var(--ws-primary-soft);
-  color: var(--ws-primary);
+  color: var(--ws-link);
 }
 
 .ws-benefit-icon svg {
@@ -574,7 +574,7 @@
 
 .ws-hero-eyebrow {
   margin: 0 0 12px;
-  color: var(--ws-primary-strong);
+  color: var(--ws-on-primary-soft);
   font-size: 14px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -640,7 +640,7 @@
   height: 22px;
   flex: none;
   fill: none;
-  stroke: var(--ws-primary);
+  stroke: var(--ws-link);
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -661,7 +661,7 @@
   border-radius: 999px;
   background: color-mix(in srgb, var(--ws-surface) 50%, transparent);
   padding: 0;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--ws-ink) 8%, transparent);
   /* Desenfoque mínimo: se ve la foto a través, como en LG, sin que el contador pierda legibilidad. */
   backdrop-filter: blur(6px);
 }
@@ -673,7 +673,7 @@
 .ws-hero.is-wide .ws-hero-count,
 .ws-hero.is-wide .ws-hero-count strong {
   /* Azul de marca más profundo: con la cápsula más transparente mantiene 4,5:1 sobre la madera. */
-  color: color-mix(in srgb, var(--ws-primary-strong) 50%, var(--ws-ink));
+  color: color-mix(in srgb, var(--ws-on-primary-soft) 50%, var(--ws-ink));
 }
 
 /*
@@ -813,7 +813,7 @@
   border: 1px solid var(--ws-border);
   border-radius: 50%;
   background: var(--ws-surface);
-  color: var(--ws-primary);
+  color: var(--ws-link);
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -831,11 +831,11 @@
 }
 
 .ws-shortcuts a:hover {
-  color: var(--ws-primary);
+  color: var(--ws-link);
 }
 
 .ws-shortcuts a:hover .ws-shortcut-icon {
-  border-color: var(--ws-primary);
+  border-color: var(--ws-link);
   background: var(--ws-primary-soft);
 }
 
@@ -944,7 +944,7 @@
   place-items: center;
   border-radius: 50%;
   background: var(--ws-primary-soft);
-  color: var(--ws-primary);
+  color: var(--ws-link);
   transition:
     background-color 160ms ease,
     color 160ms ease,
@@ -963,7 +963,7 @@
 
 .ws-quick-access.is-current .ws-category-access:hover .ws-category-access-arrow {
   background: var(--ws-primary);
-  color: #ffffff;
+  color: var(--ws-on-primary);
   transform: translateX(2px);
 }
 

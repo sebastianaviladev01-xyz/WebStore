@@ -29,7 +29,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
           </mat-form-field>
           @if (codeRequested()) {
             @if (demoCode()) {
-              <p class="rounded-xl bg-primary-soft p-3 text-sm text-primary-strong">
+              <p class="rounded-xl bg-primary-soft p-3 text-sm text-on-primary-soft">
                 <strong>Canal local de demostración:</strong>
                 {{ demoCode() }}
               </p>

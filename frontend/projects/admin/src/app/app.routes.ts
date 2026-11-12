@@ -81,6 +81,12 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Contenido',
       },
       {
+        path: 'temas',
+        canMatch: [permisoGuard('themes.manage')],
+        loadComponent: () => import('./features/temas/presentation/temas.page').then((m) => m.TemasPage),
+        title: 'WebStore Admin | Temas',
+      },
+      {
         path: 'envios',
         canMatch: [permisoGuard('shipping.manage')],
         loadComponent: () =>

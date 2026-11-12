@@ -37,7 +37,7 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Tabla envío origen → destino | `TarifasEnvioPage` + `BffEnvioGateway`; el checkout solo pide el distrito y el BFF asigna la tienda de origen más próxima (tarifa más baja) |
 | Banners con vigencia | `BannersPage` + `activeBanners` |
 | Logo gráfico configurable | CMS permite URL o carga de imagen → BFF → Storefront shell |
-| Color principal configurable | CMS → CSS custom property |
+| Color principal configurable | Sustituido por los temas de la feature 002 (filas «Temas configurables»): Contenido ya no tiene colores; el color vive en el tema activo |
 | Contacto configurable | CMS → footer |
 | Header/footer configurables | CMS → Storefront shell |
 | Navegación superior configurable | CMS `topNavigation` → Storefront shell |
@@ -61,3 +61,15 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Identidad propia en lugar de clon LG | Paleta B azul cobalto (`src/styles/tokens.css`), hero en tarjeta, categorías de texto, beneficios en tarjetas claras, footer azul marino, Source Sans 3, assets y copy propios; ver `VISUAL-SYSTEM.md` |
 | Contenido legal editable | CMS publica textos de Contacto, Envíos, Privacidad y Términos; rutas respetan sus toggles |
 | Fotografía eficiente en listados | miniaturas de 480 px, `srcset`/carga diferida y prioridad exclusiva para el LCP |
+| Temas configurables (feature 002): tres predefinidos A, B y C, B por defecto (REQ-01, REQ-03, REQ-04; AC-01 a AC-03) | `backend/src/domain/temas/temas-predefinidos.mjs`; mapa de 30 tokens (`TOKENS_DEL_TEMA`); `frontend/src/styles/tokens.css` (B y respaldo); TEST-02, TEST-18, TEST-23 (capturas de B iguales a `dev`; A y C solo cambian colores) |
+| Tema con nombre y cinco colores; validación (REQ-02; AC-06, AC-11, AC-12) | `backend/src/domain/temas/tema-propio.rules.mjs` (`exigirTemaValido`); réplica del Admin `tema.rules.ts`; TEST-06, TEST-14, TEST-19 |
+| Tema activo único, aplicado al cargar sin parpadeo (REQ-04, REQ-16; AC-10, AC-18) | `GET /bff/appearance/theme.css` (`<link>` bloqueante en los dos `index.html`, [ADR-0010](../adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)); `TemasFacade`; TEST-12, TEST-17, TEST-22, TEST-24 |
+| Lista de temas para el `superadmin` y predefinidos de solo lectura (REQ-05, REQ-06; AC-03, AC-05) | `TemasPage` (Admin, `/temas`); `PREDEFINED_THEME_READ_ONLY`; TEST-06, TEST-07, TEST-19 |
+| Crear, editar, borrar y activar temas propios (REQ-07, REQ-08; AC-06 a AC-10) | `TemaDialog`, `TemasFacade` (Admin); `temas.use-cases.mjs`; `/bff/admin/themes`; TEST-07, TEST-13, TEST-19 |
+| Solo el `superadmin` gestiona temas (REQ-09; AC-04) | Permiso `themes.manage` en `rol.rules.mjs` y su réplica `rol.rules.ts`; `403 INSUFFICIENT_ROLE`; TEST-09, TEST-13, TEST-19 |
+| Temas y tema activo persistentes en el BFF, con revisión propia (REQ-10; AC-10, AC-19) | `appearance` del estado (`SCHEMA_VERSION = 3`, [ADR-0011](../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)); `409 STALE_THEMES`; TEST-07, TEST-13, TEST-19 |
+| Modo demo y tuerca «Cambiar tema» con vista previa local (REQ-11, REQ-12; AC-15, AC-16, AC-21) | `WEBSTORE_DEMO_MODE` (`demoMode`); cookie `ws_tema_vista_previa` ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)); `SelectorTemaComponent` en las dos aplicaciones; TEST-08, TEST-12, TEST-15, TEST-21, TEST-25 |
+| Contraste AA de los predefinidos y aviso o bloqueo en los propios (REQ-13, REQ-14, REQ-17; AC-13, AC-14, AC-20) | `contraste.rules.mjs` y `PARES_DE_CONTRASTE` (15 pares); pares medidos en [`VISUAL-SYSTEM.md`](../../frontend/docs/VISUAL-SYSTEM.md) y en la verificación de la feature; TEST-01, TEST-03, TEST-04, TEST-05, TEST-14 |
+| El tema no cambia el logo ni las imágenes (REQ-15; AC-17) | Colores solo por tokens (`--ws-*`); TEST-20 (`storefront-temas.spec.ts`) y TEST-23 |
+| Contenido sin colores y migración al tema «Colores de Contenido» (REQ-18; AC-22, AC-23) | Migración v3 en `normalizar-estado.mjs`; `sinColoresDeContenido`; TEST-10, TEST-11, TEST-13 |
+| El tema activo de una instalación nueva es B; C se activa en la puesta en marcha de Ecom (REQ-19; AC-24) | Semilla con B activo; [`docs/development/puesta-en-marcha.md`](../development/puesta-en-marcha.md); TEST-08, TEST-10, TEST-11 |

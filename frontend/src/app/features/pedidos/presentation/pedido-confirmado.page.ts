@@ -9,7 +9,7 @@ import { PedidosFacade } from '../application/pedidos.facade';
     <section class="ws-container grid min-h-[65vh] place-items-center py-12">
       <div class="ws-card w-full max-w-2xl p-8 text-center sm:p-12">
         @if (order(); as o) {
-          <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-primary">
+          <div class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary-soft text-link">
             <svg
               viewBox="0 0 24 24"
               aria-hidden="true"

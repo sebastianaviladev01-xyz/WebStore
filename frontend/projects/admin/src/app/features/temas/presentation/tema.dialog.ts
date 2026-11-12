@@ -1,0 +1,284 @@
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+} from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+
+import { TemasFacade } from '../application/temas.facade';
+import { revisarContraste, tokensDelTema, validarNombreTema } from '../domain/tema.rules';
+import { ColoresTema, ParContraste, Tema } from '../domain/tema.model';
+import { VistaPreviaTemaComponent } from './vista-previa-tema.component';
+
+/** Lo que recibe el diálogo: el tema propio que se edita (o null para crear uno) y los colores de partida. */
+export interface DatosTemaDialog {
+  readonly tema: Tema | null;
+  readonly coloresIniciales: ColoresTema;
+}
+
+/** Resultado al cerrar tras guardar; `undefined` si se canceló. */
+export interface ResultadoTemaDialog {
+  readonly accion: 'creado' | 'editado';
+  readonly nombre: string;
+}
+
+type CampoDeColor = keyof ColoresTema;
+
+/** Los cinco colores de un tema, en el orden del contrato, con el nombre que ve la persona y para qué sirven. */
+const CAMPOS_DE_COLOR: readonly {
+  readonly campo: CampoDeColor;
+  readonly etiqueta: string;
+  readonly uso: string;
+}[] = [
+  { campo: 'primary', etiqueta: 'Principal', uso: 'Botones, cabecera y marca.' },
+  { campo: 'secondary', etiqueta: 'Secundario', uso: 'Ofertas y acentos.' },
+  { campo: 'background', etiqueta: 'Fondo principal', uso: 'Lienzo de las páginas.' },
+  { campo: 'surface', etiqueta: 'Fondo secundario', uso: 'Tarjetas, formularios y cabecera.' },
+  { campo: 'contrast', etiqueta: 'Contraste', uso: 'Texto, titulares y pie de página.' },
+];
+
+/** Nombre de cada par de texto y fondo, como lo lee la persona (AC-14). */
+const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
+  'contrast/background': 'Texto sobre el fondo principal',
+  'contrast/surface': 'Texto sobre el fondo secundario',
+  'muted/background': 'Texto secundario sobre el fondo principal',
+  'muted/surface': 'Texto secundario sobre el fondo secundario',
+  'onPrimary/primary': 'Texto sobre el color principal',
+  'onPrimary/primaryStrong': 'Texto sobre el principal oscuro',
+  'onPrimarySoft/primarySoft': 'Texto sobre el principal suave',
+  'onAccent/accent': 'Texto sobre el color secundario',
+  'link/background': 'Enlaces sobre el fondo principal',
+  'link/surface': 'Enlaces sobre el fondo secundario',
+  'focusRing/background': 'Contorno de foco sobre el fondo principal',
+  'focusRing/surface': 'Contorno de foco sobre el fondo secundario',
+  'footerText/footer': 'Texto del pie de página',
+  'onTopbar/topbar': 'Texto de la barra superior',
+  'disabledText/disabled': 'Texto deshabilitado',
+};
+
+/** «Texto sobre el fondo principal: 2.1:1, mínimo 4.5:1», el formato de AC-14. */
+const describirPar = ({ par, relacion, minimo }: ParContraste): string =>
+  `${NOMBRE_DEL_PAR[par]}: ${relacion.toFixed(1)}:1, mínimo ${minimo}:1`;
+
+const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
+
+/**
+ * Formulario de un tema propio (AC-06 a AC-08, AC-11, AC-14): nombre, cinco selectores de color, vista
+ * previa al momento y revisión de contraste con las reglas replicadas del BFF. Un par que bloquea impide
+ * guardar; los demás solo avisan. Los errores del BFF se muestran en su campo; si los temas cambiaron
+ * mientras tanto (AC-19), la facade ya recargó la lista y el diálogo muestra el aviso sin reintentar.
+ */
+@Component({
+  selector: 'ws-admin-tema-dialog',
+  imports: [
+    MatDialogModule,
+    MatFormFieldModule,
+    MatInputModule,
+    ReactiveFormsModule,
+    VistaPreviaTemaComponent,
+  ],
+  template: `
+    <h2 mat-dialog-title>{{ datos.tema ? 'Editar tema' : 'Nuevo tema' }}</h2>
+    <form class="contents" [formGroup]="formulario" (ngSubmit)="guardar()">
+      <mat-dialog-content>
+        @if (aviso()) {
+          <div class="mb-4 rounded-lg bg-warning-soft p-3 text-sm text-warning" role="alert">
+            {{ aviso() }}
+          </div>
+        }
+        @if (errorGeneral()) {
+          <div
+            class="mb-4 rounded-lg border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+            role="alert"
+          >
+            {{ errorGeneral() }}
+          </div>
+        }
+        <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div class="min-w-0">
+            <mat-form-field>
+              <mat-label>Nombre</mat-label>
+              <input matInput maxlength="40" autocomplete="off" formControlName="nombre" />
+              @if (nombre.errors?.['nombre']; as motivo) {
+                <mat-error>{{ motivo }}</mat-error>
+              }
+            </mat-form-field>
+            <fieldset class="mt-1 grid gap-3">
+              <legend class="mb-2 text-sm font-semibold text-ink">Colores</legend>
+              @for (c of campos; track c.campo) {
+                <div class="flex items-center gap-3">
+                  <input
+                    type="color"
+                    class="h-11 w-14 shrink-0 cursor-pointer rounded-lg border border-line bg-surface p-1"
+                    [id]="'tema-color-' + c.campo"
+                    [value]="colores()[c.campo]"
+                    [attr.aria-describedby]="'tema-color-' + c.campo + '-uso'"
+                    [attr.aria-invalid]="errorDeColor()?.campo === c.campo"
+                    (input)="cambiarColor(c.campo, $any($event.target).value)"
+                  />
+                  <div class="min-w-0 flex-1">
+                    <label class="block text-sm font-semibold text-ink" [for]="'tema-color-' + c.campo">
+                      {{ c.etiqueta }}
+                    </label>
+                    <p class="text-xs text-muted" [id]="'tema-color-' + c.campo + '-uso'">
+                      {{ c.uso }}
+                      @if (errorDeColor()?.campo === c.campo) {
+                        <span class="block font-semibold text-danger">{{ errorDeColor()?.mensaje }}</span>
+                      }
+                    </p>
+                  </div>
+                  <span class="shrink-0 text-sm tabular-nums text-muted">{{ colores()[c.campo] }}</span>
+                </div>
+              }
+            </fieldset>
+            <section class="mt-5" aria-labelledby="tema-contraste-titulo">
+              <h3 id="tema-contraste-titulo" class="text-sm font-semibold text-ink">Revisión de contraste</h3>
+              <div class="mt-2 grid gap-2" aria-live="polite">
+                @if (bloqueos().length) {
+                  <div
+                    class="rounded-lg border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+                    data-contraste="bloqueo"
+                  >
+                    <p class="font-semibold">No se puede guardar: el color de contraste no se lee bien.</p>
+                    <ul class="mt-1 grid gap-0.5">
+                      @for (par of bloqueos(); track par.par) {
+                        <li>{{ describir(par) }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (avisos().length) {
+                  <div class="rounded-lg bg-warning-soft p-3 text-sm text-warning" data-contraste="aviso">
+                    <p class="font-semibold">Puedes guardar, pero estos pares no alcanzan su mínimo:</p>
+                    <ul class="mt-1 grid gap-0.5">
+                      @for (par of avisos(); track par.par) {
+                        <li>{{ describir(par) }}</li>
+                      }
+                    </ul>
+                  </div>
+                }
+                @if (!bloqueos().length && !avisos().length) {
+                  <p class="text-sm text-muted" data-contraste="correcto">
+                    Todos los pares de texto y fondo alcanzan su mínimo de contraste.
+                  </p>
+                }
+              </div>
+            </section>
+          </div>
+          <div class="min-w-0">
+            <h3 class="mb-2 text-sm font-semibold text-ink">Vista previa</h3>
+            <ws-admin-vista-previa-tema [tokens]="tokens()" />
+            <p class="mt-2 text-xs text-muted">
+              Solo cambia aquí. El tema se aplica a la tienda y al Admin cuando lo activas.
+            </p>
+          </div>
+        </div>
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button
+          type="button"
+          class="min-h-11 rounded-xl border border-line px-5 text-sm font-semibold hover:bg-subtle"
+          mat-dialog-close
+        >
+          Cancelar
+        </button>
+        <button
+          type="submit"
+          class="min-h-11 rounded-xl bg-primary px-5 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+          [disabled]="bloqueos().length > 0 || temas.guardando()"
+        >
+          {{ temas.guardando() ? 'Guardando…' : 'Guardar tema' }}
+        </button>
+      </mat-dialog-actions>
+    </form>
+  `,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class TemaDialog {
+  protected readonly datos = inject<DatosTemaDialog>(MAT_DIALOG_DATA);
+  protected readonly temas = inject(TemasFacade);
+  private readonly ref = inject<MatDialogRef<TemaDialog, ResultadoTemaDialog>>(MatDialogRef);
+
+  protected readonly campos = CAMPOS_DE_COLOR;
+  protected readonly describir = describirPar;
+  protected readonly colores = signal<ColoresTema>({ ...this.datos.coloresIniciales });
+  protected readonly errorDeColor = signal<{ campo: string; mensaje: string } | null>(null);
+  protected readonly errorGeneral = signal<string | null>(null);
+  /** Aviso de datos desactualizados del último guardado de este diálogo (AC-19). */
+  protected readonly aviso = signal<string | null>(null);
+
+  /** Los predefinidos de la lista del BFF: de ellos hereda la escala neutra un tema con su misma base. */
+  private readonly predefinidos = computed(
+    () => this.temas.temasAdmin()?.themes.filter((tema) => tema.kind === 'predefined') ?? [],
+  );
+  protected readonly tokens = computed(() => tokensDelTema(this.colores(), this.predefinidos()));
+  private readonly pares = computed(() => revisarContraste(this.colores(), this.predefinidos()));
+  protected readonly bloqueos = computed(() =>
+    this.pares().filter(({ bloquea, relacion, minimo }) => bloquea && relacion < minimo),
+  );
+  protected readonly avisos = computed(() =>
+    this.pares().filter(({ bloquea, relacion, minimo }) => !bloquea && relacion < minimo),
+  );
+
+  protected readonly nombre = new FormControl(this.datos.tema?.name ?? '', {
+    nonNullable: true,
+    validators: (control: AbstractControl<string>) => this.validarNombre(control.value),
+  });
+  /** Envuelve el nombre para que `ngSubmit` (Intro en el campo) llame a `guardar()` sin envío nativo. */
+  protected readonly formulario = new FormGroup({ nombre: this.nombre });
+
+  protected cambiarColor(campo: CampoDeColor, valor: string): void {
+    this.colores.update((actuales) => ({ ...actuales, [campo]: valor.toUpperCase() }));
+    if (this.errorDeColor()?.campo === campo) this.errorDeColor.set(null);
+  }
+
+  protected async guardar(): Promise<void> {
+    this.nombre.markAsTouched();
+    if (this.nombre.invalid || this.bloqueos().length > 0) return;
+    this.errorGeneral.set(null);
+    this.errorDeColor.set(null);
+    this.aviso.set(null);
+    const entrada = { name: this.nombre.value.trim(), colors: this.colores() };
+    const guardado = this.datos.tema
+      ? await this.temas.editar(this.datos.tema.id, entrada)
+      : await this.temas.crear(entrada);
+    if (guardado) {
+      this.ref.close({ accion: this.datos.tema ? 'editado' : 'creado', nombre: entrada.name });
+      return;
+    }
+    this.mostrarRechazo();
+  }
+
+  /**
+   * Lleva el rechazo del BFF a su campo. Si los temas cambiaron mientras tanto (AC-19), la facade ya recargó
+   * la lista y no reintenta: se muestra su aviso arriba del formulario.
+   */
+  private mostrarRechazo(): void {
+    const regla = this.temas.errorDeRegla();
+    if (regla && CODIGOS_DEL_NOMBRE.has(regla.code)) {
+      this.nombre.setErrors({ nombre: regla.message });
+      return;
+    }
+    const campo = (regla?.details as { field?: unknown } | undefined)?.field;
+    if (regla?.code === 'INVALID_THEME_COLOR' && typeof campo === 'string') {
+      this.errorDeColor.set({ campo, mensaje: regla.message });
+      return;
+    }
+    if (this.temas.aviso()) this.aviso.set(this.temas.aviso());
+    else this.errorGeneral.set(this.temas.error());
+  }
+
+  /** Mismas reglas que el BFF; los nombres existentes no incluyen el del tema que se edita. */
+  private validarNombre(valor: string): ValidationErrors | null {
+    const existentes = (this.temas.temasAdmin()?.themes ?? [])
+      .filter((tema) => tema.id !== this.datos.tema?.id)
+      .map((tema) => tema.name);
+    const resultado = validarNombreTema(valor, existentes);
+    return resultado.valido ? null : { nombre: resultado.mensaje };
+  }
+}

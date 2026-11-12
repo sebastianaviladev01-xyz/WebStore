@@ -11,7 +11,7 @@ No incluye versiones (están en [`package.json`](package.json)) ni comandos (est
 | Angular | Componentes standalone, signals, `inject()`, `OnPush`, formularios reactivos tipados y rutas con carga diferida |
 | Angular Material y CDK | Diálogos, menús, selects, foco y overlays |
 | Tailwind CSS (vía PostCSS) | Layout y utilidades; solo analiza el código de cada aplicación (`source(none)` + `@source '.'` en `styles.css`) |
-| Tokens CSS | Paleta B (azul cobalto), tipografía y espaciado en [`src/styles/tokens.css`](src/styles/tokens.css) |
+| Tokens CSS | Paleta B (azul cobalto, el tema por defecto y el respaldo), tipografía y espaciado en [`src/styles/tokens.css`](src/styles/tokens.css). El tema activo llega del BFF (`/bff/appearance/theme.css`) y redefine los tokens del tema; ver [§5](#5-integración-con-el-bff) y el [sistema visual](docs/VISUAL-SYSTEM.md) |
 | ESLint, angular-eslint y Sheriff | Calidad y límites entre capas y features ([`eslint.config.mjs`](eslint.config.mjs), [`sheriff.config.ts`](sheriff.config.ts)) |
 
 ## 2. Estilo arquitectónico
@@ -62,7 +62,7 @@ Sheriff impone la regla 1; `no-restricted-imports` impone la parte de las reglas
 ```text
 Storefront                                   Admin
 vitrina  → catalogo, carrito, contenido      tienda → sesion
-carrito  → catalogo
+carrito  → catalogo                          temas  → sesion
 checkout → carrito, catalogo, cuenta, envios, pedidos
 pedidos  → carrito, catalogo, cuenta, envios
 envios   → contenido
@@ -77,15 +77,18 @@ src/app/                                  projects/admin/src/app/
 │                 y errores)               ├── layout/      (AppLayout)
 ├── layout/      (AppLayout, menú de       └── features/
 │                 categorías, 404)             ├── sesion/  (login, roles y permisos, guards)
-├── shared/ui/   (empty-state, reveal)         └── tienda/  (resumen, productos, inventario,
-└── features/                                                categorías, marcas, clientes, usuarios,
-    ├── catalogo/  productos y categorías                    pedidos, banners, contenido, tarifas,
-    ├── vitrina/   inicio, /inicio-anterior,                 reclamaciones)
-    │              listado, ficha y tarjeta
-    ├── carrito/   ├── checkout/  ├── pedidos/
+├── shared/ui/   (empty-state, reveal)         ├── tienda/  (resumen, productos, inventario,
+└── features/                                  │             categorías, marcas, clientes, usuarios,
+    ├── catalogo/  productos y categorías      │             pedidos, banners, contenido, tarifas,
+    ├── vitrina/   inicio, /inicio-anterior,   │             reclamaciones)
+    │              listado, ficha y tarjeta    └── temas/   (apariencia, tema visible y gestión
+    ├── carrito/   ├── checkout/  ├── pedidos/                de los temas del superadmin)
     ├── cuenta/    ├── envios/    ├── contenido/ (CMS y páginas informativas)
-    └── reclamos/  (libro de reclamaciones)
+    ├── reclamos/  (libro de reclamaciones)
+    └── temas/     (apariencia y tema visible)
 ```
+
+`temas` existe en las dos aplicaciones, sin código compartido: cada una tiene su modelo, su puerto, su regla `temaVisible` y su `TemasFacade`, que carga la apariencia del BFF y aplica los tokens del tema visible a `<html>`. La de la tienda no depende de ninguna feature y solo la usa la raíz (`App`). La del Admin depende de `sesion` para el token y, además, gestiona los temas del `superadmin`: ante `STALE_THEMES` avisa y recarga la lista, sin reintentar.
 
 `vitrina` agrupa la presentación que combina catálogo, carrito y contenido (inicio, listado, ficha de producto, tarjeta y diálogo de agregar al carrito). Así `catalogo` no depende de `carrito`, que sí depende de `catalogo`.
 
@@ -125,20 +128,22 @@ El nombre del archivo indica su rol con un sufijo. La parte de negocio va en esp
 - El carrito guarda solo id y cantidad en `localStorage`; precio y stock se toman siempre del catálogo vigente.
 - Contrato: [`backend/docs/BFF-CONTRACT.md`](../backend/docs/BFF-CONTRACT.md).
 
-**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de implementar.** Hasta que se implemente, los colores siguen saliendo solo de `tokens.css` y de Contenido. Las tareas que lo implementen actualizarán §1 a §6 con el estado real.
+Temas (feature [002](../docs/specs/features/002-temas-configurables/planning.md)):
 
-- Tema activo ([ADR-0010](../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)): los dos `index.html` cargarán `/bff/appearance/theme.css`, que bloquea el primer pintado. `tokens.css` queda como la paleta B y el respaldo. **Riesgo aceptado:** si el BFF acepta la conexión y no responde, la página espera la hoja hasta el tiempo límite del navegador; si la rechaza o responde con error, se ve B.
+- Tema activo ([ADR-0010](../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)): los dos `index.html` cargan `/bff/appearance/theme.css` con un `<link rel="stylesheet">` que bloquea el primer pintado. La hoja redefine los tokens del tema en un bloque `:root:root`, que gana a `tokens.css`. `tokens.css` es la paleta B y el respaldo, y las plantillas y los estilos solo usan tokens (lo comprueba `tools/validate-structure.mjs`, TEST-18). Durante la sesión, `TemasFacade` aplica los cambios con `style.setProperty` sobre `<html>`.
+- Build: el `<link>` lleva `data-beasties-skip`. La optimización de CSS crítico de `@angular/build` (beasties) intenta leer del disco las hojas de `index.html` y avisa «Unable to locate stylesheet /bff/appearance/theme.css». Con el atributo, la deja fuera: el build no avisa y la hoja sigue bloqueando el pintado (sin `media="print"`). Lo comprueba TEST-18 (c).
+- **Riesgo aceptado:** si el BFF acepta la conexión y no responde, la página espera la hoja hasta el tiempo límite del navegador. Si la rechaza o responde con error, se ve B (TEST-22).
 - Cálculo ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)): el BFF calcula los tokens y el contraste. El dominio de la feature `temas` del Admin los replica solo para la vista previa, y la tienda no calcula nada.
-- Vista previa en modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): la tuerca guardará el id del tema en la cookie `ws_tema_vista_previa`, que comparten la tienda y el Admin y que el BFF lee solo en modo demo.
+- Vista previa en modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): `TemasFacade.verTema` guarda el id del tema en la cookie `ws_tema_vista_previa` (`Path=/`, `SameSite=Lax`, 30 días, `Secure` con `https`), que comparten la tienda y el Admin y que el BFF lee solo en modo demo para servir `theme.css`. La tuerca «Cambiar tema» (`SelectorTemaComponent`, en las dos aplicaciones) solo existe en modo demo y es la que usa la cookie.
 
 ## 6. Pruebas
 
 | Nivel | Herramienta | Qué se prueba |
 |---|---|---|
-| Unitarias de `domain/` | `node:test`, archivos `*.spec.mjs` junto al código (`npm test`) | Árbol de categorías del storefront, tarifas de envío del Admin e indicadores del Resumen del Admin (`resumen.rules.spec.mjs`: variación, clientes nuevos, serie del mes, distritos, últimos pedidos y estados) |
+| Unitarias de `domain/` | `node:test`, archivos `*.spec.mjs` junto al código (`npm test`) | Árbol de categorías del storefront, tarifas de envío del Admin e indicadores del Resumen del Admin (`resumen.rules.spec.mjs`: variación, clientes nuevos, serie del mes, distritos, últimos pedidos y estados), roles y permisos del Admin (`rol.rules.spec.mjs`) y, de la feature `temas`, el tema visible de la tienda y del Admin (`tema-visible.rules.spec.mjs`) y la réplica de las reglas de temas del Admin (`tema.rules.spec.mjs`, que lee los mismos casos que el BFF). La facade de `temas` del Admin también tiene prueba unitaria (`temas.facade.spec.mjs`: sin reintento tras `STALE_THEMES`) |
 | Límites de arquitectura | `node:test` con la API de ESLint ([`tests/architecture/`](tests/architecture/), `npm run test:architecture`) | Que Sheriff y `no-restricted-imports` rechazan lo prohibido y aceptan lo permitido, sin escribir en `src/` |
-| Estructura y contrato | [`tools/validate-structure.mjs`](../tools/validate-structure.mjs) y el smoke test del BFF (`npm run validate:contract` desde la raíz) | Rutas, guards, CMS compartido, roles y el contrato HTTP completo |
-| E2E | Playwright ([`tests/e2e/`](tests/e2e/), [`playwright.config.ts`](playwright.config.ts)), `npm run test:e2e` | Recorridos derivados de la [matriz de trazabilidad](../docs/planning/TRACEABILITY.md) contra el BFF de prueba real: navegación y 404, catálogo y ficha, carrito con IGV, compra como invitado, cuenta de cliente, libro de reclamaciones, CMS y acceso al Admin por rol |
+| Estructura y contrato | [`tools/validate-structure.mjs`](../tools/validate-structure.mjs) y el smoke test del BFF (`npm run validate:contract` desde la raíz) | Rutas, guards, CMS compartido, roles, el contrato HTTP completo (incluidos los temas), que el tema B del BFF sea igual a `tokens.css`, que no quede ningún color fijo fuera de `tokens.css` y que no falte el `<link>` de `theme.css` |
+| E2E | Playwright ([`tests/e2e/`](tests/e2e/), [`playwright.config.ts`](playwright.config.ts)), `npm run test:e2e` | Recorridos derivados de la [matriz de trazabilidad](../docs/planning/TRACEABILITY.md) contra el BFF de prueba real: navegación y 404, catálogo y ficha, carrito con IGV, compra como invitado, cuenta de cliente, libro de reclamaciones, CMS y acceso al Admin por rol. De la feature de temas: `storefront-temas` (con C activo, la tienda no conserva colores de B, y la hoja no parpadea), `storefront-modo-demo` y `admin-modo-demo` (la tuerca «Cambiar tema» y su vista previa) y `admin-temas` (la página de temas del `superadmin`). El BFF de las e2e arranca en modo demo |
 | QA visual e interacción | Scripts CDP de [`tools/qa/`](tools/qa/) con Chrome headless | Capturas, consola sin errores e interacciones clave |
 
 - Las e2e levantan sus propios servidores en puertos dedicados (BFF 3400, Storefront 4400 y Admin 4500, con [`proxy.e2e.conf.json`](proxy.e2e.conf.json)) y no interfieren con los de desarrollo. El BFF arranca con un archivo de estado temporal que crea desde el seed; nunca usa `backend/data.json`.
