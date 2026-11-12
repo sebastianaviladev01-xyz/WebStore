@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+
+import { TemasFacade } from './features/temas/application/temas.facade';
 
 @Component({
   selector: 'ws-root',
@@ -7,4 +9,10 @@ import { RouterOutlet } from '@angular/router';
   template: '<router-outlet />',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class App {}
+export class App {
+  private readonly temas = inject(TemasFacade);
+
+  constructor() {
+    void this.temas.cargar();
+  }
+}
