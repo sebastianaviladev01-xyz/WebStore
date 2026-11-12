@@ -79,11 +79,11 @@ Los productos tienen `gallery` (fotos adicionales). El catálogo público expone
 
 Los roles no se crean ni se editan; solo se asignan. La tabla vive en `backend/src/domain/sesion/rol.rules.mjs` y el Admin la replica en `frontend/projects/admin/src/app/features/sesion/domain/rol.rules.ts` solo para mostrar u ocultar opciones.
 
-| Rol          | Puede                                                                                                                                                |
-| ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `superadmin` | Todo, incluida la gestión de usuarios y el reinicio de la demo                                                                                       |
-| `admin`      | Toda la operación (catálogo, inventario, categorías, marcas, clientes, pedidos, banners, contenido, tarifas y reclamaciones), sin gestionar usuarios |
-| `vendedor`   | Resumen, ficha de productos existentes (nombre, descripción, imágenes, características, stock), inventario y estado de pedidos                       |
+| Rol          | Puede                                                                                                                                                         |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `superadmin` | Todo, incluida la gestión de usuarios, el reinicio de la demo y los temas (`themes.manage`)                                                                   |
+| `admin`      | Toda la operación (catálogo, inventario, categorías, marcas, clientes, pedidos, banners, contenido, tarifas y reclamaciones), sin gestionar usuarios ni temas |
+| `vendedor`   | Resumen, ficha de productos existentes (nombre, descripción, imágenes, características, stock), inventario y estado de pedidos                                |
 
 Reglas del servidor:
 

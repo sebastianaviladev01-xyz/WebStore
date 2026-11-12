@@ -17,11 +17,13 @@ export const ADMIN_PERMISSIONS = [
   'shipping.manage',
   'complaints.manage',
   'store.reset',
+  'themes.manage',
 ];
 
-const OPERATION = ADMIN_PERMISSIONS.filter(
-  (permission) => permission !== 'users.manage' && permission !== 'store.reset',
-);
+/** Permisos exclusivos del superadministrador: usuarios, reinicio de la demo y temas (feature 002). */
+const SOLO_SUPERADMIN = new Set(['users.manage', 'store.reset', 'themes.manage']);
+
+const OPERATION = ADMIN_PERMISSIONS.filter((permission) => !SOLO_SUPERADMIN.has(permission));
 
 export const ADMIN_ROLES = [
   {
