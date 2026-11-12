@@ -1,0 +1,25 @@
+{
+  "$comment": "Casos compartidos de las reglas de temas: los leen las pruebas del BFF y la réplica del Admin (TEST-14). Solo datos.",
+  "contraste": [
+    { "a": "#FFFFFF", "b": "#000000", "relacion": 21, "decimales": 2 },
+    { "a": "#000000", "b": "#FFFFFF", "relacion": 21, "decimales": 2 },
+    { "a": "#1D4ED8", "b": "#FFFFFF", "relacion": 6.7, "decimales": 2 },
+    { "a": "#FFFFFF", "b": "#1D4ED8", "relacion": 6.7, "decimales": 2 },
+    { "a": "#F2B705", "b": "#FFFFFF", "relacion": 1.8, "decimales": 1 },
+    { "a": "#FFFFFF", "b": "#F2B705", "relacion": 1.8, "decimales": 1 },
+    { "a": "#1d4ed8", "b": "#ffffff", "relacion": 6.7, "decimales": 2 }
+  ],
+  "mezcla": [
+    { "a": "#1D4ED8", "peso": 0.62, "b": "#0F172A", "resultado": "#183996" },
+    { "a": "#1D4ED8", "peso": 0.1, "b": "#FFFFFF", "resultado": "#E8EDFB" },
+    { "a": "#1d4ed8", "peso": 1, "b": "#0F172A", "resultado": "#1D4ED8" },
+    { "a": "#1D4ED8", "peso": 0, "b": "#0f172a", "resultado": "#0F172A" },
+    { "a": "#1d4ed8", "peso": 0.62, "b": "#0f172a", "resultado": "#183996" }
+  ],
+  "textoMasLegible": [
+    { "fondo": "#1D4ED8", "candidatos": ["#FFFFFF", "#0F172A"], "resultado": "#FFFFFF" },
+    { "fondo": "#F2B705", "candidatos": ["#FFFFFF", "#1F2328"], "resultado": "#1F2328" },
+    { "fondo": "#777777", "candidatos": ["#ffffff", "#FFFFFF"], "resultado": "#ffffff" },
+    { "fondo": "#1D4ED8", "candidatos": ["#ffffff"], "resultado": "#ffffff" }
+  ]
+}
