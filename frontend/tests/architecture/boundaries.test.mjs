@@ -123,7 +123,7 @@ describe('layout del Admin (TEST-02, feature 003)', () => {
   // El menú de usuario vive en `layout/` y la página Perfil en `features/sesion/presentation/`: la regla que
   // obliga a separarlos es que el layout no puede importar la capa de presentación de una feature.
   test('layout → presentation de sesion: el layout no puede importar features/sesion/presentation', async () => {
-    const messages = await lint(files.adminLayout, ['../features/sesion/presentation/login.page']);
+    const messages = await lint(files.adminLayout, ['../features/sesion/presentation/perfil.page']);
     assert.equal(byRule(messages, dependencyRule).length, 1);
   });
 
