@@ -1,0 +1,147 @@
+/**
+ * Pruebas unitarias de las consultas de temas (TEST-08): la apariencia pública con y sin modo demo, la vista
+ * del Admin y la hoja de estilos `theme.css` con vista previa válida, inexistente o ignorada fuera del modo demo.
+ */
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+
+import { createTemasQueries } from '../../../../src/application/temas/temas.queries.mjs';
+import { TOKENS_DEL_TEMA, tokensDelTema } from '../../../../src/domain/temas/tema.rules.mjs';
+import { TEMAS_PREDEFINIDOS } from '../../../../src/domain/temas/temas-predefinidos.mjs';
+
+const colores = {
+  primary: '#0A7A5A',
+  secondary: '#FF8800',
+  background: '#F0F0F0',
+  surface: '#FFFFFF',
+  contrast: '#111111',
+};
+
+const propio = (id, name) => ({
+  id,
+  name,
+  colors: { ...colores },
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-02T00:00:00.000Z',
+});
+
+function crearAlmacen(activeThemeId = 'b') {
+  return {
+    state: {
+      revision: 7,
+      appearance: {
+        revision: 3,
+        activeThemeId,
+        // Orden de inserción distinto del orden por nombre con `localeCompare('es')`.
+        customThemes: [propio('z', 'Zafiro'), propio('n', 'Ñandú'), propio('b1', 'árbol')],
+      },
+    },
+  };
+}
+
+const consultas = (activeThemeId) => createTemasQueries({ store: crearAlmacen(activeThemeId) });
+
+test('apariencia(true) trae A, B y C y después los propios por nombre', () => {
+  const vista = consultas().apariencia(true);
+  assert.equal(vista.demoMode, true);
+  assert.equal(vista.activeThemeId, 'b');
+  assert.deepEqual(
+    vista.themes.map(({ id }) => id),
+    ['a', 'b', 'c', 'b1', 'n', 'z'],
+  );
+  assert.deepEqual(
+    vista.themes.map(({ kind }) => kind),
+    ['predefined', 'predefined', 'predefined', 'custom', 'custom', 'custom'],
+  );
+});
+
+test('apariencia(false) trae solo el tema activo y demoMode en falso', () => {
+  const vista = consultas('n').apariencia(false);
+  assert.equal(vista.demoMode, false);
+  assert.equal(vista.activeThemeId, 'n');
+  assert.deepEqual(
+    vista.themes.map(({ id }) => id),
+    ['n'],
+  );
+  assert.equal(consultas().apariencia(undefined).demoMode, false);
+});
+
+test('un activeThemeId inexistente se trata como B', () => {
+  const vista = consultas('fantasma').apariencia(false);
+  assert.equal(vista.activeThemeId, 'b');
+  assert.deepEqual(
+    vista.themes.map(({ id }) => id),
+    ['b'],
+  );
+});
+
+test('el DTO no trae fechas y los tokens de un propio se calculan al leer', () => {
+  const store = crearAlmacen();
+  const antes = structuredClone(store.state);
+  const { themes } = createTemasQueries({ store }).apariencia(true);
+  const tema = themes.find(({ id }) => id === 'z');
+
+  assert.deepEqual(tema.tokens, tokensDelTema(colores, TEMAS_PREDEFINIDOS));
+  assert.deepEqual(Object.keys(tema).sort(), ['colors', 'id', 'kind', 'name', 'tokens']);
+  assert.deepEqual(tema.colors, colores);
+  assert.deepEqual(store.state, antes);
+  assert.equal('tokens' in store.state.appearance.customThemes[0], false);
+});
+
+test('los predefinidos salen como copias planas, no como las referencias congeladas', () => {
+  const { themes } = consultas().apariencia(true);
+  const a = themes.find(({ id }) => id === 'a');
+  assert.notEqual(a.colors, TEMAS_PREDEFINIDOS[0].colors);
+  assert.notEqual(a.tokens, TEMAS_PREDEFINIDOS[0].tokens);
+  assert.equal(Object.isFrozen(a.colors), false);
+  assert.equal(Object.isFrozen(a.tokens), false);
+  assert.deepEqual(a.tokens, TEMAS_PREDEFINIDOS[0].tokens);
+});
+
+test('temasAdmin trae la revisión, el activo y todos los temas', () => {
+  const vista = consultas('c').temasAdmin();
+  assert.equal(vista.revision, 3);
+  assert.equal(vista.activeThemeId, 'c');
+  assert.equal(vista.themes.length, 6);
+});
+
+test('hojaDeEstilos: con modo demo y vista previa válida sirve la vista previa', () => {
+  const css = consultas('b').hojaDeEstilos(true, 'a');
+  assert.ok(css.includes(`  --ws-primary: ${TEMAS_PREDEFINIDOS[0].tokens['--ws-primary']};\n`));
+  assert.ok(!css.includes('#1d4ed8'));
+  const propioCss = consultas('b').hojaDeEstilos(true, 'n');
+  assert.ok(
+    propioCss.includes('  --ws-primary: #0A7A5A;\n') || propioCss.includes('  --ws-primary: #0a7a5a;\n'),
+  );
+});
+
+test('hojaDeEstilos: una vista previa inexistente o vacía sirve el activo', () => {
+  const esperado = consultas('b').hojaDeEstilos(false, undefined);
+  for (const id of ['fantasma', '', undefined, null]) {
+    assert.equal(consultas('b').hojaDeEstilos(true, id), esperado);
+  }
+});
+
+test('hojaDeEstilos: sin modo demo ignora la vista previa', () => {
+  const esperado = consultas('b').hojaDeEstilos(false, undefined);
+  assert.equal(consultas('b').hojaDeEstilos(false, 'a'), esperado);
+  assert.equal(consultas('b').hojaDeEstilos(undefined, 'a'), esperado);
+});
+
+test('hojaDeEstilos: un activo inexistente sirve B', () => {
+  assert.equal(consultas('fantasma').hojaDeEstilos(false), consultas('b').hojaDeEstilos(false));
+});
+
+test('hojaDeEstilos: formato exacto, cada token una vez y en orden', () => {
+  const css = consultas('b').hojaDeEstilos(false);
+  assert.ok(css.startsWith(':root:root {\n'));
+  assert.ok(css.endsWith('}\n'));
+  const lineas = css.slice(':root:root {\n'.length, -'}\n'.length).split('\n');
+  assert.equal(lineas.pop(), '');
+  assert.equal(lineas.length, TOKENS_DEL_TEMA.length);
+  lineas.forEach((linea, indice) => {
+    assert.match(linea, /^ {2}--ws-[a-z-]+: [^;\n]+;$/);
+    assert.ok(linea.startsWith(`  ${TOKENS_DEL_TEMA[indice]}: `));
+  });
+  assert.ok(css.includes('  --ws-primary: #1d4ed8;\n'));
+});
