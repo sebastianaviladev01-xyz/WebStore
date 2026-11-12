@@ -271,11 +271,15 @@ Restricción de las pruebas del frontend: los `*.spec.mjs` transpilan el `.ts` y
   - Pregunta 2, el parpadeo: la hoja `theme.css` del BFF, con `ETag` y `no-cache`, y el riesgo aceptado del BFF colgado.
   - Pregunta 3, la vista previa: la cookie `ws_tema_vista_previa`, que el BFF lee solo en modo demo. Se aclaró la tabla de datos de la especificación, y queda anotada la limitación de la demo con túneles.
   - Pregunta 4, los tokens: se calculan en el BFF, y el Admin tiene una réplica que usa la misma tabla de casos.
-- **Condicionadas:** ninguna. El hito está aprobado; para ejecutar faltan los ADR de `sdd-decide`.
-- **ADR necesarios** (`sdd-decide`):
-  - **ADR-0010. Aplicar el tema activo con una hoja de estilos del BFF.** `theme.css` bloquea el primer pintado; `tokens.css` es el respaldo B; los nombres de los tokens forman un contrato entre el BFF y los frontends. Recoge las preguntas 2 y 4.
-  - **ADR-0011. Guardar los temas como recurso propio del BFF.** Rutas y revisión propias, predefinidos en el código, permiso `themes.manage` (cambia la tabla de roles fijos del 05/11), migración v3 y alineación con PBI-0043. Recoge la pregunta 1.
-  - **ADR-0012. Modo demo con `WEBSTORE_DEMO_MODE` y vista previa en una cookie.** Amplía [STD-08](../../../architecture/standards.md) con la cookie `ws_tema_vista_previa`. Recoge la pregunta 3.
+- **Condicionadas:** ninguna. El hito está aprobado y los ADR de `sdd-decide` están aceptados.
+- **ADR necesarios** (`sdd-decide`). Sebastián Avila los aceptó los tres el 2026-11-11, con dos ajustes. Pidió responder desde su sesión principal («respondele porfavor»), y esa sesión trajo la aprobación:
+  - Las referencias a documentos que todavía no cambian se redactan en futuro y quedan en la tarea que las implementa.
+  - AC-16 tiene que estar cubierto en el frontend. Ya lo está con TEST-15 y TEST-21, en las dos aplicaciones. No hay prueba unitaria del componente porque el frontend aún no tiene entorno de pruebas de Angular ([ADR-0009](../../../adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md)).
+
+  Los ADR:
+  - **[ADR-0010](../../../adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md). Aplicar el tema activo con una hoja de estilos del BFF.** `theme.css` bloquea el primer pintado, con `ETag` y `no-cache`; `tokens.css` es el respaldo B; los nombres de los tokens forman un contrato entre el BFF y los frontends; riesgo aceptado del BFF colgado. Recoge la pregunta 2.
+  - **[ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md). Guardar los temas como recurso propio del BFF.** Rutas y revisión propias, predefinidos en el código, permiso `themes.manage` (cambia la tabla de roles fijos del 05/11), migración v3, alineación con PBI-0043 y cálculo de tokens y contraste en el BFF con réplica en el Admin. Recoge las preguntas 1 y 4: la 4 pasó del ADR-0010 al ADR-0011 al escribirlos, porque decide qué calcula el BFF con los temas que guarda; el ADR-0010 solo usa el mapa.
+  - **[ADR-0012](../../../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md). Activar el modo demo y recordar la vista previa en una cookie.** `WEBSTORE_DEMO_MODE`; amplía [STD-08](../../../architecture/standards.md) con la cookie `ws_tema_vista_previa`; limitación conocida de la demo con túneles de `trycloudflare.com`. Recoge la pregunta 3.
 
 ## Estrategia de pruebas
 

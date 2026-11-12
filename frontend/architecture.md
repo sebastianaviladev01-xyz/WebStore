@@ -125,6 +125,12 @@ El nombre del archivo indica su rol con un sufijo. La parte de negocio va en esp
 - El carrito guarda solo id y cantidad en `localStorage`; precio y stock se toman siempre del catálogo vigente.
 - Contrato: [`backend/docs/BFF-CONTRACT.md`](../backend/docs/BFF-CONTRACT.md).
 
+**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de implementar.** Hasta que se implemente, los colores siguen saliendo solo de `tokens.css` y de Contenido. Las tareas que lo implementen actualizarán §1 a §6 con el estado real.
+
+- Tema activo ([ADR-0010](../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)): los dos `index.html` cargarán `/bff/appearance/theme.css`, que bloquea el primer pintado. `tokens.css` queda como la paleta B y el respaldo. **Riesgo aceptado:** si el BFF acepta la conexión y no responde, la página espera la hoja hasta el tiempo límite del navegador; si la rechaza o responde con error, se ve B.
+- Cálculo ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)): el BFF calcula los tokens y el contraste. El dominio de la feature `temas` del Admin los replica solo para la vista previa, y la tienda no calcula nada.
+- Vista previa en modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): la tuerca guardará el id del tema en la cookie `ws_tema_vista_previa`, que comparten la tienda y el Admin y que el BFF lee solo en modo demo.
+
 ## 6. Pruebas
 
 | Nivel | Herramienta | Qué se prueba |
