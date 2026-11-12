@@ -33,7 +33,7 @@ import { TiendaFacade } from '../application/tienda.facade';
             class="text-sm font-semibold"
             [class.text-danger]="p.stock === 0"
             [class.text-warning]="p.stock > 0 && p.stock <= 5"
-            [class.text-primary-strong]="p.stock > 5"
+            [class.text-on-primary-soft]="p.stock > 5"
           >
             {{ p.stock === 0 ? 'Sin stock' : p.stock <= 5 ? 'Stock bajo' : 'Disponible' }}
           </span>

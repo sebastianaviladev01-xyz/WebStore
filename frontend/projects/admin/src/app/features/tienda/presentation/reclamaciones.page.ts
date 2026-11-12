@@ -90,13 +90,13 @@ import { Reclamo, ETIQUETAS_ESTADO_RECLAMO } from '../domain/tienda.model';
               <textarea matInput rows="5" formControlName="providerResponse"></textarea>
             </mat-form-field>
             <button
-              class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white"
+              class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
               type="submit"
             >
               Guardar atención
             </button>
             @if (saved()) {
-              <p class="text-sm text-primary-strong" role="status">Atención guardada.</p>
+              <p class="text-sm text-on-primary-soft" role="status">Atención guardada.</p>
             }
           </form>
         </aside>

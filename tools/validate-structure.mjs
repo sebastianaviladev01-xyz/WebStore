@@ -140,5 +140,67 @@ for (const [label, ok] of [
   failed ||= !ok;
 }
 
+// TEST-18 (feature 002, ADR-0010): el color de las dos aplicaciones sale solo de los tokens del tema.
+const informar = (label, problemas) => {
+  console.log(`${problemas.length === 0 ? '✓' : '✗'} ${label}`);
+  for (const problema of problemas) console.log(`    ${problema}`);
+  failed ||= problemas.length > 0;
+};
+
+// (a) El mapa de B del BFF es igual, declaración por declaración, a los tokens del tema de tokens.css.
+const { TEMAS_PREDEFINIDOS } = await import(path('backend/src/domain/temas/temas-predefinidos.mjs'));
+const { TOKENS_DEL_TEMA } = await import(path('backend/src/domain/temas/tema.rules.mjs'));
+const tokensCss = read('frontend/src/styles/tokens.css');
+const bloqueRaiz = tokensCss.match(/:root\s*\{([^}]*)\}/)?.[1] ?? '';
+const declaraciones = new Map(
+  [...bloqueRaiz.matchAll(/^\s*(--ws-[\w-]+)\s*:\s*([^;]+?)\s*;/gm)].map(([, nombre, valor]) => [
+    nombre,
+    valor,
+  ]),
+);
+const mapaB = TEMAS_PREDEFINIDOS.find((tema) => tema.id === 'b')?.tokens ?? {};
+informar(
+  'TEST-18 (a): el tema B del BFF es igual a tokens.css',
+  TOKENS_DEL_TEMA.filter((nombre) => declaraciones.get(nombre) !== mapaB[nombre]).map(
+    (nombre) =>
+      `${nombre}: tokens.css «${declaraciones.get(nombre) ?? '(falta)'}», BFF «${mapaB[nombre] ?? '(falta)'}»`,
+  ),
+);
+
+// (b) Ningún color fijo fuera de tokens.css en estilos y plantillas. Quedan fuera index.html (meta theme-color),
+// las pruebas (*.spec.*) y features/temas/domain/, que calculan colores como datos y no pintan nada.
+const COLORES_FIJOS = [
+  /(?<![\w&])#[0-9a-f]{3,8}(?![\w-])/gi,
+  /(?<![a-z-])(?:rgba?|hsla?)\(/gi,
+  /(?<![\w-])(?:white|black)(?![\w-])/gi,
+  /-(?:white|black)(?![\w-])/gi,
+];
+const fuentesDeEstilo = ['frontend/src', 'frontend/projects']
+  .flatMap((carpeta) =>
+    readdirSync(path(`${carpeta}/`), { recursive: true }).map(
+      (archivo) => `${carpeta}/${archivo.replaceAll('\\', '/')}`,
+    ),
+  )
+  .filter((archivo) => /\.(css|scss|html|ts)$/.test(archivo))
+  .filter(
+    (archivo) =>
+      archivo !== 'frontend/src/styles/tokens.css' &&
+      !archivo.endsWith('/index.html') &&
+      !/\.spec\.[cm]?[jt]s$/.test(archivo) &&
+      !archivo.includes('/features/temas/domain/'),
+  );
+informar(
+  'TEST-18 (b): ningún color fijo fuera de tokens.css',
+  fuentesDeEstilo.flatMap((archivo) =>
+    read(archivo)
+      .split('\n')
+      .flatMap((linea, i) =>
+        COLORES_FIJOS.flatMap((patron) =>
+          [...linea.matchAll(patron)].map(([texto]) => `${archivo}:${i + 1} «${texto}»`),
+        ),
+      ),
+  ),
+);
+
 if (failed) process.exit(1);
 console.log('\nEstructura contractual WebStore: OK');

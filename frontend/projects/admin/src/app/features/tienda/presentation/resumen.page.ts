@@ -132,7 +132,7 @@ const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
               <p class="text-sm text-muted">Sin alertas.</p>
             }
           </div>
-          <a routerLink="/inventario" class="mt-5 inline-flex text-sm font-medium text-primary">
+          <a routerLink="/inventario" class="mt-5 inline-flex text-sm font-medium text-link">
             Gestionar inventario →
           </a>
         </section>
@@ -141,7 +141,7 @@ const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
           <section class="admin-card min-w-0 lg:col-span-2" aria-labelledby="ultimos-pedidos">
             <div class="flex flex-wrap items-baseline justify-between gap-2 p-6 pb-4">
               <h2 id="ultimos-pedidos" class="text-lg font-semibold">Últimos pedidos</h2>
-              <a routerLink="/pedidos" class="text-sm font-medium text-primary">Ver todos los pedidos →</a>
+              <a routerLink="/pedidos" class="text-sm font-medium text-link">Ver todos los pedidos →</a>
             </div>
             <!-- relative: los sr-only de la tabla quedan dentro del contenedor que se desplaza y no ensanchan la página. -->
             <div class="relative overflow-x-auto">
@@ -177,7 +177,7 @@ const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
                       </td>
                       <td class="px-4 py-3 text-right">
                         <a
-                          class="inline-flex min-h-8 items-center rounded-lg border border-line px-3 text-xs font-medium text-primary hover:border-primary"
+                          class="inline-flex min-h-8 items-center rounded-lg border border-line px-3 text-xs font-medium text-link hover:border-link"
                           routerLink="/pedidos"
                           [queryParams]="{ pedido: order.id }"
                         >
@@ -267,6 +267,6 @@ export class ResumenPage {
   protected insignia(status: EstadoPedido): string {
     if (status === 'cancelled') return 'bg-danger-soft text-danger';
     if (status === 'delivered') return 'bg-soft text-body';
-    return 'bg-primary-soft text-primary-strong';
+    return 'bg-primary-soft text-on-primary-soft';
   }
 }

@@ -31,7 +31,7 @@ import { TiendaFacade } from '../application/tienda.facade';
             />
           } @else {
             <span
-              class="grid h-20 w-20 place-items-center rounded-3xl bg-primary text-3xl font-semibold text-white"
+              class="grid h-20 w-20 place-items-center rounded-3xl bg-primary text-3xl font-semibold text-on-primary"
             >
               {{ form.controls.logoText.value || 'W' }}
             </span>
@@ -45,7 +45,7 @@ import { TiendaFacade } from '../application/tienda.facade';
           </p>
           <div class="mt-4 flex flex-wrap gap-3">
             <label
-              class="cursor-pointer rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-white"
+              class="cursor-pointer rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary"
             >
               Cargar logo
               <input type="file" accept="image/*,.svg" class="sr-only" (change)="onLogoSelected($event)" />
@@ -138,11 +138,14 @@ import { TiendaFacade } from '../application/tienda.facade';
       </div>
 
       <div class="mt-6 flex flex-wrap items-center gap-4">
-        <button class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+        <button
+          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+          type="submit"
+        >
           Guardar configuración
         </button>
         @if (saved()) {
-          <p class="text-sm text-primary-strong" role="status">Configuración publicada en la tienda.</p>
+          <p class="text-sm text-on-primary-soft" role="status">Configuración publicada en la tienda.</p>
         }
       </div>
     </form>

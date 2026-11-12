@@ -56,7 +56,7 @@ const EMPTY_USER = {
               {{ roleLabel(user.role) }}{{ user.active ? '' : ' · inactivo' }}
             </span>
             <div class="flex gap-3 text-sm font-medium">
-              <button class="text-primary" type="button" (click)="edit(user.id)">Editar</button>
+              <button class="text-link" type="button" (click)="edit(user.id)">Editar</button>
               @if (user.id !== session.user()?.id) {
                 <button class="text-danger" type="button" (click)="remove(user.id)">Eliminar</button>
               }
@@ -99,7 +99,10 @@ const EMPTY_USER = {
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
         </div>
         <div class="mt-5 flex flex-wrap gap-3">
-          <button class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+          <button
+            class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            type="submit"
+          >
             Guardar usuario
           </button>
           @if (editing()) {

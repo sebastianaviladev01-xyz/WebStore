@@ -14,11 +14,11 @@ import { SesionFacade } from '../application/sesion.facade';
       <form
         [formGroup]="form"
         (ngSubmit)="submit()"
-        class="w-full max-w-md rounded-2xl bg-surface p-8 border border-line shadow-[0_18px_55px_rgba(15,23,42,.08)]"
+        class="w-full max-w-md rounded-2xl bg-surface p-8 border border-line shadow-[0_18px_55px_color-mix(in_srgb,var(--ws-ink)_8%,transparent)]"
       >
         <div class="flex items-center gap-3">
           <span
-            class="grid h-11 w-11 place-items-center rounded-xl bg-primary text-lg font-semibold text-white"
+            class="grid h-11 w-11 place-items-center rounded-xl bg-primary text-lg font-semibold text-on-primary"
           >
             W
           </span>
@@ -44,7 +44,7 @@ import { SesionFacade } from '../application/sesion.facade';
           </p>
         }
         <button
-          class="mt-4 min-h-11 w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-50"
+          class="mt-4 min-h-11 w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
           type="submit"
           [disabled]="session.pending()"
         >

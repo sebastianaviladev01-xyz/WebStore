@@ -136,7 +136,7 @@ import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
               }
               @if (notice()) {
                 <p
-                  class="mt-3 rounded-xl bg-primary-soft p-3 text-sm font-semibold text-primary-strong"
+                  class="mt-3 rounded-xl bg-primary-soft p-3 text-sm font-semibold text-on-primary-soft"
                   role="status"
                 >
                   {{ notice() }}

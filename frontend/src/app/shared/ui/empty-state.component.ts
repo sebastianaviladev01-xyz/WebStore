@@ -8,7 +8,7 @@ import { RouterLink } from '@angular/router';
     <section class="ws-card grid min-h-80 place-items-center p-8 text-center">
       <div class="max-w-md">
         <div
-          class="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-xl bg-primary-soft text-primary"
+          class="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-xl bg-primary-soft text-link"
           aria-hidden="true"
         >
           <svg viewBox="0 0 32 32" class="h-7 w-7 fill-none stroke-current" stroke-width="1.7">

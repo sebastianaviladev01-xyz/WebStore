@@ -24,7 +24,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
         } @else {
           <p class="mt-3 text-sm leading-6 text-muted">Ingresa el código temporal enviado a {{ email }}.</p>
           @if (demoCode) {
-            <p class="mt-4 rounded-xl bg-primary-soft p-3 text-sm text-primary-strong">
+            <p class="mt-4 rounded-xl bg-primary-soft p-3 text-sm text-on-primary-soft">
               <strong>Canal local de demostración:</strong>
               {{ demoCode }}
             </p>

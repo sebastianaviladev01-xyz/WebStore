@@ -142,7 +142,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                   </div>
                 }
                 @if (!quoting() && !shippingError() && shippingQuote(); as quote) {
-                  <p class="rounded-xl bg-primary-soft p-3 text-sm font-semibold text-primary-strong">
+                  <p class="rounded-xl bg-primary-soft p-3 text-sm font-semibold text-on-primary-soft">
                     Envío cotizado:
                     <span class="ws-price-numerals">
                       {{ quote.price | currency: 'PEN' : 'symbol' : '1.2-2' }}

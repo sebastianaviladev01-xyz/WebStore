@@ -60,7 +60,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
       <aside class="border-b border-line bg-surface lg:min-h-screen lg:border-r lg:border-b-0">
         <div class="px-5 pt-5 lg:sticky lg:top-0 lg:max-h-screen lg:overflow-y-auto lg:pb-5">
           <a routerLink="/" class="flex items-center gap-3">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-primary font-semibold text-white">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-primary font-semibold text-on-primary">
               W
             </span>
             <span class="font-semibold text-ink">WebStore Admin</span>
@@ -75,7 +75,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
                 @for (item of group.items; track item.path) {
                   <a
                     [routerLink]="item.path"
-                    routerLinkActive="bg-primary-soft text-primary-strong"
+                    routerLinkActive="bg-primary-soft text-on-primary-soft"
                     [routerLinkActiveOptions]="{ exact: item.path === '/' }"
                     class="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-3 font-medium text-body hover:bg-subtle"
                   >

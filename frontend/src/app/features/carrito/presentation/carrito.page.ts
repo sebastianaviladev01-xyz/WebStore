@@ -36,14 +36,14 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                   <p class="text-xs font-semibold text-muted">{{ item.product.categoryName }}</p>
                   <a
                     [routerLink]="['/catalogo', item.product.slug]"
-                    class="mt-1 block text-xl font-semibold tracking-[-0.025em] hover:text-primary"
+                    class="mt-1 block text-xl font-semibold tracking-[-0.025em] hover:text-link"
                   >
                     {{ item.product.name }}
                   </a>
                   <p class="mt-2 text-sm leading-6 text-muted">{{ item.product.shortDescription }}</p>
                   <button
                     type="button"
-                    class="mt-4 text-sm font-semibold text-primary underline-offset-4 hover:underline"
+                    class="mt-4 text-sm font-semibold text-link underline-offset-4 hover:underline"
                     (click)="cart.remove(item.product.id)"
                   >
                     Eliminar

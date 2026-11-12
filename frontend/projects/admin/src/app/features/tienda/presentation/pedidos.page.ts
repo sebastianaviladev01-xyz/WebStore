@@ -63,7 +63,7 @@ const PAYMENT_LABELS: Record<string, string> = {
                 (click)="selectedId.set(order.id)"
               >
                 <td class="px-4 py-3">
-                  <button type="button" class="font-semibold text-primary" (click)="selectedId.set(order.id)">
+                  <button type="button" class="font-semibold text-link" (click)="selectedId.set(order.id)">
                     {{ order.id }}
                   </button>
                   <p class="text-xs text-muted">{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
@@ -184,7 +184,7 @@ export class PedidosPage {
   protected badge(status: EstadoPedido): string {
     if (status === 'cancelled') return 'bg-danger-soft text-danger';
     if (status === 'delivered') return 'bg-soft text-body';
-    return 'bg-primary-soft text-primary-strong';
+    return 'bg-primary-soft text-on-primary-soft';
   }
 
   protected async setStatus(order: Pedido, status: EstadoPedido): Promise<void> {

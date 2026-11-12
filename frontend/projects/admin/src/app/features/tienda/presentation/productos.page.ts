@@ -32,7 +32,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
       </div>
       @if (session.can('products.manage')) {
         <button
-          class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white"
+          class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
           (click)="newItem()"
         >
           Nuevo producto
@@ -61,7 +61,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
             <span>{{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}</span>
             <span [class.text-danger]="p.stock === 0" class="font-semibold">{{ p.stock }}</span>
             <div class="flex gap-2">
-              <button class="font-semibold text-primary" (click)="edit(p.id)">Editar</button>
+              <button class="font-semibold text-link" (click)="edit(p.id)">Editar</button>
               @if (session.can('products.manage')) {
                 <button
                   class="min-h-10 font-semibold text-danger"
@@ -208,7 +208,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
         </div>
         <button
-          class="mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white"
+          class="mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
           type="submit"
         >
           Guardar producto
