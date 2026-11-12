@@ -55,6 +55,11 @@ Variables de entorno, leídas una vez en [`src/infrastructure/config.mjs`](src/i
 
 `backend/data.json` no se versiona: contiene hashes, sesiones y datos de clientes de prueba. Si no existe, el BFF lo crea desde el seed.
 
+**Decidido para la feature [002](../docs/specs/features/002-temas-configurables/planning.md), pendiente de implementar:**
+
+- La variable `WEBSTORE_DEMO_MODE` encenderá el modo demo. Solo el valor `true` lo enciende, y por defecto está apagado, también en producción ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Pasará a la tabla anterior cuando `config.mjs` la lea.
+- La capacidad `temas`, con `appearance` en el estado y `SCHEMA_VERSION = 3`, se describirá en §1 y §2 con su implementación ([ADR-0011](../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)).
+
 ## 4. Pruebas
 
 Las pruebas se dividen como en IdShield entre unitarias e integración. Las carpetas de `tests/unit/` repiten las de `src/` que prueban.

@@ -1,6 +1,6 @@
 # 0011. Guardar los temas como recurso propio del BFF
 
-- Estado: Propuesta
+- Estado: Aceptada
 - Fecha: 2026-11-11
 
 ## Contexto
@@ -39,9 +39,9 @@ Guardaremos los temas como un recurso propio del BFF:
 
 - Una capacidad `temas` en las cuatro capas del BFF, con las rutas de [apariencia y temas del plan](../specs/features/002-temas-configurables/planning.md#contrato-del-bff-afectado). Las escrituras exigen la revisión vigente y, si no coincide, responden `409 STALE_THEMES` sin aplicar nada ni reintentar.
 - El estado gana `appearance` (`revision`, `activeThemeId` y `customThemes`), independiente de `state.revision`. La migración `schemaVersion: 3` lleva los colores de Contenido a un tema propio «Colores de Contenido» si difieren de B, y los quita de `config` ([estado del BFF](../specs/features/002-temas-configurables/planning.md#estado-del-bff)).
-- Los predefinidos A, B y C son constantes del dominio. B copia `tokens.css` al pie de la letra, y TEST-18 lo comprueba.
+- Los predefinidos A, B y C son constantes del dominio. B copia `tokens.css` al pie de la letra, y TEST-18 lo comprobará.
 - Un permiso nuevo, `themes.manage`, solo del `superadmin`, en [`rol.rules.mjs`](../../backend/src/domain/sesion/rol.rules.mjs) y en su réplica del Admin. Cambia la tabla de roles fijos del 05/11: `admin` y `vendedor` conservan exactamente sus permisos, y `content.manage` deja de dar acceso a los colores.
-- El BFF calcula el mapa de tokens (derivación D2 y regla de la base neutra) y el contraste WCAG 2.1, y es la autoridad para guardar. El dominio del Admin replica esas reglas solo para la vista previa y el aviso; las dos copias leen el mismo archivo de casos (`casos-tema.json`, TEST-14).
+- El BFF calcula el mapa de tokens (derivación D2 y regla de la base neutra) y el contraste WCAG 2.1, y es la autoridad para guardar. El dominio del Admin replica esas reglas solo para la vista previa y el aviso; las dos copias leerán el mismo archivo de casos (`casos-tema.json`, TEST-14).
 
 *Motivo:* una revisión propia es la única forma de cumplir AC-19 sin tocar el snapshot ni su reintento, y calcular en el BFF es lo que permite servir `theme.css`; la réplica del Admin solo añade la vista previa en vivo.
 
@@ -55,10 +55,10 @@ Guardaremos los temas como un recurso propio del BFF:
 
 **Lo que se vuelve más difícil:**
 
-- Hay un segundo gateway en el Admin y otro grupo de rutas que mantener en el [contrato](../../backend/docs/BFF-CONTRACT.md) y en el smoke test.
+- Habrá un segundo gateway en el Admin y otro grupo de rutas que mantener en el [contrato](../../backend/docs/BFF-CONTRACT.md) y en el smoke test. Las rutas se añadirán al contrato con el código que las implementa (STD-05).
 - Quitar `primaryColor` y `secondaryColor` de `/content/settings` y de `config` es un cambio incompatible del contrato: BFF, `BFF-CONTRACT.md`, smoke test y adaptadores cambian en el mismo PR (STD-05).
 - Las reglas de contraste y derivación existen dos veces. Si se separan, falla TEST-14; si aun así discrepan, manda el BFF.
-- La migración v3 es un cambio de datos irreversible para cada `data.json`: se escribe con su prueba de caracterización primero (TEST-10).
+- La migración v3 es un cambio de datos irreversible para cada `data.json`: se escribirá con su prueba de caracterización primero (TEST-10).
 
 **Fuera de alcance:**
 

@@ -1,6 +1,6 @@
 # 0012. Activar el modo demo y recordar la vista previa en una cookie
 
-- Estado: Propuesta
+- Estado: Aceptada
 - Fecha: 2026-11-11
 
 ## Contexto
@@ -31,8 +31,8 @@ Dónde se recuerda la vista previa de la tuerca:
 
 Usaremos el modo demo y la cookie así:
 
-- **`WEBSTORE_DEMO_MODE`**: solo `true` lo enciende, sin distinguir mayúsculas y sin espacios en los extremos. Ausente, vacía o con otro valor (`false`, `1`, `sí`), queda apagado, también fuera de producción. `readConfig` la expone como `demoMode`, y se documenta en [`backend/architecture.md` §3](../../backend/architecture.md#3-configuración).
-- **`ws_tema_vista_previa`**: cookie con el id de un tema, `Path=/`, `SameSite=Lax`, `Max-Age=2592000` (30 días), `Secure` si la página va por `https` y sin `Domain`. La escribe la `TemasFacade` de cada aplicación.
+- **`WEBSTORE_DEMO_MODE`**: solo `true` lo enciende, sin distinguir mayúsculas y sin espacios en los extremos. Ausente, vacía o con otro valor (`false`, `1`, `sí`), queda apagado, también fuera de producción. `readConfig` la expondrá como `demoMode`. [`backend/architecture.md` §3](../../backend/architecture.md#3-configuración) la anota como decidida, y se añadirá a su tabla de variables en la tarea que la implementa.
+- **`ws_tema_vista_previa`**: cookie con el id de un tema, `Path=/`, `SameSite=Lax`, `Max-Age=2592000` (30 días), `Secure` si la página va por `https` y sin `Domain`. La escribirá la `TemasFacade` de cada aplicación.
 - El BFF lee la cookie **solo en modo demo** y solo para elegir qué hoja sirve `theme.css`. No la guarda y no cambia nada para otras personas. Fuera del modo demo la ignora, y el frontend la borra.
 - **Se amplía STD-08**: en el navegador, además del token de sesión en `sessionStorage` y del carrito en `localStorage`, se permite esta cookie, que lleva un id de tema no sensible y solo tiene efecto en modo demo.
 
@@ -49,8 +49,8 @@ Usaremos el modo demo y la cookie así:
 
 - Con modo demo, `theme.css` depende de una cookie: se sirve con `Vary: Cookie` para que ningún intermediario dé la vista previa de una persona a otra.
 - La frase «no viaja al BFF» de la tabla de datos de la especificación queda matizada; la fila [ya se aclaró](../specs/features/002-temas-configurables/specification.md#datos-y-contrato).
-- **Limitación conocida de la demo con túneles:** los túneles de `trycloudflare.com` dan a la tienda y al Admin subdominios distintos de un dominio que está en la [Public Suffix List](https://publicsuffix.org/list/public_suffix_list.dat) (comprobado el 2026-11-11). El navegador no permite una cookie para ese dominio, así que cada aplicación recuerda su propia vista previa. AC-21 entre la tienda y el Admin solo se cumple en `localhost` y en un despliegue con dominio propio y subdominios (PBI-0042). Se documenta en [`docs/development/local-environment.md`](../development/local-environment.md).
-- La e2e arranca el BFF con `WEBSTORE_DEMO_MODE=true`, así que la tuerca está en todas las specs y no puede tapar ningún control (AC-15).
+- **Limitación conocida de la demo con túneles:** los túneles de `trycloudflare.com` dan a la tienda y al Admin subdominios distintos de un dominio que está en la [Public Suffix List](https://publicsuffix.org/list/public_suffix_list.dat) (comprobado el 2026-11-11). El navegador no permite una cookie para ese dominio, así que cada aplicación recuerda su propia vista previa. AC-21 entre la tienda y el Admin solo se cumple en `localhost` y en un despliegue con dominio propio y subdominios (PBI-0042). Se documentará en [`docs/development/local-environment.md`](../development/local-environment.md) en la tarea que implementa el modo demo, junto con cómo arrancar el BFF con la variable.
+- La e2e arrancará el BFF con `WEBSTORE_DEMO_MODE=true`, así que la tuerca estará en todas las specs y no puede tapar ningún control (AC-15).
 
 **Fuera de alcance:**
 

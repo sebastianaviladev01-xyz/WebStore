@@ -1,6 +1,6 @@
 # 0010. Aplicar el tema activo con una hoja de estilos del BFF
 
-- Estado: Propuesta
+- Estado: Aceptada
 - Fecha: 2026-11-11
 
 ## Contexto
@@ -39,9 +39,9 @@ Aplicaremos el tema con una hoja de estilos que sirve el BFF:
 **Lo que se vuelve más difícil:**
 
 - El primer pintado depende de una petición al BFF. TEST-24 mide el tamaño de la hoja (4 kB como máximo), su tiempo y el FCP frente a `dev`.
-- **Riesgo aceptado** por Sebastián Avila en el hito del 2026-11-11: si el BFF rechaza la conexión o responde con error, el `<link>` falla al momento y se ve B; si acepta la conexión y no responde, el navegador espera la hoja hasta su propio tiempo límite. Sin el BFF la tienda tampoco puede mostrar catálogo ni precios, así que pintar antes no la haría usable. Queda descrito en [`frontend/architecture.md` §5](../../frontend/architecture.md#5-integración-con-el-bff).
-- El BFF productivo deberá servir la hoja con caché y la misma revalidación ([contrato, «Producción»](../../backend/docs/BFF-CONTRACT.md#producción)).
-- Ningún color fijo puede quedar fuera de `tokens.css`: lo comprueba TEST-18 en `tools/validate-structure.mjs`.
+- **Riesgo aceptado** por Sebastián Avila en el hito del 2026-11-11: si el BFF rechaza la conexión o responde con error, el `<link>` falla al momento y se ve B; si acepta la conexión y no responde, el navegador espera la hoja hasta su propio tiempo límite. Sin el BFF la tienda tampoco puede mostrar catálogo ni precios, así que pintar antes no la haría usable. [`frontend/architecture.md` §5](../../frontend/architecture.md#5-integración-con-el-bff) lo anota como decidido; se describirá como estado vigente en la tarea que implementa la hoja.
+- El BFF productivo deberá servir la hoja con caché y la misma revalidación. Se anotará en la sección «Producción» del [contrato](../../backend/docs/BFF-CONTRACT.md) en la tarea que implementa las rutas de temas (STD-05).
+- Ningún color fijo podrá quedar fuera de `tokens.css`: lo comprobará TEST-18, que se añadirá a `tools/validate-structure.mjs` en la tarea que sustituye los colores fijos.
 
 **Fuera de alcance:**
 
