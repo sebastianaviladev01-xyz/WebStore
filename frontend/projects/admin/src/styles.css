@@ -49,3 +49,148 @@ select:focus-visible {
 .mat-mdc-form-field {
   width: 100%;
 }
+
+/*
+ * Tuerca del modo demo (feature 002, AC-15): abajo a la derecha, lejos del carrito (cabecera), de
+ * «Pagar» y del menú del Admin (izquierda o arriba). En pantallas estrechas es una pestaña de 28 px
+ * pegada al borde, fuera de la columna de los botones a todo el ancho y de los controles del
+ * carrusel (que terminan a 32 px o más del borde), para que ni al hacer scroll pasen por debajo.
+ * Queda debajo de la cabecera, del drawer y de las capas de Material (diálogos, avisos y su propio
+ * menú). Solo tokens.
+ */
+.ws-selector-tema {
+  position: fixed;
+  right: 0;
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 30;
+}
+
+.ws-selector-tema-boton {
+  display: grid;
+  width: 28px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--ws-border);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+  box-shadow: var(--ws-shadow);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.ws-selector-tema-boton svg {
+  transition: transform 220ms ease;
+}
+
+.ws-selector-tema-boton:hover,
+.ws-selector-tema-boton[aria-expanded='true'] {
+  border-color: var(--ws-link);
+  color: var(--ws-link);
+}
+
+.ws-selector-tema-boton[aria-expanded='true'] svg {
+  transform: rotate(60deg);
+}
+
+/* La pestaña toca el borde: el contorno de foco va por dentro para que no quede cortado. */
+@media (max-width: 767.98px) {
+  .ws-selector-tema-boton:focus-visible {
+    outline-offset: -2px;
+  }
+}
+
+@media (min-width: 768px) {
+  .ws-selector-tema {
+    right: 24px;
+    bottom: 24px;
+  }
+
+  .ws-selector-tema-boton {
+    width: 44px;
+    border-right: 1px solid var(--ws-border);
+    border-radius: 999px;
+  }
+}
+
+.ws-selector-tema-panel.mat-mdc-menu-panel {
+  --mat-menu-container-color: var(--ws-surface);
+  --mat-menu-container-shape: 14px;
+  --mat-menu-container-elevation-shadow: var(--ws-shadow-lg);
+  --mat-menu-item-label-text-color: var(--ws-ink);
+  --mat-menu-item-label-text-size: 0.95rem;
+  --mat-menu-item-label-text-weight: 500;
+  min-width: 248px;
+  border: 1px solid var(--ws-border);
+}
+
+.ws-selector-tema-titulo {
+  margin: 0;
+  padding: 10px 16px 8px;
+  color: var(--ws-ink);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.ws-selector-tema-titulo span {
+  display: block;
+  color: var(--ws-muted);
+  font-size: 0.8rem;
+  font-weight: 400;
+}
+
+.ws-selector-tema-opcion {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ws-selector-tema-muestra {
+  display: inline-flex;
+  flex: none;
+}
+
+.ws-selector-tema-muestra span {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--ws-surface);
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px var(--ws-border);
+}
+
+.ws-selector-tema-muestra span + span {
+  margin-left: -5px;
+}
+
+.ws-selector-tema-nombre {
+  flex: 1;
+}
+
+.ws-selector-tema-activo {
+  border-radius: 999px;
+  background: var(--ws-surface-soft);
+  padding: 1px 8px;
+  color: var(--ws-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ws-selector-tema-marca {
+  flex: none;
+  color: var(--ws-link);
+}
+
+.ws-selector-tema-separador {
+  margin: 4px 0;
+  border-top: 1px solid var(--ws-border);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-selector-tema-boton,
+  .ws-selector-tema-boton svg {
+    transition: none;
+  }
+}
