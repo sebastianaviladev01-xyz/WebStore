@@ -11,6 +11,7 @@ import {
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
 import { Permiso } from '../features/sesion/domain/rol.rules';
+import { MenuUsuarioComponent } from './menu-usuario.component';
 
 interface NavigationItem {
   readonly path: string;
@@ -81,7 +82,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
 
 @Component({
   selector: 'ws-admin-shell',
-  imports: [RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [MenuUsuarioComponent, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
     <div class="min-h-screen lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       <aside class="border-b border-line bg-surface lg:min-h-screen lg:border-r lg:border-b-0">
@@ -147,11 +148,8 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
         <header class="border-b border-line bg-surface px-5 py-3">
           <div class="admin-container flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-muted">Backoffice de la tienda</p>
-            <div class="flex flex-wrap items-center gap-3">
-              <div class="text-right leading-tight">
-                <strong class="block text-sm font-semibold text-ink">{{ session.user()?.name }}</strong>
-                <span class="text-xs text-muted">{{ session.roleLabel() }}</span>
-              </div>
+            <!-- ml-auto: si la cabecera se parte en dos líneas, el menú de usuario sigue a la derecha. -->
+            <div class="ml-auto flex min-w-0 items-center gap-3">
               <button
                 class="min-h-10 rounded-lg border border-line px-4 text-sm font-medium hover:bg-subtle"
                 type="button"
@@ -159,13 +157,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
               >
                 Actualizar
               </button>
-              <button
-                class="min-h-10 rounded-lg bg-soft px-4 text-sm font-medium hover:bg-line"
-                type="button"
-                (click)="logout()"
-              >
-                Cerrar sesión
-              </button>
+              <ws-admin-menu-usuario />
             </div>
           </div>
         </header>
@@ -245,10 +237,5 @@ export class AppLayout {
       if (!siguientes.delete(id)) siguientes.add(id);
       return siguientes;
     });
-  }
-
-  protected async logout(): Promise<void> {
-    await this.session.logout();
-    await this.router.navigate(['/login']);
   }
 }

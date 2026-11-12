@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { cuentasAdmin, desplegarTodos, ingresarAlAdmin } from './apoyo/entorno';
+import { cerrarSesionAdmin, cuentasAdmin, desplegarTodos, ingresarAlAdmin } from './apoyo/entorno';
 
 /**
  * Acceso al Admin y roles fijos: el superadministrador entra y recorre cada módulo desde el menú; el vendedor
@@ -55,8 +55,7 @@ test('el superadministrador recorre todos los módulos del panel', async ({ page
   await expect(page.getByRole('heading', { level: 2, name: 'Superadministrador' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 2, name: 'Vendedor' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Cerrar sesión' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Acceso administrativo' })).toBeVisible();
+  await cerrarSesionAdmin(page);
 });
 
 test('el vendedor no ve Usuarios ni los módulos comerciales', async ({ page }) => {

@@ -80,9 +80,15 @@ const screenshot = await command('Page.captureScreenshot', { format: 'png', from
 await mkdir(output, { recursive: true });
 await writeFile(resolve(output, 'admin-owner-1440x1000.png'), Buffer.from(screenshot.data, 'base64'));
 
-await evaluate(
-  `[...document.querySelectorAll('header button')].find((button)=>button.textContent.includes('Cerrar sesión'))?.click()`,
-);
+// «Cerrar sesión» está en el menú de usuario de la cabecera (feature 003): se abre el menú y se elige la opción.
+const cerrarSesion = async () => {
+  const opcion = `[...document.querySelectorAll('[role="menuitem"]')].find((item)=>item.textContent.includes('Cerrar sesión'))`;
+  await evaluate(`document.querySelector('ws-admin-menu-usuario button')?.click()`);
+  await waitFor(`Boolean(${opcion})`);
+  await evaluate(`${opcion}?.click()`);
+};
+
+await cerrarSesion();
 await waitFor(`location.pathname==='/login'&&Boolean(document.querySelector('input[type="email"]'))`);
 await fill('catalogo@webstore.demo', 'Catalogo#2026');
 // Los grupos del menú lateral se pliegan (feature 003): se despliegan todos antes de leer los enlaces visibles.
@@ -99,9 +105,7 @@ const catalog = await evaluate(`(()=>({
 await command('Page.navigate', { url: `${adminUrl}/usuarios` });
 await wait(900);
 const catalogGuard = await evaluate(`location.pathname`);
-await evaluate(
-  `[...document.querySelectorAll('header button')].find((button)=>button.textContent.includes('Cerrar sesión'))?.click()`,
-);
+await cerrarSesion();
 await waitFor(`location.pathname==='/login'`);
 
 console.log(JSON.stringify({ owner, catalog, catalogGuard }, null, 2));

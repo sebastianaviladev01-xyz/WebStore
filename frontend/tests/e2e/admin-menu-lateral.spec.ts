@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import {
+  cerrarSesionAdmin,
   correoUnico,
   cuentasAdmin,
   desplegarGrupo,
@@ -189,8 +190,7 @@ test.describe('Menú lateral en escritorio', () => {
 
     // Al volver a iniciar sesión, solo «General».
     await desplegarGrupo(page, 'Tienda');
-    await page.getByRole('button', { name: 'Cerrar sesión' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Acceso administrativo' })).toBeVisible();
+    await cerrarSesionAdmin(page);
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await esperarGrupos(page, ['General'], ['Catálogo', 'Ventas', 'Tienda', 'Accesos']);
   });

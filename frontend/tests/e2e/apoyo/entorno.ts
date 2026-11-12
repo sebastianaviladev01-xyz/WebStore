@@ -59,6 +59,24 @@ export async function desplegarTodos(page: Page): Promise<void> {
   }
 }
 
+/** Botón del menú de usuario de la cabecera del Admin (feature 003): iniciales, nombre y rol. */
+export const botonMenuUsuario = (page: Page) => page.locator('ws-admin-menu-usuario').getByRole('button');
+
+/** Abre el menú de usuario del Admin con un clic y devuelve su panel. */
+export async function abrirMenuUsuario(page: Page) {
+  await botonMenuUsuario(page).click();
+  const panel = page.getByRole('menu', { name: 'Cuenta' });
+  await expect(panel).toBeVisible();
+  return panel;
+}
+
+/** Cierra la sesión del Admin desde el menú de usuario y espera el acceso administrativo. */
+export async function cerrarSesionAdmin(page: Page): Promise<void> {
+  const panel = await abrirMenuUsuario(page);
+  await panel.getByRole('menuitem', { name: 'Cerrar sesión' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Acceso administrativo' })).toBeVisible();
+}
+
 /** Correo único por ejecución para no chocar con registros de otra prueba. */
 export function correoUnico(prefijo: string): string {
   return `${prefijo}-${Date.now()}@example.com`;
