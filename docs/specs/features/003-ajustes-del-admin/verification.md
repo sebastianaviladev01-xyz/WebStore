@@ -105,7 +105,7 @@ Ejecuciones finales de `sdd-verify` del 2026-11-12, todas sobre `a57ed48` con el
 | `npm run verify` completo | Sí | Sí | Sí: código de salida 0 |
 | Capturas antes y después | Sí ([capturas del plan](planning.md#capturas-antes-y-después)) | Sí (`capturar.mjs`, `comparar.mjs`, `zonas.mjs` y `temas-lado-a-lado.mjs`, con Playwright y el Chrome instalado, mismos datos, rutas, anchos y sesión) | Sí: la comparación final con la base, con A, B y C, es la de ⚠ TASK-07; en `sdd-verify` se repitió con B sobre la punta. Ver [Capturas antes y después](#capturas-antes-y-después) |
 | Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`, exit 0. Ningún `package.json` ni `package-lock.json` cambia en la rama |
-| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | No ejecutado: la rama no está publicada y el PR todavía no existe; lo abre la sesión principal con `pr-create` |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | Sí: en el [PR #20](https://github.com/sebastianaviladev01-xyz/WebStore/pull/20), «Verificar» y «E2E» en verde sobre `2b5f4f6`; después del merge, el CI de `dev` también se ejecuta sobre `93298b0` |
 | Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: ni `sdd-verify` ni la guía la piden en esta etapa. Aunque se hiciera, no contaría como evidencia |
 
 ## Resultados de las pruebas
@@ -189,12 +189,12 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - [x] Documentación, ADR y diagramas coherentes con la implementación: `frontend/architecture.md` §3 y §6, `frontend/docs/VISUAL-SYSTEM.md`, glosario, `TRACEABILITY.md`, backlog e índice de features (TASK-08). Sin ADR necesarios. Los 174 enlaces relativos de los `.md` que cambian en la rama resuelven, también sus anclas.
 - [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
 - [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las cuentas de las e2e y de los guiones de captura son las de la semilla local; las copias de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó (sha256 `38154861…ab530c1` antes y después).
-- [x] Los controles no ejecutados figuran como tales: el CI y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [x] Los controles no ejecutados figuran como tales: la revisión ciega. El CI se ejecutó en el PR #20 y en `dev`. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
 - [x] Revisión humana del hito correspondiente registrada: los seis bloques, las cinco tareas ⚠ y el [hito de entrega](#hito-de-entrega), aprobados por Sebastián Avila el 2026-11-12.
 
 ## Riesgos remanentes y excepciones
 
-- **CI.** No ejecutado: la rama no está publicada. Se ejecuta en el PR único que abre la sesión principal con `pr-create`.
+- **CI.** Se ejecutó en el [PR #20](https://github.com/sebastianaviladev01-xyz/WebStore/pull/20), en verde, y en `dev` después del merge.
 - **Fallos de la base, fuera de la feature.** En `f8278e9` ya estaban, y siguen igual: `/productos` del Admin desborda en horizontal a 375 px en los tres temas, y `/login` a 1440 px da un `404` de un recurso en la consola. Anotados en el [backlog](../../../planning/backlog.md) como `bug`, con el estado `propuesta`: PBI-0045 (desborde) y PBI-0046 (`404`), aprobado por Sebastián Avila con el hito de entrega.
 - **Diferencias visuales aceptadas por Sebastián Avila**, registradas en sus tareas: a 375 px, «Ver todos los pedidos →» pasa a una segunda línea (⚠ TASK-04) y la cabecera pasa de tres líneas a dos (⚠ TASK-06); los indicadores de plegado van en el gris atenuado del tema, `--ws-muted` (⚠ TASK-07, AC-14).
 - **TDD en un solo commit.** TEST-01 y `inicialesDeUsuario` entraron juntos en `fd0a6d7`. El rojo está registrado en su fila y se reprodujo en `sdd-verify`; el historial por sí solo no lo muestra.
@@ -214,4 +214,6 @@ Evidencia presentada antes de aprobar: la de esta verificación sobre `a57ed48`.
 
 Con la aprobación, los dos fallos de la base pasan al backlog como PBI-0045 y PBI-0046.
 
-Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones). El CI se ejecuta en el PR.
+Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+
+Entrega: el [PR #20](https://github.com/sebastianaviladev01-xyz/WebStore/pull/20) se fusionó en `dev` el 2026-11-12 (`93298b0`), con «Verificar» y «E2E» en verde en el PR. La rama local y el worktree se cerraron con `post-merge`.
