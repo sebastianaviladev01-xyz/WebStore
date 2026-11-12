@@ -37,7 +37,7 @@ Las versiones exactas viven solo en los manifiestos: [`frontend/package.json`](.
 - HTTP solo en los adaptadores `Bff*Gateway` de la capa `data/`; la aplicación depende de puertos del dominio.
 - Contratos del BFF orientados a la experiencia, no a tablas ([contrato](../../backend/docs/BFF-CONTRACT.md)).
 - Vocabulario de negocio en español y términos técnicos en inglés ([ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md)).
-- Configuración del negocio desacoplada de los componentes: la publica el CMS del Admin. Decidido para la feature 002, pendiente de implementar: los colores pasarán a un tema activo, que el `superadmin` gestiona como recurso propio del BFF y que se aplica con una hoja de estilos del BFF ([ADR-0010](../adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md), [ADR-0011](../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md) y, para la tuerca del modo demo, [ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)).
+- Configuración del negocio desacoplada de los componentes: la publica el CMS del Admin y, para los colores, el tema activo. El `superadmin` gestiona los temas como recurso propio del BFF y la tienda y el Admin los aplican con una hoja de estilos del BFF ([ADR-0010](../adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md), [ADR-0011](../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md) y, para la tuerca del modo demo, [ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)).
 - Pruebas unitarias e integración con `node:test` y e2e con Playwright ([ADR-0009](../adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md)).
 
 ## Una sola fuente de datos
@@ -52,7 +52,7 @@ El Admin modifica la misma fuente que usa el Storefront. Por ello:
 
 ## Roles
 
-Tres roles fijos, asignables pero no editables: `superadmin` (todo, incluidos usuarios), `admin` (toda la operación sin usuarios) y `vendedor` (fichas de productos existentes, inventario y estado de pedidos). Las rutas del Admin usan `permisoGuard(permiso)` y el menú se filtra con `session.can(permiso)`; el BFF vuelve a validar cada operación. Detalle en el [contrato del BFF](../../backend/docs/BFF-CONTRACT.md). Decidido para la feature 002, pendiente de implementar: un permiso nuevo, `themes.manage`, solo del `superadmin`, para gestionar los temas; `admin` y `vendedor` conservan sus permisos ([ADR-0011](../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)).
+Tres roles fijos, asignables pero no editables: `superadmin` (todo, incluidos usuarios), `admin` (toda la operación sin usuarios) y `vendedor` (fichas de productos existentes, inventario y estado de pedidos). Las rutas del Admin usan `permisoGuard(permiso)` y el menú se filtra con `session.can(permiso)`; el BFF vuelve a validar cada operación. Detalle en el [contrato del BFF](../../backend/docs/BFF-CONTRACT.md). Además, el permiso `themes.manage`, solo del `superadmin`, gestiona los temas; `admin` y `vendedor` conservan sus permisos ([ADR-0011](../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)).
 
 ## SEO / SSR
 

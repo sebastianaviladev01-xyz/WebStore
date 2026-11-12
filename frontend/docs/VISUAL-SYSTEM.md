@@ -2,7 +2,9 @@
 
 ## Dirección
 
-Paleta **B · Azul cobalto**, elegida entre las tres propuestas del 05/11 (A violeta, B cobalto, C grafito y ámbar). Es la única que no choca con ninguna versión de lo acordado: no usa beige, verde ni violeta, se aleja del rojo y los neutros cálidos de LG y todos sus pares de texto cumplen WCAG AA.
+Hay **tres temas predefinidos**, las tres propuestas del 05/11: **A · Violeta tienda**, **B · Azul cobalto** y **C · Grafito y ámbar**. Todos sus pares de texto cumplen WCAG AA (tablas en «Paleta y tokens»). B es el tema por defecto, en la demo y en toda instalación nueva, y es el que describe el resto de este documento; A y C solo cambian los colores, nunca la estructura, la tipografía ni el espaciado. El tema activo lo elige el `superadmin` en Admin → Temas ([ADR-0010](../../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md) y [ADR-0011](../../docs/adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)).
+
+La paleta **B · Azul cobalto** se eligió entre las tres propuestas por ser la única que no choca con ninguna versión de lo acordado: no usa beige, verde ni violeta, se aleja del rojo y los neutros cálidos de LG y todos sus pares de texto cumplen WCAG AA.
 
 La tienda es un retail de tecnología y electrohogar en Lima. El azul cobalto transmite confianza para comprar; el naranja quemado se reserva para lo que exige atención comercial (ofertas, contador del carrito). Todo lo demás es estructura neutra sobre un lienzo plomo.
 
@@ -20,12 +22,12 @@ Por pedido de Sebastián (06/11), el inicio actual toma la **estructura** de la 
 
 ## Paleta y tokens
 
-Fuente única: `src/styles/tokens.css`, importado por la tienda y por el Admin. Las plantillas usan nombres semánticos de Tailwind (`bg-primary`, `text-muted`, `border-line`…); no hay grises, índigos ni hex sueltos en los templates.
+`src/styles/tokens.css`, importado por la tienda y por el Admin, es la paleta B y el respaldo: lo que se ve si el BFF no responde. El tema activo llega del BFF en `/bff/appearance/theme.css`, una hoja que redefine los tokens del tema en un bloque `:root:root` y bloquea el primer pintado, así que no hay parpadeo. La tabla siguiente son los valores de B. Las plantillas usan nombres semánticos de Tailwind (`bg-primary`, `text-muted`, `border-line`…); no hay grises, índigos ni hex sueltos en los templates.
 
 | Token CSS                              | Clase Tailwind   |                 Valor | Uso                                                   |                                   Contraste |
 | -------------------------------------- | ---------------- | --------------------: | ----------------------------------------------------- | ------------------------------------------: |
 | `--ws-primary`                         | `primary`        |             `#1D4ED8` | Acciones, enlaces, foco, navegación activa            |                          6.7:1 sobre blanco |
-| `--ws-primary-strong`                  | `primary-strong` |    mezcla ≈ `#183996` | Franja superior, hover, texto sobre azul suave        | 10.2:1 sobre blanco, 8.7:1 sobre azul suave |
+| `--ws-primary-strong`                  | `primary-strong` |    mezcla ≈ `#183996` | Hover, texto sobre azul suave (franja superior: `--ws-topbar`)        | 10.2:1 sobre blanco, 8.7:1 sobre azul suave |
 | `--ws-primary-soft`                    | `primary-soft`   |    mezcla ≈ `#E8EDFB` | Hero, ítem activo, fondos de confirmación             |                                           — |
 | `--ws-accent`                          | `accent`         |             `#C2410C` | Ofertas y contador del carrito (texto blanco)         |                            5.2:1 con blanco |
 | `--ws-bg`                              | `canvas`         |             `#F3F5F8` | Lienzo plomo de la página                             |                                           — |
@@ -45,7 +47,90 @@ Fuente única: `src/styles/tokens.css`, importado por la tienda y por el Admin. 
 
 No hay verde: los estados positivos usan el azul (`primary-soft` + `primary-strong`).
 
-El color principal y el de acento siguen siendo configurables desde **Admin → Contenido**. Las variantes fuerte y suave se derivan con `color-mix()`, así que un color personalizado mantiene la jerarquía. Al migrar, el BFF reemplaza los colores por defecto anteriores (borgoña `#6E173C` y bronce `#8C6845`) por los de la paleta B; un color elegido por la tienda se respeta.
+### Temas y tokens del tema
+
+Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo principal, fondo secundario (la superficie) y contraste (el texto). El BFF calcula de ellos el mapa completo de **30 tokens** (`TOKENS_DEL_TEMA`); la tienda y el Admin solo lo aplican. Son nuevos respecto a la paleta B original (antes eran un color fijo o reutilizaban `--ws-primary` o `--ws-primary-strong`):
+
+| Token | Uso |
+|---|---|
+| `--ws-on-primary` | Texto e íconos sobre el principal y el principal fuerte |
+| `--ws-on-primary-soft` | Texto sobre el tinte del principal |
+| `--ws-on-accent` | Texto sobre el acento |
+| `--ws-link` | Enlaces y texto en el color de marca |
+| `--ws-focus-ring` | Contorno del foco |
+| `--ws-topbar` | Franja superior de la tienda |
+| `--ws-on-topbar` | Texto de la franja superior |
+| `--ws-footer-heading` | Títulos y enlaces al pasar el cursor en el pie |
+
+La franja superior (`--ws-topbar` y `--ws-on-topbar`) es: en B, `--ws-primary-strong` con `#ffffff`; en A, `#2E1A5C` con `#FFFFFF`; en C, grafito `#1F2328` con `#FFFFFF`; en un tema propio, su `primary-strong` con el más legible entre blanco y el color de contraste.
+
+Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la paleta: `--ws-danger*`, `--ws-warning*`, `--ws-on-media` (texto y botones sobre fotos y velos) y `--ws-scrim` (velo del cajón de navegación).
+
+**Derivación de un tema propio.** Cada token que no es uno de los cinco colores se calcula con `color-mix(in srgb, <hex> N%, <hex>)` sobre colores literales (P, S, F, Sf y C son el principal, el secundario, el fondo principal, el secundario y el contraste):
+
+- Con texto blanco sobre el principal, `primary-strong` es `color-mix(P 62%, C)`; con el texto en el color de contraste, `color-mix(P 88%, C)`. Si el texto sobre P no llega a 4.5:1 sobre el resultado, `primary-strong` es P.
+- `primary-soft` es `color-mix(P 10%, Sf)`; `accent-strong`, `color-mix(S 78%, C)`; `accent-soft`, `color-mix(S 9%, Sf)`.
+- `on-primary` y `on-accent` son blanco o C, el que más contraste dé sobre P y sobre S. `on-primary-soft` es `primary-strong` si llega a 4.5:1 sobre el tinte; si no, C.
+- `link` y `focus-ring` son P si llega a 4.5:1 y 3:1 sobre F y sobre Sf; si no, C.
+- Neutros: `muted` `color-mix(C 68%, Sf)`, `muted-strong` `color-mix(C 82%, Sf)`, `surface-subtle` `color-mix(C 3%, Sf)`, `surface-soft` `color-mix(C 9%, Sf)`, `border` `color-mix(C 14%, Sf)`, `border-strong` `color-mix(C 50%, Sf)`, `disabled` `color-mix(C 10%, Sf)`, `disabled-text` `color-mix(C 68%, Sf)` y `dot` `color-mix(P 30%, Sf)`.
+- Pie: `footer` es C, `footer-text` `color-mix(Sf 78%, C)`, `footer-rule` `color-mix(Sf 15%, C)` y `footer-heading` Sf.
+
+**Base neutra.** Si el fondo principal, el fondo secundario y el contraste de un tema propio coinciden con los de un predefinido, sin distinguir mayúsculas, el tema hereda la escala neutra de ese predefinido: `bg`, superficies, `ink`, `text`, `muted` y `muted-strong`, bordes, deshabilitados, `dot` y los cuatro tokens del pie. Así, un tema que solo cambia el principal y el secundario sobre la base de B se ve como antes con esos dos colores. Los tokens de marca (principal, acento y los que se calculan con ellos) se derivan siempre.
+
+**Contraste al guardar.** Hay 15 pares medidos (`PARES_DE_CONTRASTE`). Solo el contraste sobre el fondo principal y sobre el secundario bloquean el guardado de un tema propio; el foco pide 3:1 y el resto 4.5:1, y esos solo avisan.
+
+**Contraste medido de los predefinidos** (fórmula de WCAG 2.1, sobre los mapas reales; todos alcanzan su mínimo):
+
+**B · Azul cobalto** (por defecto)
+
+| Par | Contraste |
+|---|---:|
+| Texto sobre el fondo / la superficie | 16.35 / 17.85 |
+| Texto secundario sobre el fondo / la superficie | 5.85 / 6.39 |
+| Texto sobre el principal / el principal fuerte | 6.70 / 10.17 |
+| Texto sobre el tinte | 8.69 |
+| Texto sobre el acento | 5.18 |
+| Enlace sobre el fondo / la superficie | 6.14 / 6.70 |
+| Foco sobre el fondo / la superficie (mínimo 3) | 6.14 / 6.70 |
+| Pie | 10.81 |
+| Texto deshabilitado | 4.84 |
+| Barra superior (texto sobre la barra) | 10.17 |
+
+**A · Violeta tienda**: principal `#4C2A92`, secundario `#F5A524`, fondo `#F4F4F6`, superficie `#FFFFFF`, contraste `#17151C`.
+
+| Par | Contraste |
+|---|---:|
+| Texto sobre el fondo / la superficie | 16.47 / 18.10 |
+| Texto secundario sobre el fondo / la superficie | 6.30 / 6.92 |
+| Texto sobre el principal / el principal fuerte | 10.23 / 14.80 |
+| Texto sobre el tinte | 10.95 |
+| Texto sobre el acento | 8.40 |
+| Enlace sobre el fondo / la superficie | 9.31 / 10.23 |
+| Foco sobre el fondo / la superficie (mínimo 3) | 9.31 / 10.23 |
+| Pie | 10.78 |
+| Texto deshabilitado | 5.09 |
+| Barra superior (texto sobre la barra) | 14.80 |
+
+**C · Grafito y ámbar**: principal `#F2B705`, secundario `#1F2328`, fondo `#F2F3F5`, superficie `#FFFFFF`, contraste `#1F2328`. Sobre el principal claro, el texto, el enlace y el foco van en grafito, no en blanco (REQ-17).
+
+| Par | Contraste |
+|---|---:|
+| Texto sobre el fondo / la superficie | 14.23 / 15.80 |
+| Texto secundario sobre el fondo / la superficie | 6.16 / 6.84 |
+| Texto sobre el principal / el principal fuerte | 8.69 / 7.02 |
+| Texto sobre el tinte | 5.48 |
+| Texto sobre el acento | 8.69 |
+| Enlace sobre el fondo / la superficie | 14.23 / 15.80 |
+| Foco sobre el fondo / la superficie (mínimo 3) | 14.23 / 15.80 |
+| Pie | 11.14 |
+| Texto deshabilitado | 4.53 |
+| Barra superior (texto sobre la barra) | 15.80 |
+
+Particularidades aceptadas:
+
+- Las fotos de producto se funden con `mix-blend-mode: multiply` sobre el fondo de su tarjeta, que es un token del tema: con A y C su fondo blanco toma el neutro del tema. No cambian el archivo ni el `src` (el logo y las imágenes no cambian).
+- En C, el elemento activo del menú del Admin usa el tinte ámbar (`#FFF6D6` con texto `#8A5A00`); la pestaña activa de la tienda es grafito.
+- `color-scheme: light` no cambia: un tema propio oscuro se puede guardar si cumple el contraste bloqueante, pero los controles nativos del navegador siguen claros.
 
 ## Tipografía
 
@@ -61,7 +146,7 @@ El color principal y el de acento siguen siendo configurables desde **Admin → 
 - Contenido hasta 1280 px con márgenes de 32 px (16 px en móvil); el hero comparte ese ancho.
 - Radios: 10 px en botones, 14 px en tarjetas, 20 px en el hero.
 - Profundidad: bordes `line` y sombras mínimas; las tarjetas no flotan.
-- Foco: contorno sólido de 2 px en el color principal.
+- Foco: contorno sólido de 2 px con `--ws-focus-ring` (en B, el color principal).
 - Hover: cambio de borde o color y un desplazamiento máximo de 2 px, solo en dispositivos con cursor.
 - `prefers-reduced-motion` desactiva animaciones y el autoplay del carrusel.
 
