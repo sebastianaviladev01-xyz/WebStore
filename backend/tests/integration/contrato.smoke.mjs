@@ -284,10 +284,19 @@ try {
   if (!snapshot.complaints.some((item) => item.id === complaint.id))
     throw new Error('La reclamación no llegó al Admin');
 
+  // Contenido ya no tiene colores (D3, AC-22): ni la semilla ni el snapshot los traen.
+  const coloresDeContenido = (config) => ['primaryColor', 'secondaryColor'].filter((key) => key in config);
+  if (
+    coloresDeContenido(await request('/bff/content/settings')).length ||
+    coloresDeContenido(snapshot.config).length
+  )
+    throw new Error('Contenido no debe traer primaryColor ni secondaryColor');
+  // Un Admin anterior que aún envía los colores: se descartan sin error y no se publican.
   const settings = {
     ...snapshot.config,
     storeName: 'Tienda Smoke',
     primaryColor: '#123456',
+    secondaryColor: '#654321',
     logoUrl: 'data:image/svg+xml;base64,PHN2Zy8+',
     sideNavigation: 'TV y audio, Cocina',
     shippingPageEnabled: false,
@@ -302,10 +311,11 @@ try {
   const publicSettings = await request('/bff/content/settings');
   if (
     publicSettings.storeName !== 'Tienda Smoke' ||
-    publicSettings.primaryColor !== '#123456' ||
     publicSettings.privacyContent !== 'Privacidad contractual'
   )
     throw new Error('CMS Admin no llegó al Storefront');
+  if (coloresDeContenido(publicSettings).length || coloresDeContenido(snapshot.config).length)
+    throw new Error('El PUT del snapshot con primaryColor y secondaryColor no debe publicarlos (AC-22)');
   if (
     publicSettings.logoUrl !== settings.logoUrl ||
     publicSettings.sideNavigation !== 'TV y audio, Cocina' ||

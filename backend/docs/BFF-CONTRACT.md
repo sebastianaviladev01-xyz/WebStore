@@ -15,7 +15,9 @@ Base URL: `/bff` (proxy local a `http://localhost:3000`).
 
 Cada banner incluye `imageFit` (`cover` para fotos de ambiente, `contain` para producto completo) e `imageTone` (`light` u `dark`, por defecto `light`): con `dark` la tienda muestra los controles del carrusel oscuros, para que se lean sobre fotos oscuras. `imageFocusY` (0–100 o `null`) es la posición vertical de una foto de ambiente; sin valor, la tienda usa 31,5.
 
-Los ajustes públicos incluyen la identidad visual, navegación y el contenido configurable de Contacto, Envíos, Privacidad y Términos.
+Los ajustes públicos incluyen la identidad visual (nombre, logo y tipografía), navegación y el contenido configurable de Contacto, Envíos, Privacidad y Términos.
+
+**Cambio incompatible (`schemaVersion: 3`, feature 002):** los ajustes ya no traen `primaryColor` ni `secondaryColor`. El color vive solo en los temas (D3). Tampoco los trae la `config` del snapshot del Admin, y si un `PUT /admin/snapshot` los envía, se descartan sin error y no se publican.
 
 ## Envíos
 
@@ -93,7 +95,10 @@ Reglas del servidor:
 - Debe quedar al menos un superadministrador activo (`409 LAST_SUPERADMIN`) y nadie puede eliminarse, desactivarse ni cambiarse el rol a sí mismo (`409 SELF_LOCKOUT`).
 - Un usuario eliminado o desactivado pierde sus sesiones abiertas.
 
-Migración: los datos guardados por versiones anteriores (sin `schemaVersion`) pasan `owner` → `superadmin` y `catalog-maintainer` → `vendedor`, y se agrega la cuenta demo `admin@webstore.demo` si no existe. Se ejecuta una sola vez (`schemaVersion: 2`).
+Migraciones de los datos guardados por versiones anteriores. Cada una se ejecuta una sola vez, al arrancar el BFF:
+
+- `schemaVersion: 2`: sin `schemaVersion`, los roles pasan `owner` → `superadmin` y `catalog-maintainer` → `vendedor`, y se agrega la cuenta demo `admin@webstore.demo` si no existe.
+- `schemaVersion: 3`: el estado gana `appearance` (`revision`, `activeThemeId` y `customThemes`), con B activo. Si los colores de Contenido difieren de los de B (`#1D4ED8` y `#C2410C`, sin distinguir mayúsculas), se crea con ellos el tema propio «Colores de Contenido» (con el fondo principal, el fondo secundario y el contraste de B) y queda activo; si el nombre ya existe, «Colores de Contenido (2)», «(3)»… Un color ausente, que no es `#RRGGBB` o el anterior por defecto (borgoña `#6E173C` o bronce `#8C6845`) cuenta como el de B. Después, `primaryColor` y `secondaryColor` se quitan de la configuración. Un tema activo que no existe pasa a B. `POST /admin/reset` vuelve a B, sin temas propios.
 
 ## Convenciones y protección local
 

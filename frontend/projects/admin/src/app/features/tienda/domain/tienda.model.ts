@@ -116,8 +116,6 @@ export interface ConfiguracionTienda {
   readonly storeName: string;
   readonly logoText: string;
   readonly logoUrl: string;
-  readonly primaryColor: string;
-  readonly secondaryColor: string;
   readonly contactEmail: string;
   readonly contactPhone: string;
   readonly fontFamily: string;

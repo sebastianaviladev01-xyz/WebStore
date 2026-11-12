@@ -32,8 +32,6 @@ export interface ConfiguracionTienda {
   readonly logoUrl: string;
   readonly contactEmail: string;
   readonly contactPhone: string;
-  readonly primaryColor: string;
-  readonly secondaryColor: string;
   readonly fontFamily: string;
   readonly headerMessage: string;
   readonly footerText: string;
