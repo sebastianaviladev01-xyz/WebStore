@@ -36,6 +36,10 @@ Cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../deve
 | TASK-03 | | TEST-02 y TEST-03 rojo | `node --test tests/unit/domain/temas/temas-predefinidos.test.mjs` con `TEMAS_PREDEFINIDOS` vacío: `# tests 10`, `# pass 1`, `# fail 9` (pasa la de lista congelada) | ídem |
 | TASK-03 | | TEST-02 y TEST-03 verde | `# tests 10`, `# pass 10`: ids, nombres y cinco colores; valores presentados de A y C; B literal de `tokens.css`; mapa completo de 28 tokens en orden; igual a `casos-tema.json`; los 14 pares de A, B y C en AA ([tabla](#pares-de-contraste-de-a-b-y-c-task-03)); en C, `on-primary`, `link` y `focus-ring` calculan `#1F2328`. BFF: 27/27 | ídem |
 | TASK-03 | | `npm run verify` | Exit 0: sintaxis (56 archivos), formato, lint, arquitectura, build, estructura OK, frontend 22/22, BFF 27/27 y smoke test OK. Prettier sobre los archivos tocados | ídem |
+| TASK-04 | | Ejecución | Agente delegado con brief cerrado; la regla de redondeo (un decimal hacia abajo) la fijó el agente principal. El agente principal revisó el diff y repitió `verify` | Claude Code, Sonnet 5.5 (`claude-sonnet-5-5`), esfuerzo alto, delegada; revisión: Opus 5.5, esfuerzo alto |
+| TASK-04 | | TEST-05 rojo | `node --test tests/unit/domain/temas/tema.rules.test.mjs`: primero falla la importación; con `revisarContraste` sin implementar, `# tests 17`, `# pass 10`, `# fail 7` (los 4 casos de `casos-tema.json` y las pruebas de forma, redondeo y bloqueo) | ídem |
+| TASK-04 | | TEST-05 verde | `# tests 17`, `# pass 17`. Bloqueo: base de B con contraste `#9CA3AF` (`contrast/background` 2.3 y `contrast/surface` 2.5, `bloquea: true`). Aviso que no bloquea: base oscura (`onPrimary/primary` 3.6 y `onAccent/accent` 2.8, `bloquea: false`). Sin problemas: B. Redondeo: contraste `#717171`, `contrast/background` 4.4687 se informa 4.4 y bloquea. Siempre 14 pares, en orden y congelados. BFF: 34/34 | ídem |
+| TASK-04 | | `npm run verify` | Exit 0: sintaxis (56 archivos), formato, lint, arquitectura, build, estructura OK, frontend 22/22, BFF 34/34 y smoke test OK. Prettier sobre los tres archivos: sin cambios | ídem |
 
 ### Pares de contraste de A, B y C (TASK-03)
 

@@ -445,5 +445,69 @@
         "disabledText/disabled": 5.86
       }
     }
+  ],
+  "revisarContraste": [
+    {
+      "nombre": "un contraste gris sobre la base de B bloquea y avisa de los demás pares bajo su mínimo",
+      "colores": {
+        "primary": "#1D4ED8",
+        "secondary": "#C2410C",
+        "background": "#F3F5F8",
+        "surface": "#FFFFFF",
+        "contrast": "#9CA3AF"
+      },
+      "bajoMinimo": [
+        { "par": "contrast/background", "relacion": 2.3, "minimo": 4.5, "bloquea": true },
+        { "par": "contrast/surface", "relacion": 2.5, "minimo": 4.5, "bloquea": true },
+        { "par": "muted/background", "relacion": 1.6, "minimo": 4.5, "bloquea": false },
+        { "par": "muted/surface", "relacion": 1.8, "minimo": 4.5, "bloquea": false },
+        { "par": "onPrimarySoft/primarySoft", "relacion": 2.1, "minimo": 4.5, "bloquea": false },
+        { "par": "footerText/footer", "relacion": 2.1, "minimo": 4.5, "bloquea": false },
+        { "par": "disabledText/disabled", "relacion": 1.6, "minimo": 4.5, "bloquea": false }
+      ]
+    },
+    {
+      "nombre": "la base oscura de TEST-04 solo avisa del texto sobre el principal y el acento: no bloquea",
+      "colores": {
+        "primary": "#3B82F6",
+        "secondary": "#F97316",
+        "background": "#111318",
+        "surface": "#1B1E25",
+        "contrast": "#F5F7FA"
+      },
+      "bajoMinimo": [
+        { "par": "onPrimary/primary", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
+        { "par": "onPrimary/primaryStrong", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
+        { "par": "onAccent/accent", "relacion": 2.8, "minimo": 4.5, "bloquea": false }
+      ]
+    },
+    {
+      "nombre": "los colores de B con su contraste no dejan ningún par bajo el mínimo",
+      "colores": {
+        "primary": "#1D4ED8",
+        "secondary": "#C2410C",
+        "background": "#F3F5F8",
+        "surface": "#FFFFFF",
+        "contrast": "#0F172A"
+      },
+      "bajoMinimo": []
+    },
+    {
+      "nombre": "redondeo hacia abajo: 4.4687 se informa como 4.4 y queda bajo el mínimo que bloquea",
+      "colores": {
+        "primary": "#1D4ED8",
+        "secondary": "#C2410C",
+        "background": "#F3F5F8",
+        "surface": "#FFFFFF",
+        "contrast": "#717171"
+      },
+      "bajoMinimo": [
+        { "par": "contrast/background", "relacion": 4.4, "minimo": 4.5, "bloquea": true },
+        { "par": "muted/background", "relacion": 2.4, "minimo": 4.5, "bloquea": false },
+        { "par": "muted/surface", "relacion": 2.6, "minimo": 4.5, "bloquea": false },
+        { "par": "footerText/footer", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
+        { "par": "disabledText/disabled", "relacion": 2.3, "minimo": 4.5, "bloquea": false }
+      ]
+    }
   ]
 }

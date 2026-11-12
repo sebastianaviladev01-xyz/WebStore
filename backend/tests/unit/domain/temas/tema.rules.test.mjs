@@ -1,6 +1,7 @@
 /**
  * Pruebas unitarias de las reglas de un tema: derivación de sus tokens (D2, con la regla de la base neutra),
- * cálculo de los colores que pinta el navegador y medida de sus pares de contraste. Funciones puras.
+ * cálculo de los colores que pinta el navegador, medida de sus pares de contraste y revisión de contraste
+ * (relación redondeada hacia abajo, qué pares bloquean). Funciones puras.
  * Los casos salen de `casos-tema.json`, que también recorre la réplica del Admin (TEST-14).
  */
 import { test } from 'node:test';
@@ -12,6 +13,7 @@ import {
   TOKENS_DEL_TEMA,
   coloresCalculados,
   medirPares,
+  revisarContraste,
   tokensDelTema,
 } from '../../../../src/domain/temas/tema.rules.mjs';
 
@@ -93,4 +95,48 @@ test('se miden 14 pares; solo los del contraste sobre los fondos bloquean (D7) y
   );
   for (const { par, minimo } of PARES_DE_CONTRASTE)
     assert.equal(minimo, par.startsWith('focusRing/') ? 3 : 4.5, par);
+});
+
+for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
+  test(`revisarContraste: ${nombre}`, () => {
+    const pares = revisarContraste(colores, casos.predefinidos);
+    assert.deepEqual(
+      pares.filter((p) => p.relacion < p.minimo),
+      bajoMinimo,
+    );
+  });
+}
+
+test('revisarContraste devuelve siempre los 14 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
+  for (const { colores } of casos.revisarContraste) {
+    const pares = revisarContraste(colores, casos.predefinidos);
+    assert.ok(Object.isFrozen(pares));
+    assert.deepEqual(
+      pares.map(({ par }) => par),
+      PARES_DE_CONTRASTE.map(({ par }) => par),
+    );
+    for (const [indice, par] of pares.entries()) {
+      assert.deepEqual(Object.keys(par), ['par', 'relacion', 'minimo', 'bloquea']);
+      assert.equal(par.minimo, PARES_DE_CONTRASTE[indice].minimo, par.par);
+      assert.equal(par.bloquea, PARES_DE_CONTRASTE[indice].bloquea, par.par);
+    }
+  }
+});
+
+test('revisarContraste redondea la relación hacia abajo: un par bajo el mínimo no se muestra como si lo alcanzara', () => {
+  const { colores } = casos.revisarContraste.find(({ nombre }) => nombre.startsWith('redondeo'));
+  const exacta = medirPares(tokensDelTema(colores, casos.predefinidos))['contrast/background'];
+  assert.ok(exacta > 4.45 && exacta < 4.5, 'el redondeo al más cercano lo mostraría como 4.5');
+  const par = revisarContraste(colores, casos.predefinidos).find((p) => p.par === 'contrast/background');
+  assert.equal(par.relacion, 4.4);
+  assert.ok(par.relacion < par.minimo);
+});
+
+test('revisarContraste: bloquea indica qué pares frenan el guardado, con independencia de la medida', () => {
+  for (const { colores } of casos.revisarContraste) {
+    const bloqueantes = revisarContraste(colores, casos.predefinidos)
+      .filter(({ bloquea }) => bloquea)
+      .map(({ par }) => par);
+    assert.deepEqual(bloqueantes, ['contrast/background', 'contrast/surface']);
+  }
 });

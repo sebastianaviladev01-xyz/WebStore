@@ -248,3 +248,24 @@ export function medirPares(tokens) {
     ]),
   );
 }
+
+/**
+ * Revisión de contraste de un tema (AC-14, D7): los 14 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
+ * sobre los tokens que derivan de sus cinco colores. Cada `ParContraste` trae `par`, `relacion`, `minimo` y
+ * `bloquea`; `bloquea` dice si ese par impide guardar cuando queda bajo su mínimo y no depende de la medida.
+ *
+ * La relación se redondea a un decimal hacia abajo, no al más cercano: así un par que no llega a su mínimo
+ * nunca se muestra con una cifra igual o mayor que él (4.47 se informa como 4.4, no como 4.5) y comparar
+ * `relacion < minimo` da el mismo resultado que con el valor exacto.
+ */
+export function revisarContraste(colores, predefinidos = []) {
+  const medidas = medirPares(tokensDelTema(colores, predefinidos));
+  return Object.freeze(
+    PARES_DE_CONTRASTE.map(({ par, minimo, bloquea }) => ({
+      par,
+      relacion: Math.floor(medidas[par] * 10) / 10,
+      minimo,
+      bloquea,
+    })),
+  );
+}
