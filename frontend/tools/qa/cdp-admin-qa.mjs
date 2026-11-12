@@ -5,7 +5,9 @@ const endpoint = process.env.CDP_ENDPOINT ?? 'http://127.0.0.1:9333';
 const output = resolve(
   process.env.VISUAL_QA_OUTPUT ?? 'output/visual-qa/compliance-final/admin-authenticated',
 );
-const pageUrl = 'http://localhost:4300/login';
+// `ADMIN_URL` permite usarlo con el Admin de un worktree (por ejemplo, en 4500); por omisión, el de desarrollo.
+const adminUrl = process.env.ADMIN_URL ?? 'http://localhost:4300';
+const pageUrl = `${adminUrl}/login`;
 const wait = (milliseconds) => new Promise((done) => setTimeout(done, milliseconds));
 
 const targetResponse = await fetch(`${endpoint}/json/new?${encodeURIComponent(pageUrl)}`, { method: 'PUT' });
@@ -83,12 +85,18 @@ await evaluate(
 );
 await waitFor(`location.pathname==='/login'&&Boolean(document.querySelector('input[type="email"]'))`);
 await fill('catalogo@webstore.demo', 'Catalogo#2026');
+// Los grupos del menú lateral se pliegan (feature 003): se despliegan todos antes de leer los enlaces visibles.
+await evaluate(
+  `document.querySelectorAll('nav button[aria-expanded="false"]').forEach((button)=>button.click())`,
+);
+await waitFor(`document.querySelectorAll('nav button[aria-expanded="false"]').length===0`);
+await wait(400);
 const catalog = await evaluate(`(()=>({
   url:location.pathname,
   role:[...document.querySelectorAll('header span')].map((node)=>node.textContent.trim()).find((value)=>value==='Vendedor')??'',
-  visibleNavigation:[...document.querySelectorAll('nav a')].map((node)=>node.textContent.trim())
+  visibleNavigation:[...document.querySelectorAll('nav a')].filter((node)=>node.checkVisibility({visibilityProperty:true})).map((node)=>node.textContent.trim())
 }))()`);
-await command('Page.navigate', { url: 'http://localhost:4300/usuarios' });
+await command('Page.navigate', { url: `${adminUrl}/usuarios` });
 await wait(900);
 const catalogGuard = await evaluate(`location.pathname`);
 await evaluate(

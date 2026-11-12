@@ -1,6 +1,6 @@
 import { expect, request as nuevoRequest, test, type Locator, type Page } from '@playwright/test';
 
-import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
+import { cuentasAdmin, desplegarGrupo, desplegarTodos, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
  * Página «Temas» del Admin (feature 002). TEST-19: el `superadmin` lista, crea, edita, borra y activa temas
@@ -101,6 +101,7 @@ const dialogo = (page: Page) => page.getByRole('dialog');
 
 async function abrirTemas(page: Page): Promise<void> {
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+  await desplegarGrupo(page, 'Tienda');
   await menu(page).getByRole('link', { name: 'Temas', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Temas', exact: true })).toBeVisible();
   await expect(nuevoTema(page)).toBeEnabled();
@@ -292,6 +293,8 @@ test.describe('Temas del Admin', () => {
   for (const rol of ['admin', 'vendedor'] as const) {
     test(`${rol} no tiene Temas en el menú y /temas lo deja en Resumen`, async ({ page }) => {
       await ingresarAlAdmin(page, cuentasAdmin[rol]);
+      // Con todo desplegado: con «Tienda» plegado, la ausencia de «Temas» pasaría siempre.
+      await desplegarTodos(page);
       await expect(menu(page).getByRole('link', { name: 'Resumen', exact: true })).toBeVisible();
       await expect(menu(page).getByRole('link', { name: 'Temas', exact: true })).toHaveCount(0);
 

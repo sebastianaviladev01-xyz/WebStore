@@ -51,6 +51,67 @@ select:focus-visible {
 }
 
 /*
+ * Plegables (feature 003): grupos del menú lateral y, desde TASK-04, bloques del Resumen. La región
+ * (`ws-plegable`) pasa de `1fr` a `0fr` en 200 ms, dentro de las entradas cortas del sistema visual, y al
+ * terminar queda con `visibility: hidden`: lo plegado sale del orden de tabulación y del árbol de
+ * accesibilidad sin quitarlo del DOM. `data-plegado` marca el estado; el botón que la controla lleva
+ * `aria-expanded` y `aria-controls`. El contenido recorta lo que sobra al plegar, con 4 px de margen para
+ * no cortar el contorno de foco de los enlaces. Solo tokens.
+ */
+.ws-plegable {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 200ms ease,
+    visibility 0s linear;
+}
+
+.ws-plegable[data-plegado] {
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition:
+    grid-template-rows 200ms ease,
+    visibility 0s linear 200ms;
+}
+
+.ws-plegable-contenido {
+  min-height: 0;
+  margin: -4px;
+  padding: 4px;
+  overflow: hidden;
+}
+
+/* Menú lateral: por debajo de `lg:` no hay plegado y la región no genera caja (la tira de hoy, D3). */
+@media (width < 64rem) {
+  .ws-plegable-lg,
+  .ws-plegable-lg > .ws-plegable-contenido {
+    display: contents;
+  }
+
+  .ws-plegable-lg[data-plegado] {
+    visibility: visible;
+  }
+}
+
+/* Chevron del botón: apunta abajo plegado y arriba desplegado. */
+.ws-plegable-indicador {
+  flex: none;
+  transition: transform 200ms ease;
+}
+
+[aria-expanded='true'] > .ws-plegable-indicador {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-plegable,
+  .ws-plegable[data-plegado],
+  .ws-plegable-indicador {
+    transition: none;
+  }
+}
+
+/*
  * Tuerca del modo demo (feature 002, AC-15): abajo a la derecha, lejos del carrito (cabecera), de
  * «Pagar» y del menú del Admin (izquierda o arriba). En pantallas estrechas es una pestaña de 28 px
  * pegada al borde, fuera de la columna de los botones a todo el ancho y de los controles del

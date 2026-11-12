@@ -1,5 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
+import {
+  isActive,
+  type IsActiveMatchOptions,
+  Router,
+  RouterLink,
+  RouterLinkActive,
+  RouterOutlet,
+} from '@angular/router';
 
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
@@ -11,17 +18,23 @@ interface NavigationItem {
   readonly permission: Permiso;
 }
 
+type NavigationGroupId = 'general' | 'catalogo' | 'ventas' | 'tienda' | 'accesos';
+
 interface NavigationGroup {
+  /** Fijo: forma el id de la región que pliega el grupo (`menu-grupo-<id>`). */
+  readonly id: NavigationGroupId;
   readonly label: string;
   readonly items: readonly NavigationItem[];
 }
 
 const NAVIGATION: readonly NavigationGroup[] = [
   {
+    id: 'general',
     label: 'General',
     items: [{ path: '/', label: 'Resumen', permission: 'dashboard.view' }],
   },
   {
+    id: 'catalogo',
     label: 'Catálogo',
     items: [
       { path: '/productos', label: 'Productos', permission: 'products.edit' },
@@ -31,6 +44,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
     ],
   },
   {
+    id: 'ventas',
     label: 'Ventas',
     items: [
       { path: '/pedidos', label: 'Pedidos', permission: 'orders.manage' },
@@ -39,6 +53,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
     ],
   },
   {
+    id: 'tienda',
     label: 'Tienda',
     items: [
       { path: '/banners', label: 'Banners', permission: 'banners.manage' },
@@ -48,10 +63,21 @@ const NAVIGATION: readonly NavigationGroup[] = [
     ],
   },
   {
+    id: 'accesos',
     label: 'Accesos',
     items: [{ path: '/usuarios', label: 'Usuarios y roles', permission: 'users.manage' }],
   },
 ];
+
+/** Las mismas reglas con que `routerLinkActive` marca el enlace: `/` exacto, el resto por prefijo. */
+function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
+  return {
+    paths: path === '/' ? 'exact' : 'subset',
+    queryParams: 'ignored',
+    matrixParams: 'ignored',
+    fragment: 'ignored',
+  };
+}
 
 @Component({
   selector: 'ws-admin-shell',
@@ -70,19 +96,48 @@ const NAVIGATION: readonly NavigationGroup[] = [
             class="-mx-5 mt-4 flex gap-1 overflow-x-auto px-5 pb-3 text-sm lg:mx-0 lg:mt-8 lg:grid lg:gap-5 lg:overflow-visible lg:px-0"
             aria-label="Administración"
           >
-            @for (group of navigation(); track group.label) {
+            @for (group of navigation(); track group.id) {
               <div class="contents lg:grid lg:gap-0.5">
-                <p class="mb-1 hidden px-3 text-xs font-medium text-muted lg:block">{{ group.label }}</p>
-                @for (item of group.items; track item.path) {
-                  <a
-                    [routerLink]="item.path"
-                    routerLinkActive="bg-primary-soft text-on-primary-soft"
-                    [routerLinkActiveOptions]="{ exact: item.path === '/' }"
-                    class="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-3 font-medium text-body hover:bg-subtle"
+                <!-- Solo en escritorio (D3). -mt-1 y py-1 dan 24 px de objetivo sin mover el texto ni los enlaces. -->
+                <button
+                  type="button"
+                  class="-mt-1 hidden w-full cursor-pointer items-center justify-between gap-2 rounded-md px-3 py-1 text-left text-xs font-medium text-muted hover:text-ink lg:flex"
+                  [attr.aria-expanded]="grupoAbierto(group.id)"
+                  [attr.aria-controls]="'menu-grupo-' + group.id"
+                  (click)="alternarGrupo(group.id)"
+                >
+                  {{ group.label }}
+                  <svg
+                    class="ws-plegable-indicador h-3.5 w-3.5"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
                   >
-                    {{ item.label }}
-                  </a>
-                }
+                    <path d="m4 6 4 4 4-4" />
+                  </svg>
+                </button>
+                <div
+                  class="ws-plegable ws-plegable-lg"
+                  [id]="'menu-grupo-' + group.id"
+                  [attr.data-plegado]="grupoAbierto(group.id) ? null : ''"
+                >
+                  <div class="ws-plegable-contenido lg:grid lg:gap-0.5">
+                    @for (item of group.items; track item.path) {
+                      <a
+                        [routerLink]="item.path"
+                        routerLinkActive="bg-primary-soft text-on-primary-soft"
+                        [routerLinkActiveOptions]="{ exact: item.path === '/' }"
+                        class="flex min-h-10 shrink-0 items-center whitespace-nowrap rounded-lg px-3 font-medium text-body hover:bg-subtle"
+                      >
+                        {{ item.label }}
+                      </a>
+                    }
+                  </div>
+                </div>
               </div>
             }
           </nav>
@@ -147,8 +202,49 @@ export class AppLayout {
     })).filter((group) => group.items.length > 0),
   );
 
+  /** Cada enlace del menú con su grupo y si es la página actual, según el router. */
+  private readonly enlaces = NAVIGATION.flatMap((group) =>
+    group.items.map((item) => ({
+      path: item.path,
+      grupo: group.id,
+      activo: isActive(item.path, this.router, opcionesDePaginaActual(item.path)),
+    })),
+  );
+
+  /** `path` del enlace de la página actual, o `null` fuera del menú (por ejemplo, en `/perfil`). */
+  private readonly paginaActual = computed(
+    () => this.enlaces.find((enlace) => enlace.activo())?.path ?? null,
+  );
+
+  /**
+   * Grupos desplegados (D2). Empieza solo con el grupo de la página de entrada; al cambiar de página
+   * conserva los que había y despliega el de la nueva. Vive con el layout: al recargar o al volver a
+   * iniciar sesión vuelve a empezar, y no se guarda en el navegador (D4, STD-08).
+   */
+  protected readonly gruposAbiertos = linkedSignal<string | null, ReadonlySet<NavigationGroupId>>({
+    source: this.paginaActual,
+    computation: (pagina, anterior) => {
+      const abiertos = new Set(anterior?.value);
+      const grupo = this.enlaces.find((enlace) => enlace.path === pagina)?.grupo;
+      if (grupo) abiertos.add(grupo);
+      return abiertos;
+    },
+  });
+
   constructor() {
     void this.admin.load();
+  }
+
+  protected grupoAbierto(id: NavigationGroupId): boolean {
+    return this.gruposAbiertos().has(id);
+  }
+
+  protected alternarGrupo(id: NavigationGroupId): void {
+    this.gruposAbiertos.update((abiertos) => {
+      const siguientes = new Set(abiertos);
+      if (!siguientes.delete(id)) siguientes.add(id);
+      return siguientes;
+    });
   }
 
   protected async logout(): Promise<void> {

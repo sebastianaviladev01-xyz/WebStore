@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { correoUnico, cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
+import { correoUnico, cuentasAdmin, desplegarGrupo, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
  * Compra como invitado: el checkout cotiza el envío por distrito, crea el pedido en el BFF, lo muestra en
@@ -51,6 +51,8 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await expect(page.getByRole('heading', { name: 'Tu carrito está vacío' })).toBeVisible();
 
   await ingresarAlAdmin(page, cuentasAdmin.superadmin, urls.admin);
+  // Al entrar solo está desplegado «General» (feature 003).
+  await desplegarGrupo(page, 'Ventas');
   await page
     .getByRole('navigation', { name: 'Administración' })
     .getByRole('link', { name: 'Pedidos' })
