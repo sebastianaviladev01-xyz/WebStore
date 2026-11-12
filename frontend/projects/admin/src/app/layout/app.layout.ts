@@ -43,6 +43,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
     items: [
       { path: '/banners', label: 'Banners', permission: 'banners.manage' },
       { path: '/contenido', label: 'Contenido', permission: 'content.manage' },
+      { path: '/temas', label: 'Temas', permission: 'themes.manage' },
       { path: '/envios', label: 'Tarifas de envío', permission: 'shipping.manage' },
     ],
   },

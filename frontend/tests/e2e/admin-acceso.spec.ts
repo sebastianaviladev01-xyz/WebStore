@@ -17,6 +17,7 @@ const modulos = [
   { enlace: 'Reclamaciones', titulo: 'WebStore Admin | Reclamaciones', encabezado: 'Reclamaciones' },
   { enlace: 'Banners', titulo: 'WebStore Admin | Banners', encabezado: 'Banners y campañas' },
   { enlace: 'Contenido', titulo: 'WebStore Admin | Contenido', encabezado: 'Contenido y configuración' },
+  { enlace: 'Temas', titulo: 'WebStore Admin | Temas', encabezado: 'Temas' },
   { enlace: 'Tarifas de envío', titulo: 'WebStore Admin | Envíos', encabezado: 'Tarifas de envío' },
   { enlace: 'Usuarios y roles', titulo: 'WebStore Admin | Usuarios', encabezado: 'Usuarios y roles' },
 ];
