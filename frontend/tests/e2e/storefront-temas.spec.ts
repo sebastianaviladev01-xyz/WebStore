@@ -6,27 +6,52 @@ import { cuentasAdmin, urls } from './apoyo/entorno';
  * Temas en la tienda (feature 002). TEST-20 (AC-02, AC-08, AC-17): con C activo, ningún elemento visible usa un
  * color de B, el logo y las imágenes conservan su `src` y, al recargar, sigue C. TEST-22 (AC-18): la hoja
  * `/bff/appearance/theme.css` bloquea el primer pintado, así que la tienda sale ya con el tema activo y sin
- * parpadeo; si la hoja no llega, se ve con B, el de `tokens.css`. El tema se activa por la API del Admin y cada
- * bloque deja B activo al terminar.
+ * parpadeo; si la hoja no llega, se ve con B, el de `tokens.css`. TEST-14 (feature 004, AC-05, AC-06, AC-12): el
+ * lienzo de la tienda es `--ws-store-bg` (con un tema propio, su fondo principal) y el buscador de la cabecera
+ * conserva `--ws-bg`. El tema se activa por la API del Admin y cada bloque deja B activo al terminar.
  */
 const HOJA_DEL_TEMA = '/bff/appearance/theme.css';
-const FONDO = { b: 'rgb(243, 245, 248)', c: 'rgb(242, 243, 245)' } as const;
+/** Lienzo de la tienda (`--ws-store-bg`) de cada predefinido. */
+const FONDO_DE_LA_TIENDA = {
+  a: 'rgb(250, 250, 251)',
+  b: 'rgb(249, 250, 252)',
+  c: 'rgb(249, 249, 250)',
+} as const;
+/** Fondo principal de B (`--ws-bg`): el del buscador de la cabecera y el lienzo de un tema propio con su base. */
+const FONDO_PRINCIPAL_DE_B = 'rgb(243, 245, 248)';
 
-async function activarTema(themeId: string): Promise<void> {
+interface TemaAdminDto {
+  readonly id: string;
+  readonly name: string;
+  readonly colors: Record<string, string>;
+}
+
+/** Sesión del `superadmin` contra la API del Admin, para preparar el estado sin pasar por la interfaz. */
+async function conApiDelAdmin<T>(
+  accion: (
+    api: Awaited<ReturnType<typeof nuevoRequest.newContext>>,
+    headers: Record<string, string>,
+  ) => Promise<T>,
+): Promise<T> {
   const api = await nuevoRequest.newContext({ baseURL: urls.bff });
   try {
     const sesion = await api.post('/bff/admin/sessions', {
       data: { email: cuentasAdmin.superadmin.email, password: cuentasAdmin.superadmin.password },
     });
     expect(sesion.ok()).toBe(true);
-    const headers = { authorization: `Bearer ${(await sesion.json()).token}` };
+    return await accion(api, { authorization: `Bearer ${(await sesion.json()).token}` });
+  } finally {
+    await api.dispose();
+  }
+}
+
+async function activarTema(themeId: string): Promise<void> {
+  await conApiDelAdmin(async (api, headers) => {
     const temas = await api.get('/bff/admin/themes', { headers });
     const { revision } = await temas.json();
     const activado = await api.put('/bff/admin/active-theme', { headers, data: { revision, themeId } });
     expect(activado.ok()).toBe(true);
-  } finally {
-    await api.dispose();
-  }
+  });
 }
 
 /** Sin `/bff/appearance` (el JSON), Angular no aplica ningún tema: el color solo puede venir de la hoja. */
@@ -63,6 +88,7 @@ const COLORES_DE_B = [
   '#E8EDFB',
   '#C2410C',
   '#F3F5F8',
+  '#F9FAFC',
   '#0F172A',
   '#1E293B',
   '#526075',
@@ -211,7 +237,7 @@ test.describe('TEST-20: con C activo, la tienda no conserva colores de B', () =>
       await page.reload({ waitUntil: 'networkidle' });
       const recargada = await inspeccionar(page);
       expect(recargada.primario).toBe('#F2B705');
-      expect(recargada.fondo).toBe(FONDO.c);
+      expect(recargada.fondo).toBe(FONDO_DE_LA_TIENDA.c);
       expect(recargada.restosDeB).toEqual([]);
     });
   }
@@ -238,7 +264,7 @@ test.describe('tema activo en la primera carga', () => {
     const medida = await colores(page);
     expect(medida.finDeLaHoja).not.toBeNull();
     expect(medida.fcp!).toBeGreaterThan(medida.finDeLaHoja!);
-    expect(medida.fondo).toBe(FONDO.c);
+    expect(medida.fondo).toBe(FONDO_DE_LA_TIENDA.c);
     expect(medida.primario).toBe('#F2B705');
   });
 
@@ -254,7 +280,96 @@ test.describe('tema activo en la primera carga', () => {
     await expect.poll(async () => (await colores(page)).fcp).not.toBeNull();
 
     const medida = await colores(page);
-    expect(medida.fondo).toBe(FONDO.b);
+    expect(medida.fondo).toBe(FONDO_DE_LA_TIENDA.b);
     expect(medida.primario).toBe('#1D4ED8');
+  });
+});
+
+/** Colores del lienzo (`html` y `body`), del buscador visible de la cabecera y de la cabecera que lo contiene. */
+async function lienzoYBuscador(page: Page) {
+  const buscador = page.getByRole('searchbox', { name: 'Buscar productos' }).filter({ visible: true });
+  await expect(buscador).toHaveCount(1);
+  const deLaCabecera = await buscador.evaluate((input) => {
+    const cabecera = input.closest('header');
+    return {
+      buscador: getComputedStyle(input).backgroundColor,
+      cabecera: cabecera ? getComputedStyle(cabecera).backgroundColor : null,
+    };
+  });
+  return {
+    html: await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor),
+    body: await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
+    ...deLaCabecera,
+  };
+}
+
+test.describe('TEST-14: lienzo de la tienda y buscador de la cabecera', () => {
+  test.afterAll(() => activarTema('b'));
+
+  for (const [tema, ancho] of [
+    ['b', 1440],
+    ['b', 375],
+    ['c', 1440],
+  ] as const) {
+    test(`con ${tema.toUpperCase()} a ${ancho} px, el lienzo es --ws-store-bg y el buscador conserva --ws-bg`, async ({
+      page,
+    }) => {
+      await activarTema(tema);
+      await page.setViewportSize({ width: ancho, height: 900 });
+      await abrir(page, '/');
+
+      const medida = await lienzoYBuscador(page);
+      expect(medida.html).toBe(FONDO_DE_LA_TIENDA[tema]);
+      expect(medida.body).toBe(FONDO_DE_LA_TIENDA[tema]);
+      // El buscador pinta `--ws-bg` del tema activo, no el lienzo ni el fondo de la cabecera (AC-06).
+      const fondoPrincipal = await page.evaluate(() => {
+        const muestra = document.createElement('span');
+        muestra.style.backgroundColor = 'var(--ws-bg)';
+        document.body.append(muestra);
+        const color = getComputedStyle(muestra).backgroundColor;
+        muestra.remove();
+        return color;
+      });
+      expect(medida.buscador).toBe(fondoPrincipal);
+      expect(medida.buscador).not.toBe(FONDO_DE_LA_TIENDA[tema]);
+      expect(medida.buscador).not.toBe(medida.cabecera);
+      if (tema === 'b') expect(medida.buscador).toBe(FONDO_PRINCIPAL_DE_B);
+    });
+  }
+
+  test('con un tema propio con la base de B, el lienzo es su fondo principal (#F3F5F8)', async ({ page }) => {
+    const nombre = `E2E${Date.now().toString(36)} lienzo`;
+    const propio = await conApiDelAdmin(async (api, headers) => {
+      const lista = await (await api.get('/bff/admin/themes', { headers })).json();
+      const b = (lista.themes as TemaAdminDto[]).find((tema) => tema.id === 'b')!;
+      const creado = await api.post('/bff/admin/themes', {
+        headers,
+        data: { revision: lista.revision, name: nombre, colors: { ...b.colors, primary: '#0F766E' } },
+      });
+      expect(creado.ok()).toBe(true);
+      const vista = await creado.json();
+      return (vista.themes as TemaAdminDto[]).find((tema) => tema.name === nombre)!;
+    });
+    try {
+      await activarTema(propio.id);
+      await abrir(page, '/');
+
+      const medida = await lienzoYBuscador(page);
+      expect(medida.body).toBe(FONDO_PRINCIPAL_DE_B);
+      expect(medida.html).toBe(FONDO_PRINCIPAL_DE_B);
+      expect(
+        await page.evaluate(() =>
+          getComputedStyle(document.documentElement).getPropertyValue('--ws-store-bg').trim().toUpperCase(),
+        ),
+      ).toBe('#F3F5F8');
+      expect(medida.buscador).toBe(FONDO_PRINCIPAL_DE_B);
+    } finally {
+      await activarTema('b');
+      await conApiDelAdmin(async (api, headers) => {
+        const { revision } = await (await api.get('/bff/admin/themes', { headers })).json();
+        const borrado = await api.delete(`/bff/admin/themes/${propio.id}?revision=${revision}`, { headers });
+        expect(borrado.ok()).toBe(true);
+      });
+    }
   });
 });

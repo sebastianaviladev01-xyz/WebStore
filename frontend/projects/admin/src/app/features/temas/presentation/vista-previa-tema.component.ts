@@ -12,7 +12,7 @@ import { TokensTema } from '../domain/tema.model';
 @Component({
   selector: 'ws-admin-vista-previa-tema',
   template: `
-    <figure class="m-0 overflow-hidden rounded-xl border border-line bg-canvas text-body">
+    <figure class="m-0 overflow-hidden rounded-xl border border-line bg-store-canvas text-body">
       <div aria-hidden="true">
         <div class="bg-topbar px-4 py-1.5 text-xs font-medium text-on-topbar">
           Franja de avisos de la tienda

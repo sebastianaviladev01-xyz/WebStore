@@ -92,6 +92,7 @@
   --color-focus-ring: var(--ws-focus-ring);
   --color-topbar: var(--ws-topbar);
   --color-on-topbar: var(--ws-on-topbar);
+  --color-store-canvas: var(--ws-store-bg);
   --color-canvas: var(--ws-bg);
   --color-surface: var(--ws-surface);
   --color-subtle: var(--ws-surface-subtle);

@@ -17,7 +17,7 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
   selector: 'ws-store-shell',
   imports: [A11yModule, MenuCategoriasComponent, RouterLink, RouterOutlet],
   template: `
-    <div class="min-h-screen bg-canvas" [class.ws-shell-previous]="isPrevious()">
+    <div class="min-h-screen bg-store-canvas" [class.ws-shell-previous]="isPrevious()">
       <a href="#main-content" class="ws-skip-link">Saltar al contenido</a>
 
       <div class="ws-utility-bar">

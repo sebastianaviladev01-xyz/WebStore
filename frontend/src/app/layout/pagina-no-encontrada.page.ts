@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
   selector: 'ws-not-found-page',
   imports: [RouterLink],
   template: `
-    <main class="grid min-h-screen place-items-center bg-canvas p-6">
+    <main class="grid min-h-screen place-items-center bg-store-canvas p-6">
       <div class="max-w-xl text-center">
         <h1 class="text-4xl font-semibold tracking-[-0.03em] text-ink sm:text-5xl">
           <span class="block text-7xl text-link sm:text-8xl">404</span>
