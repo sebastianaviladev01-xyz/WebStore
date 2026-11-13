@@ -17,8 +17,7 @@ import { Producto } from '../../catalogo/domain/producto.model';
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" (click)="close()">Seguir comprando</button>
-      <button mat-button type="button" (click)="go('/carrito')">Ver carrito</button>
-      <button mat-flat-button type="button" (click)="go('/checkout')">Finalizar compra</button>
+      <button mat-flat-button type="button" (click)="go('/carrito')">Ver carrito</button>
     </mat-dialog-actions>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -30,7 +29,7 @@ export class AgregarAlCarritoDialog {
   protected close(): void {
     this.ref.close();
   }
-  protected async go(path: '/carrito' | '/checkout'): Promise<void> {
+  protected async go(path: '/carrito'): Promise<void> {
     this.ref.close();
     await this.router.navigate([path]);
   }

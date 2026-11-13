@@ -724,7 +724,8 @@
 
 /* Resumen del carrito y del checkout: acompaña al scroll desde escritorio, a la misma distancia de
    la cabecera que los filtros (antes se metía 11 px debajo de ella). En pantallas bajas se
-   desplaza por dentro para que "Confirmar pedido" nunca quede fuera de la vista. */
+   desplaza por dentro para que su botón principal ("Confirmar pedido" en el carrito y "Finalizar
+   compra" en el checkout) nunca quede fuera de la vista. */
 @media (min-width: 1024px) {
   .ws-order-summary {
     position: sticky;

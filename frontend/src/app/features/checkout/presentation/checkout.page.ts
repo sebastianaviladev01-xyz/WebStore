@@ -28,8 +28,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
   template: `
     <section class="ws-container py-10 sm:py-14">
       <div class="mb-9">
-        <p class="ws-eyebrow">Finalizar compra</p>
-        <h1 class="ws-title mt-2">Checkout</h1>
+        <h1 class="ws-title">Finalizar compra</h1>
       </div>
       @if (cart.isEmpty()) {
         <ws-empty-state
@@ -212,7 +211,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
               class="ws-btn-primary mt-6 w-full disabled:opacity-50"
               [disabled]="checkout.submitting() || quoting() || shippingCost() === null"
             >
-              {{ checkout.submitting() ? 'Procesando…' : 'Confirmar pedido' }}
+              {{ checkout.submitting() ? 'Procesando…' : 'Finalizar compra' }}
             </button>
             <a routerLink="/carrito" class="ws-btn-secondary mt-3 w-full">Volver al carrito</a>
           </aside>

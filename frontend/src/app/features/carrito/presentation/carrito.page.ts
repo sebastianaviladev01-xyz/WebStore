@@ -114,7 +114,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                 </strong>
               </div>
             </div>
-            <a routerLink="/checkout" class="ws-btn-primary mt-6 w-full">Continuar al checkout</a>
+            <a routerLink="/checkout" class="ws-btn-primary mt-6 w-full">Confirmar pedido</a>
             <a routerLink="/catalogo" class="ws-btn-secondary mt-3 w-full">Seguir comprando</a>
           </aside>
         </div>

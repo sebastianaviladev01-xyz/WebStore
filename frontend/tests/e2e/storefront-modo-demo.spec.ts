@@ -94,17 +94,18 @@ for (const { ancho, alto } of ANCHOS) {
 
     await page.goto('/carrito');
     await sinCruceConLaTuerca(page, carrito, 'Carrito de la cabecera');
+    // Textos de la feature 004 (D1, TEST-16).
     await sinCruceConLaTuerca(
       page,
-      page.getByRole('link', { name: 'Continuar al checkout' }),
-      '«Continuar al checkout»',
+      page.getByRole('link', { name: 'Confirmar pedido' }),
+      '«Confirmar pedido»',
     );
 
     await page.goto('/checkout');
     await sinCruceConLaTuerca(
       page,
-      page.getByRole('button', { name: 'Confirmar pedido' }),
-      '«Confirmar pedido»',
+      page.getByRole('button', { name: 'Finalizar compra' }),
+      '«Finalizar compra»',
     );
   });
 }

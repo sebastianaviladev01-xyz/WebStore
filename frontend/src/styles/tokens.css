@@ -74,6 +74,10 @@
   --mat-sys-outline: var(--ws-border-strong);
   --mat-sys-outline-variant: var(--ws-border);
   --mat-sys-error: var(--ws-danger);
+  /* El botón relleno es el principal: fondo y texto del principal, no del enlace. Con C, --ws-link y
+     --ws-on-primary son el mismo gris oscuro y el texto no se leería. */
+  --mat-button-filled-container-color: var(--ws-primary);
+  --mat-button-filled-label-text-color: var(--ws-on-primary);
   color-scheme: light;
 }
 
