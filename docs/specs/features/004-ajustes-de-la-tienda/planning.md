@@ -143,7 +143,7 @@ Si elige el tono intermedio, T7 solo registra la elección.
   - Pregunta 2 (posición del token y valores de A, B y C): respondida el 2026-11-12 con A; ya no bloquea T1 ni T2.
   - Pregunta 3 (campos con contorno): respondida el 2026-11-12 con A; ya no bloquea T5.
   - Elección del valor final por Daniel (AC-14): bloquea T7 y el hito de entrega.
-- **ADR necesarios:** uno, que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md): el mapa del tema gana el token del lienzo de la tienda, que no se hereda con la escala neutra, y los pares que se miden sobre él (D3). Lo redacta la etapa `sdd-decide` con las respuestas de las preguntas 1 y 2. Bloquea T1. El cambio de `--ws-border-strong` en B no cambia lo que decide el ADR: es un valor de un predefinido, como los demás de su mapa, y ADR-0011 no fija valores ni pares. El ADR solo lo cita en sus consecuencias, con el par `borderStrong/surface` entre los que se miden (20).
+- **ADR necesarios:** uno, que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md): el mapa del tema gana el token del lienzo de la tienda, que no se hereda con la escala neutra, y los pares que se miden sobre él (D3). Lo redacta la etapa `sdd-decide` con las respuestas de las preguntas 1 y 2. Bloquea T1. Registrado como [ADR-0013](../../../adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md) (aceptado por Sebastián Avila el 2026-11-12). El cambio de `--ws-border-strong` en B no cambia lo que decide el ADR: es un valor de un predefinido, como los demás de su mapa, y ADR-0011 no fija valores ni pares. El ADR solo lo cita en sus consecuencias, con el par `borderStrong/surface` entre los que se miden (20).
 
 ## Estrategia de pruebas
 
@@ -246,7 +246,7 @@ Bloques sugeridos para `sdd-implement`:
 
 ## Documentos afectados
 
-- ADR nuevo que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md), en `sdd-decide`.
+- [ADR-0013](../../../adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md), que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md), en `sdd-decide`. [`docs/architecture/README.md`](../../../architecture/README.md), [`backend/architecture.md`](../../../../backend/architecture.md) y [`frontend/architecture.md`](../../../../frontend/architecture.md) lo anotan como decidido y pendiente de implementar; T9 lo pasa al estado real.
 - [Contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md): `Tema.tokens` con `--ws-store-bg`, su regla (literal en los predefinidos, `background` en los propios) y las 31 declaraciones de `theme.css`.
 - [`backend/architecture.md`](../../../../backend/architecture.md): la línea de `domain/temas/` no cambia de nombres; se revisa si cita cantidades.
 - [`frontend/architecture.md`](../../../../frontend/architecture.md): §6, el e2e nuevo `storefront-checkout-panel.spec.ts`.
