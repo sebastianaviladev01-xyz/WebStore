@@ -476,6 +476,19 @@ try {
   )
     throw new Error('theme.css debe ser un único bloque :root:root solo con declaraciones --ws-*');
   if (!/--ws-primary: #1D4ED8;/i.test(cuerpoB)) throw new Error('theme.css no sirve el tema activo B');
+  // Lienzo de la tienda (ADR-0013): una clave más en Tema.tokens y una declaración más, justo antes de --ws-bg.
+  if (aparienciaPublica.themes[0].tokens['--ws-store-bg'] !== '#f9fafc')
+    throw new Error('/bff/appearance debe traer tokens["--ws-store-bg"] igual a #f9fafc con B');
+  const lineaDelLienzo = declaraciones.indexOf('  --ws-store-bg: #f9fafc;');
+  if (
+    declaraciones.length !== 31 ||
+    lineaDelLienzo < 0 ||
+    declaraciones[lineaDelLienzo + 1] !== '  --ws-bg: #f3f5f8;' ||
+    !declaraciones.includes('  --ws-border-strong: #8894a6;')
+  )
+    throw new Error(
+      'theme.css de B debe tener 31 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
+    );
   const revalidada = await hoja({ 'if-none-match': etagB });
   if (revalidada.status !== 304 || (await revalidada.text()) !== '')
     throw new Error('theme.css con If-None-Match igual al ETag debe responder 304 sin cuerpo');
@@ -518,6 +531,13 @@ try {
       .join() !== 'a:predefined,b:predefined,c:predefined'
   )
     throw new Error('GET /bff/admin/themes debe traer la revisión, el activo B y los predefinidos A, B y C');
+  if (
+    listaInicial.themes
+      .slice(0, 3)
+      .map((tema) => tema.tokens['--ws-store-bg'])
+      .join() !== '#FAFAFB,#f9fafc,#F9F9FA'
+  )
+    throw new Error('GET /bff/admin/themes debe traer el lienzo de la tienda de A, B y C');
   const crearTema = (entrada) => temas(owner, 'themes', { method: 'POST', body: JSON.stringify(entrada) });
   let revisionDeTemas = listaInicial.revision;
 
@@ -621,8 +641,11 @@ try {
   const etagNuevo = hojaNueva.headers.get('etag');
   if (hojaNueva.status !== 200 || !etagNuevo || etagNuevo === etagB)
     throw new Error('Tras activar otro tema, theme.css debe responder 200 con otro ETag');
-  if (!(await hojaNueva.text()).includes('--ws-primary: #123456;'))
+  const cuerpoPropio = await hojaNueva.text();
+  if (!cuerpoPropio.includes('--ws-primary: #123456;'))
     throw new Error('theme.css no sirve el tema recién activado');
+  if (!cuerpoPropio.includes('  --ws-store-bg: #F3F5F8;\n  --ws-bg: #f3f5f8;\n'))
+    throw new Error('Un tema propio con la base de B pinta el lienzo de la tienda con su fondo principal');
   if ((await request('/bff/appearance')).activeThemeId !== propio.id)
     throw new Error('/bff/appearance no refleja el tema activado');
 

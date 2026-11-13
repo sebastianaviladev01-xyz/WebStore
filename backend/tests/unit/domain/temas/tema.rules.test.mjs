@@ -104,14 +104,78 @@ test('la barra superior de un tema propio es su principal fuerte, con el texto m
   });
 });
 
-test('se miden 15 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco pide 3:1', () => {
-  assert.equal(PARES_DE_CONTRASTE.length, 15);
+test('se miden 20 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
+  assert.equal(PARES_DE_CONTRASTE.length, 20);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
   );
   for (const { par, minimo } of PARES_DE_CONTRASTE)
-    assert.equal(minimo, par.startsWith('focusRing/') ? 3 : 4.5, par);
+    assert.equal(minimo, par.startsWith('focusRing/') || par.startsWith('borderStrong/') ? 3 : 4.5, par);
+});
+
+test('los cinco pares nuevos van al final, después de disabledText/disabled, con sus mínimos y sin bloquear (AC-07, AC-09)', () => {
+  assert.equal(PARES_DE_CONTRASTE[14].par, 'disabledText/disabled');
+  assert.deepEqual(PARES_DE_CONTRASTE.slice(15), [
+    {
+      par: 'contrast/storeBackground',
+      texto: '--ws-ink',
+      fondo: '--ws-store-bg',
+      minimo: 4.5,
+      bloquea: false,
+    },
+    {
+      par: 'muted/storeBackground',
+      texto: '--ws-muted',
+      fondo: '--ws-store-bg',
+      minimo: 4.5,
+      bloquea: false,
+    },
+    { par: 'link/storeBackground', texto: '--ws-link', fondo: '--ws-store-bg', minimo: 4.5, bloquea: false },
+    {
+      par: 'focusRing/storeBackground',
+      texto: '--ws-focus-ring',
+      fondo: '--ws-store-bg',
+      minimo: 3,
+      bloquea: false,
+    },
+    {
+      par: 'borderStrong/surface',
+      texto: '--ws-border-strong',
+      fondo: '--ws-surface',
+      minimo: 3,
+      bloquea: false,
+    },
+  ]);
+});
+
+test('el mapa tiene 31 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 31);
+  assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
+  assert.equal(ESCALA_NEUTRA.includes('--ws-store-bg'), false);
+});
+
+test('en un tema propio, el lienzo de la tienda es su fondo principal, herede o no la escala de B (AC-05, REQ-14)', () => {
+  const derivado = tokensDelTema(caso('base oscura').colores, casos.predefinidos);
+  assert.equal(derivado['--ws-store-bg'], '#111318');
+  for (const inicio of ['principal claro', '#123456']) {
+    const tokens = tokensDelTema(caso(inicio).colores, casos.predefinidos);
+    assert.equal(tokens['--ws-store-bg'], '#F3F5F8', inicio);
+    assert.notEqual(tokens['--ws-store-bg'].toUpperCase(), tokensB['--ws-store-bg'].toUpperCase(), inicio);
+    assert.equal(tokens['--ws-bg'], tokensB['--ws-bg'], inicio);
+  }
+});
+
+test('en un tema propio, los cuatro pares sobre el lienzo de la tienda valen lo mismo que los del fondo principal', () => {
+  for (const { nombre, colores } of casos.tokensDelTema) {
+    const pares = medirPares(tokensDelTema(colores, casos.predefinidos));
+    for (const prefijo of ['contrast', 'muted', 'link', 'focusRing'])
+      assert.equal(
+        pares[`${prefijo}/storeBackground`],
+        pares[`${prefijo}/background`],
+        `${nombre}: ${prefijo}`,
+      );
+  }
 });
 
 for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
@@ -124,10 +188,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve siempre los 15 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
+test('revisarContraste devuelve siempre los 20 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
+    assert.equal(pares.length, 20);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),
