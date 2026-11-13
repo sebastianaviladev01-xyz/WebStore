@@ -1,0 +1,221 @@
+# 004. Ajustes de la tienda — Tareas
+
+- Feature: `004-ajustes-de-la-tienda`
+- Especificación: [specification.md](specification.md) (aprobada el 2026-11-12, PR #22; D1 a D5)
+- Plan: [planning.md](planning.md) (hito de arquitectura aprobado el 2026-11-12, PR #23; alternativa A en las tres preguntas y `--ws-border-strong` de B en `#8894a6`)
+- ADR: [ADR-0013](../../../adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md) (aceptado el 2026-11-12, PR #24), que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)
+- Fecha: 2026-11-13
+- Estado: aprobado por Sebastián Avila el 2026-11-13 («Sí, apruébalas», desde su sesión principal), con los [ajustes respecto al plan](#ajustes-respecto-al-plan)
+
+Las rutas de código son relativas a la raíz del repositorio. Los TEST son los de la [estrategia de pruebas del plan](planning.md#estrategia-de-pruebas); los nombres, tokens, pares, clases y constantes, los de [tipos intermedios y nombres](planning.md#tipos-intermedios-y-nombres). Ninguna tarea los vuelve a decidir.
+
+## Traspaso
+
+Permite empezar el bloque siguiente sin releer la feature. La actualiza la última tarea del bloque, en su mismo commit ([guía](../../../development/agent-execution.md#traspaso)).
+
+| Campo | Contenido |
+|---|---|
+| Punta de la rama | `feature/004-ajustes-de-la-tienda` en `dev` (`30ddcb3`, «Merge pull request #24»), con este `tasks.md` como único cambio. Sin implementación |
+| Siguiente bloque | Bloque 1 (TASK-01): crear el worktree `.worktrees/004-ajustes-de-la-tienda` desde esta rama, `npm run setup` y la línea base. Tareas aprobadas el 2026-11-13: empieza cuando se fusione el PR de estas tareas, con la rama creada de nuevo desde `dev` |
+| Decisiones de ejecución | Ninguna todavía. Las del desglose están en [Ajustes respecto al plan](#ajustes-respecto-al-plan) |
+| Riesgos abiertos | ⚠ TASK-07, ⚠ TASK-08 y TASK-09 están bloqueadas hasta que Daniel elija el valor final del lienzo con la comparación de ⚠ TASK-06 (AC-14). Los guiones de captura de las features 002 y 003 vivían en `frontend/output/` de sus worktrees, ya borrados: TASK-01 los escribe de nuevo. Los de [Dependencias y riesgos](planning.md#dependencias-y-riesgos) del plan |
+| Entorno | Sin servidores levantados. Puertos de las capturas: 3400, 4400 y 4500 ([Reglas](#reglas)). Copia de datos y método de captura: los fija TASK-01 y los anota aquí |
+
+## Reglas
+
+- **TDD** ([STD-18](../../../architecture/standards.md)). En esta feature son área obligatoria las reglas de temas del BFF (`backend/src/domain/temas/`), `theme.css` (`backend/src/application/temas/`), el contrato del BFF y la réplica de las reglas en `frontend/projects/admin/src/app/features/temas/domain/`. ⚠ TASK-02 escribe TEST-01 a TEST-06 primero y registra el rojo de cada uno, con `node --test <archivo>` desde `backend/` o `frontend/`, antes de tocar el código; ⚠ TASK-07, si Daniel elige el blanco, cambia primero los valores esperados. El `domain/` del Storefront solo gana un nombre en un tipo, sin reglas. El diálogo, el carrito, el checkout, el layout y los estilos se prueban con e2e derivadas de los AC, que se escriben junto al código. La caracterización es la línea base de TASK-01 ([estrategia del plan](planning.md#estrategia-de-pruebas)).
+- **Evidencia.** Una tarea solo se marca `hecha` con evidencia: su fila en `verification.md` (comando y resultado de cada control) en el mismo commit ([guía](../../../development/agent-execution.md#evidencia-en-el-commit-de-la-tarea)). La primera línea dice con qué se ejecutó: herramienta, modelo real, esfuerzo y si fue delegada. Los SHA se rellenan en un commit `docs` al cerrar cada fase. TASK-01 crea `verification.md` desde la [plantilla](../../templates/verification-template.md).
+- **Capturas** ([STD-12](../../../architecture/standards.md)). Las tareas con `Sí` en Capturas comparan contra las tomas de TASK-01 con el mismo método, las mismas rutas, los mismos anchos (1440 y 375 px), la misma copia de datos, un producto en el carrito y, en el Admin, la sesión de `superadmin` ([capturas del plan](planning.md#capturas-antes-y-después)). `cdp-visual-qa.mjs` no admite 375 px, así que TASK-01 elige el método (un guion de Playwright con el Chrome instalado o el panel del navegador) y lo usan todas las tomas. El resultado es «Iguales» o la lista de diferencias, cada una con el AC o el ajuste del hito que la pide. Los temas A y C se activan por la API del Admin, como en `storefront-temas.spec.ts`, y la copia vuelve a B al terminar cada toma.
+- **Datos** ([STD-09](../../../architecture/standards.md)). Nunca se escribe `backend/data.json`; su hash se comprueba antes y después de cada tarea con servidores. `WEBSTORE_DATA_FILE` lleva siempre una ruta absoluta. La copia de las capturas (`backend/data-capturas.json`, ignorada por git) sale de la semilla y no se modifica entre tomas, salvo para activar A o C. La feature no cambia el estado del BFF ni su `schemaVersion`.
+- **Servidores.** Los puertos 3000, 4200 y 4300, y las configuraciones de `.claude/launch.json` que apuntan a ellos, no se usan: pueden estar ocupados por la demo del checkout principal. Los del worktree se levantan en segundo plano en los [puertos de las capturas](../../../development/local-environment.md#puertos-de-las-capturas): BFF en 3400 (`node backend/src/main.mjs` con `PORT`, `WEBSTORE_DATA_FILE` y `WEBSTORE_ALLOWED_ORIGINS=http://localhost:4400,http://localhost:4500`), tienda en 4400 y Admin en 4500 (`npx ng serve storefront|admin --port <puerto> --proxy-config proxy.e2e.conf.json`, desde `frontend/`). El BFF no recarga solo: tras cambiar `backend/src/`, se reinicia. **Nunca a la vez que la suite e2e**, que usa esos puertos: se detienen antes de `npm run test:e2e` y al terminar la tarea.
+- **Contrato.** Solo crece ([contrato del plan](planning.md#contrato-del-bff-afectado)): una clave en `Tema.tokens` y una declaración en `theme.css`. Lo cambia ⚠ TASK-02, con `BFF-CONTRACT.md` y el smoke test en la misma tarea. Ninguna otra tarea toca el BFF salvo ⚠ TASK-07 si Daniel elige el blanco. `POST /bff/checkout/orders` no cambia (REQ-11).
+- **Material.** Los campos se personalizan solo con `appearance="outline"` y los tokens `--mat-form-field-outlined-*` en `ws-checkout-panel`: sin `::ng-deep` ni clases internas (`.mdc-*`), como fija STD-04.
+- **Controles.** Cada tarea que toca `frontend/`, `backend/` o `tools/` ejecuta `npm run verify` sobre el árbol del commit (incluye TEST-07 y TEST-08) y Prettier sobre los archivos tocados. E2E según la columna **E2E** y completo al cerrar cada fase, en segundo plano ([controles](../../../development/agent-execution.md#controles-proporcionados)). No se pasa Prettier por los `.md` de `docs/`.
+- **⚠.** Las tareas de alto impacto (en esta feature, el token y los pares del BFF, el contrato y los cambios visuales pedidos) llevan ⚠, no se delegan y tienen un hito de revisión humana antes y un paquete de revisión después ([disparadores](../../../architecture/development-workflow.md#disparadores-de-revisión-adicional)).
+- **Commits** en español, con [Conventional Commits](../../../git/conventional-commits.md), `Refs: 004-ajustes-de-la-tienda/TASK-NN` y sin `Co-Authored-By` ni firmas de herramientas. Los agentes no hacen push a `dev` ni fusionan. La implementación se publica en un único PR de la rama hacia `dev`, después de `sdd-verify`.
+
+### Nivel y esfuerzo resueltos en el catálogo
+
+La columna **Nivel y esfuerzo** dice el nivel, no el modelo. Resueltos en el [catálogo](../../../../.agents/execution-catalog.json) (versión 1.0.0, `harnesses`):
+
+| Tareas | Nivel y esfuerzo | Claude Code | Codex (provisional) | Delegable |
+|---|---|---|---|---|
+| TASK-01 y TASK-09 | estándar · medio | `claude-sonnet-5-5`, `medium` (alias `sonnet`) | `gpt-5.6-sol`, `medium` | Sí |
+| ⚠ TASK-02, ⚠ TASK-03, ⚠ TASK-04, ⚠ TASK-05 y ⚠ TASK-08 | avanzado · alto | `claude-opus-5-5`, `high` | `gpt-5.6-sol`, `high` | No: agente principal |
+| ⚠ TASK-06 y ⚠ TASK-07 | avanzado · medio | `claude-opus-5-5`, `medium` | `gpt-5.6-sol`, `medium` | No: agente principal |
+
+El agente principal de cada bloque trabaja en avanzado. Si delega TASK-01 o TASK-09, lo hace con un brief cerrado y revisa el diff y la evidencia antes del commit ([delegar](../../../development/agent-execution.md#delegar-por-nivel-y-esfuerzo)).
+
+## Ajustes respecto al plan
+
+La [ejecución prevista](planning.md#ejecución-prevista) del plan sugería T0 a T9 en cinco bloques, con ⚠ en T1, T3, T4, T5, T6 y T8. Este desglose numera las tareas de TASK-01 a TASK-09 y cambia lo siguiente. Ninguna decisión del plan ni del ADR cambia:
+
+| Ajuste | Motivo |
+|---|---|
+| T1 (BFF) y T2 (réplica del Admin) se unen en ⚠ TASK-02, que también pone en `tokens.css` los dos valores nuevos de B (`--ws-store-bg` y `--ws-border-strong`). `--color-store-canvas` y el uso del token siguen en ⚠ TASK-03 | [`casos-tema.json`](../../../../backend/tests/unit/domain/temas/casos-tema.json) lo leen las dos copias de las reglas, y [`validate-structure.mjs`](../../../../tools/validate-structure.mjs) (TEST-18 de la feature 002) compara `tokens.css` con el mapa de B del BFF. Con T1 sola, `npm run verify` quedaría en rojo en su commit (TEST-06 y TEST-07), y `NOMBRE_DEL_PAR` del Admin es un `Record` sobre los pares, así que el Admin no compila sin sus nombres. T2 pasa de estándar · alto a la ⚠, que no se delega |
+| ⚠ TASK-02 compara capturas con B | Desde ese commit, `theme.css` sirve el `--ws-border-strong` nuevo de B: los bordes que lo usan cambian en la tienda y en el Admin, aunque el lienzo todavía no. Así esa diferencia se aprueba aislada, antes de la del lienzo |
+| ⚠ TASK-02 cambia `BFF-CONTRACT.md` y el smoke test, y su E2E es `Sí` | `sdd-tasks` pide actualizar el contrato y el smoke test en la tarea que cambia el contrato, y marcar E2E en ella. El plan dejaba el contrato para T9 |
+| ⚠ TASK-04 pasa de estándar · alto a avanzado · alto | Es una ⚠ (cambio visual pedido): no se delega y la ejecuta el agente principal |
+| T7 pasa a ⚠ TASK-07, avanzado · medio | Si Daniel elige el blanco, cambia los literales del token en el BFF (área de STD-18) y el lienzo de la tienda: los dos son disparadores de ⚠. Si elige el tono intermedio, solo registra la elección y su paquete es breve |
+| La lista del [valor final](planning.md#valor-final-del-lienzo) se amplía con las aserciones de TEST-02 y TEST-05 y con `BFF-CONTRACT.md`, si citan los literales | ⚠ TASK-02 escribe esas aserciones con los valores de D2. ⚠ TASK-02 anota en el Traspaso cada sitio que contiene los literales, para que ⚠ TASK-07 trabaje con una lista cerrada |
+| ⚠ TASK-07, ⚠ TASK-08 y TASK-09 quedan `bloqueadas` | Dependen de la elección de Daniel (AC-14): ⚠ TASK-07 la aplica, ⚠ TASK-08 captura el valor final y TASK-09 la escribe en el sistema visual y cierra la fila «Fondo de la tienda» de las decisiones pendientes |
+| TASK-01 es estándar · medio, no ligero · medio | Los guiones de captura y de activar temas de las features 002 y 003 vivían en `frontend/output/` de sus worktrees, ya borrados, y no están en el repositorio. Escribirlos para la tienda y el Admin, con el carrito con un producto y el cajón móvil, es trabajo con decisiones locales, como en la feature 003 |
+| Ocho bloques en lugar de cinco | Un bloque termina antes de cada ⚠, y hay siete ⚠ |
+
+## Fases
+
+| Fase | Objetivo |
+|---|---|
+| 1 | Línea base (capturas «antes», `verify` y e2e) y token y pares en las dos copias de las reglas, con TDD (TEST-01 a TEST-07) y el contrato |
+| 2 | Lienzo de la tienda con `bg-store-canvas` y vista previa de Temas (TEST-14 y TEST-15) |
+| 3 | Camino de compra: diálogo, textos de D1, panel y campos con contorno (TEST-09 a TEST-13 y TEST-16) |
+| 4 | Comparación del tono intermedio con el blanco (TEST-18) y valor final elegido por Daniel |
+| 5 | Capturas «después» con A, B y C (TEST-17), controles completos y documentos |
+
+## Bloques de sesión
+
+Cada bloque se ejecuta en una sesión nueva sobre el worktree ([guía](../../../development/agent-execution.md#una-sesión-por-bloque)) y termina antes de cada tarea ⚠. Un bloque que empieza con una ⚠ la prepara y se detiene con su paquete de revisión; con la aprobación (en esa sesión o al empezar la siguiente) hace su commit y sigue con el resto del bloque. Al terminar un bloque, el agente informa y espera un sí explícito antes del siguiente.
+
+| Bloque | Tareas | Termina antes de (⚠) | Qué se revisa al cerrarlo |
+|---|---|---|---|
+| 1 | TASK-01 | ⚠ TASK-02 | Capturas «antes» completas con A, B y C, línea base de `verify` y del e2e |
+| 2 | ⚠ TASK-02 (cierra la fase 1) | ⚠ TASK-03 | Token y pares en el BFF y en el Admin con TDD, contrato y bordes de B; e2e completo de la fase |
+| 3 | ⚠ TASK-03 (cierra la fase 2) | ⚠ TASK-04 | Lienzo de la tienda y vista previa de Temas, con el Admin en plomo; e2e completo de la fase |
+| 4 | ⚠ TASK-04 | ⚠ TASK-05 | Diálogo de dos botones y textos de D1 |
+| 5 | ⚠ TASK-05 (cierra la fase 3) | ⚠ TASK-06 | Panel y campos del checkout; e2e completo de la fase |
+| 6 | ⚠ TASK-06 | ⚠ TASK-07 | Los 30 pares de la comparación, listos para Daniel |
+| 7 | ⚠ TASK-07 (cierra la fase 4) | ⚠ TASK-08 | Valor final aplicado o registrado |
+| 8 | ⚠ TASK-08 y TASK-09 (cierra la fase 5) | — (sigue `sdd-verify`) | Capturas con A, B y C frente a la base; documentos |
+
+## Tareas
+
+| ID | Fase | Descripción | Capa | REQ/AC | TEST primero | Depende de | Riesgo | Nivel y esfuerzo | E2E | Capturas | Evidencia esperada | Estado |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| TASK-01 | 1 | Línea base antes de tocar código. Worktree `.worktrees/004-ajustes-de-la-tienda` sobre la rama y `npm run setup`. BFF en 3400 con `backend/data-capturas.json` (creada desde la semilla), tienda en 4400 y Admin en 4500. Guiones de captura y de activar tema en la carpeta de capturas: carrito con la ficha `soundbar-cinema-500`, diálogo abierto y cajón móvil. Capturas «antes» de la [tabla del plan](planning.md#capturas-antes-y-después) con A, B y C (B activo al terminar), salvo la fila del campo enfocado, que es solo «después». Consola de cada ruta. Servidores detenidos, `npm run verify` y e2e completo como línea base de caracterización. Crear `verification.md` desde su plantilla | QA visual y e2e (tienda y Admin) | REQ-12 / AC-13 | — (toma «antes» de TEST-17; el e2e es la caracterización) | — | Medio: usar los puertos de la demo o escribir en `backend/data.json`; dejar A o C activo en la copia; olvidar una ruta, un ancho o un tema; capturar el diálogo antes de que termine su animación | estándar · medio | Sí (completo, línea base) | Sí: tienda (inicio, catálogo, ficha, diálogo, carrito y checkout a 1440 y 375 px, y cajón móvil a 375 px) y Admin (`/login`, `/` y `/temas` a 1440 y 375 px), con A, B y C | `frontend/output/visual-qa/004-ajustes-de-la-tienda/antes/{a,b,c}` con un `LEEME.md` (SHA base, rutas, anchos, temas, método y fecha); los guiones; resultado de `verify` y del e2e completo (número de pruebas y fallos, si los hay, con su causa); consola de la base; hash de `backend/data.json` igual antes y después; B activo en la copia; servidores detenidos; `verification.md` creado; Traspaso con la copia y el método | pendiente |
+| ⚠ TASK-02 | 1 | Token y pares en las dos copias de las reglas. **Primero las pruebas, en rojo:** `casos-tema.json` con `--ws-store-bg` en los mapas, los cinco pares nuevos y `#8a96a8` → `#8894a6` en B y en los dos casos con su base (el caso «principal claro sobre la base de B» espera `'--ws-store-bg': '#F3F5F8'`); las aserciones de TEST-01 a TEST-04 en `tema.rules.test.mjs`, `temas-predefinidos.test.mjs` y `temas.queries.test.mjs` (15 → 20 pares); TEST-05 en `contrato.smoke.mjs`; TEST-06 entra solo por `casos-tema.json`. **Después el código:** BFF `tema.rules.mjs` (`TOKENS_DEL_TEMA` con `--ws-store-bg` justo antes de `--ws-bg`, `tokensDelTema` con `colors.background`, `PARES_DE_CONTRASTE` con los cinco pares al final y `bloquea: false`) y `temas-predefinidos.mjs` (literales `#FAFAFB`, `#f9fafc` y `#F9F9FA`, y `--ws-border-strong` de B en `#8894a6`); Admin `tema.model.ts` (`NombreToken` y `ParContraste['par']`), `tema.rules.ts` y `NOMBRE_DEL_PAR` de `tema.dialog.ts`; `tokens.css` con `--ws-store-bg: #f9fafc` justo antes de `--ws-bg` y `--ws-border-strong: #8894a6`. `BFF-CONTRACT.md`: `Tema.tokens` con la clave nueva y su regla, y las 31 declaraciones de `theme.css`. Traspaso con la lista de los sitios que contienen los literales de D2 | BFF `domain/temas/` y `application/temas/`, contrato, Admin `features/temas/domain/` y `presentation/`, `tokens.css` | REQ-05, REQ-07, REQ-09, REQ-10, REQ-14, REQ-15 / AC-05, AC-07, AC-09, AC-13, AC-15 | TEST-01, TEST-02, TEST-03, TEST-04, TEST-05 y TEST-06 | TASK-01 | Alto: el token detrás de `--ws-bg` (la réplica del Admin lo heredaría con la escala neutra); un par nuevo que bloquee el guardado; tocar `--ws-bg`, `colors.background` o `schemaVersion`; mayúsculas distintas del resto del mapa de B | avanzado · alto | Sí (completo, cierra la fase 1) | Sí: con B, las mismas rutas de la tienda y del Admin que TASK-01 | Rojo de TEST-01 a TEST-06 registrado antes del código, cada uno con su comando y su fallo; verde con `npm test --prefix backend`, `npm run test:contract --prefix backend` y `npm test --prefix frontend`; `theme.css` de B con 31 líneas y `--ws-store-bg` antes de `--ws-bg`; `--ws-bg` y `colors.background` de A, B y C sin cambios; `borderStrong/surface` en A, B y C (3.43, 3.07 y 3.16); `INSUFFICIENT_THEME_CONTRAST` solo con los dos pares de siempre; `npm run verify` (TEST-07 y TEST-08); e2e completo en verde; capturas con B frente a TASK-01: el lienzo «Iguales» y solo los bordes de `--ws-border-strong` un poco más oscuros (filtros del catálogo, `ws-btn-secondary`, punto de «sin stock» y contornos de Material del Admin); diff sin cambios en `infrastructure/` ni en `customThemes`; Prettier | pendiente |
+| ⚠ TASK-03 | 2 | Lienzo de la tienda. `tokens.css`: `--color-store-canvas: var(--ws-store-bg)` en `@theme inline`. `src/styles.css`: `html` y `body` con `background: var(--ws-store-bg)`. `AppLayout` (shell) y `PaginaNoEncontradaPage` de `bg-canvas` a `bg-store-canvas`; los dos buscadores siguen en `bg-canvas`. `NombreToken` del Storefront con `'--ws-store-bg'`. Admin: `figure` de `VistaPreviaTemaComponent` de `bg-canvas` a `bg-store-canvas`; su `styles.css` y `LoginPage`, sin cambios. E2E: `storefront-temas.spec.ts` con `FONDO_DE_LA_TIENDA` en lugar de `FONDO`, `#F9FAFC` en `COLORES_DE_B` y los casos de TEST-14 (tema propio con la base de B y buscador); `admin-temas.spec.ts` con `FONDO_PRINCIPAL` y TEST-15 | Storefront estilos, `layout/` y `features/temas/domain/`; Admin `features/temas/presentation/`; e2e | REQ-05, REQ-06, REQ-12, REQ-14, REQ-15 / AC-05, AC-06, AC-07, AC-12, AC-13, AC-15 | — (no es área de STD-18; TEST-14 y TEST-15 junto al código) | ⚠ TASK-02 | Alto: parpadeo al cargar si `html` no lee el token; el buscador pierde su relleno; el lienzo del Admin cambia; un `bg-canvas` de lienzo olvidado en la tienda | avanzado · alto | Sí (completo, cierra la fase 2) | Sí: tienda (inicio, catálogo, ficha, carrito, checkout y cajón móvil) y Admin (`/login`, `/` y `/temas`), con A, B y C, a 1440 y 375 px | TEST-07, TEST-14 y TEST-15 en verde, y TEST-22 de la feature 002 (sin parpadeo) en verde; e2e completo en verde; capturas frente a ⚠ TASK-02 (B) y a TASK-01 (A y C): en la tienda solo cambia el lienzo, también detrás de las zonas `surface-subtle` (revisadas una a una); el buscador, «Iguales»; en el Admin, solo el fondo de la vista previa de Temas, y el login y el Resumen «Iguales»; ningún `bg-canvas` de lienzo en la tienda (búsqueda en el diff); `npm run verify`; Prettier | pendiente |
+| ⚠ TASK-04 | 3 | Diálogo y textos de D1. `AgregarAlCarritoDialog`: dos botones en este orden, «Seguir comprando» (`mat-button`, cierra) y «Ver carrito» (`mat-flat-button`, a `/carrito`); `go()` solo acepta `'/carrito'`. `CarritoPage`: el enlace principal del resumen dice «Confirmar pedido» y sigue yendo a `/checkout`. `app.routes.ts`: título «WebStore \| Finalizar compra» en la ruta `checkout`. `CheckoutPage`: `h1` «Finalizar compra», sin la etiqueta oculta `ws-eyebrow`, y el botón «Finalizar compra» («Procesando…» al enviar). E2E: TEST-09 y TEST-10 en `storefront-carrito.spec.ts`, TEST-11 en `storefront-checkout.spec.ts` (por rol: `heading` nivel 1 y `button`) y TEST-16 en `storefront-modo-demo.spec.ts` y `storefront-navegacion.spec.ts` | Storefront `features/vitrina/`, `features/carrito/` y `features/checkout/` `presentation/`, rutas y e2e | REQ-01, REQ-02, REQ-03, REQ-04, REQ-11, REQ-12 / AC-01, AC-02, AC-03, AC-04, AC-11, AC-13, AC-16 | — (TEST-09 a TEST-11 y TEST-16 junto al código) | ⚠ TASK-03 (orden de bloques y capturas; no usa su código) | Medio: un localizador por texto encuentra el `h1` y el botón a la vez; cambiar «Procesando…», «Volver al carrito» o «Seguir comprando»; el diálogo desborda a 375 px; romper la compra de AC-11 | avanzado · alto | Sí | Sí: diálogo sobre la ficha, carrito y checkout, con B, a 1440 y 375 px | TEST-09 a TEST-11 y TEST-16 en verde, con el mismo total (S/ 711.00) y el pedido en «Mis pedidos» y en el Admin; e2e completo en verde; capturas frente a ⚠ TASK-03: solo cambian los botones del diálogo («Ver carrito» relleno) y los tres textos de D1; a 375 px el diálogo no desborda; búsqueda sin «Continuar al checkout» ni `h1` «Checkout» en `frontend/src`; `npm run verify`; Prettier | pendiente |
+| ⚠ TASK-05 | 3 | Panel y campos del checkout. `CheckoutPage`: el `div` de los tres pasos lleva `ws-checkout-panel` y los diez `mat-form-field`, `appearance="outline"`. `src/styles/storefront.css`: `ws-checkout-panel` con la superficie, el borde, el radio de 14 px y el relleno (28 px, 22 px en móvil) de `ws-order-summary`, sin `sticky`, y los tokens `--mat-form-field-outlined-*` de la [pregunta 3 del plan](planning.md#pregunta-3-cómo-se-aplican-y-se-animan-los-campos-con-contorno) (contorno `--ws-border-strong`, foco de 2 px en `--ws-focus-ring`, radio `--ws-radius`). E2E nuevo `storefront-checkout-panel.spec.ts` con TEST-12 y TEST-13 (`reducedMotion: 'reduce'` fijado antes de abrir la página) | Storefront `features/checkout/presentation/`, estilos y e2e | REQ-08, REQ-09, REQ-10, REQ-11, REQ-12 / AC-08, AC-09, AC-10, AC-12, AC-13 | — (TEST-12 y TEST-13 junto al código) | ⚠ TASK-04 (mismo `checkout.page.ts`) | Alto: tocar internals de Material o usar `::ng-deep`; el resumen pierde su `sticky`; espacio vertical añadido entre los pasos; el error deja de verse; desborde a 375 px; un orden de Tab distinto | avanzado · alto | Sí (completo, cierra la fase 3) | Sí: checkout, y checkout con un campo enfocado y otro inválido, con A, B y C, a 1440 y 375 px | TEST-12 y TEST-13 en verde con A, B y C; e2e completo en verde; capturas del checkout frente a ⚠ TASK-04: un solo panel con el aspecto del resumen, al lado en escritorio y encima en móvil, campos con contorno, y foco y error con los colores del tema; sin desborde horizontal; ninguna regla con `.mdc-`, `::ng-deep` ni color fijo en el diff; `npm run verify`; Prettier | pendiente |
+| ⚠ TASK-06 | 4 | Comparación del tono intermedio con el blanco ([plan](planning.md#comparación-del-tono-intermedio-con-el-blanco)): inicio, catálogo, ficha, carrito y checkout, con A, B y C, a 1440 y 375 px (30 pares), con la misma ruta, los mismos datos y la misma sesión en cada par; la variante blanca inyecta `:root { --ws-store-bg: #FFFFFF !important; }`. Hoja de contactos HTML con cada par lado a lado. Con las capturas en blanco, revisión de AC-06. Paquete para que Sebastián lo enseñe a Daniel | QA visual (tienda) | REQ-06, REQ-13 / AC-06, AC-14 | — | ⚠ TASK-05 | Medio: pares con datos o rutas distintas; la variante blanca no se aplica porque gana el estilo en línea de `TemasFacade`; A o C activos al terminar | avanzado · medio | No | Sí: los 30 pares (comparación, no antes y después) | `frontend/output/visual-qa/004-ajustes-de-la-tienda/comparacion-lienzo/` con los 60 archivos, un `LEEME.md` y la hoja de contactos; el color del `body` medido en cada variante (`rgb(255, 255, 255)` en la blanca); AC-06 revisado en blanco (tarjetas, paneles y cabecera separados por su borde, y el buscador visible como campo); hash de `backend/data.json`; B activo en la copia; servidores detenidos | pendiente |
+| ⚠ TASK-07 | 4 | Aplicar el valor final que elija Daniel. **Tono intermedio:** solo se registra la elección, con su fecha y quién la comunica, en la especificación (AC-14) y en `verification.md`. **Blanco:** primero los valores esperados, en rojo (`casos-tema.json`, las aserciones de TEST-02, TEST-03 y TEST-05 y `FONDO_DE_LA_TIENDA` de los e2e); después los literales de A, B y C en `temas-predefinidos.mjs` y `tokens.css`, `#F9FAFC` fuera de `COLORES_DE_B` y `BFF-CONTRACT.md` si cita el valor, según la [lista del plan](planning.md#valor-final-del-lienzo) y la del Traspaso de ⚠ TASK-02; la elección queda registrada igual | Según la elección: documentación, o BFF `domain/temas/`, contrato, `tokens.css` y e2e | REQ-05, REQ-13 / AC-05, AC-14 | Con el blanco: TEST-02, TEST-03 y TEST-05 con los valores nuevos | ⚠ TASK-06 y la elección de Daniel | Medio: valores desalineados entre el BFF, `tokens.css`, los casos y los e2e; registrar una elección que no consta | avanzado · medio | Sí (completo, cierra la fase 4) si cambia el valor; si no, No | Sí si cambia el valor: inicio, catálogo, ficha, carrito y checkout con A, B y C, a 1440 y 375 px; si no, No | Elección de Daniel registrada con su fecha. Con el blanco: rojo y verde de TEST-02, TEST-03 y TEST-05; TEST-07 (`tokens.css` igual al mapa de B); e2e completo en verde; capturas iguales a la variante blanca de ⚠ TASK-06 en cada par; búsqueda sin los literales de D2 fuera de la documentación histórica; `npm run verify`; Prettier | bloqueada |
+| ⚠ TASK-08 | 5 | Capturas «después» de la [tabla del plan](planning.md#capturas-antes-y-después) con A, B y C, a 1440 y 375 px, con el método y la copia de TASK-01, y comparación con las «antes» (TEST-17). Paquete de revisión con los pares y las diferencias. `npm run verify` y e2e completo. Consola de cada ruta | QA visual y controles (tienda y Admin) | REQ-11, REQ-12 / AC-06, AC-12, AC-13 | — | ⚠ TASK-07 | Medio: una diferencia no pedida (zonas `surface-subtle`, contenido de las páginas); A o C activos al terminar; ruido de rasterizado tomado por cambio | avanzado · alto | Sí (completo) | Sí: todas las filas de la tabla del plan, con A, B y C | Carpeta `despues/{a,b,c}` y comparación par a par: «Iguales» o cada diferencia con su AC o con el ajuste de `--ws-border-strong`; el Admin solo con la vista previa de Temas y, con B, los contornos; el buscador «Iguales»; `npm run verify` y e2e completo en verde; consola sin mensajes nuevos frente a la base; hash de `backend/data.json`; B activo en la copia; servidores detenidos | bloqueada |
+| TASK-09 | 5 | Documentos afectados del [plan](planning.md#documentos-afectados), salvo `BFF-CONTRACT.md` (⚠ TASK-02): `docs/architecture/README.md`, `backend/architecture.md` y `frontend/architecture.md` (ADR-0013 implementado, cantidades de tokens y pares, y el e2e nuevo en §6); nota fechada del hito de arquitectura en AC-13 y en los casos límite de la especificación; [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md) (31 tokens y 20 pares, `--ws-border-strong` de B y `borderStrong/surface`, lienzo de la tienda frente al del Admin con el valor final, contraste sobre el lienzo de la tienda, panel y campos del checkout, y «lienzo plomo» solo para el Admin); [glosario](../../../architecture/glosario.md) («Lienzo de la tienda», `--ws-store-bg` y `bg-store-canvas`); Escenario 01 de [US04](../../../planning/user-stories/ep-02-comprar/us-04-agregar-al-carrito/us-04-agregar-al-carrito.md); [trazabilidad](../../../planning/TRACEABILITY.md) (fila «Confirmación al agregar al carrito» y filas de los textos, el lienzo y el panel); [decisiones pendientes](../../../planning/PENDING-DECISIONS.md) («Textos del carrito y del checkout» y «Fondo de la tienda» cerradas); nota fechada en [`SOURCE-COMPLIANCE.md`](../../../../frontend/docs/SOURCE-COMPLIANCE.md); PBI-0035 a PBI-0038 `en curso` en el [backlog](../../../planning/backlog.md); fila 004 del [índice](../README.md) en `en implementación`. Traspaso para `sdd-verify` | Documentación | REQ-01 a REQ-15 | — | ⚠ TASK-07 (valor final) y ⚠ TASK-08 | Bajo: describir como entregado lo que solo está en la rama; reescribir la historia (`docs/changelog/`, la revisión fechada de `SOURCE-COMPLIANCE.md` o las decisiones del hito) | estándar · medio | No | No | Diff solo de documentación, con enlaces que resuelven; términos del glosario; `npm run verify`; Traspaso actualizado | bloqueada |
+
+- **Nivel y esfuerzo:** según las [tablas de la guía](../../../development/agent-execution.md#delegar-por-nivel-y-esfuerzo), resueltos en [Nivel y esfuerzo resueltos en el catálogo](#nivel-y-esfuerzo-resueltos-en-el-catálogo).
+- **E2E:** `Sí` si la tarea cambia plantillas, rutas, datos guardados o el contrato; `Spec <nombre>` si basta una spec; `No` en otro caso.
+- **Capturas:** `Sí` si la tarea toca plantillas, estilos o tokens.
+
+Estados: `pendiente`, `bloqueada`, `en curso`, `hecha`.
+
+## Trazabilidad
+
+Cada REQ y cada AC de la especificación tiene al menos una tarea y un TEST.
+
+| REQ | Tareas |
+|---|---|
+| REQ-01 | ⚠ TASK-04 |
+| REQ-02 | ⚠ TASK-04 |
+| REQ-03 | ⚠ TASK-04 |
+| REQ-04 | ⚠ TASK-04 |
+| REQ-05 | ⚠ TASK-02, ⚠ TASK-03, ⚠ TASK-07 |
+| REQ-06 | ⚠ TASK-03, ⚠ TASK-06 |
+| REQ-07 | ⚠ TASK-02, TASK-09 |
+| REQ-08 | ⚠ TASK-05 |
+| REQ-09 | ⚠ TASK-02, ⚠ TASK-05 |
+| REQ-10 | ⚠ TASK-02, ⚠ TASK-05 |
+| REQ-11 | ⚠ TASK-04, ⚠ TASK-05, ⚠ TASK-08 |
+| REQ-12 | TASK-01, ⚠ TASK-03, ⚠ TASK-04, ⚠ TASK-05, ⚠ TASK-08 |
+| REQ-13 | ⚠ TASK-06, ⚠ TASK-07 |
+| REQ-14 | ⚠ TASK-02, ⚠ TASK-03 |
+| REQ-15 | ⚠ TASK-02, ⚠ TASK-03 |
+
+| AC | Tareas | TEST |
+|---|---|---|
+| AC-01 | ⚠ TASK-04 | TEST-09 |
+| AC-02 | ⚠ TASK-04 | TEST-09 |
+| AC-03 | ⚠ TASK-04 | TEST-10, TEST-16 |
+| AC-04 | ⚠ TASK-04 | TEST-11, TEST-16 |
+| AC-05 | ⚠ TASK-02, ⚠ TASK-03, ⚠ TASK-07 | TEST-01, TEST-02, TEST-04, TEST-05, TEST-07, TEST-14 |
+| AC-06 | ⚠ TASK-03, ⚠ TASK-06, ⚠ TASK-08 | TEST-14, TEST-17, TEST-18 |
+| AC-07 | ⚠ TASK-02, ⚠ TASK-03, TASK-09 | TEST-01, TEST-03, TEST-06, TEST-15 |
+| AC-08 | ⚠ TASK-05 | TEST-12 |
+| AC-09 | ⚠ TASK-02, ⚠ TASK-05 | TEST-02, TEST-03, TEST-12, TEST-13 |
+| AC-10 | ⚠ TASK-05 | TEST-08, TEST-12, TEST-13 |
+| AC-11 | ⚠ TASK-04 | TEST-11 |
+| AC-12 | ⚠ TASK-03, ⚠ TASK-05, ⚠ TASK-08 | TEST-07, TEST-12, TEST-14 |
+| AC-13 | TASK-01, ⚠ TASK-02 a ⚠ TASK-05, ⚠ TASK-08 | TEST-17 |
+| AC-14 | ⚠ TASK-06, ⚠ TASK-07 | TEST-18 |
+| AC-15 | ⚠ TASK-02, ⚠ TASK-03 | TEST-02, TEST-05, TEST-06, TEST-15 |
+| AC-16 | ⚠ TASK-04 | TEST-11, TEST-16 |
+
+TEST-08 (lint, Sheriff y build) lo ejecuta `npm run verify` en cada tarea que toca `frontend/`.
+
+## Definition of Ready
+
+Comprobado contra los [criterios](../../../development/definition-of-ready.md) el 2026-11-13. Para todas: alcance aprobado (PR #22), plan aprobado con el hito de arquitectura cerrado (PR #23) y ADR-0013 aceptado (PR #24); sin preguntas abiertas; el contrato solo crece y está definido en el plan; sin datos guardados nuevos ni cambios de permisos. PBI-0043 no bloquea, según la especificación y el plan. Las pantallas y anchos de las capturas están fijados en el plan, y los servidores del worktree usan los puertos de las e2e. Queda abierta una decisión: el valor final del lienzo, que elige Daniel con la comparación de ⚠ TASK-06 (AC-14; fila «Fondo de la tienda» de [`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)).
+
+| Tarea | Lista | Motivo si no lo está |
+|---|---|---|
+| TASK-01 | Sí | Preparar el worktree, `npm run setup`, la copia de datos y los guiones de captura es parte de la tarea. No puede ejecutarse a la vez que la suite e2e |
+| ⚠ TASK-02 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 1 |
+| ⚠ TASK-03 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 2 |
+| ⚠ TASK-04 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 3 |
+| ⚠ TASK-05 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 4 |
+| ⚠ TASK-06 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 5 |
+| ⚠ TASK-07 | No | Bloqueada: depende de la elección del valor final por Daniel (AC-14), que se hace con el paquete de ⚠ TASK-06 |
+| ⚠ TASK-08 | No | Bloqueada: captura el lienzo con el valor final, que fija ⚠ TASK-07 |
+| TASK-09 | No | Bloqueada: escribe el valor final en el sistema visual y cierra la fila «Fondo de la tienda»; empieza cuando Sebastián aprueba el paquete de ⚠ TASK-08 |
+
+## Hitos de revisión humana
+
+Antes de cada ⚠, Sebastián Avila revisa el bloque anterior y da el sí para empezar. Después, revisa el paquete de la tarea con estos criterios. Disparadores: el token, los pares y el contrato del BFF en ⚠ TASK-02 (y en ⚠ TASK-07 si Daniel elige el blanco), y un cambio del diseño visual pedido en las demás ([disparadores](../../../architecture/development-workflow.md#disparadores-de-revisión-adicional)).
+
+- **Antes de ⚠ TASK-02 (fin del bloque 1):** las capturas «antes» cubren la tienda y el Admin en los dos anchos y los tres temas, con B activo al terminar; la línea base de `verify` y del e2e está registrada, con sus fallos, si los hay, y su causa.
+- **⚠ TASK-02** (token, pares y contrato; criterios del plan para T1):
+  1. TEST-01 a TEST-06 en verde, con el rojo de cada uno registrado antes del código.
+  2. `--ws-store-bg` va justo antes de `--ws-bg` en `TOKENS_DEL_TEMA` y en `theme.css` (31 líneas con B), y el caso del tema propio con la base de B espera su propio fondo (`#F3F5F8`) en las dos copias.
+  3. `--ws-bg` y `colors.background` de A, B y C no cambian; `--ws-border-strong` de B es `#8894a6` y `borderStrong/surface` llega a 3:1 con A, B y C.
+  4. Los cinco pares nuevos van al final, con sus mínimos, y no bloquean: `INSUFFICIENT_THEME_CONTRAST` sigue listando solo `contrast/background` y `contrast/surface`.
+  5. `BFF-CONTRACT.md` describe la clave nueva y su regla, y el smoke test la comprueba; ninguna migración ni cambio en `customThemes` o `schemaVersion`.
+  6. Capturas con B: el lienzo no cambia y solo se oscurecen un poco los bordes de `--ws-border-strong`.
+  7. `npm run verify` y el e2e completo en verde (cierra la fase 1).
+- **Antes de ⚠ TASK-03 (fin del bloque 2):** paquete de ⚠ TASK-02 aprobado y su commit hecho.
+- **⚠ TASK-03** (lienzo de la tienda; criterios del plan para T3):
+  1. TEST-07, TEST-14 y TEST-15 en verde, y TEST-22 de la feature 002 (sin parpadeo) en verde.
+  2. Con A, B y C, en la tienda solo cambia el lienzo; las zonas `surface-subtle` revisadas en las capturas.
+  3. El buscador de la cabecera y del cajón móvil, igual (AC-06).
+  4. En el Admin solo cambia el fondo de la vista previa de Temas; el login y el Resumen conservan el plomo (AC-15).
+  5. Con un tema propio con la base de B, el lienzo de la tienda es su fondo (`#F3F5F8`).
+  6. El e2e completo en verde (cierra la fase 2).
+- **Antes de ⚠ TASK-04 (fin del bloque 3):** paquete de ⚠ TASK-03 aprobado y su commit hecho.
+- **⚠ TASK-04** (diálogo y textos; criterios del plan para T4):
+  1. TEST-09 a TEST-11 y TEST-16 en verde, con la compra de AC-11 completa.
+  2. El diálogo tiene solo «Seguir comprando» y «Ver carrito», en ese orden, con «Ver carrito» relleno, desde la tarjeta y desde la ficha; a 375 px no desborda.
+  3. El carrito dice «Confirmar pedido»; el checkout, «Finalizar compra» en el `h1`, en el título del navegador y en el botón; la ruta sigue siendo `/checkout`.
+  4. «Procesando…», «Volver al carrito» y «Seguir comprando» no cambian.
+  5. Capturas con B: solo cambian los botones del diálogo y los tres textos de D1.
+- **Antes de ⚠ TASK-05 (fin del bloque 4):** paquete de ⚠ TASK-04 aprobado y su commit hecho.
+- **⚠ TASK-05** (panel y campos; criterios del plan para T5):
+  1. TEST-12 y TEST-13 en verde con A, B y C.
+  2. Un solo panel con el aspecto del resumen (superficie, borde, radio de 14 px y relleno de 28 px y 22 px), al lado del resumen en escritorio y encima en móvil, sin espacio añadido entre los pasos (D4).
+  3. Campos con contorno en reposo, foco de 2 px en el color de foco y error en su color, con la transición de Material (200 ms o menos) y sin ella con movimiento reducido (D5).
+  4. Sin internals de Material, `::ng-deep` ni colores fijos; sin desborde horizontal; el orden de Tab, igual.
+  5. Los demás formularios de la tienda no cambian (D5, PBI-0047).
+  6. El e2e completo en verde (cierra la fase 3).
+- **Antes de ⚠ TASK-06 (fin del bloque 5):** paquete de ⚠ TASK-05 aprobado y su commit hecho.
+- **⚠ TASK-06** (comparación con el blanco; criterios del plan para T6):
+  1. Los 30 pares completos (cinco pantallas, tres temas y dos anchos), con la misma ruta, los mismos datos y la misma sesión en cada par.
+  2. La variante blanca pinta el lienzo en `#FFFFFF` (medido) y la intermedia, con su valor de D2.
+  3. AC-06 revisado con el blanco: tarjetas, paneles y cabecera separados por su borde, y el buscador visible como campo.
+  4. La hoja de contactos está lista para enseñarla a Daniel.
+- **Elección de Daniel (antes de ⚠ TASK-07, fin del bloque 6):** Sebastián enseña la comparación a Daniel y comunica en la sesión el valor elegido, con su fecha. Hasta entonces, ⚠ TASK-07, ⚠ TASK-08 y TASK-09 siguen bloqueadas y el hito de entrega no se puede pedir.
+- **⚠ TASK-07** (valor final):
+  1. La elección consta con su fecha en la especificación y en `verification.md`.
+  2. Con el tono intermedio, ningún archivo de código cambia.
+  3. Con el blanco, el rojo y el verde de TEST-02, TEST-03 y TEST-05 están registrados; los literales cambian en todos los sitios de la lista y en ningún otro; `tokens.css` sigue igual al mapa de B; las capturas son iguales a la variante blanca de ⚠ TASK-06; `npm run verify` y el e2e completo en verde (cierra la fase 4).
+- **Antes de ⚠ TASK-08 (fin del bloque 7):** paquete de ⚠ TASK-07 aprobado y su commit hecho.
+- **⚠ TASK-08** (comparación final; criterios del plan para T8):
+  1. Sebastián aprueba las capturas con A, B y C: solo cambia lo de la [tabla del plan](planning.md#capturas-antes-y-después) (AC-13), con el valor final del lienzo.
+  2. El buscador y el lienzo del Admin salen «Iguales»; con B, los bordes de `--ws-border-strong`, como en ⚠ TASK-02.
+  3. `npm run verify` y el e2e completo en verde.
+  4. Sin mensajes de consola nuevos frente a la base.
