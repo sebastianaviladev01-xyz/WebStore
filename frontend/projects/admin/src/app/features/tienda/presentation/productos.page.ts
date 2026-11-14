@@ -42,7 +42,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
     <div class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
       <section class="admin-card overflow-hidden" aria-label="Lista de productos">
         <div
-          class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted"
+          class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
         >
           <span>Producto</span>
           <span>Precio</span>
@@ -50,16 +50,21 @@ const MAX_PHOTO_BYTES = 400 * 1024;
           <span></span>
         </div>
         @for (p of admin.products(); track p.id) {
-          <div class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm">
-            <div class="min-w-0">
+          <div
+            class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
+          >
+            <div class="min-w-0 max-md:col-span-full">
               <strong class="block truncate">{{ p.name }}</strong>
               <p class="text-xs text-muted">
                 {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
                 {{ p.gallery.length === 0 ? 'foto' : 'fotos' }}
               </p>
             </div>
-            <span>{{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}</span>
-            <span [class.text-danger]="p.stock === 0" class="font-semibold">{{ p.stock }}</span>
+            <span class="max-md:col-start-2">{{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}</span>
+            <span [class.text-danger]="p.stock === 0" class="font-semibold">
+              <span class="font-normal text-muted md:hidden">Stock&nbsp;</span>
+              <span>{{ p.stock }}</span>
+            </span>
             <div class="flex gap-2">
               <button class="font-semibold text-link" (click)="edit(p.id)">Editar</button>
               @if (session.can('products.manage')) {
@@ -106,12 +111,12 @@ const MAX_PHOTO_BYTES = 400 * 1024;
             <mat-label>Imagen principal</mat-label>
             <input matInput formControlName="imageUrl" />
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field subscriptSizing="dynamic">
             <mat-label>Miniatura optimizada</mat-label>
             <input matInput formControlName="thumbnailUrl" />
             <mat-hint>Opcional. Si la dejas vacía se usa la imagen principal.</mat-hint>
           </mat-form-field>
-          <fieldset class="rounded-xl border border-line p-4">
+          <fieldset class="min-w-0 rounded-xl border border-line p-4">
             <legend class="px-1 text-sm font-semibold">Galería de fotos</legend>
             <p class="text-xs text-muted">
               La imagen principal va primero; estas fotos se muestran después en la ficha.
@@ -146,7 +151,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
               </ul>
             }
             <div class="mt-3 flex gap-2">
-              <mat-form-field class="flex-1" subscriptSizing="dynamic">
+              <mat-form-field class="min-w-0 flex-1" subscriptSizing="dynamic">
                 <mat-label>URL de foto</mat-label>
                 <input
                   matInput
