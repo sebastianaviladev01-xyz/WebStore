@@ -5,8 +5,8 @@ import { tokensDelTema } from './tema.rules.mjs';
  * A y C toman los valores presentados el 05/11 y derivan el resto con la fórmula de los temas propios
  * (D2). B copia `frontend/src/styles/tokens.css` al pie de la letra (AC-01). La franja superior
  * (`--ws-topbar`) de A y C es la presentada: `#2E1A5C` y el grafito `#1F2328`, con texto blanco.
- * El lienzo de la tienda (`--ws-store-bg`, ADR-0013) es un literal en los tres (D2 de la feature 004), hasta
- * que se elija entre ese tono y el blanco (AC-14). `--ws-border-strong` de B es `#8894a6` (WCAG 1.4.11).
+ * El lienzo de la tienda (`--ws-store-bg`, ADR-0013) es un literal en los tres (D2 de la feature 004): el tono
+ * intermedio que Daniel eligió frente al blanco el 2026-11-13 (AC-14). `--ws-border-strong` de B es `#8894a6` (WCAG 1.4.11).
  */
 const predefinido = (id, name, colors, tokens) =>
   Object.freeze({ id, name, colors: Object.freeze(colors), tokens: Object.freeze(tokens) });

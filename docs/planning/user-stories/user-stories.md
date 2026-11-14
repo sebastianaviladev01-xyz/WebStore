@@ -86,7 +86,7 @@ Cada épica y cada historia tiene su propio archivo. Las historias viven dentro 
 
 | Tema | Motivo |
 |---|---|
-| Resumen (Dashboard) del Admin | Las fuentes lo nombran, pero no dicen qué muestra |
+| Resumen (Dashboard) del Admin | Las fuentes lo nombran, pero no dicen qué muestra. Daniel lo definió el 06/11 (la estructura del dashboard de OpenCart) y se especificó como la feature [001](../../specs/features/001-reorganizar-resumen-del-admin/specification.md), no como historia |
 | Página 404 | Se mencionó sin detalle (PBI-0020) |
 | Comparador de productos, pasarela de pago, facturación electrónica, correo transaccional, multi-tenant y SSR/SEO | Decisiones abiertas ([`PENDING-DECISIONS.md`](../PENDING-DECISIONS.md) y [backlog](../backlog.md)) |
 | Identidad visual, fotografía eficiente y rendimiento | Son requisitos de diseño y calidad, no de comportamiento: viven en el [sistema visual](../../../frontend/docs/VISUAL-SYSTEM.md) y en la [validación](../../../frontend/docs/VALIDATION.md) |
