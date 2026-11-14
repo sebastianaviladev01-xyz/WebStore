@@ -15,6 +15,7 @@ import {
   retirarProductos,
   type ProductoApi,
 } from './apoyo/catalogo';
+import { TEMAS, activarTema, restablecerTemas } from './apoyo/contraste';
 import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
@@ -45,8 +46,23 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
  *   estado y «Nombre» filtra sin distinguir mayúsculas; «Nueva marca» y «Editar» abren su interfaz de registro con
  *   «Nombre» y «Activa», y guardar vuelve al listado con sus filtros.
  *
+ * Las tres páginas y los casos de fallo (TASK-11):
+ *
+ * - TEST-10 (AC-01, AC-10): a 1440 px, Productos, Categorías y Marcas tienen el título con «Nuevo…» a su derecha, el
+ *   panel con «Buscar» y «Limpiar filtros» y la lista, en ese orden vertical, sin formulario de registro; la lista
+ *   ocupa el ancho del panel y los bordes coinciden en las tres páginas.
+ * - TEST-18 (AC-12): a 360, 375 y 390 px con A, B y C, las tres listas y sus registros (nuevo y edición) sin
+ *   desplazamiento horizontal y con sus controles dentro de la pantalla. B queda activo al terminar.
+ * - TEST-19 (AC-15): con 30 productos, 25 en la página 1 y «Página 1 de 2»; «Siguiente» lleva a la 2; una búsqueda
+ *   nueva vuelve a la 1; con 25 resultados o menos no hay paginación.
+ * - TEST-20 (REQ-02, caso límite): si la consulta del snapshot falla al «Buscar», el aviso sale junto al panel y se
+ *   conservan los filtros escritos y los resultados; el reintento funciona.
+ * - TEST-21 (REQ-04, caso límite): si el BFF rechaza el guardado con un `400`, el registro de producto, de categoría
+ *   y de marca se queda con lo escrito y el motivo junto al botón.
+ *
  * Los cambios de datos se hacen como «otra sesión» con la API del Admin (`apoyo/catalogo.ts`) y cada prueba deja
- * los productos o las categorías como estaban en un `finally`. A 1440 px, el tamaño por defecto de la suite.
+ * los productos, las categorías o las marcas como estaban en un `finally`. TEST-20 y TEST-21 interceptan solo
+ * `/bff/admin/snapshot`, con el método que simulan. A 1440 px, el tamaño por defecto de la suite, salvo TEST-18.
  */
 
 const lista = (page: Page) => page.getByRole('region', { name: 'Lista de productos' });
@@ -56,7 +72,7 @@ const editar = (zona: Locator) => zona.getByRole('link', { name: 'Editar', exact
 const filaDe = (page: Page, nombre: string) =>
   lista(page)
     .locator('div')
-    .filter({ has: editar(page) })
+    .filter({ has: page.getByRole('link', { name: 'Editar', exact: true }) })
     .filter({ hasText: nombre });
 
 /** Nombres de los productos de la lista, en orden: el texto del `strong` de cada fila. */
@@ -545,5 +561,324 @@ test.describe('Filtros y registro de marcas del Admin', () => {
     } finally {
       await cambiarMarcas(() => originales);
     }
+  });
+});
+
+/** Caja de un elemento en la ventana. */
+interface Caja {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+const caja = (elemento: Locator): Promise<Caja> =>
+  elemento.evaluate((nodo) => {
+    const { left, top, right, bottom } = nodo.getBoundingClientRect();
+    return { left, top, right, bottom };
+  });
+
+const TOLERANCIA = 0.5;
+
+/** Las tres páginas del catálogo con su título, su botón «Nuevo…», su panel y su lista (AC-10). */
+const PAGINAS_DEL_CATALOGO = [
+  { ruta: '/productos', titulo: 'Productos', nuevo: 'Nuevo producto', panel: panel, lista: lista },
+  {
+    ruta: '/categorias',
+    titulo: 'Categorías',
+    nuevo: 'Nueva categoría',
+    panel: panelCategorias,
+    lista: listaCategorias,
+  },
+  { ruta: '/marcas', titulo: 'Marcas', nuevo: 'Nueva marca', panel: panelMarcas, lista: listaMarcas },
+] as const;
+
+/**
+ * Listas y registros del catálogo (TEST-18): cada ruta con lo que hay que esperar antes de medir y los controles
+ * que se tienen que poder usar dentro de la pantalla.
+ */
+const VISTAS_DEL_CATALOGO: readonly {
+  ruta: string;
+  listo: (page: Page) => Locator;
+  controles: (page: Page) => Locator[];
+}[] = [
+  ...PAGINAS_DEL_CATALOGO.map((pagina) => ({
+    ruta: pagina.ruta,
+    listo: (page: Page) => pagina.lista(page),
+    controles: (page: Page) => [
+      page.getByRole('link', { name: pagina.nuevo, exact: true }),
+      pagina.panel(page).getByRole('button', { name: 'Buscar', exact: true }),
+      pagina.panel(page).getByRole('button', { name: 'Limpiar filtros' }),
+      pagina.lista(page).getByRole('link', { name: 'Editar', exact: true }).first(),
+    ],
+  })),
+  ...[
+    ['/productos/nuevo', 'Nuevo producto', 'Guardar producto'],
+    ['/productos/p-001', 'Editar producto', 'Guardar producto'],
+    ['/categorias/nueva', 'Nueva categoría', 'Guardar'],
+    ['/categorias/cat-tv-oled', 'Editar categoría', 'Guardar'],
+    ['/marcas/nueva', 'Nueva marca', 'Guardar'],
+    ['/marcas/b-nova', 'Editar marca', 'Guardar'],
+  ].map(([ruta, formulario, guardar]) => ({
+    ruta,
+    listo: (page: Page) => page.getByRole('form', { name: formulario }),
+    controles: (page: Page) => [
+      page.getByRole('form', { name: formulario }).getByRole('textbox', { name: 'Nombre', exact: true }),
+      page.getByRole('form', { name: formulario }).getByRole('button', { name: guardar, exact: true }),
+      page.getByRole('form', { name: formulario }).getByRole('link', { name: 'Cancelar' }),
+    ],
+  })),
+];
+
+const MOVILES = [360, 375, 390] as const;
+
+/** Motivo del `400` simulado de TEST-21, con el formato de error del BFF. */
+const MOTIVO_RECHAZO = 'El BFF rechazó el cambio (prueba e2e 008).';
+
+test.describe('Filtros y registro del catálogo: las tres páginas y los casos de fallo', () => {
+  test('TEST-10 · a 1440 px, las tres páginas con la misma disposición', async ({ page }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const medidas: { titulo: string; panel: Caja; lista: Caja; nuevo: Caja }[] = [];
+
+    for (const pagina of PAGINAS_DEL_CATALOGO) {
+      await page.goto(pagina.ruta);
+      const titulo = page.getByRole('heading', { level: 1, name: pagina.titulo });
+      await expect(titulo).toBeVisible();
+      await expect(pagina.lista(page)).toBeVisible();
+      const que = (parte: string) => `${pagina.titulo} · ${parte}`;
+
+      // Sin formulario de registro ni columna lateral: solo el panel de búsqueda.
+      await expect(page.getByRole('form'), que('sin formulario de registro')).toHaveCount(0);
+      const filtros = pagina.panel(page);
+      await expect(filtros.getByRole('button', { name: 'Buscar', exact: true })).toBeVisible();
+      await expect(filtros.getByRole('button', { name: 'Limpiar filtros' })).toBeVisible();
+
+      const cajaTitulo = await caja(titulo);
+      const cajaNuevo = await caja(page.getByRole('link', { name: pagina.nuevo, exact: true }));
+      const cajaPanel = await caja(filtros);
+      const cajaLista = await caja(pagina.lista(page));
+
+      // Orden vertical: título y «Nuevo…», panel, lista.
+      expect(cajaTitulo.bottom, que('el título acaba antes del panel')).toBeLessThanOrEqual(cajaPanel.top);
+      expect(cajaNuevo.bottom, que('«Nuevo…» acaba antes del panel')).toBeLessThanOrEqual(cajaPanel.top);
+      expect(cajaPanel.bottom, que('el panel acaba antes de la lista')).toBeLessThanOrEqual(cajaLista.top);
+      // «Nuevo…» a la derecha del título, en su fila; la lista con el ancho del panel (todo el contenido).
+      expect(cajaNuevo.left, que('«Nuevo…» a la derecha del título')).toBeGreaterThan(cajaTitulo.right);
+      expect(Math.abs(cajaNuevo.right - cajaPanel.right), que('«Nuevo…» alineado a la derecha')).toBeLessThan(
+        TOLERANCIA + 0.5,
+      );
+      expect(
+        Math.abs(cajaLista.left - cajaPanel.left),
+        que('lista y panel, mismo borde izquierdo'),
+      ).toBeLessThan(TOLERANCIA + 0.5);
+      expect(
+        Math.abs(cajaLista.right - cajaPanel.right),
+        que('lista y panel, mismo borde derecho'),
+      ).toBeLessThan(TOLERANCIA + 0.5);
+      medidas.push({ titulo: pagina.titulo, panel: cajaPanel, lista: cajaLista, nuevo: cajaNuevo });
+    }
+
+    // Las mismas posiciones horizontales en las tres páginas.
+    const [productos, ...otras] = medidas;
+    for (const otra of otras) {
+      for (const [parte, a, b] of [
+        ['panel', productos.panel, otra.panel],
+        ['lista', productos.lista, otra.lista],
+      ] as const) {
+        expect(
+          Math.abs(a.left - b.left),
+          `${otra.titulo} · ${parte}: borde izquierdo de Productos`,
+        ).toBeLessThan(1);
+        expect(
+          Math.abs(a.right - b.right),
+          `${otra.titulo} · ${parte}: borde derecho de Productos`,
+        ).toBeLessThan(1);
+      }
+      expect(Math.abs(productos.nuevo.right - otra.nuevo.right), `${otra.titulo} · «Nuevo…»`).toBeLessThan(1);
+    }
+  });
+
+  test.describe('TEST-18 · móvil sin desplazamiento horizontal', () => {
+    test.afterAll(() => restablecerTemas());
+
+    for (const tema of TEMAS) {
+      test(`tema ${tema.toUpperCase()} a 360, 375 y 390 px`, async ({ page }) => {
+        test.setTimeout(240_000);
+        await activarTema(tema);
+        await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+
+        for (const ancho of MOVILES) {
+          await page.setViewportSize({ width: ancho, height: 812 });
+          for (const vista of VISTAS_DEL_CATALOGO) {
+            const lugar = `${tema.toUpperCase()} · ${ancho} px · ${vista.ruta}`;
+            await page.goto(vista.ruta);
+            await expect(vista.listo(page), lugar).toBeVisible();
+            await page.evaluate(() => document.fonts.ready);
+
+            const medida = await page.evaluate(() => ({
+              scrollWidth: document.documentElement.scrollWidth,
+              clientWidth: document.documentElement.clientWidth,
+            }));
+            expect.soft(medida.scrollWidth, `${lugar} · scrollWidth`).toBe(medida.clientWidth);
+            for (const control of vista.controles(page)) {
+              await expect.soft(control, `${lugar} · control visible`).toBeVisible();
+              const { left, right } = await caja(control);
+              expect
+                .soft(
+                  left >= -TOLERANCIA && right <= medida.clientWidth + TOLERANCIA,
+                  `${lugar} · ${await control.innerText()} dentro de la pantalla (x ${left.toFixed(1)}–${right.toFixed(1)})`,
+                )
+                .toBe(true);
+            }
+          }
+        }
+      });
+    }
+  });
+
+  test('TEST-19 · con 30 productos, 25 por página y una búsqueda nueva vuelve a la 1', async ({ page }) => {
+    const originales = await leerProductos();
+    const faltan = 30 - originales.length;
+    const nuevos = Array.from({ length: faltan }, (_, i) => {
+      const n = String(i + 1).padStart(2, '0');
+      return productoDePrueba({
+        id: `e2e-008-pag-${n}`,
+        sku: `E2E-PAG-${n}`,
+        name: `Producto paginado 008 ${n}`,
+      });
+    });
+    const paginacion = page.getByRole('navigation', { name: 'Páginas de productos' });
+    try {
+      await agregarProductos(nuevos);
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await abrirProductos(page);
+
+      // 30 resultados: los 25 primeros y «Página 1 de 2»; «Anterior» deshabilitado.
+      await expect(editar(lista(page))).toHaveCount(25);
+      await expect(paginacion).toContainText('Página 1 de 2');
+      await expect(paginacion.getByRole('button', { name: 'Anterior' })).toBeDisabled();
+      // La barra está dentro de la lista, después de las filas.
+      const cajaLista = await caja(lista(page));
+      const cajaBarra = await caja(paginacion);
+      expect(cajaBarra.bottom).toBeLessThanOrEqual(cajaLista.bottom + TOLERANCIA);
+
+      await paginacion.getByRole('button', { name: 'Siguiente' }).click();
+      await expect(page).toHaveURL(/\/productos\?pagina=2$/);
+      await expect(paginacion).toContainText('Página 2 de 2');
+      await expect(editar(lista(page))).toHaveCount(5);
+      await expect(paginacion.getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+
+      // Una búsqueda nueva, desde la página 2, vuelve a la 1.
+      await buscar(page);
+      await expect(page).toHaveURL(/\/productos$/);
+      await expect(paginacion).toContainText('Página 1 de 2');
+      await expect(editar(lista(page))).toHaveCount(25);
+
+      // 25 resultados o menos: sin paginación.
+      await panel(page).getByRole('textbox', { name: 'Nombre' }).fill('Producto paginado 008');
+      await buscar(page);
+      await expect(page).toHaveURL(/\/productos\?nombre=Producto(%20|\+)paginado(%20|\+)008$/);
+      await expect(editar(lista(page))).toHaveCount(faltan);
+      await expect(paginacion).toHaveCount(0);
+    } finally {
+      await restaurar(originales);
+    }
+  });
+
+  test('TEST-20 · si «Buscar» falla, avisa junto al panel y conserva filtros y resultados', async ({
+    page,
+  }) => {
+    const originales = await leerProductos();
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await abrirProductos(page);
+    await panel(page).getByRole('textbox', { name: 'Nombre' }).fill('oled');
+    await buscar(page);
+    await expect(nombresEnLista(page)).toHaveText(['OLED Vision 55” 4K']);
+
+    // Solo la consulta del snapshot falla; lo demás pasa sin tocar.
+    let consultas = 0;
+    await page.route('**/bff/admin/snapshot', (route) => {
+      if (route.request().method() !== 'GET') return route.fallback();
+      consultas++;
+      return route.fulfill({ status: 503, contentType: 'application/json', body: '{"error":"UNAVAILABLE"}' });
+    });
+    await panel(page).getByRole('textbox', { name: 'Nombre' }).fill('soundbar');
+    await buscar(page);
+    expect(consultas).toBe(1);
+
+    const aviso = page.getByRole('alert').filter({ hasText: 'No pudimos consultar los productos actuales' });
+    await expect(aviso).toHaveText(
+      'No pudimos consultar los productos actuales. La lista muestra la última búsqueda; inténtalo de nuevo.',
+    );
+    // Junto al panel: debajo de él y encima de la lista.
+    const cajaAviso = await caja(aviso);
+    expect(cajaAviso.top).toBeGreaterThanOrEqual((await caja(panel(page))).bottom);
+    expect(cajaAviso.bottom).toBeLessThanOrEqual((await caja(lista(page))).top);
+    // Filtros escritos y resultados de la última búsqueda, sin cambios; la URL sigue con la búsqueda anterior.
+    await expect(panel(page).getByRole('textbox', { name: 'Nombre' })).toHaveValue('soundbar');
+    await expect(page).toHaveURL(/\/productos\?nombre=oled$/);
+    await expect(nombresEnLista(page)).toHaveText(['OLED Vision 55” 4K']);
+
+    // Reintento con el BFF de vuelta: busca, quita el aviso y aplica los filtros.
+    await page.unroute('**/bff/admin/snapshot');
+    await buscar(page);
+    await expect(aviso).toHaveCount(0);
+    await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
+    await expect(nombresEnLista(page)).toHaveText(['Soundbar Cinema 500']);
+    expect(await leerProductos()).toEqual(originales);
+  });
+
+  test('TEST-21 · si el BFF rechaza el guardado, el registro conserva lo escrito y avisa junto al botón', async ({
+    page,
+  }) => {
+    const productos = await leerProductos();
+    const categorias = await leerCategorias();
+    const marcas = await leerMarcas();
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+
+    // Solo el guardado del snapshot falla con un 400; la consulta pasa sin tocar.
+    await page.route('**/bff/admin/snapshot', (route) => {
+      if (route.request().method() !== 'PUT') return route.fallback();
+      return route.fulfill({
+        status: 400,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: { code: 'VALIDATION_ERROR', message: MOTIVO_RECHAZO } }),
+      });
+    });
+
+    for (const [ruta, formulario, guardar] of [
+      ['/productos/p-004', 'Editar producto', 'Guardar producto'],
+      ['/categorias/cat-tv-oled', 'Editar categoría', 'Guardar'],
+      ['/marcas/b-nova', 'Editar marca', 'Guardar'],
+    ] as const) {
+      await page.goto(ruta);
+      const registro = page.getByRole('form', { name: formulario });
+      const nombre = registro.getByRole('textbox', { name: 'Nombre', exact: true });
+      await expect(nombre).not.toHaveValue('');
+      await nombre.fill(`Nombre rechazado 008`);
+      const boton = registro.getByRole('button', { name: guardar, exact: true });
+      await boton.click();
+
+      // Se queda en el registro con lo escrito y el error junto al botón, dentro del formulario.
+      const error = registro.getByRole('alert');
+      await expect(error, formulario).toHaveText(MOTIVO_RECHAZO);
+      await expect(page).toHaveURL(new RegExp(`${ruta}$`));
+      await expect(nombre).toHaveValue('Nombre rechazado 008');
+      const cajaError = await caja(error);
+      const cajaBoton = await caja(boton);
+      expect(
+        cajaBoton.top - cajaError.bottom,
+        `${formulario}: el error justo encima del botón`,
+      ).toBeGreaterThanOrEqual(0);
+      expect(cajaBoton.top - cajaError.bottom, `${formulario}: el error justo encima del botón`).toBeLessThan(
+        40,
+      );
+    }
+
+    await page.unroute('**/bff/admin/snapshot');
+    // Nada se guardó.
+    expect(await leerProductos()).toEqual(productos);
+    expect(await leerCategorias()).toEqual(categorias);
+    expect(await leerMarcas()).toEqual(marcas);
   });
 });
