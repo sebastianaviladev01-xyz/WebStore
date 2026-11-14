@@ -236,7 +236,7 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - **Ejecutado con.** Todas las tareas registraron la herramienta y el modelo. Excepciones:
   - El esfuerzo de la sesión no se pudo leer en ninguna tarea ni en esta verificación.
   - TASK-01 y TASK-06 se ejecutaron con Opus 5.5 (`claude-opus-5-5`), un nivel por encima del catálogo (estándar · medio, Sonnet 5.5), por el agente principal de su bloque, sin delegar.
-- **Typecheck.** `verify` no comprueba los tipos de los archivos que nada importa (PBI-0029), y el lint no cubre `tests/e2e/`. En esta verificación se comprobaron a mano las dos aplicaciones y las cinco e2e nuevas con `tsc`.
+- **Typecheck.** `verify` no comprueba los tipos de los archivos que nada importa (PBI-0029), y el lint no cubre `tests/e2e/` ([PBI-0056](../../../planning/backlog.md), anotado al registrar la entrega). En esta verificación se comprobaron a mano las dos aplicaciones y las cinco e2e nuevas con `tsc`.
 - **Pruebas de componentes.** Sigue sin entorno de pruebas de componentes de Angular (PBI-0025): la regla `a` y los componentes de Material se prueban con e2e.
 - **Temas propios ya guardados.** El par `onLink/link` es un aviso que no bloquea. Un tema propio guardado antes de la feature recibe su `--ws-on-link` calculado al leerse, sin migración ni cambio de `schemaVersion`. Con las reglas actuales, el aviso no llega a salir en ningún tema válido (nota fechada en el plan y en ADR-0014).
 - **Pendiente de la entrega.** Lo que depende de fusionar el PR no se marca como entregado en la rama. Se actualiza en el registro de la entrega, después del merge, con la lista del [Traspaso](tasks.md#traspaso).
