@@ -59,3 +59,65 @@ export function filtrarMarcas(marcas: readonly Marca[], filtros: FiltrosMarcas):
     (marca) => contieneTexto(marca.name, filtros.nombre) && cumpleEstado(marca.active, filtros.estado),
   );
 }
+
+/** Parámetros de consulta de la URL de un listado, tal como los entrega el router. */
+export type ParametrosUrl = Readonly<Record<string, string | undefined>>;
+
+const leerEstado = (valor: string | undefined): EstadoFiltro =>
+  valor === 'activos' || valor === 'inactivos' ? valor : 'todos';
+
+/** Solo los parámetros con valor: un texto vacío (o de espacios) y el estado «todos» no se escriben. */
+const sinPorDefecto = (parametros: Record<string, string>): Record<string, string> =>
+  Object.fromEntries(
+    Object.entries(parametros)
+      .map(([clave, valor]) => [clave, valor.trim()] as const)
+      .filter(([clave, valor]) => valor && !(clave === 'estado' && valor === 'todos')),
+  );
+
+/** Filtros de Productos de `nombre`, `sku`, `categoria`, `marca` y `estado`; lo que falta, por defecto. */
+export function leerFiltrosProductos(parametros: ParametrosUrl): FiltrosProductos {
+  return {
+    nombre: parametros['nombre'] ?? '',
+    sku: parametros['sku'] ?? '',
+    categoriaId: parametros['categoria'] ?? '',
+    marcaId: parametros['marca'] ?? '',
+    estado: leerEstado(parametros['estado']),
+  };
+}
+
+/** Filtros de Categorías de `nombre` y `padre` (un id o `SIN_PADRE`). */
+export function leerFiltrosCategorias(parametros: ParametrosUrl): FiltrosCategorias {
+  return { nombre: parametros['nombre'] ?? '', padreId: parametros['padre'] ?? '' };
+}
+
+/** Filtros de Marcas de `nombre` y `estado`. */
+export function leerFiltrosMarcas(parametros: ParametrosUrl): FiltrosMarcas {
+  return { nombre: parametros['nombre'] ?? '', estado: leerEstado(parametros['estado']) };
+}
+
+/** Página de `pagina`: un entero desde 1, sin signos ni decimales; si no es válida, la 1. */
+export function leerPagina(parametros: ParametrosUrl): number {
+  const valor = parametros['pagina'];
+  return valor && /^[1-9]\d*$/.test(valor) ? Number(valor) : 1;
+}
+
+/** Parámetros de la URL para los filtros de Productos, sin los valores por defecto ni `pagina`. */
+export function parametrosDeFiltrosProductos(filtros: FiltrosProductos): Record<string, string> {
+  return sinPorDefecto({
+    nombre: filtros.nombre,
+    sku: filtros.sku,
+    categoria: filtros.categoriaId,
+    marca: filtros.marcaId,
+    estado: filtros.estado,
+  });
+}
+
+/** Parámetros de la URL para los filtros de Categorías, sin los valores por defecto ni `pagina`. */
+export function parametrosDeFiltrosCategorias(filtros: FiltrosCategorias): Record<string, string> {
+  return sinPorDefecto({ nombre: filtros.nombre, padre: filtros.padreId });
+}
+
+/** Parámetros de la URL para los filtros de Marcas, sin los valores por defecto ni `pagina`. */
+export function parametrosDeFiltrosMarcas(filtros: FiltrosMarcas): Record<string, string> {
+  return sinPorDefecto({ nombre: filtros.nombre, estado: filtros.estado });
+}

@@ -26,6 +26,13 @@ const {
   FILTROS_PRODUCTOS_VACIOS,
   FILTROS_CATEGORIAS_VACIOS,
   FILTROS_MARCAS_VACIOS,
+  leerFiltrosProductos,
+  leerFiltrosCategorias,
+  leerFiltrosMarcas,
+  leerPagina,
+  parametrosDeFiltrosProductos,
+  parametrosDeFiltrosCategorias,
+  parametrosDeFiltrosMarcas,
 } = regla;
 
 const cat = (id, name, parentId, order) => ({
@@ -235,4 +242,110 @@ test('TEST-05: marcas por nombre, por estado y las dos a la vez, en el orden de 
   assert.deepEqual(ids(filtrarMarcas(marcas, filtrosM({ estado: 'inactivos' }))), ['m2', 'm3']);
   assert.deepEqual(ids(filtrarMarcas(marcas, filtrosM({ nombre: 'sonica', estado: 'inactivos' }))), []);
   assert.deepEqual(ids(filtrarMarcas(marcas, filtrosM({ nombre: 'son', estado: 'inactivos' }))), ['m3']);
+});
+
+// TEST-06: filtros y página en los parámetros de la URL.
+test('TEST-06: sin parámetros, los filtros vacíos y la página 1', () => {
+  assert.deepEqual(leerFiltrosProductos({}), FILTROS_PRODUCTOS_VACIOS);
+  assert.deepEqual(leerFiltrosCategorias({}), FILTROS_CATEGORIAS_VACIOS);
+  assert.deepEqual(leerFiltrosMarcas({}), FILTROS_MARCAS_VACIOS);
+  assert.equal(leerPagina({}), 1);
+});
+
+test('TEST-06: los filtros de productos se leen de nombre, sku, categoria, marca y estado', () => {
+  assert.deepEqual(
+    leerFiltrosProductos({
+      nombre: 'Cooler',
+      sku: 'COOL',
+      categoria: 'cat-tv',
+      marca: 'brand-1',
+      estado: 'inactivos',
+      pagina: '2',
+      otro: 'x',
+    }),
+    { nombre: 'Cooler', sku: 'COOL', categoriaId: 'cat-tv', marcaId: 'brand-1', estado: 'inactivos' },
+  );
+  assert.deepEqual(leerFiltrosCategorias({ nombre: 'oled', padre: 'cat-tv' }), {
+    nombre: 'oled',
+    padreId: 'cat-tv',
+  });
+  assert.deepEqual(leerFiltrosCategorias({ padre: SIN_PADRE }), { nombre: '', padreId: SIN_PADRE });
+  assert.deepEqual(leerFiltrosMarcas({ nombre: 'son', estado: 'activos' }), {
+    nombre: 'son',
+    estado: 'activos',
+  });
+});
+
+test('TEST-06: un estado desconocido se lee como «todos»', () => {
+  for (const estado of ['todos', 'Activos', 'otro', '']) {
+    assert.equal(leerFiltrosProductos({ estado }).estado, 'todos', `estado=${estado}`);
+    assert.equal(leerFiltrosMarcas({ estado }).estado, 'todos', `estado=${estado}`);
+  }
+});
+
+test('TEST-06: la página es un entero desde 1; si no es válida, la 1', () => {
+  assert.equal(leerPagina({ pagina: '3' }), 3);
+  assert.equal(leerPagina({ pagina: '12' }), 12);
+  for (const pagina of ['0', '-2', '2.5', 'abc', '', ' 2', '1e2', undefined]) {
+    assert.equal(leerPagina({ pagina }), 1, `pagina=${pagina}`);
+  }
+});
+
+test('TEST-06: al escribir, los valores por defecto se omiten y la página nunca se escribe', () => {
+  assert.deepEqual(parametrosDeFiltrosProductos(FILTROS_PRODUCTOS_VACIOS), {});
+  assert.deepEqual(parametrosDeFiltrosCategorias(FILTROS_CATEGORIAS_VACIOS), {});
+  assert.deepEqual(parametrosDeFiltrosMarcas(FILTROS_MARCAS_VACIOS), {});
+  assert.deepEqual(
+    parametrosDeFiltrosProductos({ ...FILTROS_PRODUCTOS_VACIOS, nombre: '   ', estado: 'activos' }),
+    {
+      estado: 'activos',
+    },
+  );
+  for (const parametros of [
+    parametrosDeFiltrosProductos({ ...FILTROS_PRODUCTOS_VACIOS, pagina: 3 }),
+    parametrosDeFiltrosCategorias({ ...FILTROS_CATEGORIAS_VACIOS, pagina: 3 }),
+    parametrosDeFiltrosMarcas({ ...FILTROS_MARCAS_VACIOS, pagina: 3 }),
+  ]) {
+    assert.equal('pagina' in parametros, false);
+  }
+});
+
+test('TEST-06: los textos se escriben sin los espacios de los extremos', () => {
+  assert.deepEqual(
+    parametrosDeFiltrosProductos({ ...FILTROS_PRODUCTOS_VACIOS, nombre: '  Cooler portátil ' }),
+    {
+      nombre: 'Cooler portátil',
+    },
+  );
+});
+
+test('TEST-06: ida y vuelta de los tres filtros', () => {
+  const productos = {
+    nombre: 'Jesús',
+    sku: 'LIC',
+    categoriaId: 'cat-tv',
+    marcaId: 'brand-2',
+    estado: 'inactivos',
+  };
+  assert.deepEqual(parametrosDeFiltrosProductos(productos), {
+    nombre: 'Jesús',
+    sku: 'LIC',
+    categoria: 'cat-tv',
+    marca: 'brand-2',
+    estado: 'inactivos',
+  });
+  assert.deepEqual(leerFiltrosProductos(parametrosDeFiltrosProductos(productos)), productos);
+  for (const categorias of [
+    { nombre: 'oled', padreId: 'cat-tv' },
+    { nombre: '', padreId: SIN_PADRE },
+  ]) {
+    assert.deepEqual(leerFiltrosCategorias(parametrosDeFiltrosCategorias(categorias)), categorias);
+  }
+  assert.deepEqual(parametrosDeFiltrosCategorias({ nombre: 'oled', padreId: 'cat-tv' }), {
+    nombre: 'oled',
+    padre: 'cat-tv',
+  });
+  const marcas = { nombre: 'Sónica', estado: 'activos' };
+  assert.deepEqual(parametrosDeFiltrosMarcas(marcas), { nombre: 'Sónica', estado: 'activos' });
+  assert.deepEqual(leerFiltrosMarcas(parametrosDeFiltrosMarcas(marcas)), marcas);
 });
