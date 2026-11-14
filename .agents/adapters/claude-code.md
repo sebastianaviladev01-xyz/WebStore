@@ -32,13 +32,6 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 - Delega con la herramienta `Agent`: `model` con el alias de `agentAliases` y `effort` con el valor del catálogo.
 - [Revisión ciega](../../docs/development/agent-execution.md#revisión-ciega): un `Agent` nuevo, no una bifurcación de la sesión, con el modelo y el esfuerzo de `roles`. Recibe solo los artefactos que revisa y la pregunta o la lista de comprobación.
 - No uses los modelos de `excludedModels`.
-- El tope es el modelo del nivel avanzado con esfuerzo `alto` (hoy, Opus 5.5 con `high`). No fijes `xhigh` ni `max` ni uses un modelo por encima, ni en la sesión ni al delegar, aunque Claude Code los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)). Si la sesión está en un modelo o un esfuerzo superior sin que una persona lo haya pedido para ella, pide el cambio.
-
-## Commits y pull requests
-
-- Claude Code añade por defecto una línea `Co-Authored-By` al final del mensaje de cada commit y «Generated with Claude Code» al final del cuerpo de cada pull request. No las pongas: la [convención de commits](../../docs/git/conventional-commits.md#formato) y la [de pull requests](../../docs/git/conventional-pull-requests.md#3-completar-la-descripción) las prohíben, y la regla del repositorio gana a la de la herramienta.
-- Antes de informar de un commit, comprueba que su mensaje no la lleva: `git log -1 --format=%B`. Si la lleva y el commit es local y no está publicado, reescribe solo el mensaje. Si ya está publicado, no reescribas el historial: avisa a la persona.
-- Al delegar con `Agent` o con una sesión nueva, dilo en el encargo. Quien recibe el encargo tiene la misma instrucción por defecto.
 
 ## CI de un pull request
 

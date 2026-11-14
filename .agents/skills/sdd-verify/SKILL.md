@@ -45,4 +45,3 @@ Argumentos: el `NNN-slug` de la feature.
 - No instales ni alteres servicios externos. Levantar los servidores locales (BFF, Storefront y Admin) está permitido: no son servicios externos. Detenlos al terminar.
 - No uses `backend/data.json` para las comprobaciones que modifican datos: usa una copia con `WEBSTORE_DATA_FILE`.
 - No copies cifras de cobertura ni marques casillas por intención.
-- No marques como entregado lo que depende del merge. Déjalo en el Traspaso de `tasks.md`, en la fila «Tras la fusión del PR», con archivo y línea de cada mención, para el registro de la entrega (`docs/architecture/development-workflow.md`, apartado «Registro de la entrega»).

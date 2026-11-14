@@ -46,8 +46,7 @@ WebStore es una tienda en línea: Storefront (tienda pública) y Admin (backoffi
 - Si encuentras un hueco o una contradicción real en la documentación, repórtalo aparte, con archivo y línea, y propón el cambio en una rama `feature/*` de documentación. No lo mezcles con la tarea.
 - El estado de cada feature y el siguiente trabajo están en el [índice de features](docs/specs/features/README.md). Si el siguiente trabajo figura como «por decidir», pregunta; no lo elijas.
 - Si una persona te enseña una regla del flujo que no está en el repositorio, propón escribirla en el documento que corresponda, no solo en tu memoria.
-- Una mejora o deuda fuera del alcance de la tarea se anota en el [backlog](docs/planning/backlog.md) con su origen. No la priorizas sin que te lo pidan. Todo hallazgo fuera de alcance (defecto, deuda o prueba intermitente) tiene su PBI, no solo una línea en `verification.md` o en un PR.
-- Una pregunta de negocio que las fuentes (notas de reunión, chats) no responden de forma explícita no la decide quien aprueba el hito: va a [decisiones pendientes](docs/planning/PENDING-DECISIONS.md) para quien decide el producto, con las citas y la pregunta, y la feature queda bloqueada hasta su respuesta. Las preguntas técnicas o de proceso sí las responde quien aprueba el hito ([hitos humanos](docs/architecture/development-workflow.md#hitos-humanos)).
+- Una mejora o deuda fuera del alcance de la tarea se anota en el [backlog](docs/planning/backlog.md) con su origen. No la priorizas sin que te lo pidan.
 
 ## Mapa del repositorio
 

@@ -63,7 +63,7 @@ Argumentos opcionales: la rama y el destino.
     - la URL del PR, que está en borrador y sus etiquetas;
     - el estado de los checks;
     - el comando para marcarlo como listo, `gh pr ready <n>`;
-    - que, una vez fusionado, se cierra con el skill `post-merge` y, si es el último PR de la implementación de una feature, sigue el registro de la entrega.
+    - que, una vez fusionado, se cierra con el skill `post-merge`.
 
 ## No hacer
 
