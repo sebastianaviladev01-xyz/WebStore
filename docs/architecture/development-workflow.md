@@ -27,6 +27,7 @@ Con agentes, cada etapa empieza en una sesión nueva ([una sesión por etapa](..
 Los hitos de alcance, arquitectura y entrega los aprueba una persona del equipo:
 
 - Las preguntas del hito se presentan **de una en una**. Cada una lleva sus alternativas, con lo que significaría elegir cada una, la recomendación y la evidencia que la respalda (un archivo, una historia, una medida), para que la persona pueda rebatirla.
+- Si una pregunta depende de una regla de negocio que las fuentes (notas de reunión, chats) no dicen de forma explícita, no se le pide a la persona que aprueba el hito que la decida. Se registra en [decisiones pendientes](../planning/PENDING-DECISIONS.md) para quien decide el producto (hoy, Daniel Avila), con las citas explícitas y cada pregunta, y la feature y su PBI quedan bloqueados hasta la respuesta. La recomendación se conserva en el artefacto como recomendación, no como decisión. Las preguntas técnicas o de proceso (alternativas de arquitectura, estrategia de pruebas, redacción que solo sigue lo dicho) sí las responde la persona que aprueba el hito.
 - La decisión se registra en el artefacto de la etapa: quién aprobó y cuándo. Si da lugar a un ADR, sus alternativas pasan a la tabla de opciones de la [plantilla](../adrs/0000-template.md).
 - El registro es un commit de la rama de la feature. Un hito no abre un pull request, y la etapa siguiente no empieza hasta que el hito anterior está aprobado y registrado.
 
@@ -59,7 +60,7 @@ El PR de la feature no puede citar su propio número ni el SHA de su merge. Por 
 2. Una rama `feature/registrar-entrega-NNN-slug`, creada desde la rama base, lleva un commit `docs` con el registro:
    - la fila del [índice de features](../specs/features/README.md) pasa a `entregada`, con el PR y el SHA del merge;
    - `verification.md` y el Traspaso de `tasks.md` anotan el resultado del CI del PR y la entrega;
-   - los documentos que la feature dejó como pendientes de entregar (arquitectura, [trazabilidad](../planning/TRACEABILITY.md)) y los elementos del [backlog](../planning/backlog.md) que cierra pasan a entregados.
+   - los documentos que la feature dejó como pendientes de entregar (arquitectura, [trazabilidad](../planning/TRACEABILITY.md)) y los elementos del [backlog](../planning/backlog.md) que cierra pasan a entregados. Parte de la lista «Tras la fusión del PR» que `sdd-verify` deja en el Traspaso, con archivo y línea, y se completa buscando el estado pendiente con varias formulaciones (por ejemplo, «pendiente de entregar», «en su rama», «implementado en la rama», «sin push»), no con una sola. Lo que siga apareciendo fuera de los registros históricos de `tasks.md` y `verification.md` se corrige en el mismo commit.
 3. Su PR se abre con `pr-create`. Es el único PR adicional de una feature.
 
 El registro no cambia código ni reabre decisiones: lo que se descubra después de la entrega va al backlog.
