@@ -1,9 +1,9 @@
 # 0015. Entregar cada feature en un solo pull request
 
-- Estado: Aceptada
+- Estado: Sustituida por [0016](0016-volver-a-un-pull-request-por-hito.md)
 - Fecha: 2026-11-14
 
-Aceptada por Sebastián Avila el 2026-11-14, según la instrucción escrita de Daniel Avila del 2026-11-13, que pidió el cambio.
+Aceptada por Sebastián Avila el 2026-11-14, según la instrucción escrita de Daniel Avila del 2026-11-13, que pidió el cambio. Sustituida el mismo 2026-11-14, después del piloto, por [ADR-0016](0016-volver-a-un-pull-request-por-hito.md). El texto se conserva como estaba; el apartado «Un pull request por feature» del flujo de trabajo, que enlazaba, ya no existe.
 
 ## Contexto
 
@@ -30,7 +30,7 @@ Entregaremos cada feature en un solo pull request hacia `dev`:
 - **Registro de la entrega.** Después del merge, un PR nuevo deja la feature como `entregada`, con el número del PR y el SHA del merge, que no existen antes. Es el único PR adicional de una feature.
 - **Implantación con un piloto.** La regla se estrena con una sola feature, limitada a un módulo (por ejemplo, productos). Cuando esté entregada, el equipo comprueba que el flujo funciona como necesita, y solo entonces se aplica a las features siguientes.
 
-No cambian las sesiones por etapa y por bloque, el worktree de la implementación, el ciclo TDD, los controles de cada tarea ni la [política de ramas](../git/conventional-pull-requests.md#política-de-pull-requests). Este ADR amplía [ADR-0002](0002-adoptar-sdd-y-tdd.md) y [ADR-0005](0005-adoptar-convenciones-de-versionamiento-y-entrega.md); no los sustituye. El detalle vive en [Un pull request por feature](../architecture/development-workflow.md#un-pull-request-por-feature).
+No cambian las sesiones por etapa y por bloque, el worktree de la implementación, el ciclo TDD, los controles de cada tarea ni la [política de ramas](../git/conventional-pull-requests.md#política-de-pull-requests). Este ADR amplía [ADR-0002](0002-adoptar-sdd-y-tdd.md) y [ADR-0005](0005-adoptar-convenciones-de-versionamiento-y-entrega.md); no los sustituye. El detalle vive en «Un pull request por feature» del [flujo de trabajo](../architecture/development-workflow.md).
 
 *Motivo:* los PR intermedios no añadían una revisión que no existiera ya en el hito: solo repetían la ronda de integración. Un PR por feature conserva los hitos y la evidencia en el historial y quita esa repetición.
 

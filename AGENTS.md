@@ -84,8 +84,8 @@ Qué control corresponde a cada tarea: [controles proporcionados](docs/developme
 
 Cada feature se desarrolla en `docs/specs/features/NNN-slug/` siguiendo el [flujo de trabajo](docs/architecture/development-workflow.md) ([ADR-0002](docs/adrs/0002-adoptar-sdd-y-tdd.md)):
 
-1. `sdd-specify` → `sdd-plan` → `sdd-decide` → `sdd-tasks` → `sdd-implement` → `sdd-verify`. Cada etapa empieza en una sesión nueva y hace commit en la misma rama `feature/NNN-slug`. La feature se entrega en un solo PR, que se abre con el hito de entrega aprobado; solo el registro de la entrega, después del merge, va en un PR nuevo ([un pull request por feature](docs/architecture/development-workflow.md#un-pull-request-por-feature), [ADR-0015](docs/adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)).
-2. Hay hitos humanos de alcance, arquitectura y entrega. No los des por aprobados sin evidencia. Cada hito se registra en un commit de la rama; no abre un PR.
+1. `sdd-specify` → `sdd-plan` → `sdd-decide` → `sdd-tasks` → `sdd-implement` → `sdd-verify`. Cada etapa empieza en una sesión nueva y cada hito cierra un PR.
+2. Hay hitos humanos de alcance, arquitectura y entrega. No los des por aprobados sin evidencia.
 3. En las áreas de STD-18 la prueba se escribe antes que el código.
 4. La implementación se hace en un worktree por feature y por bloques de tareas, cada uno con el nivel y el esfuerzo que indica `tasks.md`, resueltos para tu herramienta en el [catálogo](.agents/execution-catalog.json). Al terminar un bloque, informa y espera la aprobación antes del siguiente.
 5. Cada tarea ejecuta los controles de su área y deja la evidencia en el commit. Si toca la interfaz, compara capturas antes y después (STD-12).

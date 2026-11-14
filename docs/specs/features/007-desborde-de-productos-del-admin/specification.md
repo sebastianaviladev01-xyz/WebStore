@@ -1,7 +1,7 @@
 # 007. Desborde de productos del Admin — Especificación
 
 - Feature: `007-desborde-de-productos-del-admin`
-- Historia de usuario: ninguna. Sale de [PBI-0045](../../../planning/backlog.md) (desborde horizontal de `/productos` del Admin a 375 px, en los tres temas), detectado en la verificación de la feature [003](../003-ajustes-del-admin/verification.md#riesgos-remanentes-y-excepciones). Sebastián Avila lo eligió el 2026-11-14 como piloto del flujo de [un solo pull request por feature](../../../architecture/development-workflow.md#implantación-con-un-piloto): un solo módulo, el de productos, como pidió Daniel Avila el 2026-11-13.
+- Historia de usuario: ninguna. Sale de [PBI-0045](../../../planning/backlog.md) (desborde horizontal de `/productos` del Admin a 375 px, en los tres temas), detectado en la verificación de la feature [003](../003-ajustes-del-admin/verification.md#riesgos-remanentes-y-excepciones). Sebastián Avila lo eligió el 2026-11-14 como piloto del flujo de [un solo pull request por feature](../../../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md): un solo módulo, el de productos, como pidió Daniel Avila el 2026-11-13.
 - Estado: aprobada
 - Fecha: 2026-11-14
 - Hito de alcance: aprobado por Sebastián Avila el 2026-11-14, con las tres [decisiones del hito](#decisiones-del-hito-de-alcance)
@@ -197,7 +197,7 @@ Sebastián Avila respondió el 2026-11-14 las tres preguntas, presentadas de una
 
 - [PBI-0045 en el backlog](../../../planning/backlog.md)
 - [Verificación de la feature 003](../003-ajustes-del-admin/verification.md#riesgos-remanentes-y-excepciones)
-- [Implantación con un piloto](../../../architecture/development-workflow.md#implantación-con-un-piloto)
+- [Implantación con un piloto](../../../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)
 - [Estándares](../../../architecture/standards.md) (STD-11 y STD-12)
 - [Validación: anchos de referencia](../../../../frontend/docs/VALIDATION.md#responsive-y-revisión-visual)
 - [Sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md)

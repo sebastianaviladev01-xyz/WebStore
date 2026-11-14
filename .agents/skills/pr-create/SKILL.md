@@ -20,7 +20,6 @@ Argumentos opcionales: la rama y el destino.
 - `.github/pull_request_template.md`: las secciones del cuerpo.
 - `docs/git/conventional-commits.md`, apartados «Formato» y «Tipos».
 - `docs/development/pull-request-checklist.md`.
-- `docs/architecture/development-workflow.md`, apartados «Un pull request por feature» y «Registro de la entrega», si la rama es la de una feature.
 
 ## Pasos
 
@@ -28,7 +27,6 @@ Argumentos opcionales: la rama y el destino.
    - la rama es `feature/*`, o `hotfix/*` si la persona lo pidió; nunca `dev`, `release/*` ni `main`;
    - `git status --porcelain` está vacío. Si hay cambios sin commit, pregunta: no los incluyas por tu cuenta;
    - el origen y el destino cumplen la política. Si generan una alerta, prepárala para el cuerpo; si son un flujo prohibido, detente;
-   - si la rama es la de una feature (`feature/NNN-slug`), este es su único PR: todas sus etapas están en la rama, `verification.md` está completo y el hito de entrega figura como aprobado. Si falta algo, no abras el PR: di qué etapa o qué hito falta. El registro de la entrega (`feature/registrar-entrega-NNN-slug`) va en su propio PR, después del merge;
    - `gh pr list --head <rama> --state open` no devuelve ningún PR. Si devuelve uno, no abras otro: sigue los pasos 2 a 7 para su cuerpo y propone hacer push de los commits nuevos y actualizarlo con `gh pr edit <n> --body-file <archivo>`.
 2. **Revisa el diff y los commits** contra `origin/<destino>`, como indica la guía. Si la rama todavía no está publicada, compara con la rama local:
    - el diff contiene solo lo previsto, sin archivos generados (`node_modules`, `dist`, `.angular`, `frontend/output`, logs), sin `backend/data*.json`, sin secretos y sin capturas ni datos personales;
@@ -65,7 +63,7 @@ Argumentos opcionales: la rama y el destino.
     - la URL del PR, que está en borrador y sus etiquetas;
     - el estado de los checks;
     - el comando para marcarlo como listo, `gh pr ready <n>`;
-    - que, una vez fusionado, se cierra con el skill `post-merge` y, si es el PR de una feature, sigue el registro de la entrega.
+    - que, una vez fusionado, se cierra con el skill `post-merge`.
 
 ## No hacer
 
@@ -76,4 +74,3 @@ Argumentos opcionales: la rama y el destino.
 - No sustituyas la plantilla por la lista de commits ni uses palabras clave de cierre como `Closes #12` sin que la persona lo pida.
 - No fusiones `dev` en la feature ni uses el botón de resolver conflictos de GitHub en un PR hacia `dev`.
 - No crees etiquetas nuevas ni el repositorio de GitHub.
-- No abras un PR para una etapa suelta de una feature (la especificación, el plan, los ADR, las tareas o un bloque): la feature se entrega en un solo PR.

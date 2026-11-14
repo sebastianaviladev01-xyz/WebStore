@@ -10,7 +10,7 @@ Complementa la [convención de commits](conventional-commits.md). La decisión e
 
 ## Principios
 
-- Mantén cada pull request enfocado en un único propósito y entrega en él el cambio completo: no lo repartas en PR pequeños. En una feature SDD, un solo PR con todas sus etapas y otro, después del merge, para el registro de la entrega ([un pull request por feature](../architecture/development-workflow.md#un-pull-request-por-feature), [ADR-0015](../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)).
+- Mantén cada pull request enfocado en un único propósito y con el menor alcance razonable. En una feature SDD, un PR por hito ([pull requests de una feature](../architecture/development-workflow.md#pull-requests-de-una-feature)).
 - Describe el resultado funcional y las decisiones relevantes. Una lista de archivos o commits no reemplaza la explicación.
 - Revisa el diff completo contra la rama destino antes de solicitar aprobación.
 - Registra los comandos de validación ejecutados y sus resultados reales. No declares como ejecutada una prueba que se omitió ([STD-13](../architecture/standards.md)).
@@ -57,8 +57,7 @@ WebStore todavía no tiene ambientes desplegados: el despliegue es una decisión
 
 ### Nombres de rama
 
-- Feature del flujo SDD: `feature/<NNN-slug>`, con la carpeta de su especificación. Es una sola rama para todas las etapas de la feature. Ejemplo: `feature/001-comprar-como-invitado`.
-- Registro de la entrega de una feature: `feature/registrar-entrega-<NNN-slug>`. Ejemplo: `feature/registrar-entrega-001-comprar-como-invitado`.
+- Feature del flujo SDD: `feature/<NNN-slug>`, con la carpeta de su especificación. Ejemplo: `feature/001-comprar-como-invitado`.
 - Otro trabajo: `feature/<slug>`, en kebab-case y en español. Ejemplo: `feature/convenciones-versionamiento-entrega`.
 - Versión: `release/<x.y.z>`, con el número [SemVer](#numerar-la-versión). Ejemplo: `release/0.1.0`.
 - Corrección urgente: `hotfix/<x.y.z>`, con la versión de parche que producirá. Ejemplo: `hotfix/0.1.1`.
@@ -301,8 +300,6 @@ Usa estos prefijos para que la acción esperada sea inequívoca:
 - `[SUGERENCIA]`: mejora opcional que no condiciona la aprobación.
 
 Un comentario indica la ubicación o el comportamiento observado, el riesgo concreto y la acción esperada. Después de nuevos pushes, vuelve a revisar las áreas modificadas.
-
-El PR de una feature trae todas sus etapas. Revísalo por commits, en el orden de las etapas: la especificación, el plan, los ADR, las tareas, cada bloque y la verificación. Cada hito aprobado tiene su commit, y el de entrega debe figurar como aprobado en `verification.md`.
 
 ## Aprobar y fusionar
 

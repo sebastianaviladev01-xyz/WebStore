@@ -12,8 +12,7 @@ Se aplica a tareas y entregas funcionales. Es obligatoria ([STD-13, STD-17 y STD
 - [ ] Trazabilidad REQ → AC → TASK → cambio → TEST → resultado completa.
 - [ ] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia; `backend/data.json` sin modificar por las pruebas.
 - [ ] Excepciones justificadas y vigentes; los controles no ejecutados figuran como pendientes, no como aprobados.
-- [ ] Revisión humana del hito correspondiente registrada en el artefacto de su etapa, en un commit de la rama de la feature.
-- [ ] En una feature, todas las etapas están en su rama y se entregan en [un solo pull request](../architecture/development-workflow.md#un-pull-request-por-feature), que se abre con el hito de entrega aprobado.
+- [ ] Revisión humana del hito correspondiente registrada.
 
 La cantidad de pruebas no reemplaza la aceptación funcional. Un build local no acredita un despliegue: WebStore todavía no tiene ambientes desplegados.
 

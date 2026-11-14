@@ -25,7 +25,7 @@ Otros skills:
 | Skill | Uso |
 |---|---|
 | `pr-create` | Publica una rama `feature/*` y abre su PR en borrador hacia `dev` cuando la persona aprueba el título, las etiquetas y el cuerpo ([convenciones de pull requests](../docs/git/conventional-pull-requests.md)) |
-| `post-merge` | Cierra un cambio cuyo PR ya está fusionado en `dev`: su worktree, su rama local y sus copias de datos, y actualiza `dev` local ([cerrar el worktree](../docs/development/agent-execution.md#cerrar-el-worktree)). Si era el PR de una feature, propone el [registro de la entrega](../docs/architecture/development-workflow.md#registro-de-la-entrega) |
+| `post-merge` | Cierra un cambio cuyo PR ya está fusionado en `dev`: su worktree, su rama local y sus copias de datos, y actualiza `dev` local ([cerrar el worktree](../docs/development/agent-execution.md#cerrar-el-worktree)) |
 | `ready-check` | Comprueba el entorno, el repositorio, el flujo y el estado del proyecto, y responde «Listo para trabajar» o qué falta. No cambia nada |
 | `onboarding` | Acompaña la incorporación de una persona: accesos, entorno del primer día, `ready-check` y ruta de lectura de la [guía de incorporación](../docs/development/onboarding.md) |
 
