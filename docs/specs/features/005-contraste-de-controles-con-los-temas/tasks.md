@@ -5,7 +5,7 @@
 - Plan: [planning.md](planning.md) (hito de arquitectura aprobado el 2026-11-13, PR #32; alternativa A en las cuatro preguntas)
 - ADR: [ADR-0014](../../../adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md) (aceptado el 2026-11-13, PR #33), que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md)
 - Fecha: 2026-11-13
-- Estado: borrador, pendiente de la aprobación de Sebastián Avila, con los [ajustes respecto al plan](#ajustes-respecto-al-plan)
+- Estado: aprobado por Sebastián Avila el 2026-11-13 («Sí, apruébalas», desde su sesión principal), con los [ajustes respecto al plan](#ajustes-respecto-al-plan)
 
 Las rutas de código son relativas a la raíz del repositorio. Los TEST son los de la [estrategia de pruebas del plan](planning.md#estrategia-de-pruebas); los nombres, tokens, pares y constantes, los de [tipos intermedios y nombres](planning.md#tipos-intermedios-y-nombres); los diez enlaces, los de [enlaces afectados por D1](planning.md#enlaces-afectados-por-d1). Ninguna tarea los vuelve a decidir.
 
@@ -15,8 +15,8 @@ Permite empezar el bloque siguiente sin releer la feature. La actualiza la últi
 
 | Campo | Contenido |
 |---|---|
-| Punta de la rama | El commit `docs` de este desglose, sobre `dev` (`65d4ce9`). Sin push |
-| Siguiente bloque | Bloque 1, TASK-01 (línea base), cuando Sebastián apruebe estas tareas. Ninguna tarea está bloqueada |
+| Punta de la rama | El commit `docs` que registra la aprobación, sobre `69702dc` («docs: desglosar las tareas de la feature 005») y `dev` (`65d4ce9`). Sin push |
+| Siguiente bloque | Bloque 1, TASK-01 (línea base), con `sdd-implement` en una sesión nueva. Tareas aprobadas por Sebastián Avila el 2026-11-13. Antes de empezar, el PR de las tareas tiene que estar fusionado en `dev` y el checkout principal de vuelta en `dev`. Ninguna tarea está bloqueada |
 | Decisiones de ejecución | Ninguna todavía. Las del plan y el ADR no se reabren |
 | Riesgos abiertos | Los de [Dependencias y riesgos](planning.md#dependencias-y-riesgos) del plan. Para TASK-01: el detalle de un pedido de invitado (`/pedidos/:orderId`) solo se ve con la cabecera `x-order-token` que guarda el navegador que hizo la compra ([contrato](../../../../backend/docs/BFF-CONTRACT.md)); el guion de capturas debe crear el pedido y capturarlo con el mismo contexto de navegador, o reponer ese estado igual en cada toma. La copia de la semilla no trae temas propios: el diálogo de `/temas` necesita uno creado en la copia antes de la toma «antes» |
 | Entorno | Sin worktree todavía. TASK-01 lo crea con `git worktree add .worktrees/005-contraste-de-controles-con-los-temas feature/005-contraste-de-controles-con-los-temas`: antes, el checkout principal tiene que volver a `dev`, porque git no saca en un worktree una rama que ya está en otro. Puertos de las capturas: BFF en 3400, tienda en 4400 y Admin en 4500 ([puertos](../../../development/local-environment.md#puertos-de-las-capturas)); copia `backend/data-capturas.json` del worktree, con ruta absoluta en `WEBSTORE_DATA_FILE`. Los guiones de captura de la feature 004 vivían en `frontend/output/` de su worktree, ya borrado: hay que escribirlos de nuevo. Capturas en `frontend/output/visual-qa/005-contraste-de-controles-con-los-temas/` |
@@ -129,7 +129,7 @@ Comprobado contra los [criterios](../../../development/definition-of-ready.md) e
 
 | Tarea | Lista | Motivo si no lo está |
 |---|---|---|
-| TASK-01 | Sí, cuando se aprueben estas tareas | Preparar el worktree (con el checkout principal de vuelta en `dev`), `npm run setup`, la copia de datos y los guiones de captura y medida es parte de la tarea. No puede ejecutarse a la vez que la suite e2e |
+| TASK-01 | Sí | Tareas aprobadas el 2026-11-13; empieza cuando el PR de las tareas esté fusionado en `dev`. Preparar el worktree (con el checkout principal de vuelta en `dev`), `npm run setup`, la copia de datos y los guiones de captura y medida es parte de la tarea. No puede ejecutarse a la vez que la suite e2e |
 | ⚠ TASK-02 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 1 |
 | ⚠ TASK-03 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 2 |
 | ⚠ TASK-04 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 3 |
