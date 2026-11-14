@@ -28,6 +28,22 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Productos',
       },
       {
+        // Antes que `productos/:id`: sin `products.manage`, `permisoGuard` redirige al Resumen y el router no
+        // prueba la ruta siguiente, así que «nuevo» nunca llega como identificador (AC-11).
+        path: 'productos/nuevo',
+        canMatch: [permisoGuard('products.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-producto.page').then((m) => m.RegistroProductoPage),
+        title: 'WebStore Admin | Nuevo producto',
+      },
+      {
+        path: 'productos/:id',
+        canMatch: [permisoGuard('products.edit')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-producto.page').then((m) => m.RegistroProductoPage),
+        title: 'WebStore Admin | Editar producto',
+      },
+      {
         path: 'inventario',
         canMatch: [permisoGuard('inventory.manage')],
         loadComponent: () =>
@@ -42,10 +58,44 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Categorías',
       },
       {
+        // Antes que `categorias/:id`, para que «nueva» no llegue como identificador.
+        path: 'categorias/nueva',
+        canMatch: [permisoGuard('categories.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-categoria.page').then(
+            (m) => m.RegistroCategoriaPage,
+          ),
+        title: 'WebStore Admin | Nueva categoría',
+      },
+      {
+        path: 'categorias/:id',
+        canMatch: [permisoGuard('categories.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-categoria.page').then(
+            (m) => m.RegistroCategoriaPage,
+          ),
+        title: 'WebStore Admin | Editar categoría',
+      },
+      {
         path: 'marcas',
         canMatch: [permisoGuard('brands.manage')],
         loadComponent: () => import('./features/tienda/presentation/marcas.page').then((m) => m.MarcasPage),
         title: 'WebStore Admin | Marcas',
+      },
+      {
+        // Antes que `marcas/:id`, para que «nueva» no llegue como identificador.
+        path: 'marcas/nueva',
+        canMatch: [permisoGuard('brands.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
+        title: 'WebStore Admin | Nueva marca',
+      },
+      {
+        path: 'marcas/:id',
+        canMatch: [permisoGuard('brands.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
+        title: 'WebStore Admin | Editar marca',
       },
       {
         path: 'clientes',

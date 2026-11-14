@@ -1,26 +1,52 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
-import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCheckboxModule } from '@angular/material/checkbox';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+  untracked,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { aplanarArbolCategorias } from '../domain/categoria.rules';
+import { EstadoFiltro, FILTROS_PRODUCTOS_VACIOS } from '../domain/filtro-catalogo.model';
+import {
+  filtrarProductos,
+  leerFiltrosProductos,
+  leerPagina,
+  ParametrosUrl,
+  parametrosDeFiltrosProductos,
+} from '../domain/filtro-catalogo.rules';
+import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
+import { PaginacionComponent } from './paginacion.component';
+import { PanelFiltrosComponent } from './panel-filtros.component';
 
-const MAX_GALLERY_PHOTOS = 6;
-const MAX_PHOTO_BYTES = 400 * 1024;
-
+/**
+ * Listado de productos (feature 008): panel de filtros debajo del título, la lista a todo el ancho y la paginación.
+ * Los filtros aplicados y la página viven en la URL; el panel edita un borrador que «Buscar» aplica después de traer
+ * los datos actuales. El registro se abre en `/productos/nuevo` y `/productos/:id` (`RegistroProductoPage`).
+ */
 @Component({
   selector: 'ws-products-page',
   imports: [
     CurrencyPipe,
     ReactiveFormsModule,
+    RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatCheckboxModule,
+    PanelFiltrosComponent,
+    PaginacionComponent,
   ],
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
@@ -31,348 +57,186 @@ const MAX_PHOTO_BYTES = 400 * 1024;
         </p>
       </div>
       @if (session.can('products.manage')) {
-        <button
-          class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
-          (click)="newItem()"
+        <a
+          class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+          routerLink="/productos/nuevo"
+          queryParamsHandling="preserve"
         >
           Nuevo producto
-        </button>
+        </a>
       }
     </div>
-    <div class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
-      <section class="admin-card overflow-hidden" aria-label="Lista de productos">
-        <div
-          class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
-        >
-          <span>Producto</span>
-          <span>Precio</span>
-          <span>Stock</span>
-          <span></span>
-        </div>
-        @for (p of admin.products(); track p.id) {
-          <div
-            class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
-          >
-            <div class="min-w-0 max-md:col-span-full">
-              <strong class="block truncate">{{ p.name }}</strong>
-              <p class="text-xs text-muted">
-                {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
-                {{ p.gallery.length === 0 ? 'foto' : 'fotos' }}
-              </p>
-            </div>
-            <span class="max-md:col-start-2">{{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}</span>
-            <span [class.text-danger]="p.stock === 0" class="font-semibold">
-              <span class="font-normal text-muted md:hidden">Stock&nbsp;</span>
-              <span>{{ p.stock }}</span>
-            </span>
-            <div class="flex gap-2">
-              <button class="font-semibold text-link" (click)="edit(p.id)">Editar</button>
-              @if (session.can('products.manage')) {
-                <button
-                  class="min-h-10 font-semibold text-danger"
-                  [attr.aria-label]="'Eliminar producto ' + p.name"
-                  (click)="remove(p.id)"
-                >
-                  Eliminar
-                </button>
-              }
-            </div>
-          </div>
-        }
-      </section>
-      <form
-        [formGroup]="form"
-        (ngSubmit)="save()"
-        class="admin-card h-fit p-6"
-        aria-labelledby="titulo-formulario-producto"
+    <ws-filter-panel
+      class="mt-7"
+      etiqueta="Filtros de productos"
+      [formGroup]="borrador"
+      [buscando]="buscando()"
+      [error]="errorBusqueda()"
+      (buscar)="buscar()"
+      (limpiar)="limpiar()"
+    >
+      <mat-form-field>
+        <mat-label>Nombre</mat-label>
+        <input matInput formControlName="nombre" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>SKU</mat-label>
+        <input matInput formControlName="sku" />
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Categoría</mat-label>
+        <mat-select formControlName="categoriaId">
+          <mat-option value="">Todas</mat-option>
+          @for (entry of categoriasEnArbol(); track entry.category.id) {
+            <mat-option [value]="entry.category.id">
+              {{ indent(entry.depth) }}{{ entry.category.name }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Marca</mat-label>
+        <mat-select formControlName="marcaId">
+          <mat-option value="">Todas</mat-option>
+          @for (b of admin.brands(); track b.id) {
+            <mat-option [value]="b.id">{{ b.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="todos">Todos</mat-option>
+          <mat-option value="activos">Activos</mat-option>
+          <mat-option value="inactivos">Inactivos</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ws-filter-panel>
+    <section class="admin-card mt-6 overflow-hidden" aria-label="Lista de productos">
+      <div
+        class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
       >
-        <h2 id="titulo-formulario-producto" class="text-xl font-semibold">
-          {{ editingId() ? 'Editar' : 'Nuevo' }} producto
-        </h2>
-        @if (!editingId() && !session.can('products.manage')) {
-          <p class="mt-2 text-sm text-muted">
-            Elige un producto de la lista para actualizar su ficha o su stock.
-          </p>
-        }
-        <div class="mt-5 grid gap-3">
-          <mat-form-field>
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="name" />
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>SKU</mat-label>
-            <input matInput formControlName="sku" [readonly]="!session.can('products.manage')" />
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Descripción</mat-label>
-            <textarea matInput rows="3" formControlName="description"></textarea>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Imagen principal</mat-label>
-            <input matInput formControlName="imageUrl" />
-          </mat-form-field>
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Miniatura optimizada</mat-label>
-            <input matInput formControlName="thumbnailUrl" />
-            <mat-hint>Opcional. Si la dejas vacía se usa la imagen principal.</mat-hint>
-          </mat-form-field>
-          <fieldset class="min-w-0 rounded-xl border border-line p-4">
-            <legend class="px-1 text-sm font-semibold">Galería de fotos</legend>
-            <p class="text-xs text-muted">
-              La imagen principal va primero; estas fotos se muestran después en la ficha.
-            </p>
-            @if (gallery().length) {
-              <ul class="mt-3 grid grid-cols-3 gap-2">
-                @for (url of gallery(); track url; let i = $index) {
-                  <li class="relative overflow-hidden rounded-lg border border-line bg-subtle">
-                    <img
-                      [src]="url"
-                      [alt]="'Foto ' + (i + 2) + ' del producto'"
-                      class="aspect-square w-full object-contain p-1"
-                    />
-                    <button
-                      type="button"
-                      class="absolute right-1 top-1 grid h-7 w-7 place-items-center rounded-full bg-surface text-sm font-semibold text-danger shadow"
-                      [attr.aria-label]="'Quitar foto ' + (i + 2)"
-                      (click)="removePhoto(i)"
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                        class="h-3.5 w-3.5 fill-none stroke-current"
-                        stroke-width="2.25"
-                        stroke-linecap="round"
-                      >
-                        <path d="M6 6l12 12M18 6L6 18" />
-                      </svg>
-                    </button>
-                  </li>
-                }
-              </ul>
-            }
-            <div class="mt-3 flex gap-2">
-              <mat-form-field class="min-w-0 flex-1" subscriptSizing="dynamic">
-                <mat-label>URL de foto</mat-label>
-                <input
-                  matInput
-                  [formControl]="photoUrl"
-                  (keydown.enter)="$event.preventDefault(); addPhotoUrl()"
-                />
-              </mat-form-field>
-              <button
-                type="button"
-                class="min-h-11 self-start rounded-xl border border-line px-4 text-sm font-semibold"
-                (click)="addPhotoUrl()"
-              >
-                Agregar
-              </button>
-            </div>
-            <label
-              class="mt-3 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
-            >
-              Cargar foto
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                class="sr-only"
-                (change)="onPhotoSelected($event)"
-              />
-            </label>
-            @if (photoError()) {
-              <p class="mt-2 text-xs font-semibold text-danger" role="alert">{{ photoError() }}</p>
-            }
-          </fieldset>
-          <mat-form-field>
-            <mat-label>Características (una por línea)</mat-label>
-            <textarea matInput rows="4" formControlName="highlights"></textarea>
-          </mat-form-field>
-          <div class="grid grid-cols-2 gap-3">
-            <mat-form-field>
-              <mat-label>Precio</mat-label>
-              <input
-                matInput
-                type="number"
-                formControlName="price"
-                [readonly]="!session.can('products.manage')"
-              />
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>Stock</mat-label>
-              <input matInput type="number" formControlName="stock" />
-            </mat-form-field>
-          </div>
-          <mat-form-field>
-            <mat-label>Categoría</mat-label>
-            <mat-select formControlName="categoryId">
-              @for (c of admin.categories(); track c.id) {
-                <mat-option [value]="c.id">{{ c.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Marca</mat-label>
-            <mat-select formControlName="brandId">
-              @for (b of admin.brands(); track b.id) {
-                <mat-option [value]="b.id">{{ b.name }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-checkbox formControlName="active">Activo</mat-checkbox>
-        </div>
-        <button
-          class="mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
-          type="submit"
+        <span>Producto</span>
+        <span>Precio</span>
+        <span>Stock</span>
+        <span></span>
+      </div>
+      @for (p of pagina().items; track p.id) {
+        <div
+          class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
         >
-          Guardar producto
-        </button>
-      </form>
-    </div>
+          <div class="min-w-0 max-md:col-span-full">
+            <strong class="block truncate">{{ p.name }}</strong>
+            <p class="text-xs text-muted">
+              {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
+              {{ p.gallery.length === 0 ? 'foto' : 'fotos' }}
+            </p>
+          </div>
+          <span class="max-md:col-start-2">{{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}</span>
+          <span [class.text-danger]="p.stock === 0" class="font-semibold">
+            <span class="font-normal text-muted md:hidden">Stock&nbsp;</span>
+            <span>{{ p.stock }}</span>
+          </span>
+          <div class="flex gap-2">
+            <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
+            <a
+              class="inline-flex items-center font-semibold text-link"
+              [routerLink]="['/productos', p.id]"
+              queryParamsHandling="preserve"
+            >
+              Editar
+            </a>
+            @if (session.can('products.manage')) {
+              <button
+                class="min-h-10 font-semibold text-danger"
+                [attr.aria-label]="'Eliminar producto ' + p.name"
+                (click)="remove(p.id)"
+              >
+                Eliminar
+              </button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <p class="border-t border-line p-10 text-center text-sm text-muted">
+          {{ admin.products().length ? 'Ningún producto cumple los filtros.' : 'Todavía no hay productos.' }}
+        </p>
+      }
+      <ws-pagination [pagina]="pagina()" etiqueta="Páginas de productos" (cambiar)="irAPagina($event)" />
+    </section>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly session = inject(SesionFacade);
-  protected readonly editingId = signal<string | null>(null);
-  protected readonly form = new FormGroup({
-    name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    sku: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    description: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    imageUrl: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    thumbnailUrl: new FormControl('', { nonNullable: true }),
-    highlights: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    price: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
-    stock: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
-    categoryId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    brandId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    active: new FormControl(true, { nonNullable: true }),
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  /** Parámetros de consulta de la URL; con un parámetro repetido, el primero. */
+  private readonly parametros = toSignal(
+    this.route.queryParamMap.pipe(
+      map((mapa): ParametrosUrl =>
+        Object.fromEntries(mapa.keys.map((clave) => [clave, mapa.get(clave) ?? undefined])),
+      ),
+    ),
+    { requireSync: true },
+  );
+  /** Filtros de la última búsqueda, los de la URL. */
+  protected readonly aplicados = computed(() => leerFiltrosProductos(this.parametros()));
+  protected readonly resultados = computed(() =>
+    filtrarProductos(this.admin.products(), this.admin.categories(), this.aplicados()),
+  );
+  protected readonly pagina = computed(() =>
+    paginar(this.resultados(), leerPagina(this.parametros()), ELEMENTOS_POR_PAGINA),
+  );
+  protected readonly categoriasEnArbol = computed(() => aplanarArbolCategorias(this.admin.categories()));
+  /** Lo que se escribe en el panel; se aplica con «Buscar». */
+  protected readonly borrador = new FormGroup({
+    nombre: new FormControl('', { nonNullable: true }),
+    sku: new FormControl('', { nonNullable: true }),
+    categoriaId: new FormControl('', { nonNullable: true }),
+    marcaId: new FormControl('', { nonNullable: true }),
+    estado: new FormControl<EstadoFiltro>('todos', { nonNullable: true }),
   });
+  protected readonly buscando = signal(false);
+  protected readonly errorBusqueda = signal<string | null>(null);
   constructor() {
-    // El vendedor no cambia categoría, marca ni estado: se deshabilitan en el control (getRawValue los conserva).
-    if (!this.session.can('products.manage')) {
-      for (const control of [
-        this.form.controls.categoryId,
-        this.form.controls.brandId,
-        this.form.controls.active,
-      ])
-        control.disable();
-    }
-  }
-  /** Fotos adicionales del producto en edición; se guardan junto con el resto del formulario. */
-  protected readonly gallery = signal<readonly string[]>([]);
-  protected readonly photoUrl = new FormControl('', { nonNullable: true });
-  protected readonly photoError = signal<string | null>(null);
-  protected addPhotoUrl() {
-    const url = this.photoUrl.value.trim();
-    if (!url) return;
-    this.addPhoto(url);
-    this.photoUrl.setValue('');
-  }
-  protected removePhoto(index: number) {
-    this.gallery.update((items) => items.filter((_, i) => i !== index));
-  }
-  protected onPhotoSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    // En la demo la foto viaja como Data URL dentro del snapshot (límite del BFF: 2 MB por guardado).
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
-      this.photoError.set('Usa una imagen PNG, JPG o WebP.');
-      return;
-    }
-    if (file.size > MAX_PHOTO_BYTES) {
-      this.photoError.set('La foto supera 400 KB. Optimízala o usa una URL.');
-      return;
-    }
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      if (typeof reader.result === 'string') this.addPhoto(reader.result);
-    });
-    reader.readAsDataURL(file);
-  }
-  private addPhoto(url: string) {
-    this.photoError.set(null);
-    if (url === this.form.controls.imageUrl.value || this.gallery().includes(url)) {
-      this.photoError.set('Esa foto ya está en el producto.');
-      return;
-    }
-    if (this.gallery().length >= MAX_GALLERY_PHOTOS) {
-      this.photoError.set(`Máximo ${MAX_GALLERY_PHOTOS} fotos adicionales.`);
-      return;
-    }
-    this.gallery.update((items) => [...items, url]);
-  }
-  // resetForm (no form.reset) limpia también el estado "enviado", para que el formulario vacío no aparezca con errores.
-  private readonly formDirective = viewChild.required(FormGroupDirective);
-  protected newItem() {
-    this.editingId.set(null);
-    this.gallery.set([]);
-    this.photoError.set(null);
-    this.photoUrl.setValue('');
-    this.formDirective().resetForm({
-      name: '',
-      sku: '',
-      description: '',
-      imageUrl: '',
-      thumbnailUrl: '',
-      highlights: '',
-      price: 0,
-      stock: 0,
-      categoryId: '',
-      brandId: '',
-      active: true,
+    // El borrador se iguala a los filtros aplicados cada vez que cambia la URL (también con atrás y adelante).
+    effect(() => {
+      const aplicados = this.aplicados();
+      untracked(() => this.borrador.setValue({ ...aplicados }));
     });
   }
-  protected edit(id: string) {
-    const p = this.admin.products().find((item) => item.id === id);
-    if (!p) return;
-    this.editingId.set(id);
-    this.gallery.set(p.gallery ?? []);
-    this.photoError.set(null);
-    this.form.setValue({
-      name: p.name,
-      sku: p.sku,
-      description: p.description,
-      imageUrl: p.imageUrl,
-      thumbnailUrl: p.thumbnailUrl,
-      highlights: p.highlights.join('\n'),
-      price: p.price,
-      stock: p.stock,
-      categoryId: p.categoryId,
-      brandId: p.brandId,
-      active: p.active,
-    });
-  }
-  protected async save() {
-    if (this.form.invalid || (!this.session.can('products.manage') && !this.editingId())) {
-      this.form.markAllAsTouched();
+  /** Trae los datos actuales y aplica el borrador desde la página 1; si falla, conserva filtros y resultados. */
+  protected async buscar() {
+    this.buscando.set(true);
+    this.errorBusqueda.set(null);
+    const actual = await this.admin.refresh();
+    this.buscando.set(false);
+    if (!actual) {
+      this.errorBusqueda.set(
+        'No pudimos consultar los productos actuales. La lista muestra la última búsqueda; inténtalo de nuevo.',
+      );
       return;
     }
-    const value = this.form.getRawValue();
-    const old = this.admin.products().find((item) => item.id === this.editingId());
-    const parsed = {
-      ...value,
-      highlights: value.highlights
-        .split(/\r?\n/)
-        .map((item) => item.trim())
-        .filter(Boolean),
-      thumbnailUrl: value.thumbnailUrl.trim() || value.imageUrl,
-      gallery: this.gallery(),
-    };
-    const safe =
-      !this.session.can('products.manage') && old
-        ? {
-            ...parsed,
-            sku: old.sku,
-            price: old.price,
-            categoryId: old.categoryId,
-            brandId: old.brandId,
-            active: old.active,
-          }
-        : parsed;
-    const saved = await this.admin.upsertProduct({ id: this.editingId() ?? crypto.randomUUID(), ...safe });
-    if (saved) this.newItem();
+    await this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: parametrosDeFiltrosProductos(this.borrador.getRawValue()),
+    });
+  }
+  /** Vacía todos los filtros del panel de una vez, sin buscar (AC-14). */
+  protected limpiar() {
+    this.borrador.setValue({ ...FILTROS_PRODUCTOS_VACIOS });
+  }
+  protected irAPagina(numero: number) {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { pagina: numero > 1 ? numero : null },
+      queryParamsHandling: 'merge',
+    });
+  }
+  protected indent(depth: number) {
+    return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
   protected async remove(id: string) {
     if (this.session.can('products.manage') && confirm('¿Eliminar producto?'))
