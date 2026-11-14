@@ -139,6 +139,12 @@ Términos del [glosario](../../../architecture/glosario.md): «Tema», «Tema pr
 | Material dibuja la marca de la casilla con un `svg` interno | Medir la marca obliga a leer el DOM interno de Material | Las e2e solo leen (`getComputedStyle`), sin estilar internals (STD-04). Se localiza la casilla por su rol y su nombre; dentro, el recuadro y el trazo por su posición en el DOM (el hermano del `input` y su `svg path`), sin clases `mdc-*` (PBI-0050) |
 | Las capturas del detalle del pedido necesitan un pedido | Sin él no se ve «Mis pedidos» | T0 crea un pedido de invitado con el checkout sobre la copia de los datos y usa el mismo en las dos tomas |
 
+> Nota de la implementación (2026-11-14, [verificación](verification.md#ejecución-por-tarea)): el aviso nuevo de «Temas propios ya guardados» no llega a salir con las reglas actuales. `onLink/link` no baja de 4.5:1 en ningún tema válido:
+> - si el enlace es el principal, es porque se lee sobre la superficie, que es candidata del cálculo;
+> - si es el color de contraste, la superficie se lee sobre él por el par `contrast/surface`, que bloquea por debajo de 4.5:1.
+>
+> El par queda como red de seguridad por si cambian las reglas. TEST-03 lo comprueba con una rejilla de 32 temas válidos, en lugar de «un tema con `onLink/link` bajo el mínimo se guarda», que no se puede construir (desviación de ⚠ TASK-02, aprobada por Sebastián Avila el 2026-11-13). En la comparación final (⚠ TASK-05), el diálogo de Temas con el tema de la copia no muestra ningún aviso nuevo.
+
 ## Decisiones
 
 - **Acordadas** (de la especificación y de las reglas vigentes):
@@ -181,6 +187,8 @@ TDD obligatorio según [STD-18](../../../architecture/standards.md): en esta fea
 | TEST-11 | E2E, `admin-casillas.spec.ts` | Se crea y activa el tema propio de AC-05 (principal `#F2B705`, secundario `#C2410C`, fondo `#F2F3F5`, superficie `#FFFFFF` y contraste `#1F2328`: hereda la escala neutra de C); la casilla cumple lo de TEST-10. Al terminar se reactiva B, como en `admin-temas.spec.ts` | AC-05 | No | `npm run test:e2e` |
 | TEST-12 | E2E, `storefront-material-contraste.spec.ts` y `admin-material-contraste.spec.ts` (nuevos) | Con A, B y C, la relación de cada componente de la [tabla](#componentes-de-material-y-lo-que-pintan-sobre-el-principal): casilla (Admin), botón de opción del checkout (punto sobre la superficie, 3:1), etiqueta del botón relleno del diálogo (4.5:1) y su capa de estado, que debe tener el color de `--ws-on-primary` con los tres temas, etiqueta enfocada de un campo (4.5:1), opción seleccionada de una lista desplegable (texto 4.5:1 y marca 3:1) y menú (menú de usuario del Admin y selector de tema de la tienda, 4.5:1). Cada medida se registra en `test.info().annotations` para que la verificación la liste | AC-06 | No | `npm run test:e2e` |
 | TEST-13 | Comparación de capturas | Antes y después con A, B y C ([capturas](#capturas-antes-y-después)): solo cambia lo de AC-01 a AC-05 y los cuatro enlaces del hito | AC-01 a AC-05, AC-07 | No | Panel del navegador o [`tools/qa/`](../../../../frontend/tools/qa/), con el BFF sobre una copia de los datos (`WEBSTORE_DATA_FILE`), nunca `backend/data.json` |
+
+> Nota de la implementación (2026-11-14, [verificación](verification.md#ejecución-por-tarea)): en TEST-10, el borde de la casilla sin marcar no es `--ws-border-strong`. Material 22.2.4 lo pinta con `--mat-checkbox-unselected-icon-color`, que por defecto es `--mat-sys-on-surface-variant` y que `tokens.css` lleva a `--ws-muted`, también antes de la feature. TEST-10 comprueba ese token y el relleno transparente: lo que AC-07 protege es que no cambie. En reposo, A 6.92:1, B 6.39:1 y C 6.84:1 (desviación de ⚠ TASK-03, aprobada por Sebastián Avila el 2026-11-14).
 
 Caracterización: el código que cambia ya tiene pruebas. Las reglas de temas están en `tema.rules.test.mjs`, `temas-predefinidos.test.mjs`, `temas.queries.test.mjs`, el smoke del contrato y `tema.rules.spec.mjs`. La regla `a` y las casillas no tienen pruebas de color: las capturas «antes» de T0 y las medidas «antes» de TEST-08 a TEST-10, tomadas en `dev` (que deben fallar en los enlaces y en la casilla con C), son su caracterización. T0 ejecuta `npm run verify` y el e2e completo en `dev` antes de tocar código, como línea base.
 

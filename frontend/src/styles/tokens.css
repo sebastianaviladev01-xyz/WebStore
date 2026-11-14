@@ -17,6 +17,8 @@
   --ws-accent-soft: color-mix(in srgb, var(--ws-accent) 9%, #ffffff);
   --ws-on-accent: #ffffff;
   --ws-link: var(--ws-primary);
+  /* Texto y marcas sobre el color de los enlaces (ADR-0014): lo calcula el BFF en cada tema. */
+  --ws-on-link: #ffffff;
   --ws-focus-ring: var(--ws-primary);
   /* Franja superior de la tienda: en B, el principal oscuro; A y C la fijan como se presentó. */
   --ws-topbar: var(--ws-primary-strong);
@@ -63,9 +65,10 @@
      la cabecera fija mide 123 px en escritorio y se deja aire debajo. */
   --ws-sticky-top: 150px;
 
-  /* Material usa el primario también como color de texto (la etiqueta enfocada): va con el enlace. */
+  /* Material usa el primario también como color de texto (la etiqueta enfocada): va con el enlace, y lo que
+     pinta sobre él (la marca de una casilla marcada) usa el texto sobre el enlace (ADR-0014). */
   --mat-sys-primary: var(--ws-link);
-  --mat-sys-on-primary: var(--ws-on-primary);
+  --mat-sys-on-primary: var(--ws-on-link);
   --mat-sys-primary-container: var(--ws-primary-soft);
   --mat-sys-on-primary-container: var(--ws-on-primary-soft);
   --mat-sys-surface: var(--ws-surface);
@@ -74,10 +77,12 @@
   --mat-sys-outline: var(--ws-border-strong);
   --mat-sys-outline-variant: var(--ws-border);
   --mat-sys-error: var(--ws-danger);
-  /* El botón relleno es el principal: fondo y texto del principal, no del enlace. Con C, --ws-link y
-     --ws-on-primary son el mismo gris oscuro y el texto no se leería. */
+  /* El botón relleno es el principal: fondo, texto y capa de estado (el velo al pasar el puntero o enfocar) del
+     principal, no del enlace. Con C, el enlace es el grafito de --ws-on-primary y --ws-on-link es blanco: sin
+     estos tres, «Ver carrito» sería grafito con texto blanco, o su velo pasaría a blanco sobre el ámbar. */
   --mat-button-filled-container-color: var(--ws-primary);
   --mat-button-filled-label-text-color: var(--ws-on-primary);
+  --mat-button-filled-state-layer-color: var(--ws-on-primary);
   color-scheme: light;
 }
 

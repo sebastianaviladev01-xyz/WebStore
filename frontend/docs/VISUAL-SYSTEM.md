@@ -51,7 +51,7 @@ No hay verde: los estados positivos usan el azul (`primary-soft` + `primary-stro
 
 ### Temas y tokens del tema
 
-Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo principal, fondo secundario (la superficie) y contraste (el texto). El BFF calcula de ellos el mapa completo de **31 tokens** (`TOKENS_DEL_TEMA`); la tienda y el Admin solo lo aplican. Son nuevos respecto a la paleta B original (antes eran un color fijo o reutilizaban `--ws-primary` o `--ws-primary-strong`):
+Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo principal, fondo secundario (la superficie) y contraste (el texto). El BFF calcula de ellos el mapa completo de **32 tokens** (`TOKENS_DEL_TEMA`); la tienda y el Admin solo lo aplican. Son nuevos respecto a la paleta B original (antes eran un color fijo o reutilizaban `--ws-primary` o `--ws-primary-strong`):
 
 | Token | Uso |
 |---|---|
@@ -59,6 +59,7 @@ Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo p
 | `--ws-on-primary-soft` | Texto sobre el tinte del principal |
 | `--ws-on-accent` | Texto sobre el acento |
 | `--ws-link` | Enlaces y texto en el color de marca |
+| `--ws-on-link` | Texto y marcas que Material pinta sobre el color de los enlaces (`--mat-sys-on-primary`): la marca de las casillas marcadas (feature 005) |
 | `--ws-focus-ring` | Contorno del foco |
 | `--ws-topbar` | Franja superior de la tienda |
 | `--ws-on-topbar` | Texto de la franja superior |
@@ -77,12 +78,13 @@ Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la palet
 - `primary-soft` es `color-mix(P 10%, Sf)`; `accent-strong`, `color-mix(S 78%, C)`; `accent-soft`, `color-mix(S 9%, Sf)`.
 - `on-primary` y `on-accent` son blanco o C, el que más contraste dé sobre P y sobre S. `on-primary-soft` es `primary-strong` si llega a 4.5:1 sobre el tinte; si no, C.
 - `link` y `focus-ring` son P si llega a 4.5:1 y 3:1 sobre F y sobre Sf; si no, C.
+- `on-link` es, entre blanco, C y Sf, el que más contraste dé sobre el `link` ya calculado. A diferencia de `on-primary`, considera la superficie: en un tema oscuro es lo único que se lee sobre un enlace claro. En A, B, C y los temas claros da el blanco ([ADR-0014](../../docs/adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md)).
 - Neutros: `muted` `color-mix(C 68%, Sf)`, `muted-strong` `color-mix(C 82%, Sf)`, `surface-subtle` `color-mix(C 3%, Sf)`, `surface-soft` `color-mix(C 9%, Sf)`, `border` `color-mix(C 14%, Sf)`, `border-strong` `color-mix(C 50%, Sf)`, `disabled` `color-mix(C 10%, Sf)`, `disabled-text` `color-mix(C 68%, Sf)` y `dot` `color-mix(P 30%, Sf)`.
 - Pie: `footer` es C, `footer-text` `color-mix(Sf 78%, C)`, `footer-rule` `color-mix(Sf 15%, C)` y `footer-heading` Sf.
 
 **Base neutra.** Si el fondo principal, el fondo secundario y el contraste de un tema propio coinciden con los de un predefinido, sin distinguir mayúsculas, el tema hereda la escala neutra de ese predefinido: `bg`, superficies, `ink`, `text`, `muted` y `muted-strong`, bordes, deshabilitados, `dot` y los cuatro tokens del pie. Así, un tema que solo cambia el principal y el secundario sobre la base de B se ve como antes con esos dos colores. Los tokens de marca (principal, acento y los que se calculan con ellos) se derivan siempre.
 
-**Contraste al guardar.** Hay 20 pares medidos (`PARES_DE_CONTRASTE`). Solo el contraste sobre el fondo principal y sobre el secundario bloquean el guardado de un tema propio; el foco y el contorno de los campos piden 3:1 y el resto 4.5:1, y esos solo avisan. La feature 004 añadió cinco: el texto, el texto secundario, el enlace y el foco sobre el lienzo de la tienda (`*/storeBackground`) y el contorno de los campos sobre la superficie (`borderStrong/surface`, WCAG 1.4.11). Para que este último llegue a 3:1 con B, `--ws-border-strong` de B pasó de `#8a96a8` (2.996:1) a `#8894a6` (3.07:1); A y C no cambian.
+**Contraste al guardar.** Hay 21 pares medidos (`PARES_DE_CONTRASTE`). Solo el contraste sobre el fondo principal y sobre el secundario bloquean el guardado de un tema propio; el foco y el contorno de los campos piden 3:1 y el resto 4.5:1, y esos solo avisan. La feature 004 añadió cinco: el texto, el texto secundario, el enlace y el foco sobre el lienzo de la tienda (`*/storeBackground`) y el contorno de los campos sobre la superficie (`borderStrong/surface`, WCAG 1.4.11). Para que este último llegue a 3:1 con B, `--ws-border-strong` de B pasó de `#8a96a8` (2.996:1) a `#8894a6` (3.07:1); A y C no cambian. La feature 005 añadió el par 21, `onLink/link` (el texto sobre el enlace, 4.5:1, solo avisa). Con las reglas actuales no baja de 4.5:1 en ningún tema válido, porque la superficie es candidata y `contrast/surface` bloquea: es una red de seguridad.
 
 **Contraste medido de los predefinidos** (fórmula de WCAG 2.1, sobre los mapas reales; todos alcanzan su mínimo):
 
@@ -96,6 +98,7 @@ Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la palet
 | Texto sobre el tinte | 8.69 |
 | Texto sobre el acento | 5.18 |
 | Enlace sobre el fondo / la superficie | 6.14 / 6.70 |
+| Texto sobre el enlace | 6.70 |
 | Foco sobre el fondo / la superficie (mínimo 3) | 6.14 / 6.70 |
 | Pie | 10.81 |
 | Texto deshabilitado | 4.84 |
@@ -114,6 +117,7 @@ Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la palet
 | Texto sobre el tinte | 10.95 |
 | Texto sobre el acento | 8.40 |
 | Enlace sobre el fondo / la superficie | 9.31 / 10.23 |
+| Texto sobre el enlace | 10.23 |
 | Foco sobre el fondo / la superficie (mínimo 3) | 9.31 / 10.23 |
 | Pie | 10.78 |
 | Texto deshabilitado | 5.09 |
@@ -132,6 +136,7 @@ Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la palet
 | Texto sobre el tinte | 5.48 |
 | Texto sobre el acento | 8.69 |
 | Enlace sobre el fondo / la superficie | 14.23 / 15.80 |
+| Texto sobre el enlace | 15.80 |
 | Foco sobre el fondo / la superficie (mínimo 3) | 14.23 / 15.80 |
 | Pie | 11.14 |
 | Texto deshabilitado | 4.53 |
@@ -169,10 +174,24 @@ Particularidades aceptadas:
 
 Feature 004, entregada con el [PR #26](https://github.com/sebastianaviladev01-xyz/WebStore/pull/26):
 
-- **Diálogo «Producto agregado».** Dos botones, en este orden: «Seguir comprando» (`mat-button`, cierra el diálogo) y «Ver carrito» (`mat-flat-button`, el principal, relleno). El botón relleno toma `--mat-button-filled-container-color: var(--ws-primary)` y `--mat-button-filled-label-text-color: var(--ws-on-primary)` en `tokens.css`: Material lo pintaría con `--mat-sys-primary` (`--ws-link`) y `--mat-sys-on-primary`, que con C valen los dos `#1F2328`. Contraste de «Ver carrito»: 10.23, 6.70 y 8.69:1 con A, B y C.
+- **Diálogo «Producto agregado».** Dos botones, en este orden: «Seguir comprando» (`mat-button`, cierra el diálogo) y «Ver carrito» (`mat-flat-button`, el principal, relleno). El botón relleno toma `--mat-button-filled-container-color: var(--ws-primary)` y `--mat-button-filled-label-text-color: var(--ws-on-primary)` en `tokens.css`: Material lo pintaría con `--mat-sys-primary` (`--ws-link`) y `--mat-sys-on-primary`, que con C valen los dos `#1F2328`. Contraste de «Ver carrito»: 10.23, 6.70 y 8.69:1 con A, B y C. Desde la feature 005, `--mat-sys-on-primary` es `--ws-on-link`, así que el botón suma `--mat-button-filled-state-layer-color: var(--ws-on-primary)`. Con eso, el velo del 8 % al pasar el puntero o enfocar sigue en el color del texto sobre el principal: grafito sobre el ámbar con C. Con el velo, la etiqueta se lee a 8.29, 5.71 y 7.55:1 con A, B y C.
 - **Textos.** El enlace principal del resumen del carrito dice «Confirmar pedido». El checkout se titula «Finalizar compra» (también en la pestaña: «WebStore | Finalizar compra») y su botón dice «Finalizar compra» («Procesando…» al enviar).
 - **Panel del checkout** (`ws-checkout-panel`). Los tres pasos van en un solo panel con el aspecto del resumen del pedido: superficie, borde `line`, radio de 14 px y relleno de 28 px (22 px hasta 600 px), sin el `sticky` del resumen. En escritorio va a la izquierda del resumen; en móvil, encima.
 - **Campos con contorno.** Los campos del checkout usan `appearance="outline"`, como los filtros del catálogo; los demás formularios no cambian. El panel fija los tokens `--mat-form-field-outlined-*`: en reposo, contorno de 1 px en `--ws-border-strong`, sin relleno; con el foco, 2 px en `--ws-focus-ring`; con error, `--ws-danger`, también con el ratón encima; radio `--ws-radius`. Con el ratón encima, el contorno en reposo pasa a `--ws-ink` (valor de Material). La etiqueta sube al borde en 150 ms; con `prefers-reduced-motion`, sin transición. Sin `::ng-deep` ni clases internas de Material (STD-04). Contraste sobre la superficie, con A, B y C: contorno en reposo 3.43, 3.07 y 3.16:1; contorno y etiqueta con el foco 10.23, 6.70 y 15.80:1; error 6.57:1. Con C, el foco es grafito (`#1F2328`), el `--ws-focus-ring` de C.
+
+### Material y enlaces de la tienda
+
+Feature 005, implementada en su rama y pendiente de entregar con su PR:
+
+- **`on-primary` de Material.** `tokens.css` mapea `--mat-sys-primary` a `--ws-link` y `--mat-sys-on-primary` a `--ws-on-link`: lo que Material pinta sobre su `primary` usa el par medido del enlace. La casilla marcada del Admin tiene el relleno del enlace y la marca de `--ws-on-link`: blanca sobre el principal con A y B (10.23 y 6.70:1, como antes) y blanca sobre el grafito con C (15.80:1; antes, grafito sobre grafito, 1:1). La casilla sin marcar conserva su borde `--ws-muted` (`--mat-sys-on-surface-variant`). Sin `::ng-deep` ni clases internas de Material (STD-04).
+- **Regla `a` de la tienda en la capa base.** `a { color: inherit; text-decoration: none; }` va dentro de `@layer base` en `src/styles.css`, como la de márgenes. Fuera de capa anulaba las utilidades de Tailwind, y ahora los enlaces muestran su color y su subrayado:
+  - «Ver todos los productos» del cajón móvil, con `--ws-on-primary` sobre el principal: 10.23, 6.70 y 8.69:1 con A, B y C; antes, 1.77 y 2.18:1 con A y B;
+  - «Ver toda la categoría», las subcategorías del cajón, «Crear cuenta» y «Mis pedidos» del detalle del pedido, con su color en reposo;
+  - el nombre del producto del carrito y el correo del pie, con su color al pasar el puntero;
+  - «Inicia sesión» de `/pedidos`, subrayado siempre;
+  - «Ayuda» y «Seguimiento de pedidos» de la franja superior, subrayados al pasar el puntero.
+
+  Los enlaces sin utilidades, como «Olvidé mi contraseña», siguen heredando el color y sin subrayado. Las clases `ws-*` y el foco (`a:focus-visible`) siguen fuera de capa y no cambian.
 
 ## Movimiento
 

@@ -182,6 +182,26 @@ for (const id of ['a', 'b', 'c']) {
   });
 }
 
+// TEST-02 (feature 005, ADR-0014): el texto sobre el enlace en A, B y C.
+test('A, B y C fijan el texto sobre el enlace con #FFFFFF, #ffffff y #FFFFFF, justo después del enlace', () => {
+  const esperados = { a: '#FFFFFF', b: '#ffffff', c: '#FFFFFF' };
+  for (const [id, valor] of Object.entries(esperados)) {
+    const nombres = Object.keys(tema(id).tokens);
+    assert.equal(tema(id).tokens['--ws-on-link'], valor, id);
+    assert.equal(nombres.indexOf('--ws-on-link'), nombres.indexOf('--ws-link') + 1, id);
+  }
+});
+
+test('onLink/link alcanza su mínimo en A, B y C, medido sobre el mapa literal de cada uno: 10.23, 6.70 y 15.80', () => {
+  const relaciones = Object.fromEntries(
+    ['a', 'b', 'c'].map((id) => [id, Math.round(medirPares(tema(id).tokens)['onLink/link'] * 100) / 100]),
+  );
+  assert.deepEqual(relaciones, { a: 10.23, b: 6.7, c: 15.8 });
+  const colores = coloresCalculados(tema('c').tokens);
+  assert.equal(colores['--ws-link'], '#1F2328', 'C fija el enlace con su literal');
+  assert.equal(colores['--ws-on-link'], '#FFFFFF');
+});
+
 test('en C, el texto sobre el principal, los enlaces y el foco se calculan en grafito', () => {
   const colores = coloresCalculados(tema('c').tokens);
   for (const nombre of ['--ws-on-primary', '--ws-link', '--ws-focus-ring'])

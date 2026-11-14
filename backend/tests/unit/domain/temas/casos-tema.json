@@ -120,6 +120,7 @@
         "--ws-accent-soft": "color-mix(in srgb, #F5A524 9%, #FFFFFF)",
         "--ws-on-accent": "#2B1700",
         "--ws-link": "#4C2A92",
+        "--ws-on-link": "#FFFFFF",
         "--ws-focus-ring": "#4C2A92",
         "--ws-topbar": "#2E1A5C",
         "--ws-on-topbar": "#FFFFFF",
@@ -164,6 +165,7 @@
         "--ws-accent-soft": "color-mix(in srgb, var(--ws-accent) 9%, #ffffff)",
         "--ws-on-accent": "#ffffff",
         "--ws-link": "var(--ws-primary)",
+        "--ws-on-link": "#ffffff",
         "--ws-focus-ring": "var(--ws-primary)",
         "--ws-topbar": "var(--ws-primary-strong)",
         "--ws-on-topbar": "#ffffff",
@@ -208,6 +210,7 @@
         "--ws-accent-soft": "color-mix(in srgb, #1F2328 9%, #FFFFFF)",
         "--ws-on-accent": "#F2B705",
         "--ws-link": "#1F2328",
+        "--ws-on-link": "#FFFFFF",
         "--ws-focus-ring": "#1F2328",
         "--ws-topbar": "#1F2328",
         "--ws-on-topbar": "#FFFFFF",
@@ -253,7 +256,8 @@
       "muted/storeBackground": 6.64,
       "link/storeBackground": 9.8,
       "focusRing/storeBackground": 9.8,
-      "borderStrong/surface": 3.43
+      "borderStrong/surface": 3.43,
+      "onLink/link": 10.23
     },
     "b": {
       "contrast/background": 16.35,
@@ -275,7 +279,8 @@
       "muted/storeBackground": 6.11,
       "link/storeBackground": 6.42,
       "focusRing/storeBackground": 6.42,
-      "borderStrong/surface": 3.07
+      "borderStrong/surface": 3.07,
+      "onLink/link": 6.7
     },
     "c": {
       "contrast/background": 14.23,
@@ -297,7 +302,8 @@
       "muted/storeBackground": 6.5,
       "link/storeBackground": 15.01,
       "focusRing/storeBackground": 15.01,
-      "borderStrong/surface": 3.16
+      "borderStrong/surface": 3.16,
+      "onLink/link": 15.8
     }
   },
   "tokensDelTema": [
@@ -322,6 +328,7 @@
         "--ws-accent-soft": "color-mix(in srgb, #C2410C 9%, #FFFFFF)",
         "--ws-on-accent": "#FFFFFF",
         "--ws-link": "#0F172A",
+        "--ws-on-link": "#FFFFFF",
         "--ws-focus-ring": "#0F172A",
         "--ws-topbar": "color-mix(in srgb, #FFD400 88%, #0F172A)",
         "--ws-on-topbar": "#0F172A",
@@ -364,7 +371,8 @@
         "muted/storeBackground": 5.85,
         "link/storeBackground": 16.35,
         "focusRing/storeBackground": 16.35,
-        "borderStrong/surface": 3.07
+        "borderStrong/surface": 3.07,
+        "onLink/link": 17.85
       }
     },
     {
@@ -388,6 +396,7 @@
         "--ws-accent-soft": "color-mix(in srgb, #C2410C 9%, #FFFFFF)",
         "--ws-on-accent": "#FFFFFF",
         "--ws-link": "#123456",
+        "--ws-on-link": "#FFFFFF",
         "--ws-focus-ring": "#123456",
         "--ws-topbar": "color-mix(in srgb, #123456 62%, #0F172A)",
         "--ws-on-topbar": "#FFFFFF",
@@ -430,7 +439,8 @@
         "muted/storeBackground": 5.85,
         "link/storeBackground": 11.64,
         "focusRing/storeBackground": 11.64,
-        "borderStrong/surface": 3.07
+        "borderStrong/surface": 3.07,
+        "onLink/link": 12.72
       }
     },
     {
@@ -454,6 +464,7 @@
         "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
         "--ws-on-accent": "#FFFFFF",
         "--ws-link": "#3B82F6",
+        "--ws-on-link": "#1B1E25",
         "--ws-focus-ring": "#3B82F6",
         "--ws-topbar": "#3B82F6",
         "--ws-on-topbar": "#FFFFFF",
@@ -496,7 +507,8 @@
         "muted/storeBackground": 8.73,
         "link/storeBackground": 5.05,
         "focusRing/storeBackground": 5.05,
-        "borderStrong/surface": 4.88
+        "borderStrong/surface": 4.88,
+        "onLink/link": 4.54
       }
     }
   ],

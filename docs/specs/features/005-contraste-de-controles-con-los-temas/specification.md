@@ -75,6 +75,13 @@ Actores: el comprador (invitado o con cuenta) en la tienda móvil, y el `superad
 - «Mis pedidos», el enlace de vuelta del detalle del pedido: `--ws-muted`, y `--ws-ink` al pasar el puntero;
 - el nombre del producto en el carrito: `--ws-link` al pasar el puntero.
 
+> Nota del hito de arquitectura (2026-11-13, [plan, pregunta 1](planning.md#pregunta-1-qué-se-hace-con-los-cuatro-enlaces-que-d1-cambia-y-ac-02-no-lista)): D1 cambia diez enlaces, no seis. Son los seis de AC-01 y AC-02 y cuatro más que esta lista no recoge y que se sumaron a D1:
+> - el correo de contacto del pie, con `--ws-footer-heading` al pasar el puntero;
+> - «Inicia sesión» de `/pedidos` sin sesión, subrayado siempre;
+> - «Ayuda» y «Seguimiento de pedidos» de la franja superior, subrayados al pasar el puntero.
+>
+> La tabla de los diez está en [enlaces afectados por D1](planning.md#enlaces-afectados-por-d1). La página de ingresar es `/cuenta/login`, no `/cuenta/ingresar`, también en la tabla de [Interfaz](#interfaz). TEST-09 mide los diez desde ⚠ TASK-04 (2026-11-14): con B, cada uno pinta el color y el subrayado de su utilidad, a 4.5:1 o más ([verificación](verification.md#medidas-antes-de-los-enlaces)).
+
 ### AC-03 — Casilla marcada del Admin con C
 
 - Cubre: REQ-03
@@ -120,6 +127,8 @@ Actores: el comprador (invitado o con cuenta) en la tienda móvil, y el `superad
 **Cuando** se comparan
 **Entonces** solo cambian los elementos de AC-01 a AC-05.
 
+> Nota del hito de arquitectura (2026-11-13, [plan, pregunta 1](planning.md#pregunta-1-qué-se-hace-con-los-cuatro-enlaces-que-d1-cambia-y-ac-02-no-lista)): también cambian los cuatro enlaces que se sumaron a D1 (ver la nota de AC-02). En reposo, la captura solo muestra el subrayado de «Inicia sesión»; los otros tres cambian al pasar el puntero y los mide TEST-09. La comparación final de ⚠ TASK-05 (2026-11-14, [verificación](verification.md#ejecución-por-tarea)) lo confirma con A, B y C: solo cambian los enlaces de la tabla y, con C, las casillas marcadas.
+
 ## Datos y contrato
 
 Por [D2](#decisiones-del-hito-de-alcance):
@@ -127,6 +136,8 @@ Por [D2](#decisiones-del-hito-de-alcance):
 - El mapa de tokens de cada tema ([contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md), `Tema.tokens` y `theme.css`) gana un token, `--ws-on-link`: el texto más legible sobre `--ws-link`, calculado por el BFF igual que `--ws-on-primary` sobre el principal. El contrato solo crece y no hay migración, como en la feature 004. La réplica de las reglas del Admin (`tema.rules.ts`) lo incluye.
 - `frontend/src/styles/tokens.css` declara `--ws-on-link` con el valor de B (blanco), como el resto de tokens, y mapea `--mat-sys-on-primary` a `--ws-on-link`.
 - Necesita un ADR que amplíe ADR-0011, como ADR-0013, en `sdd-decide`.
+
+> Nota del hito de arquitectura (2026-11-13, [plan, pregunta 2](planning.md#pregunta-2-entre-qué-colores-elige-el-bff-el-texto-sobre-el-enlace)): `--ws-on-link` no se calcula igual que `--ws-on-primary`. Se elige entre el blanco, el color de contraste **y la superficie** (`textoMasLegible(enlace, [BLANCO, C, Sf])`), para que la marca se lea también en un tema propio oscuro: en el caso «base oscura» de `casos-tema.json`, `#1B1E25` a 4.54:1. En A, B, C y los temas claros da el blanco. Lo registra [ADR-0014](../../../adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md), junto con el par `onLink/link` (4.5:1, solo avisa).
 
 Los permisos no cambian: los temas los sigue gestionando solo el `superadmin` (`themes.manage`).
 
@@ -156,6 +167,10 @@ Ninguna.
 | Tema propio de principal oscuro (se lee sobre los fondos) | El enlace es el principal y la marca, blanca: igual que hoy | REQ-04 |
 | Tema propio en el que ni el blanco ni el color de contraste llegan a 3:1 sobre el enlace | El BFF ya bloquea guardar temas con pares de contraste insuficientes en los pares que bloquean. Con [D2](#decisiones-del-hito-de-alcance), el par nuevo sobre el enlace es otro aviso | REQ-04 |
 
+> Notas de la implementación (2026-11-14, [verificación](verification.md#ejecución-por-tarea)):
+> - **Casilla sin marcar.** Material pinta su borde con `--mat-sys-on-surface-variant`, que `tokens.css` lleva a `--ws-muted`, también antes de la feature; no con `--ws-border-strong`. El comportamiento esperado sigue siendo «sin cambio», con ese token. TEST-10 lo comprueba con `--ws-muted` (desviación de ⚠ TASK-03, aprobada por Sebastián Avila).
+> - **Par nuevo sobre el enlace.** Con las reglas actuales, `onLink/link` no baja de 4.5:1 en ningún tema válido, así que el aviso no llega a salir: es una red de seguridad. Si el enlace es el principal, es porque se lee sobre la superficie, que es candidata. Si es el color de contraste, la superficie se lee sobre él por el par `contrast/surface`, que bloquea por debajo de 4.5:1. Lo muestra TEST-03 con una rejilla de 32 temas válidos (desviación de ⚠ TASK-02, aprobada por Sebastián Avila el 2026-11-13).
+
 ## Hechos, supuestos y decisiones pendientes
 
 **Hechos** (verificables en el repositorio):
@@ -163,6 +178,8 @@ Ninguna.
 - `frontend/src/styles.css:75-78` tiene `a { color: inherit; text-decoration: none; }` fuera de `@layer`. Las líneas 39-49 del mismo archivo ya movieron a `@layer base` la regla de márgenes por el mismo motivo.
 - El Admin no tiene esa regla en su `styles.css`: sus enlaces con utilidades de color (Resumen y tarjetas de indicador) ya muestran su color.
 - Hay seis enlaces de la tienda con utilidades de color, en `app.layout.ts` (3), `login.page.ts`, `detalle-pedido.page.ts` y `carrito.page.ts`. Solo el de «Ver todos los productos» se midió (2.18:1 con B, en la feature 004). Los otros cinco se deducen de la cascada y se medirán en las capturas «antes».
+
+  > Nota del hito de arquitectura (2026-11-13, [plan](planning.md#enlaces-afectados-por-d1)): el recuento con todas las etiquetas `<a>` de `frontend/src/app` da diez enlaces con utilidades de color o de subrayado. Son estos seis y cuatro más: el correo del pie y «Ayuda» y «Seguimiento de pedidos» de la franja superior, en `app.layout.ts`, e «Inicia sesión» en `pedidos.page.ts`. Las medidas «antes» de TASK-01 (2026-11-13) confirmaron que ninguno pintaba su utilidad.
 - `frontend/src/styles/tokens.css:67-68` mapea `--mat-sys-primary` a `--ws-link` y `--mat-sys-on-primary` a `--ws-on-primary`, y las líneas 79-80 corrigen solo el botón relleno.
 - Con C, `--ws-link` y `--ws-on-primary` valen `#1F2328` (`temas-predefinidos.mjs`). El mapeo llegó con la feature 002 (`04296c6`, PR #15).
 - Las casillas están en cinco páginas del Admin (`banners`, `contenido`, `marcas`, `productos` y `usuarios`). La tienda solo usa botones de opción (checkout), que pintan el principal sobre blanco y no usan `on-primary`.

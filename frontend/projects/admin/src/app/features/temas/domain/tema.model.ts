@@ -19,6 +19,7 @@ export type NombreToken =
   | '--ws-accent-soft'
   | '--ws-on-accent'
   | '--ws-link'
+  | '--ws-on-link'
   | '--ws-focus-ring'
   | '--ws-topbar'
   | '--ws-on-topbar'
@@ -75,7 +76,8 @@ export interface ParContraste {
     | 'muted/storeBackground'
     | 'link/storeBackground'
     | 'focusRing/storeBackground'
-    | 'borderStrong/surface';
+    | 'borderStrong/surface'
+    | 'onLink/link';
   /** Relación de contraste redondeada a un decimal hacia abajo. */
   readonly relacion: number;
   readonly minimo: 4.5 | 3;

@@ -481,14 +481,20 @@ try {
     throw new Error('/bff/appearance debe traer tokens["--ws-store-bg"] igual a #f9fafc con B');
   const lineaDelLienzo = declaraciones.indexOf('  --ws-store-bg: #f9fafc;');
   if (
-    declaraciones.length !== 31 ||
+    declaraciones.length !== 32 ||
     lineaDelLienzo < 0 ||
     declaraciones[lineaDelLienzo + 1] !== '  --ws-bg: #f3f5f8;' ||
     !declaraciones.includes('  --ws-border-strong: #8894a6;')
   )
     throw new Error(
-      'theme.css de B debe tener 31 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
+      'theme.css de B debe tener 32 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
     );
+  // Texto sobre el enlace (ADR-0014): una clave más en Tema.tokens y una declaración más, justo después de --ws-link.
+  if (aparienciaPublica.themes[0].tokens['--ws-on-link'] !== '#ffffff')
+    throw new Error('/bff/appearance debe traer tokens["--ws-on-link"] igual a #ffffff con B');
+  const lineaDelEnlace = declaraciones.indexOf('  --ws-link: var(--ws-primary);');
+  if (lineaDelEnlace < 0 || declaraciones[lineaDelEnlace + 1] !== '  --ws-on-link: #ffffff;')
+    throw new Error('theme.css de B debe declarar --ws-on-link: #ffffff justo después de --ws-link');
   const revalidada = await hoja({ 'if-none-match': etagB });
   if (revalidada.status !== 304 || (await revalidada.text()) !== '')
     throw new Error('theme.css con If-None-Match igual al ETag debe responder 304 sin cuerpo');
