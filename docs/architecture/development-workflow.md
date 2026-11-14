@@ -64,6 +64,14 @@ El PR de la feature no puede citar su propio número ni el SHA de su merge. Por 
 
 El registro no cambia código ni reabre decisiones: lo que se descubra después de la entrega va al backlog.
 
+### Implantación con un piloto
+
+La regla de un pull request por feature se estrena con un piloto, como pidió Daniel Avila el 2026-11-13:
+
+1. La primera feature que se entrega así se limita a un solo módulo, por ejemplo productos. Qué feature es la decide el equipo.
+2. Con su PR fusionado y su registro de la entrega hecho, el equipo comprueba que el flujo funcionó como necesita. El resultado se anota en ese registro.
+3. Solo después se aplica a las features siguientes. Si la revisión pide cambios en el flujo, se hacen antes, en una rama de documentación, y con un ADR nuevo si cambia la decisión de [ADR-0015](../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md).
+
 ## Etapa 5 en detalle: ciclo TDD
 
 En las áreas con TDD obligatorio (STD-18) cada tarea sigue este ciclo:

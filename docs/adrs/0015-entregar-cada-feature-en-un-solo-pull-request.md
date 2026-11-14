@@ -7,7 +7,7 @@
 
 ### Por qué había que decidir
 
-El [flujo de trabajo](../architecture/development-workflow.md) cerraba un pull request por hito. La feature 005 necesitó seis PR para un solo cambio (#31 a #36: especificación, plan, ADR, tareas, implementación y registro de la entrega), la 004 otros seis (#22 a #27) y la 003, cinco (#17 a #21). Cada PR intermedio repite la ronda de publicar, esperar el CI, revisar, fusionar, cerrar la rama y volver a crearla, y lleva a `dev` documentos de una feature sin terminar. Daniel Avila pidió el 2026-11-14 entregar cada feature como un lote completo.
+El [flujo de trabajo](../architecture/development-workflow.md) cerraba un pull request por hito. La feature 005 necesitó seis PR para un solo cambio (#31 a #36: especificación, plan, ADR, tareas, implementación y registro de la entrega), la 004 otros seis (#22 a #27) y la 003, cinco (#17 a #21). Cada PR intermedio repite la ronda de publicar, esperar el CI, revisar, fusionar, cerrar la rama y volver a crearla, y lleva a `dev` documentos de una feature sin terminar. Daniel Avila pidió el 2026-11-13 entregar cada feature como un lote completo.
 
 ### Opciones
 
@@ -16,6 +16,7 @@ El [flujo de trabajo](../architecture/development-workflow.md) cerraba un pull r
 | **Un PR por feature, abierto al final (elegida)** | Todas las etapas y los hitos son commits de `feature/NNN-slug`. El PR se abre con el hito de entrega aprobado. Solo el registro de la entrega va en un PR nuevo | Una sola ronda de CI, revisión y merge; `dev` recibe features completas; quien revisa ve el cambio entero | El CI se ejecuta al final; la feature en curso no está en `dev`; el PR es grande y la rama vive más |
 | Un PR en borrador desde la primera etapa | El PR se abre con la especificación y recibe los commits de las etapas siguientes | El CI corre en cada push y el avance se ve en GitHub | El título y el cuerpo se redactan sin conocer el resultado y se reescriben; el CI se gasta en commits de documentación |
 | Un PR por hito (regla anterior) | Especificación, plan, ADR, tareas e implementación en PR separados | Revisiones pequeñas; `dev` refleja el avance de cada feature | De cuatro a seis PR por feature; cada corrección pequeña tarda como una feature |
+| Una feature por reunión | Agrupar en una sola feature todas las correcciones de una misma reunión | Menos features y menos PR todavía | Mezcla correcciones sin relación en una especificación y en una revisión. Sebastián Avila la propuso como idea y la retiró el 2026-11-14: un solo PR por feature ya ahorra la mayor parte del tiempo |
 
 ## Decisión
 
@@ -25,6 +26,7 @@ Entregaremos cada feature en un solo pull request hacia `dev`:
 - **Hitos como commits.** Los hitos humanos de alcance, arquitectura y entrega, y las aprobaciones de las tareas, de cada tarea ⚠ y de cada bloque, se siguen pidiendo igual. Se registran en el artefacto de su etapa (quién aprobó y cuándo), en un commit de la rama. Un hito no abre un PR, y la etapa siguiente no empieza sin el hito anterior registrado.
 - **Un PR.** Se abre con el skill `pr-create` cuando `sdd-verify` ha terminado y el hito de entrega está aprobado. Una persona lo revisa y lo fusiona con merge commit.
 - **Registro de la entrega.** Después del merge, un PR nuevo deja la feature como `entregada`, con el número del PR y el SHA del merge, que no existen antes. Es el único PR adicional de una feature.
+- **Implantación con un piloto.** La regla se estrena con una sola feature, limitada a un módulo (por ejemplo, productos). Cuando esté entregada, el equipo comprueba que el flujo funciona como necesita, y solo entonces se aplica a las features siguientes.
 
 No cambian las sesiones por etapa y por bloque, el worktree de la implementación, el ciclo TDD, los controles de cada tarea ni la [política de ramas](../git/conventional-pull-requests.md#política-de-pull-requests). Este ADR amplía [ADR-0002](0002-adoptar-sdd-y-tdd.md) y [ADR-0005](0005-adoptar-convenciones-de-versionamiento-y-entrega.md); no los sustituye. El detalle vive en [Un pull request por feature](../architecture/development-workflow.md#un-pull-request-por-feature).
 
@@ -49,5 +51,6 @@ No cambian las sesiones por etapa y por bloque, el worktree de la implementació
 **Transición y fuera de alcance:**
 
 - Las features 001 a 005 se entregaron con la regla anterior y no se reescriben.
+- Qué feature es el piloto lo decide el equipo. Si su revisión pide cambios en el flujo, se hacen antes de la feature siguiente, con un ADR nuevo si cambia esta decisión.
 - Una feature con etapas ya fusionadas en `dev` (hoy, la 006, con su especificación) sigue con esta regla desde su siguiente etapa: una rama y un PR para lo que falta.
 - Los cambios que no son una feature (documentación, correcciones) ya iban en un solo PR y no cambian.

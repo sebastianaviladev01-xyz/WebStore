@@ -19,6 +19,8 @@ Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia e
 
 **Por decidir por el equipo.** Un agente no lo elige: pregunta a la persona.
 
+La primera feature que se entregue con el flujo de un solo PR es un piloto sobre un solo módulo, por ejemplo productos, y se revisa antes de empezar las siguientes ([implantación con un piloto](../../architecture/development-workflow.md#implantación-con-un-piloto)). Qué feature es el piloto también lo decide el equipo.
+
 Orientación de la reunión del equipo (notas pegadas el 2026-11-11): lo primero eran los temas configurables ([PBI-0030](../../planning/backlog.md)), ya entregados con la feature 002, antes de la gestión de banners; después vienen los ajustes priorizados del Admin y de la tienda (PBI-0031, PBI-0032 y PBI-0035 a PBI-0038). Sebastián Avila eligió el 2026-11-12 empezar por los del Admin, ya entregados con la feature 003; los de la tienda (PBI-0035 a PBI-0038), elegidos el 2026-11-12, quedaron entregados con la feature 004. Siguen en el backlog, entre otros, los fallos PBI-0048 y PBI-0049 (este último afecta al Admin con el tema C, el de Ecom) y la gestión de banners. El orden exacto y el cronograma los fija el equipo.
 
 Para decidirlo, el equipo revisa:
