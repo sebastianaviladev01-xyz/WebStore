@@ -39,6 +39,17 @@ Durante la implementación, cada tarea añade aquí una fila breve en su mismo c
 | ⚠ TASK-02 | | Capturas con B (`capturas.mjs tarea-02 b`) frente a `antes/b` | 34 de 39 iguales. Las otras 5 difieren en 1 a 4 niveles por canal, en cajas de ruido conocidas: fotos de producto de `tienda-dialogo-375`, `tienda-dialogo-hover-ver-carrito-1440` y `tienda-detalle-pedido-1440`, 2 px en `tienda-dialogo-hover-ver-carrito-375` y 4 px en `admin-lista-desplegable-1440` (x = 988). Frente a `control-ruido/b`, las mismas cajas. Resultado: «Iguales» salvo ruido de rasterizado. Consola sin mensajes nuevos (el `404` de `/favicon.ico` sale en `b/` porque la toma solo cargó B) | — |
 | ⚠ TASK-02 | | `npm run test:e2e` completo (cierra la fase 1) | Pasa (exit 0): 107 pruebas en 4.3 min, sin fallos ni pruebas inestables, con los puertos 3400, 4400 y 4500 libres antes | — |
 | ⚠ TASK-02 | | Datos, servidores y Prettier | Hash de `backend/data.json` del checkout principal igual antes y después (`f4480a1c…ae34e`). Copia con B activo (revisión 30) y `schemaVersion: 3`. Servidores detenidos; dos `ng serve` se cerraron por PID. Prettier sobre los `.mjs`, `.ts` y `.css` tocados; `casos-tema.json` se editó solo con inserciones, sin reformatear | — |
+| ⚠ TASK-03 | | Ejecución | — | Claude Code, `claude-opus-5-5`, sin delegar (avanzado · alto, como pide el catálogo para una ⚠). El esfuerzo de la sesión no se puede leer desde dentro. Paquete de revisión aprobado por Sebastián Avila el 2026-11-14 («Sí, apruébalo», desde su sesión principal, que antes revisó el diff, las e2e, las capturas de C y el hash), con la corrección del borde de la casilla sin marcar |
+| ⚠ TASK-03 | | Fallo «antes», con las e2e escritas y `tokens.css` sin cambiar | `npx playwright test admin-casillas admin-material-contraste storefront-material-contraste` desde `frontend/`: 7 pasan y 3 fallan, las tres por el defecto esperado, «C · casilla marcada, marca sobre el relleno: `rgb(31, 35, 40)` sobre `rgb(31, 35, 40)` = 1.00:1» (mínimo 3:1): TEST-10 con C, TEST-11 (tema de AC-05, también 1:1) y TEST-12 del Admin con C. Ningún fallo de sintaxis, de localización ni de tiempo | — |
+| ⚠ TASK-03 | | Verde | El mismo comando tras el cambio: 10/10. Mutación: sin `--mat-button-filled-state-layer-color`, TEST-12 de la tienda con C falla («la capa de estado del botón relleno sigue en --ws-on-primary»: `rgb(255, 255, 255)` en lugar de `rgb(31, 35, 40)`) y A y B pasan; la línea se repuso. Las medidas que no son de la casilla, idénticas antes y después (comparación de las anotaciones) | — |
+| ⚠ TASK-03 | | Desviación aprobada: borde de la casilla sin marcar | El plan (TEST-10) y la especificación (casos límite) dicen `--ws-border-strong`, pero Material 22.2.4 pinta ese borde con `--mat-checkbox-unselected-icon-color`, que por defecto es `--mat-sys-on-surface-variant` y `tokens.css` lleva a `--ws-muted`, también en la base. En reposo (sin puntero ni foco, que lo pintan con `on-surface`): A `rgb(91, 88, 102)`, 6.92:1; B `rgb(82, 96, 117)`, 6.39:1; C `rgb(85, 91, 101)`, 6.84:1. TEST-10 comprueba `--ws-muted` y el relleno transparente: lo que AC-07 protege es que no cambie. Aprobada por Sebastián Avila el 2026-11-14; TASK-06 deja la nota fechada | — |
+| ⚠ TASK-03 | | Casilla marcada de `/contenido` («Página Contacto») | Con A, blanco sobre `rgb(76, 42, 146)`, 10.23:1; con B, blanco sobre `rgb(29, 78, 216)`, 6.70:1, igual que en la base. Con C, **blanco sobre `rgb(31, 35, 40)`, 15.80:1** (antes 1:1). Con el tema de AC-05, la marca es su `--ws-on-link` (blanco) sobre el mismo grafito, 15.80:1. El relleno sobre la tarjeta blanca, 10.23, 6.70 y 15.80:1. TEST-11 crea el tema con un nombre único y deja B activo y sin el tema al terminar | — |
+| ⚠ TASK-03 | | Componentes de Material (TEST-12) | Todos llegan a su mínimo con A, B y C (tabla en [Medidas de los componentes de Material](#medidas-de-los-componentes-de-material-test-12)). Con C, la capa de estado de «Ver carrito» sigue en el grafito de `--ws-on-primary` (etiqueta a 7.55:1 con el puntero) | — |
+| ⚠ TASK-03 | | Alcance del diff | Solo `frontend/src/styles/tokens.css` (`--mat-sys-on-primary: var(--ws-on-link)`, `--mat-button-filled-state-layer-color: var(--ws-on-primary)` y los comentarios) y las cuatro e2e nuevas (`apoyo/contraste.ts`, `admin-casillas`, `admin-material-contraste` y `storefront-material-contraste`). Sin `::ng-deep`, `.mdc-` ni colores fijos (búsqueda en el diff y en las e2e). Las e2e localizan por rol y nombre y, dentro de cada control, por posición (el hermano del `input` y su `svg path`, los hijos del recuadro del botón de opción, `input.labels`, el hijo con `::before` del botón) y por las etiquetas `mat-checkbox`, `mat-radio-button` y `mat-pseudo-checkbox`; solo leen con `getComputedStyle` | — |
+| ⚠ TASK-03 | | `npm run verify`, con los servidores detenidos | Pasa (exit 0): agentes, sintaxis de 68 archivos, formato, lint y Sheriff, 29 pruebas de arquitectura, TEST-18 (a), (b) y (c), 84 del frontend, 131 del BFF, build de las dos apps y «Smoke test BFF: OK». El lint no cubre `tests/e2e/`, como con las e2e existentes: `tsc --strict` sobre las cuatro e2e nuevas, sin errores | — |
+| ⚠ TASK-03 | | Capturas con A, B y C (`capturas.mjs tarea-03`) frente a `antes/{a,b,c}` | Admin: con A y B, «Iguales» (salvo los 4 px conocidos de `admin-lista-desplegable-1440`); con C, solo las marcas de las casillas marcadas, de grafito a blanco (172 px en `contenido` y 43 px en `banners`, `marcas`, `productos` y `usuarios`, a 1440 y 375 px). Tienda: diálogo (también con el puntero sobre «Ver carrito») y checkout «Iguales» con los tres temas, salvo las fotos de producto, que difieren igual entre dos tomas del mismo árbol (`control-ruido-03`). Con A, el catálogo y el inicio a 1440 px difieren en dos fotos (hasta 13 y 1 nivel), igual con el `tokens.css` de la punta (`control-base-03/a`): deriva del rasterizado desde TASK-01, ajena al cambio. Resultado: solo cambian las casillas marcadas con C. Consola: 11 rutas con mensaje, todos iguales a la base | — |
+| ⚠ TASK-03 | | `npm run test:e2e` completo (cierra la fase 2) | Pasa (exit 0): 117 pruebas en 5.1 min (las 107 de la base y las 10 nuevas), sin fallos ni pruebas inestables, con los puertos 3400, 4400 y 4500 libres antes | — |
+| ⚠ TASK-03 | | Datos, servidores y Prettier | Hash de `backend/data.json` del checkout principal igual antes y después (`f4480a1c…ae34e`). Copia con B activo (revisión 40), `schemaVersion: 3` y el tema de AC-05 como único tema propio. Servidores detenidos por PID antes de `verify` y del e2e. Prettier sobre `tokens.css` y las cuatro e2e | — |
 
 ### Medidas «antes» de los enlaces
 
@@ -57,6 +68,25 @@ Con B, a 1440 px (los del cajón, a 375 px). «Utilidad» es lo que pintaría la
 | 9 | «Ayuda» de la franja superior | Blanco sobre `rgb(24, 57, 150)`, 10.17:1, sin subrayado | Igual, sin subrayado | Subrayado con el puntero |
 | 10 | «Seguimiento de pedidos» (`/inicio-anterior`) | Igual que «Ayuda» | Igual, sin subrayado | Subrayado con el puntero |
 | — | «Olvidé mi contraseña» (control) | `rgb(30, 41, 59)`, 14.63:1, sin subrayado | — | Igual: no tiene utilidades |
+
+### Medidas de los componentes de Material (TEST-12)
+
+Anotaciones de `admin-material-contraste.spec.ts` y `storefront-material-contraste.spec.ts` tras ⚠ TASK-03, a 1440 px. Relación WCAG con el fondo efectivo. Fuera de la casilla, iguales antes y después del cambio.
+
+| App | Componente | A | B | C | Mínimo |
+|---|---|---|---|---|---|
+| Admin | Etiqueta enfocada de «Correo» (`/login`) | 7.92 | 5.19 | 12.23 | 4.5 |
+| Admin | Menú de usuario, «Perfil» | 18.10 | 17.85 | 15.80 | 4.5 |
+| Admin | Casilla marcada: marca sobre relleno y relleno sobre tarjeta | 10.23 y 10.23 | 6.70 y 6.70 | 15.80 y 15.80 | 3 |
+| Admin | «Ubicación» de `/banners`: texto y marca de la opción seleccionada | 12.17 y 6.28 | 11.99 y 6.27 | 10.81 y 6.38 | 4.5 y 3 |
+| Tienda | «Ver carrito» del diálogo, etiqueta sobre el contenedor | 10.23 | 6.70 | 8.69 | 4.5 |
+| Tienda | «Ver carrito» con el puntero (capa de estado al 8 %, en `--ws-on-primary`) | 8.29 | 5.71 | 7.55 | 4.5 |
+| Tienda | Etiqueta enfocada de «Nombres y apellidos» (checkout) | 10.23 | 6.70 | 15.80 | 4.5 |
+| Tienda | «Distrito destino»: texto y marca de la opción seleccionada | 12.17 y 6.28 | 11.99 y 6.27 | 10.81 y 6.38 | 4.5 y 3 |
+| Tienda | «Yape / Plin»: punto y anillo sobre la superficie | 10.23 | 6.70 | 15.80 | 3 |
+| Tienda | Selector de tema del modo demo, «Azul cobalto» | 18.10 | 17.85 | 15.80 | 4.5 |
+
+Al abrir la lista, la opción seleccionada es también la activa y Material pinta su texto con `on-surface`; la marca usa `on-secondary-container` de `azure-blue.css`. Se miden como se ven.
 
 ## Estado de los controles
 
