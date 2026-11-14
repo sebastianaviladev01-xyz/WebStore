@@ -181,7 +181,7 @@ Feature 004, entregada con el [PR #26](https://github.com/sebastianaviladev01-xy
 
 ### Material y enlaces de la tienda
 
-Feature 005, implementada en su rama y pendiente de entregar con su PR:
+Feature 005, entregada con el [PR #35](https://github.com/sebastianaviladev01-xyz/WebStore/pull/35):
 
 - **`on-primary` de Material.** `tokens.css` mapea `--mat-sys-primary` a `--ws-link` y `--mat-sys-on-primary` a `--ws-on-link`: lo que Material pinta sobre su `primary` usa el par medido del enlace. La casilla marcada del Admin tiene el relleno del enlace y la marca de `--ws-on-link`: blanca sobre el principal con A y B (10.23 y 6.70:1, como antes) y blanca sobre el grafito con C (15.80:1; antes, grafito sobre grafito, 1:1). La casilla sin marcar conserva su borde `--ws-muted` (`--mat-sys-on-surface-variant`). Sin `::ng-deep` ni clases internas de Material (STD-04).
 - **Regla `a` de la tienda en la capa base.** `a { color: inherit; text-decoration: none; }` va dentro de `@layer base` en `src/styles.css`, como la de márgenes. Fuera de capa anulaba las utilidades de Tailwind, y ahora los enlaces muestran su color y su subrayado:
