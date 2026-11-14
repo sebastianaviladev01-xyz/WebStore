@@ -1,6 +1,6 @@
 # 0014. Dar al tema un token para el texto sobre el enlace
 
-- Estado: Propuesta
+- Estado: Aceptada
 - Fecha: 2026-11-13
 
 ## Contexto

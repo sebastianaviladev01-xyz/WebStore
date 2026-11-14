@@ -159,7 +159,7 @@ Términos del [glosario](../../../architecture/glosario.md): «Tema», «Tema pr
   - Pregunta 2: respondida el 2026-11-13 con A; ya no bloquea T1 ni T2.
   - Pregunta 3: respondida el 2026-11-13 con A; ya no bloquea T1 ni T2.
   - Pregunta 4: respondida el 2026-11-13 con A; ya no bloquea T3.
-  - El ADR de `sdd-decide` bloquea T1. Registrado como [ADR-0014](../../../adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md), propuesto el 2026-11-13; bloquea T1 hasta que se acepte.
+  - El ADR de `sdd-decide`: registrado como [ADR-0014](../../../adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md) y aceptado por Sebastián Avila el 2026-11-13; ya no bloquea T1.
 - **ADR necesarios:** uno, que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md) como [ADR-0013](../../../adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md): el mapa del tema gana el token del texto sobre el enlace, calculado por el BFF, con su par de contraste, y Material pinta su `on-primary` con él. Propuesta de nombre: `0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md`. Lo redacta la etapa `sdd-decide` con las respuestas de las preguntas 2 a 4: el cálculo con la superficie como candidata (y por qué se aparta del de `--ws-on-primary`), el par a 4.5:1 que solo avisa y la capa de estado del botón relleno, que sigue en el principal. Bloquea T1. D1 no necesita ADR: aplica a la regla `a` la convención que `styles.css` ya sigue con los márgenes.
 
 ## Estrategia de pruebas
