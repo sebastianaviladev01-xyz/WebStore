@@ -9,7 +9,7 @@ Documento creado por TASK-01 desde la [plantilla](../../templates/verification-t
 
 | Dato | Valor |
 |---|---|
-| Rama y commit | `feature/007-desborde-de-productos-del-admin`, local y sin push, en el worktree `.worktrees/007-desborde-de-productos-del-admin`. Base de la implementación: `616d473` («docs: aprobar las tareas del desborde de productos del Admin») |
+| Rama y commit | `feature/007-desborde-de-productos-del-admin`, local y sin push, en el worktree `.worktrees/007-desborde-de-productos-del-admin`. Base de la implementación: `616d473` («docs: aprobar las tareas del desborde de productos del Admin»). Verificada por `sdd-verify` sobre `d2392eb` («docs: registrar la aprobación del bloque 3 del desborde de productos del Admin»), con el árbol limpio y sin cambios de código desde `14fe3a5` (`git diff 14fe3a5 d2392eb -- frontend backend tools package.json` solo toca `frontend/architecture.md` y `frontend/docs/VISUAL-SYSTEM.md`) |
 | Fecha | 2026-11-14 |
 | Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas y el e2e |
 | Datos | Capturas: copia `backend/data-capturas.json` del worktree (creada por el BFF desde el seed, ignorada por git), con el BFF del worktree en 3400 sin modo demo. E2E: archivo temporal de Playwright. Nunca `backend/data.json`: su sha256 en el checkout principal es `f4480a1c…ae34e` antes y después de cada tarea con servidores; el worktree no tiene `backend/data.json` |
@@ -64,32 +64,135 @@ Durante la implementación, cada tarea añade aquí una fila breve en su mismo c
 
 ## Estado de los controles
 
-Lo completa `sdd-verify`.
+Ejecuciones finales de `sdd-verify` del 2026-11-14, sobre `d2392eb` con el árbol limpio, en el worktree `.worktrees/007-desborde-de-productos-del-admin`, en segundo plano y en serie (`verify`, `audit:all` y el e2e), sin servidores levantados (puertos 3000, 3400, 4200, 4300, 4400 y 4500 libres antes y después). Ejecutado con Claude Code, Opus 5.5 (`claude-opus-5-5`), sin delegar; el esfuerzo de la sesión no se puede leer desde dentro, y el tope es `high`.
+
+| Control | Documentado | Configurado | Ejecutado |
+|---|---|---|---|
+| Agentes (`check:agents`) | Sí ([ADR-0008](../../../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)) | Sí (`tools/check-agents.mjs`, en `verify`) | Sí: «catálogo 1.1.0, 2 herramientas, 10 skills, 10 referencias a niveles y 3 CLAUDE.md revisados» |
+| Sintaxis del BFF (`check:syntax`) | Sí | Sí (en `verify`) | Sí: «Sintaxis correcta en 68 archivos» |
+| Formato (`format:check`) | Sí | Sí (en `verify`; no revisa los `.md`) | Sí: «All matched files use Prettier code style!» en la raíz y en `frontend/`; además, `prettier --check` de la spec nueva y de `productos.page.ts`, sin cambios |
+| Lint y límites de arquitectura | Sí ([`frontend/architecture.md`](../../../../frontend/architecture.md) §2 y §3; TEST-06) | Sí (ESLint con `templateAccessibility`, Sheriff y `test:architecture`, en `verify`) | Sí: `eslint src projects` sin errores ni avisos (TEST-06 sobre la plantilla); `test:architecture` `tests 29`, `pass 29`, `fail 0`. El diff de código solo toca una plantilla de `presentation/` y una spec e2e: ninguna importación nueva |
+| Lint y tipos de la spec e2e nueva | Sí ([PBI-0056](../../../planning/backlog.md)) | No: la configuración de ESLint no cubre `tests/` (`eslint --print-config` de la spec no da configuración) y `verify` no comprueba sus tipos | Sí, a mano, desde `frontend/`: `npx tsc --ignoreConfig --noEmit --strict --target es2022 --lib es2022,dom --module esnext --moduleResolution bundler --skipLibCheck tests/e2e/admin-productos-movil.spec.ts`, código de salida 0. Lint: no aplicable hasta PBI-0056 |
+| Typecheck del Storefront y del Admin | Sí (PBI-0029) | No en `verify` (PBI-0029): lo cubre el build | Sí, a mano, desde `frontend/`: `npx tsc -p tsconfig.app.json --noEmit` y `npx tsc -p projects/admin/tsconfig.app.json --noEmit`, código de salida 0 en los dos |
+| Pruebas unitarias | Sí | Sí (`npm test`, en `verify`) | Sí: frontend `tests 84`, `pass 84`, `fail 0`; BFF `tests 131`, `pass 131`, `fail 0`. La feature no añade ni cambia pruebas unitarias (sin `domain/` ni BFF) |
+| Pruebas de integración y contrato del BFF | Sí ([contrato](../../../../backend/docs/BFF-CONTRACT.md), sin cambios) | Sí (`validate:contract`, en `verify`) | Sí: «Estructura contractual WebStore: OK», con «TEST-18 (a): el tema B del BFF es igual a tokens.css», «(b): ningún color fijo fuera de tokens.css» (TEST-06) y «(c)»; «Smoke test BFF: OK» |
+| Pruebas E2E | Sí (TEST-01 a TEST-05 y la caracterización de TASK-01) | Sí (`playwright.config.ts`: BFF 3400, Storefront 4400, Admin 4500, estado temporal) | Sí: `npm run test:e2e` desde la raíz, en segundo plano: `127 passed (5.8m)`, 0 fallos, sin pruebas inestables ni reintentos, código de salida 0; las mismas 127 de ⚠ TASK-03 y ⚠ TASK-04, con las 6 de `admin-productos-movil` |
+| Build de Storefront y Admin | Sí | Sí (`build:all`, en `verify`, con presupuestos) | Sí: «Application bundle generation complete» en los dos, sin avisos |
+| `npm run verify` completo | Sí | Sí | Sí: código de salida 0, en 118 s |
+| Capturas antes y después | Sí ([capturas del plan](planning.md#capturas-antes-y-después)) | Sí (guiones de `frontend/output/visual-qa/007-desborde-de-productos-del-admin/`, con Playwright y el Chrome instalado, la copia `backend/data-capturas.json`, la sesión de `superadmin` y los temas por la API) | Sí: toma «verificacion» de la punta con A, B y C, comparada con la «antes» de la base y con la «despues» aprobada ([Capturas antes y después](#capturas-antes-y-después)) |
+| Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`, código de salida 0, en 5 s. Ningún `package.json` ni `package-lock.json` cambia en la rama |
+| Enlaces de los documentos | Sí (paso 9 de `sdd-verify`) | No en `verify` | Sí, con un guion sobre los `.md` que cambian en la rama (con este documento, el Traspaso y el índice ya editados): todos los enlaces relativos resuelven, con sus anclas ([Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones) da la cifra) |
+| Convención de commits | Sí ([convención](../../../git/conventional-commits.md)) | No automatizado | Sí, con `git log dev..HEAD`: ver [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones) |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar» y «E2E») | Sí | No ejecutado: se ejecuta en el PR único de la feature, que se abre con el hito de entrega aprobado; su resultado lo anota el registro de la entrega |
+| Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: ni `sdd-verify` ni la guía la piden en esta etapa |
 
 ## Resultados de las pruebas
 
-Lo completa `sdd-verify`.
+| ID | AC | Comando | Resultado | Evidencia |
+|---|---|---|---|---|
+| TEST-01 | AC-01, AC-04 | `npm run test:e2e` (spec `admin-productos-movil`, una prueba por tema a 360, 375 y 390 px) | Pasa con A, B y C | E2E completo `127 passed` sobre `d2392eb`. Sobre la plantilla de `21992b7`: falla por `scrollWidth` 376 a 375 px y 376 a 360 px, al entrar y editando, con los tres temas ([Cumplimiento TDD](#cumplimiento-tdd)) |
+| TEST-02 | AC-02, AC-04 | Ídem | Pasa con A, B y C | Ídem. Sobre `21992b7`: los campos y el grupo «Galería de fotos» acaban en x = 375.6, fuera del formulario, a 360, 375 y 390 px; a 360 px, también «Agregar» (x 278–358.6). Incluye escribir una URL y pulsar «Agregar» editando «OLED Vision 55” 4K», sin guardar |
+| TEST-03 | AC-03, AC-04 | Ídem | Pasa con A, B y C | Ídem. Sobre `21992b7`: la lista desplaza (`scrollWidth` 395), la cabecera no cabe, el SKU ocupa varias líneas, el bloque del producto mide 0 px a 360 y 375 px y la celda dice solo el número |
+| TEST-04 | AC-01, AC-03 | Ídem (vendedor, B, 375 px) | Pasa | Ídem. Sobre `21992b7`: los mismos fallos de TEST-01 y TEST-03 a 375 px |
+| TEST-05 | AC-05 | Ídem (B, 768 y 1440 px; y 767 px aparte) | Pasa | Ídem. Sobre `21992b7`: escritorio en verde (caracterización) y 767 px en rojo (la cabecera se ve y las seis celdas dicen solo el número). Medida adaptada, aprobada con el bloque 1 |
+| TEST-06 | AC-05, AC-06 | `npm run verify` (`templateAccessibility` y `validate:structure`) | Pasa | `eslint src projects` sin errores; «TEST-18 (b): ningún color fijo fuera de tokens.css» |
+| TEST-07 | AC-05, AC-06 | `capturas.mjs`, `comparar.mjs` y `franja.mjs` | Pasa | A 1440 px, iguales a la base con A, B y C; a 375 px, la franja de arriba igual y solo cambian la lista y el formulario ([Capturas antes y después](#capturas-antes-y-después)) |
 
 ## Capturas antes y después
 
-Lo completa `sdd-verify`.
+Toma «verificacion» del 2026-11-14 sobre `d2392eb`, con el mismo guion (`capturas.mjs`), los mismos servidores (BFF del worktree en 3400 sin modo demo, con `WEBSTORE_DATA_FILE` absoluto a `backend/data-capturas.json`, y el Admin en 4500 con `proxy.e2e.conf.json`), la misma sesión de `superadmin` y los temas en el orden A, B y C, con B al terminar. Se compara con la toma «antes» de TASK-01 (base `616d473`, el mismo guion y la misma copia) y con la «despues» aprobada en ⚠ TASK-04. La base no se volvió a capturar: sus capturas son del mismo guion y la misma copia, y la toma de la punta sale igual que la «despues» aprobada. Carpeta y método: `frontend/output/visual-qa/007-desborde-de-productos-del-admin/` (`LEEME.md`, apartado «Toma “verificacion”»; ignorada por git).
+
+| Pantalla o ruta | Anchos | Resultado | Evidencia |
+|---|---|---|---|
+| `/productos` al entrar («Nuevo producto»), A, B y C | 1440 × 900 | Iguales | `comparar.mjs antes verificacion` y `comparar.mjs despues verificacion`: 3 de 3 iguales píxel a píxel en cada una (AC-05) |
+| `/productos` editando «OLED Vision 55” 4K», sin guardar, A, B y C | 1440 × 900 | Iguales | Ídem: 3 de 3 iguales frente a la base y frente a «despues» (AC-05) |
+| `/productos` al entrar, A, B y C | 375 × 812 | Cambios pedidos | Frente a la base, otro tamaño (376 × 3068 frente a 375 × 2540). `franja.mjs antes verificacion`: la franja de arriba (x 0–374, y 0–425: cabecera, tira de navegación, título y «Nuevo producto») igual en los tres temas; la primera fila distinta es la 427, dentro de la lista (AC-06). Cambian la lista y el formulario, como piden AC-01 a AC-03. Frente a «despues», iguales con A, B y C |
+| `/productos` editando «OLED Vision 55” 4K», A, B y C | 375 × 812 | Cambios pedidos | Frente a la base, otro tamaño (376 × 3175 frente a 375 × 2633) y la franja de arriba igual en los tres temas, como arriba. Frente a «despues», iguales con A y B; con C difiere solo la foto de la miniatura de la galería (2975 px, máximo 6 niveles por canal, caja x 63–133, y 1833–1879). Una segunda toma con C (`verificacion-ruido`) es igual a «verificacion» en sus 4 pares y da la misma diferencia frente a «despues»: es la decodificación de la foto, no la interfaz (recortes ampliados en la carpeta) |
+| Consola de cada toma | 1440 y 375 | Sin mensajes nuevos | `verificacion/consola-abc.json`: 37 mensajes, los mismos que «antes» y «despues» por tema y ancho (mensajes de desarrollo de Vite y Angular y el `404` de `/favicon.ico` en la primera carga, [PBI-0046](../../../planning/backlog.md)); con A a 375 px solo cambia el orden de dos mensajes de desarrollo |
+
+Datos: la copia acaba con B activo, sin temas propios, `schemaVersion` 3 y los 6 productos; la revisión de `appearance` pasó de 22 a 32, solo por las activaciones de tema de los guiones. sha256 de `backend/data.json` del checkout principal `f4480a1c…ae34e` antes y después. Servidores detenidos con `taskkill /T`; ningún proceso de `ng serve` ni del BFF quedó vivo.
 
 ## Cumplimiento TDD
 
-Lo completa `sdd-verify`.
+| Área | TDD obligatorio | Prueba antes del código | Evidencia |
+|---|---|---|---|
+| Plantilla de `ProductosPage` (`presentation/` del Admin) y e2e | No ([STD-18](../../../architecture/standards.md): no toca un `domain/` ni el BFF) | Sí | La spec `admin-productos-movil` entró en `21992b7` (TASK-02), antes de la corrección `14fe3a5` (⚠ TASK-03), que no la toca (`git diff 21992b7 HEAD -- frontend/tests` vacío). Rojo reproducido en `sdd-verify`: con la plantilla de `21992b7` restaurada en el árbol de trabajo (`git show 21992b7:<plantilla>`), `npm run test:e2e -- admin-productos-movil` da `5 failed`, `1 passed` (1.4 min): fallan TEST-01 a TEST-03 con A, B y C, TEST-04 y TEST-05 a 767 px, por las mismas causas de la fila de TASK-02, con 470 aserciones blandas fallidas y ningún tiempo de espera ni fallo de localizador; pasa TEST-05 de escritorio. Después, `git checkout` de la plantilla y árbol limpio. Verde: el e2e completo sobre la punta (`127 passed`) |
+| BFF, contrato y `domain/` | Sí, si se tocaran | No aplica | La rama no los toca |
 
 ## Trazabilidad
 
-Lo completa `sdd-verify`.
+| REQ | AC | TASK | Commit o PR | TEST | Resultado |
+|---|---|---|---|---|---|
+| REQ-01, REQ-02 | AC-01 | TASK-02, ⚠ TASK-03 | `21992b7`, `14fe3a5` | TEST-01, TEST-04 | Pasa (rojo en la base, verde en la punta) |
+| REQ-02 | AC-02 | TASK-02, ⚠ TASK-03 | `21992b7`, `14fe3a5` | TEST-02 | Pasa (rojo en la base, verde en la punta) |
+| REQ-03 | AC-03 | TASK-02, ⚠ TASK-03 | `21992b7`, `14fe3a5` | TEST-03, TEST-04 | Pasa (rojo en la base, verde en la punta) |
+| REQ-04 | AC-04 | TASK-02, ⚠ TASK-03 | `21992b7`, `14fe3a5` | TEST-01, TEST-02, TEST-03 (360 y 390 px) | Pasa (rojo en la base, verde en la punta) |
+| REQ-05 | AC-05 | TASK-01, TASK-02, ⚠ TASK-03, ⚠ TASK-04 | `ef9d335`, `21992b7`, `14fe3a5`, `eda96c6` | TEST-05, TEST-06, TEST-07 | Pasa (TEST-05 de escritorio en verde antes y después; 1440 px iguales) |
+| REQ-01 a REQ-03 | AC-06 | TASK-01, ⚠ TASK-04 | `ef9d335`, `eda96c6` | TEST-06, TEST-07 | Pasa (franja de arriba igual; solo cambian la lista y el formulario) |
+| REQ-01 a REQ-05 | AC-01 a AC-06 (documentos) | TASK-05 | `c80aa69` | — | Hecho: sistema visual, arquitectura del frontend, trazabilidad, backlog (PBI-0045 `en curso`) e índice |
+
+[`TRACEABILITY.md`](../../../planning/TRACEABILITY.md) tiene la fila de la feature 007, «en la rama», y [`BFF-CONTRACT.md`](../../../../backend/docs/BFF-CONTRACT.md) no cambia, como corresponde: la feature no toca el contrato.
 
 ## Definition of Done
 
-Lo completa `sdd-verify`.
+Marca solo lo que se cumple ([criterios](../../../development/definition-of-done.md)).
+
+- [x] AC aplicables demostrados (AC-01 a AC-06), con el comportamiento normal (al entrar y editando, con A, B y C), los límites (360, 390 y 767 px; el vendedor sin «Eliminar»; el stock 0 en el color de peligro; la galería con tres fotos y el aviso de foto repetida) y la caracterización del escritorio (768 y 1440 px).
+- [x] Sin áreas con TDD obligatorio. Aun así, las e2e existían antes del código (`21992b7` antes de `14fe3a5`) y el rojo se reprodujo en `sdd-verify` ([Cumplimiento TDD](#cumplimiento-tdd)).
+- [x] `npm run verify` ejecutado desde la raíz sobre `d2392eb` (código de salida 0), `npm run test:e2e` (`127 passed`) y `npm run audit:all` (0 vulnerabilidades), aunque las dependencias no cambian.
+- [x] El contrato HTTP no cambia: ni `BFF-CONTRACT.md`, ni el smoke test, ni los adaptadores `Bff*Gateway`.
+- [x] Autorización, validación, confidencialidad y accesibilidad revisadas: sin rutas del BFF ni permisos nuevos (el `vendedor` ve lo mismo, TEST-04); la lista y el formulario ganan nombre accesible (`aria-label` y `aria-labelledby`) y TEST-06 pasa `templateAccessibility`; la etiqueta «Stock» es texto visible, no solo de lectores de pantalla.
+- [x] Capturas antes y después a 1440 y 375 px, con A, B y C, sin cambios visuales no pedidos (STD-12): a 1440 px iguales; a 375 px solo cambian la lista y el formulario; la punta, igual a lo aprobado en ⚠ TASK-04 salvo la decodificación de una foto con C.
+- [x] Documentación coherente con la implementación: sistema visual, arquitectura del frontend, `TRACEABILITY.md`, backlog e índice (TASK-05), sin ADR (ninguno necesario). Lo que depende del merge sigue como «en la rama» o `en curso`, con la lista en el [Traspaso](tasks.md#traspaso).
+- [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
+- [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las cuentas de las e2e y de los guiones son las de la semilla local; la copia de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó (sha256 `f4480a1c…ae34e` antes y después).
+- [x] Los controles no ejecutados figuran como tales: el CI y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [ ] Revisión humana del hito correspondiente registrada: los hitos de alcance, arquitectura y tareas, las dos tareas ⚠ y los tres bloques están aprobados y registrados en `tasks.md`; falta el [hito de entrega](#hito-de-entrega).
+- [ ] Todas las etapas están en la rama y se entregan en un solo PR: las etapas, sí; el PR único se abre con el hito de entrega aprobado.
 
 ## Riesgos remanentes y excepciones
 
-Lo completa `sdd-verify`.
+- **Convención de los commits (excepción que aceptar).** Los 18 commits de la rama (`git log dev..HEAD`, con el de esta verificación) están en español, con Conventional Commits y `Refs: 007-desborde-de-productos-del-admin` (con `/TASK-NN` en los de tarea); ninguno lleva `Co-Authored-By` ni firmas de herramientas, y ninguno es un merge. Todos son de Sebastián Avila. Una desviación: `21992b7` («test: escribir las e2e del desborde de productos del Admin») no lleva el ámbito `frontend`, aunque solo toca `frontend/` y documentos de la feature (la convención pide el ámbito de la carpeta de primer nivel), y añade los tres atributos de nombre accesible de la plantilla, como fija TASK-02. No se reescribe: cambiaría los SHA citados en esta verificación, en `tasks.md` y en el índice.
+- **CI.** No ejecutado: se ejecuta en el PR único de la feature.
+- **Desviaciones ya aprobadas**, en sus filas de «Ejecución por tarea»: la medida de TEST-05 (aprobada con el bloque 1) y «Stock» seguido de `&nbsp;` en lugar de un espacio (paquete de ⚠ TASK-03).
+- **Ruido de decodificación de la foto.** La miniatura de la galería varía de 1 a 6 niveles por canal entre tomas (TASK-01 midió hasta 5; esta verificación, 6 con C). Se trató como ruido porque la diferencia está dentro de la foto y se reprodujo entre dos tomas del mismo árbol. El plan no fija un umbral numérico.
+- **Anchos y temas no capturados.** Entre 768 y 1439 px no hay capturas; TEST-05 comprueba el escritorio solo con B a 768 y 1440 px. `min-w-0` y `subscriptSizing="dynamic"` se aplican a todos los anchos (no llevan `max-md:`), como aprobó el plan; las capturas a 1440 px y TEST-05 a 768 px no muestran cambios. Solo se probó con Chrome (Playwright con el Chrome instalado), sin dispositivos reales.
+- **Fallos previos, fuera de alcance.** Siguen igual y no se corrigen aquí: [PBI-0046](../../../planning/backlog.md) (`404` de `/favicon.ico`), [PBI-0059](../../../planning/backlog.md) (el mismo desborde en `/clientes` y `/inventario`, anotado en la especificación) y los defectos de `/productos` registrados en `dev` (PBI-0119, PBI-0121, PBI-0122, PBI-0130 y PBI-0134), que la rama todavía no tiene porque va por detrás de `dev`.
+- **Lint y tipos de las e2e.** El lint no cubre `tests/` ([PBI-0056](../../../planning/backlog.md)): `npx eslint` sobre la spec termina con código 0 sin revisarla. Los tipos de la spec se comprobaron a mano con `tsc --strict`.
+- **Ejecutado con.** Las cinco tareas registran la herramienta y el modelo. Excepciones: el esfuerzo de la sesión no se pudo leer en ninguna tarea ni en esta verificación; TASK-01 se ejecutó con Opus 5.5, un nivel por encima del catálogo (estándar · medio, Sonnet 5.5), por el agente principal del bloque, sin delegar.
+- **Rama por detrás de `dev`.** Choca con `dev` en `docs/planning/backlog.md` (filas de PBI-0045 y PBI-0059; `dev` reservó el número 0059 y llega a PBI-0134). No se fusiona `dev` en la rama ni se rebasa: se resuelve al abrir el PR. El adaptador de Claude Code del worktree todavía no tiene el apartado «Commits y pull requests», que llegó a `dev` con el PR #41.
+- **Enlaces.** Los 9 `.md` que cambian en la rama (`git diff --name-only <base> -- '*.md'`) tienen 346 enlaces relativos, 0 rotos, con sus anclas, comprobados con un guion después de escribir esta verificación, el Traspaso y el índice.
+- **Pendiente de la entrega.** Lo que depende de fusionar el PR no se marca como entregado en la rama: se actualiza en el registro de la entrega con la lista «Tras la fusión del PR» del [Traspaso](tasks.md#traspaso).
+
+## Fricciones del piloto
+
+Para la [revisión del piloto](../../../architecture/development-workflow.md#implantación-con-un-piloto) del flujo de un solo PR por feature, después del registro de la entrega. Son observaciones del proceso; ninguna cambia la feature:
+
+| # | Fricción | Dónde | Cómo se resolvió en la feature |
+|---|---|---|---|
+| a | El plan no dice cómo comparar píxel a píxel la franja de arriba a 375 px cuando las capturas miden anchos distintos (376 px antes, 375 después) | [planning.md](planning.md#capturas-antes-y-después) y la fila de ⚠ TASK-04 | `franja.mjs` recorta a x 0–374 y hasta el inicio de la lista, medido en el DOM |
+| b | `tasks.md` dice que la copia de datos «no se modifica entre tomas, salvo para activar A o C», pero el guion también reactiva B al terminar, y la revisión de `appearance` sube con cada toma | [Reglas](tasks.md#reglas), «Datos» | Se aceptó: solo cambian las activaciones de tema, registradas con la revisión en cada fila |
+| c | `tasks.md` no tenía un hito antes de `sdd-verify` (fin del bloque 3), aunque la guía pide un sí explícito al cerrar cada bloque | [Hitos de revisión humana](tasks.md#hitos-de-revisión-humana) | Se dejó escrito en el Traspaso y se registró al empezar esta verificación (`d2392eb`) |
+| d | La fila 007 del índice se quedó en el bloque 1 hasta TASK-05: `sdd-implement` solo obliga a tocarla al bloquearse o desbloquearse | [Índice](../README.md) | TASK-05 la puso al día |
+| e | Dentro del worktree, Claude Code rechaza los comandos de Bash con la ruta absoluta del repositorio, o con un `cd` calculado junto a git | Herramienta | Rutas relativas desde la raíz del worktree; la ruta absoluta de `WEBSTORE_DATA_FILE`, con `cygpath -w "$PWD"` |
+| f | Claude Code añade `Co-Authored-By` por defecto, contra la convención | Herramienta; [convención](../../../git/conventional-commits.md) | Cada encargo lo prohíbe y cada commit se revisa con `git log -1 --format=%B`. Ningún commit de la rama la lleva |
+| g | La numeración de PBI choca entre una rama larga y `dev`, y `backlog.md` entra en conflicto | `docs/planning/backlog.md` | `dev` dejó libre PBI-0059; el conflicto se resuelve al abrir el PR |
+| h | Una rama larga no recibe los cambios de proceso de `dev`: el worktree lee el adaptador y las guías de la base, sin el aviso de coautoría que llegó a `dev` con el PR #41 | `.agents/adapters/claude-code.md` del worktree | Los encargos de la sesión principal lo repiten |
+| i | La guía de [Comparar capturas](../../../development/agent-execution.md#comparar-capturas) pide a `sdd-verify` volver a capturar la base con `git switch --detach`, pero no dice si basta con las capturas «antes» guardadas, del mismo guion y la misma copia | Guía, paso 2 | Se comparó la punta con la «antes» guardada y con la «despues» aprobada; la base no se volvió a capturar |
+| j | El ruido de rasterizado no tiene un umbral numérico: el plan dice «ruido de rasterizado documentado», y esta vez la foto varió 6 niveles (TASK-01 midió 5) | [planning.md](planning.md#capturas-antes-y-después) | Se localizó la caja dentro de la foto y se repitió la toma con C |
+| k | El esfuerzo de la sesión no se puede leer desde dentro, aunque `sdd-verify` y la guía piden registrarlo en cada tarea | [Evidencia en el commit](../../../development/agent-execution.md#evidencia-en-el-commit-de-la-tarea) | Cada fila dice que no se pudo leer y que el tope es `high` |
+| l | `npx eslint` sobre un archivo de `tests/` termina con código 0 sin revisarlo (la configuración no lo cubre), y puede leerse como evidencia de lint | `frontend/eslint.config.mjs`; [PBI-0056](../../../planning/backlog.md) | Se registra como no aplicable; los tipos se comprueban con `tsc --strict` |
 
 ## Hito de entrega
 
 pendiente
+
+Preparado por `sdd-verify` el 2026-11-14 sobre `d2392eb`, para que Sebastián Avila lo apruebe o lo rechace. No está aprobado.
+
+Evidencia para decidir: la de esta verificación.
+
+- `npm run verify` (118 s) y `npm run audit:all` en verde; el typecheck de las dos apps y de la spec nueva, a mano; el e2e completo con `127 passed`; y el rojo de TEST-01 a TEST-05 reproducido sobre la plantilla de `21992b7`, con el verde en la punta.
+- Las capturas de la punta con A, B y C: a 1440 px, iguales a la base; a 375 px, la franja de arriba igual y solo cambian la lista y el formulario; frente a lo aprobado en ⚠ TASK-04, iguales salvo la decodificación de una foto con C. La consola, sin mensajes nuevos.
+- La trazabilidad completa y la Definition of Done, salvo este hito y el PR único.
+
+Excepción que aceptar con el hito: `21992b7` sin el ámbito `frontend`, que no se reescribe. Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones), entre ellos el CI, que se ejecuta en el PR, y el conflicto de `backlog.md` con `dev`, que se resuelve al abrirlo.
