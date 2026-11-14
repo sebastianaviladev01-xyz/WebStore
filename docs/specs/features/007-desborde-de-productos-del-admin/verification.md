@@ -166,7 +166,7 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 
 ## Fricciones del piloto
 
-Para la [revisión del piloto](../../../architecture/development-workflow.md#implantación-con-un-piloto) del flujo de un solo PR por feature, después del registro de la entrega. Son observaciones del proceso; ninguna cambia la feature:
+Para la [revisión del piloto](../../../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md) del flujo de un solo PR por feature, después del registro de la entrega. Son observaciones del proceso; ninguna cambia la feature:
 
 | # | Fricción | Dónde | Cómo se resolvió en la feature |
 |---|---|---|---|
@@ -206,7 +206,7 @@ Entrega: el [PR #42](https://github.com/sebastianaviladev01-xyz/WebStore/pull/42
 
 ## Revisión del piloto
 
-La feature 007 es el piloto del flujo de un solo PR por feature ([implantación con un piloto](../../../architecture/development-workflow.md#implantación-con-un-piloto), [ADR-0015](../../../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)), sobre un solo módulo: `/productos` del Admin.
+La feature 007 es el piloto del flujo de un solo PR por feature ([implantación con un piloto](../../../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md), [ADR-0015](../../../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)), sobre un solo módulo: `/productos` del Admin.
 
 **Resultado: funcionó, con ajustes.** Lo decidió Sebastián Avila el 2026-11-14 («Funcionó, con ajustes», a la pregunta «¿Qué resultado anoto para la revisión del piloto del flujo de un solo PR?»), con la recomendación de la sesión principal y esta evidencia:
 

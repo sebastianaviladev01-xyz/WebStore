@@ -36,7 +36,6 @@ Argumentos: el `NNN-slug` de la feature. Si hay varias plausibles, pregunta cuá
    4. Por paso o tarea prevista, sugiere nivel y esfuerzo (nivel `ligero`, `estándar` o `avanzado`, sin nombres de modelo), indica si necesita e2e o comparación de capturas y escribe los criterios concretos de aprobación de cada revisión ⚠.
 7. Separa decisiones acordadas de condicionadas y lista los ADR necesarios. Lo que dependa de una decisión crítica queda bloqueado.
 8. Actualiza el estado en `docs/specs/features/README.md` a `planificada`, con los ADR y las decisiones pendientes en «Bloqueos y siguiente paso», y propone el hito de arquitectura con sus alternativas, una pregunta cada vez (`docs/architecture/development-workflow.md`, apartado «Hitos humanos»).
-9. Haz commit del plan en la rama `feature/NNN-slug` de la feature. Si la rama no existe porque la especificación ya está en `dev`, créala desde la rama base. Cuando se responda el hito, registra quién y cuándo en la cabecera, en un commit de la rama.
 
 ## Salida
 
@@ -47,4 +46,3 @@ Argumentos: el `NNN-slug` de la feature. Si hay varias plausibles, pregunta cuá
 - No generes decisiones ficticias ni cifras de rendimiento sin base.
 - No instales herramientas ni implementes código.
 - No planifiques cambios visuales que la especificación no pida.
-- No abras un PR al terminar la etapa ni hagas push sin que la persona lo pida: la feature se entrega en un solo PR, después de `sdd-verify` (`docs/architecture/development-workflow.md`, apartado «Un pull request por feature»).
