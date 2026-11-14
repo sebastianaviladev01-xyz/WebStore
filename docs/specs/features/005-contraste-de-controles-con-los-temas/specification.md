@@ -2,9 +2,9 @@
 
 - Feature: `005-contraste-de-controles-con-los-temas`
 - Historia de usuario: ninguna. Sale de [PBI-0048](../../../planning/backlog.md) (texto del enlace «Ver todos los productos» del cajón móvil, a 2.18:1) y [PBI-0049](../../../planning/backlog.md) (casillas marcadas del Admin con el tema C, a 1:1). Los dos se detectaron en la feature [004](../004-ajustes-de-la-tienda/verification.md#ejecución-por-tarea), y Sebastián Avila los eligió como siguiente trabajo el 2026-11-13.
-- Estado: borrador
+- Estado: aprobada
 - Fecha: 2026-11-13
-- Hito de alcance: pendiente
+- Hito de alcance: aprobado por Sebastián Avila el 2026-11-13, con las dos [decisiones del hito](#decisiones-del-hito-de-alcance)
 
 ## Problema y actores
 
@@ -20,31 +20,31 @@ Dos controles no se leen con algunos temas, y en los dos casos el código declar
 
 Ecom, el primer cliente, usará el tema C ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md), «Confirmación de la paleta»), así que el defecto de las casillas lo verá en su Admin.
 
-Actores: el comprador (invitado o con cuenta) en la tienda móvil, y el `superadmin`, el `admin` y el `vendedor` en las páginas del Admin con casillas. Aplicaciones afectadas: Storefront y Admin; el BFF, según la [pregunta 2](#preguntas-abiertas).
+Actores: el comprador (invitado o con cuenta) en la tienda móvil, y el `superadmin`, el `admin` y el `vendedor` en las páginas del Admin con casillas. Aplicaciones afectadas: Storefront, Admin y BFF ([D2](#decisiones-del-hito-de-alcance): un token nuevo del tema).
 
 ## Alcance
 
 **Incluye:**
 
 - Que el texto de «Ver todos los productos» use el color que declara, con A, B y C.
-- Que los demás enlaces de la tienda que declaran un color (`text-*` o `bg-*`) lo muestren, según la [pregunta 1](#preguntas-abiertas).
+- Que los demás enlaces de la tienda que declaran un color (`text-*` o `bg-*`) lo muestren ([D1](#decisiones-del-hito-de-alcance)).
 - Que la marca de las casillas marcadas del Admin se lea con A, B y C, y con un tema propio de principal claro.
 - Medir con A, B y C cada componente de Material que usan las dos aplicaciones y que pinta un color sobre el principal: casilla, botón de opción, botón relleno, etiqueta enfocada del campo, opción seleccionada de la lista y menú.
 - Capturas antes y después con A, B y C en la tienda y el Admin.
 
 **Excluye:**
 
-- Los colores de los temas A, B y C y la fórmula de los temas propios, salvo lo que añada la [pregunta 2](#preguntas-abiertas).
+- Los colores de los temas A, B y C y la fórmula de los temas propios, salvo el token nuevo `--ws-on-link` ([D2](#decisiones-del-hito-de-alcance)).
 - El contorno de los demás formularios ([PBI-0047](../../../planning/backlog.md)).
 - El desborde de `/productos` del Admin a 375 px ([PBI-0045](../../../planning/backlog.md)) y el 404 de `/favicon.ico` ([PBI-0046](../../../planning/backlog.md)).
-- Componentes de Material que hoy no se usan (interruptor, selector de fecha, selección múltiple): quedan cubiertos si se elige la alternativa A de la pregunta 2, pero no se miden.
+- Componentes de Material que hoy no se usan (interruptor, selector de fecha, selección múltiple): quedan cubiertos por el token de [D2](#decisiones-del-hito-de-alcance), pero no se miden.
 
 ## Requisitos
 
 | ID | Requisito | Origen | Prioridad |
 |---|---|---|---|
 | REQ-01 | El texto del enlace «Ver todos los productos» del cajón móvil de la tienda tiene el color `--ws-on-primary` sobre `--ws-primary`, con al menos 4.5:1 en A, B y C | PBI-0048; WCAG 1.4.3 (STD-11) | Alta |
-| REQ-02 | Los enlaces de la tienda que declaran una utilidad de color la muestran, incluido su estado `hover` | PBI-0048 («Puede afectar a otros enlaces»); depende de la pregunta 1 | Media |
+| REQ-02 | Los enlaces de la tienda que declaran una utilidad de color la muestran, incluido su estado `hover` | PBI-0048 («Puede afectar a otros enlaces»); [D1](#decisiones-del-hito-de-alcance) | Media |
 | REQ-03 | La marca de una casilla marcada del Admin contrasta al menos 3:1 con el relleno de la casilla, y el relleno al menos 3:1 con el fondo donde está, en A, B y C | PBI-0049; WCAG 1.4.11 (STD-11) | Alta |
 | REQ-04 | REQ-03 se cumple también con un tema propio cuyo principal no se lee sobre los fondos | PBI-0049 (la causa); **propuesto** | Media |
 | REQ-05 | Ningún componente de Material usado en la tienda o el Admin pinta un texto o una marca sobre el principal con menos de 4.5:1 (texto) o 3:1 (marca), en A, B y C | PBI-0049 («Puede afectar a otros controles de Material»); **propuesto** | Media |
@@ -64,7 +64,7 @@ Actores: el comprador (invitado o con cuenta) en la tienda móvil, y el `superad
 ### AC-02 — Enlaces de la tienda con color declarado
 
 - Cubre: REQ-02
-- Origen: PBI-0048; la lista depende de la pregunta 1
+- Origen: PBI-0048 y [D1](#decisiones-del-hito-de-alcance)
 
 **Dado** el tema B
 **Cuando** se mide con `getComputedStyle` cada enlace de la tienda que declara una utilidad de color
@@ -122,10 +122,11 @@ Actores: el comprador (invitado o con cuenta) en la tienda móvil, y el `superad
 
 ## Datos y contrato
 
-Según la [pregunta 2](#preguntas-abiertas):
+Por [D2](#decisiones-del-hito-de-alcance):
 
-- **Con la alternativa A**, el mapa de tokens de cada tema ([contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md), `Tema.tokens` y `theme.css`) gana un token, `--ws-on-link`: el texto más legible sobre `--ws-link`, calculado por el BFF igual que `--ws-on-primary` sobre el principal. El contrato solo crece y no hay migración, como en la feature 004. La réplica de las reglas del Admin (`tema.rules.ts`) lo incluye.
-- **Con la alternativa B**, no cambia ni el contrato ni el BFF.
+- El mapa de tokens de cada tema ([contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md), `Tema.tokens` y `theme.css`) gana un token, `--ws-on-link`: el texto más legible sobre `--ws-link`, calculado por el BFF igual que `--ws-on-primary` sobre el principal. El contrato solo crece y no hay migración, como en la feature 004. La réplica de las reglas del Admin (`tema.rules.ts`) lo incluye.
+- `frontend/src/styles/tokens.css` declara `--ws-on-link` con el valor de B (blanco), como el resto de tokens, y mapea `--mat-sys-on-primary` a `--ws-on-link`.
+- Necesita un ADR que amplíe ADR-0011, como ADR-0013, en `sdd-decide`.
 
 Los permisos no cambian: los temas los sigue gestionando solo el `superadmin` (`themes.manage`).
 
@@ -136,7 +137,7 @@ Cambio visual pedido en los elementos que hoy no muestran el color que declaran.
 | Pantalla o ruta | Cambio esperado | Cambio visual pedido |
 |---|---|---|
 | Cajón móvil de la tienda | «Ver todos los productos» con el texto blanco con A y B, y grafito sobre amarillo con C | Sí (PBI-0048) |
-| `/cuenta/ingresar`, cajón móvil, detalle del pedido y carrito | Los enlaces de AC-02 toman su color declarado | Sí, si se elige la alternativa A de la pregunta 1 |
+| `/cuenta/ingresar`, cajón móvil, detalle del pedido y carrito | Los enlaces de AC-02 toman su color declarado | Sí ([D1](#decisiones-del-hito-de-alcance)) |
 | Páginas del Admin con casillas: `/contenido`, `/banners`, `/marcas`, `/productos` y `/usuarios` | Con C, la casilla marcada deja de ser un cuadrado sin marca. Con A y B, igual | Sí, solo con C (PBI-0049) |
 | Resto de la tienda y del Admin | Ninguno | No |
 
@@ -153,7 +154,7 @@ Ninguna.
 | Casilla sin marcar | Sin cambio: borde `--ws-border-strong` sobre la superficie | AC-07 |
 | Casilla deshabilitada | Mantiene el aspecto deshabilitado de Material | AC-07 |
 | Tema propio de principal oscuro (se lee sobre los fondos) | El enlace es el principal y la marca, blanca: igual que hoy | REQ-04 |
-| Tema propio en el que ni el blanco ni el color de contraste llegan a 3:1 sobre el enlace | El BFF ya bloquea guardar temas con pares de contraste insuficientes en los pares que bloquean. Con la alternativa A de la pregunta 2, el par nuevo es otro aviso | REQ-04 |
+| Tema propio en el que ni el blanco ni el color de contraste llegan a 3:1 sobre el enlace | El BFF ya bloquea guardar temas con pares de contraste insuficientes en los pares que bloquean. Con [D2](#decisiones-del-hito-de-alcance), el par nuevo sobre el enlace es otro aviso | REQ-04 |
 
 ## Hechos, supuestos y decisiones pendientes
 
@@ -171,11 +172,13 @@ Ninguna.
 
 **Supuestos** (se asumen hasta que se confirmen):
 
-- Las utilidades de color de los seis enlaces expresan el diseño que se quería, y no un color que alguien dejó sin querer. Se confirma con la pregunta 1.
+- Las utilidades de color de los seis enlaces expresan el diseño que se quería, y no un color que alguien dejó sin querer. Confirmado por [D1](#decisiones-del-hito-de-alcance).
 
 **Decisiones pendientes:** ninguna de `PENDING-DECISIONS.md` afecta a esta feature.
 
 ## Preguntas abiertas
+
+Respondidas en el hito de alcance ([decisiones](#decisiones-del-hito-de-alcance)). Se conservan con sus alternativas:
 
 1. **¿Cómo se corrige el enlace del cajón (PBI-0048)?**
    - **A (recomendada).** Mover `a { color: inherit; text-decoration: none; }` a `@layer base`, como ya se hizo con los márgenes. Las utilidades vuelven a aplicarse a los enlaces, y los otros cinco enlaces de AC-02 toman su color declarado: cinco cambios visuales más, todos en la tienda y medidos en las capturas.
@@ -191,6 +194,15 @@ Ninguna.
      - Cada componente nuevo de Material necesitaría su propio arreglo.
      - No toca el BFF.
    - **C.** Igual que B, pero con el grafito como relleno solo con C. Es un caso especial que no cubre los temas propios.
+
+## Decisiones del hito de alcance
+
+Las preguntas se presentaron de una en una el 2026-11-13, con sus alternativas y la recomendación. Sebastián Avila respondió en la sesión principal y eligió la recomendada en las dos.
+
+| ID | Pregunta | Decisión | Alternativas descartadas |
+|---|---|---|---|
+| D1 | ¿Cómo se corrige el enlace del cajón (PBI-0048)? (pregunta 1) | Alternativa A, elegida por Sebastián Avila el 2026-11-13: la regla `a { color: inherit; text-decoration: none; }` de `frontend/src/styles.css` pasa a `@layer base`. Los seis enlaces de la tienda con utilidades de color muestran el que declaran (AC-01 y AC-02), con las capturas como prueba | B: corregir solo «Ver todos los productos» con una regla más específica |
+| D2 | ¿Cómo se corrigen las casillas (PBI-0049)? (pregunta 2) | Alternativa A, elegida por Sebastián Avila el 2026-11-13: token nuevo del tema `--ws-on-link`, el texto más legible sobre `--ws-link`, calculado por el BFF y replicado en el Admin, y `--mat-sys-on-primary: var(--ws-on-link)`. El contrato crece de 31 a 32 tokens, sin migración. Necesita un ADR que amplíe ADR-0011 | B: tokens propios de la casilla con el principal (con C, 1.82:1 contra la tarjeta). C: relleno grafito solo con C |
 
 ## Referencias
 
