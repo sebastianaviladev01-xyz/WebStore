@@ -4,7 +4,7 @@ import { cuentasAdmin, urls } from './entorno';
 
 /**
  * Apoyo de las e2e del catálogo del Admin (feature 008, `admin-catalogo-filtros.spec.ts`). Hace de «otra sesión»:
- * crea, cambia y retira productos y categorías por la API del Admin (`GET` y `PUT /bff/admin/snapshot`) con la cuenta de
+ * crea, cambia y retira productos, categorías y marcas por la API del Admin (`GET` y `PUT /bff/admin/snapshot`) con la cuenta de
  * superadministrador, como `conApi` de `contraste.ts`. Las pruebas que la usan dejan el estado como estaba en un
  * `finally`: las suites van en serie y otras cuentan los seis productos del seed.
  */
@@ -55,7 +55,7 @@ export async function leerProductos(): Promise<ProductoApi[]> {
  * cambió la revisión entre la lectura y el guardado (`409 STALE_SNAPSHOT`), vuelve a leer y lo intenta otra vez.
  */
 async function cambiarColeccion<T>(
-  clave: 'products' | 'categories',
+  clave: 'products' | 'categories' | 'brands',
   cambio: (actuales: T[]) => T[],
 ): Promise<void> {
   await conAdmin(async (api, headers) => {
@@ -140,3 +140,23 @@ export const agregarCategorias = (nuevas: readonly CategoriaApi[]) =>
 /** Retira las categorías con esos ids, si existen. */
 export const retirarCategorias = (ids: readonly string[]) =>
   cambiarCategorias((actuales) => actuales.filter((categoria) => !ids.includes(categoria.id)));
+
+/** Una marca tal como la guarda el BFF. */
+export interface MarcaApi {
+  id: string;
+  name: string;
+  active: boolean;
+}
+
+/** Marcas del BFF en este momento. */
+export async function leerMarcas(): Promise<MarcaApi[]> {
+  return conAdmin(async (api, headers) => {
+    const respuesta = await api.get('/bff/admin/snapshot', { headers });
+    expect(respuesta.ok()).toBe(true);
+    return (await respuesta.json()).brands as MarcaApi[];
+  });
+}
+
+/** Reemplaza las marcas del BFF por las que devuelve `cambio` a partir de las actuales. */
+export const cambiarMarcas = (cambio: (actuales: MarcaApi[]) => MarcaApi[]) =>
+  cambiarColeccion('brands', cambio);

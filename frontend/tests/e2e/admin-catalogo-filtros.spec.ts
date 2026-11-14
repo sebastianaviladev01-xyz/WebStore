@@ -5,8 +5,10 @@ import {
   agregarCategorias,
   agregarProductos,
   cambiarCategorias,
+  cambiarMarcas,
   cambiarProductos,
   leerCategorias,
+  leerMarcas,
   leerProductos,
   productoDePrueba,
   retirarCategorias,
@@ -36,6 +38,12 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
  * - TEST-15 (AC-08): «oled» deja una sola fila, la de siempre, con «↳ OLED» y «Padre: TV y audio» aunque el padre no
  *   salga (D7); «Categoría padre» deja solo las hijas directas y «Sin padre», las de primer nivel; «Nueva categoría»
  *   y «Editar» abren su interfaz de registro, y el padre excluye a la misma categoría y a sus subcategorías.
+ *
+ * Marcas (⚠ TASK-10):
+ *
+ * - TEST-16 (AC-09): con una marca desactivada por otra sesión, «Inactivos» y «Activos» dejan solo las de ese
+ *   estado y «Nombre» filtra sin distinguir mayúsculas; «Nueva marca» y «Editar» abren su interfaz de registro con
+ *   «Nombre» y «Activa», y guardar vuelve al listado con sus filtros.
  *
  * Los cambios de datos se hacen como «otra sesión» con la API del Admin (`apoyo/catalogo.ts`) y cada prueba deja
  * los productos o las categorías como estaban en un `finally`. A 1440 px, el tamaño por defecto de la suite.
@@ -437,6 +445,105 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
     } finally {
       await cambiarCategorias(() => originales);
+    }
+  });
+});
+
+const listaMarcas = (page: Page) => page.getByRole('region', { name: 'Lista de marcas' });
+const panelMarcas = (page: Page) => page.getByRole('search', { name: 'Filtros de marcas' });
+/** Filas de la lista de marcas: cada una con su nombre, «Activa» o «Inactiva», «Editar» y «Eliminar». */
+const filasMarcas = (page: Page) => listaMarcas(page).locator(':scope > div');
+const filaMarca = (page: Page, nombre: string) =>
+  filasMarcas(page).filter({ has: page.locator('strong', { hasText: nombre }) });
+
+async function abrirMarcas(page: Page): Promise<void> {
+  await page.goto('/marcas');
+  await expect(page.getByRole('heading', { level: 1, name: 'Marcas' })).toBeVisible();
+  await expect(panelMarcas(page)).toBeVisible();
+}
+
+async function buscarMarcas(page: Page): Promise<void> {
+  await panelMarcas(page)
+    .getByRole('button', { name: /^Busca/ })
+    .click();
+  await expect(panelMarcas(page).getByRole('button', { name: 'Buscar', exact: true })).toBeEnabled();
+}
+
+test.describe('Filtros y registro de marcas del Admin', () => {
+  test('TEST-16 · filtros por nombre y estado, y registro en su propia ruta', async ({ page }) => {
+    const originales = await leerMarcas();
+    try {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await abrirMarcas(page);
+      await expect(filasMarcas(page)).toHaveCount(originales.length);
+
+      // Otra sesión desactiva «Zenith» con la lista abierta (el seed no tiene marcas inactivas); «Buscar» lo trae.
+      await cambiarMarcas((actuales) =>
+        actuales.map((m) => (m.id === 'b-zen' ? { ...m, active: false } : m)),
+      );
+      await elegir(page, panelMarcas(page), 'Estado', 'Inactivos');
+      await buscarMarcas(page);
+      await expect(page).toHaveURL(/\/marcas\?estado=inactivos$/);
+      await expect(filasMarcas(page).locator('strong')).toHaveText(['Zenith']);
+      await expect(filasMarcas(page)).toContainText('Inactiva');
+
+      await elegir(page, panelMarcas(page), 'Estado', 'Activos');
+      await buscarMarcas(page);
+      await expect(page).toHaveURL(/\/marcas\?estado=activos$/);
+      await expect(filasMarcas(page).locator('strong')).toHaveText(['Nova']);
+
+      // «Nombre» sin distinguir mayúsculas; con «Activos», «zen» no da resultados.
+      await panelMarcas(page).getByRole('textbox', { name: 'Nombre' }).fill('ZEN');
+      await buscarMarcas(page);
+      await expect(listaMarcas(page).getByText('Ninguna marca cumple los filtros.')).toBeVisible();
+      await panelMarcas(page).getByRole('button', { name: 'Limpiar filtros' }).click();
+      await expect(panelMarcas(page).getByRole('combobox', { name: 'Estado' })).toContainText('Todos');
+      await panelMarcas(page).getByRole('textbox', { name: 'Nombre' }).fill('zen');
+      await buscarMarcas(page);
+      await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
+      await expect(filasMarcas(page).locator('strong')).toHaveText(['Zenith']);
+
+      // «Nueva marca» abre el registro sin la lista; «Volver a marcas» conserva los filtros.
+      await page.getByRole('link', { name: 'Nueva marca', exact: true }).click();
+      await expect(page).toHaveURL(/\/marcas\/nueva\?nombre=zen$/);
+      const nueva = page.getByRole('form', { name: 'Nueva marca' });
+      await expect(nueva).toBeVisible();
+      await expect(listaMarcas(page)).toHaveCount(0);
+      await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('');
+      await expect(nueva.getByRole('checkbox', { name: 'Activa' })).toBeChecked();
+      await page.getByRole('link', { name: 'Volver a marcas' }).click();
+      await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
+
+      // Guardar vuelve al listado con los mismos filtros; la marca nueva los cumple.
+      await page.getByRole('link', { name: 'Nueva marca', exact: true }).click();
+      await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Zentro 008');
+      await nueva.getByRole('checkbox', { name: 'Activa' }).uncheck();
+      await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
+      await expect(filasMarcas(page).locator('strong')).toHaveText(['Zenith', 'Zentro 008']);
+      expect((await leerMarcas()).find((m) => m.name === 'Zentro 008')).toMatchObject({ active: false });
+
+      // «Editar» abre los datos actuales: otra sesión volvió a activar «Zenith».
+      await cambiarMarcas((actuales) => actuales.map((m) => (m.id === 'b-zen' ? { ...m, active: true } : m)));
+      await filaMarca(page, 'Zenith').getByRole('link', { name: 'Editar', exact: true }).click();
+      await expect(page).toHaveURL(/\/marcas\/b-zen\?nombre=zen$/);
+      const edicion = page.getByRole('form', { name: 'Editar marca' });
+      await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Zenith');
+      await expect(edicion.getByRole('checkbox', { name: 'Activa' })).toBeChecked();
+      await edicion.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Zenith 008');
+      await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
+      await expect(filaMarca(page, 'Zenith 008')).toContainText('Activa');
+
+      // Otra sesión elimina una marca con la lista abierta: al abrirla, ya no existe.
+      await cambiarMarcas((actuales) => actuales.filter((m) => m.name !== 'Zentro 008'));
+      await filaMarca(page, 'Zentro 008').getByRole('link', { name: 'Editar', exact: true }).click();
+      await expect(page.getByText('Esta marca ya no existe')).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Editar marca' })).toHaveCount(0);
+      await page.getByRole('link', { name: 'Volver a marcas' }).click();
+      await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
+    } finally {
+      await cambiarMarcas(() => originales);
     }
   });
 });

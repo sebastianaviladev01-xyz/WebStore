@@ -83,6 +83,21 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Marcas',
       },
       {
+        // Antes que `marcas/:id`, para que «nueva» no llegue como identificador.
+        path: 'marcas/nueva',
+        canMatch: [permisoGuard('brands.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
+        title: 'WebStore Admin | Nueva marca',
+      },
+      {
+        path: 'marcas/:id',
+        canMatch: [permisoGuard('brands.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
+        title: 'WebStore Admin | Editar marca',
+      },
+      {
         path: 'clientes',
         canMatch: [permisoGuard('customers.manage')],
         loadComponent: () =>
