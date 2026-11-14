@@ -39,14 +39,17 @@ Volveremos al flujo de IdShield: cada hito de una feature cierra un PR hacia `de
 
 El detalle vive en [Pull requests de una feature](../architecture/development-workflow.md#pull-requests-de-una-feature). Este ADR sustituye a ADR-0015.
 
-Sebastián Avila pidió además que el flujo quedara igual al de IdShield, sin añadidos («Quítalas todas», el 2026-11-14, al ver las cinco diferencias que quedaban). Por eso este cambio devuelve los documentos del proceso, los skills, los adaptadores y el catálogo de niveles al estado anterior al PR #38, y retira también lo que llegó con él o después sin depender del número de PR:
+El cambio devuelve los documentos del proceso y los skills al estado anterior al PR #38 en todo lo que toca a los PR de una feature. Se conserva lo que llegó con ese PR o después y protege el trabajo sin depender de cuántos PR tiene una feature:
 
-- **El tope de modelo y esfuerzo.** El catálogo vuelve a la versión 1.0.0, con los esfuerzos `muy alto` y `máximo`. Daniel Avila había pedido el 2026-11-13 no pasar de Opus 5.5 con `high`, por el consumo de tokens: esa instrucción deja de estar escrita en el repositorio.
-- **La regla de llevar a [decisiones pendientes](../planning/PENDING-DECISIONS.md)** lo que las fuentes no dicen de forma explícita, y la de que todo hallazgo fuera de alcance tenga su PBI. Las filas que ya están en decisiones pendientes y en el backlog no se tocan.
-- **El aviso del adaptador de Claude Code** sobre las líneas de coautoría (PR #41). La [convención de commits](../git/conventional-commits.md) las sigue prohibiendo.
-- **El apartado «Registro de la entrega».** El registro se hacía antes sin estar escrito, en las features 004 y 005, y vuelve a no estarlo.
+- **El tope de modelo y esfuerzo:** Opus 5.5 con `high`, que pidió Daniel Avila el 2026-11-13 por el consumo de tokens. El catálogo sigue en la versión 1.1.0, sin los esfuerzos `muy alto` y `máximo`.
+- **La regla de llevar a [decisiones pendientes](../planning/PENDING-DECISIONS.md)** lo que las fuentes no dicen de forma explícita, y la de que todo hallazgo fuera de alcance tenga su PBI.
+- **El aviso del adaptador de Claude Code** sobre las líneas de coautoría (PR #41).
 
-*Motivo:* un PR por hito pone el CI y la revisión de una persona antes de cada etapa siguiente. Sebastián Avila prefiere esa precisión, y un flujo idéntico al de IdShield, al tiempo que ahorra un solo PR.
+Sebastián Avila pidió primero retirar también estas tres, para dejar el flujo literal («Quítalas todas»), y el mismo 2026-11-14, antes del merge, pidió reponerlas al ver el riesgo que volvía con cada una («vuélvelo por favor»).
+
+No se conserva el apartado «Registro de la entrega», que llegó con ADR-0015: el registro se hacía antes sin estar escrito, en las features 004 y 005, y vuelve a no estarlo.
+
+*Motivo:* un PR por hito pone el CI y la revisión de una persona antes de cada etapa siguiente. Sebastián Avila prefiere esa precisión al tiempo que ahorra un solo PR, y quiere trabajar con el flujo ya probado de IdShield antes de volver a cambiarlo.
 
 ## Consecuencias
 
@@ -62,9 +65,6 @@ Sebastián Avila pidió además que el flujo quedara igual al de IdShield, sin a
 - Una feature vuelve a necesitar de cuatro a seis PR, con su ronda de publicar, esperar el CI, revisar, fusionar y cerrar la rama. Es la lentitud que motivó ADR-0015, y esta decisión no la resuelve.
 - `dev` recibe documentos de features sin terminar.
 - Falta la confirmación de Daniel Avila, que pidió lo contrario. Si no la da, este ADR se sustituye.
-- Sin el tope escrito, un agente puede volver a usar los esfuerzos `muy alto` y `máximo`, que consumen más tokens. Son dos instrucciones de Daniel Avila las que se revierten, no una.
-- Sin la regla de decisiones pendientes, una pregunta de negocio que las fuentes no responden puede volver a decidirse en un hito.
-- Sin el aviso del adaptador, Claude Code puede volver a añadir la línea de coautoría que la convención prohíbe: pasó tres veces el 2026-11-14.
 
 **Transición y fuera de alcance:**
 

@@ -1,9 +1,9 @@
 {
-  "$comment": "Catálogo de niveles de ejecución de WebStore (ADR-0008). Es la única fuente de los modelos concretos: las tareas indican nivel y esfuerzo, y cada herramienta los resuelve aquí. Uso de cada nivel: docs/development/agent-execution.md, apartado «Delegar por nivel y esfuerzo». Parte del catálogo 1.0.0 de IdShield, sin cambios de modelos.",
-  "catalogVersion": "1.0.0",
-  "updated": "2026-11-06",
+  "$comment": "Catálogo de niveles de ejecución de WebStore (ADR-0008). Es la única fuente de los modelos concretos: las tareas indican nivel y esfuerzo, y cada herramienta los resuelve aquí. Uso de cada nivel: docs/development/agent-execution.md, apartado «Delegar por nivel y esfuerzo». Parte del catálogo 1.0.0 de IdShield, sin cambios de modelos. Desde la versión 1.1.0 el tope es el nivel avanzado con esfuerzo «alto» (en Claude Code, Opus 5.5 con high): se quitaron «muy alto» y «máximo», y no se usa un modelo por encima del nivel avanzado, para contener el consumo de tokens (Daniel Avila, 2026-11-13; reglas de escalado de la guía).",
+  "catalogVersion": "1.1.0",
+  "updated": "2026-11-14",
   "decision": "docs/adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md",
-  "efforts": ["bajo", "medio", "alto", "muy alto", "máximo"],
+  "efforts": ["bajo", "medio", "alto"],
   "levels": {
     "ligero": {
       "efforts": ["bajo", "medio", "alto"],
@@ -14,7 +14,7 @@
       "use": "Patrón claro y pocas decisiones locales"
     },
     "avanzado": {
-      "efforts": ["medio", "alto", "muy alto"],
+      "efforts": ["medio", "alto"],
       "use": "Diseño, riesgo y diagnóstico; agente principal"
     }
   },
@@ -76,7 +76,7 @@
     },
     {
       "name": "GPT-6 Astra",
-      "reason": "No hay nivel crítico: el más alto es avanzado con esfuerzo muy alto"
+      "reason": "No hay nivel crítico: el más alto es avanzado con esfuerzo alto"
     }
   ],
   "harnesses": {
@@ -85,9 +85,7 @@
       "efforts": {
         "bajo": "low",
         "medio": "medium",
-        "alto": "high",
-        "muy alto": "xhigh",
-        "máximo": "max"
+        "alto": "high"
       },
       "levels": {
         "ligero": { "model": "claude-haiku-5-5", "fallbacks": [] },
@@ -108,9 +106,7 @@
       "efforts": {
         "bajo": "low",
         "medio": "medium",
-        "alto": "high",
-        "muy alto": "xhigh",
-        "máximo": null
+        "alto": "high"
       },
       "levels": {
         "ligero": { "model": "gpt-6-luna", "fallbacks": ["gpt-5.6-sol"] },

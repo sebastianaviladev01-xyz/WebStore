@@ -27,6 +27,7 @@ Con agentes, cada etapa empieza en una sesión nueva ([una sesión por etapa](..
 Los hitos de alcance, arquitectura y entrega los aprueba una persona del equipo:
 
 - Las preguntas del hito se presentan **de una en una**. Cada una lleva sus alternativas, con lo que significaría elegir cada una, la recomendación y la evidencia que la respalda (un archivo, una historia, una medida), para que la persona pueda rebatirla.
+- Si una pregunta depende de una regla de negocio que las fuentes (notas de reunión, chats) no dicen de forma explícita, no se le pide a la persona que aprueba el hito que la decida. Se registra en [decisiones pendientes](../planning/PENDING-DECISIONS.md) para quien decide el producto (hoy, Daniel Avila), con las citas explícitas y cada pregunta, y la feature y su PBI quedan bloqueados hasta la respuesta. La recomendación se conserva en el artefacto como recomendación, no como decisión. Las preguntas técnicas o de proceso (alternativas de arquitectura, estrategia de pruebas, redacción que solo sigue lo dicho) sí las responde la persona que aprueba el hito.
 - La decisión se registra en el artefacto de la etapa: quién aprobó y cuándo. Si da lugar a un ADR, sus alternativas pasan a la tabla de opciones de la [plantilla](../adrs/0000-template.md).
 
 ### Pull requests de una feature
