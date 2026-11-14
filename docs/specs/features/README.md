@@ -22,6 +22,8 @@ Entre el 2026-11-13 y el 2026-11-14 se probó entregar cada feature en un solo P
 
 Orientación de la reunión del equipo (notas pegadas el 2026-11-11): lo primero eran los temas configurables ([PBI-0030](../../planning/backlog.md)), ya entregados con la feature 002, antes de la gestión de banners; después vienen los ajustes priorizados del Admin y de la tienda (PBI-0031, PBI-0032 y PBI-0035 a PBI-0038). Sebastián Avila eligió el 2026-11-12 empezar por los del Admin, ya entregados con la feature 003; los de la tienda (PBI-0035 a PBI-0038), elegidos el 2026-11-12, quedaron entregados con la feature 004. Siguen en el backlog, entre otros, los fallos PBI-0048 y PBI-0049 (este último afecta al Admin con el tema C, el de Ecom) y la gestión de banners. El orden exacto y el cronograma los fija el equipo.
 
+Orientación de la reunión del equipo (notas pegadas el 2026-11-14): el tiempo de Sebastián va a cerrar las interfaces de la tienda virtual y a los ajustes que salgan de las historias de usuario que planifica Walther. Asignó a Sebastián la estructura de Productos, Categorías y Marcas del Admin: filtros debajo del título y encima de la tabla, y el registro en una interfaz propia ([PBI-0137 y PBI-0138](../../planning/backlog.md), priorizados). Quedan propuestos los filtros de los demás listados (PBI-0139) y quitar «Actualizar» de la cabecera (PBI-0140), y queda bloqueado el alcance de Contenido (PBI-0141). Lo que la reunión dejó ambiguo está en las [decisiones pendientes](../../planning/PENDING-DECISIONS.md) para Daniel.
+
 Para decidirlo, el equipo revisa:
 
 - Las [decisiones pendientes](../../planning/PENDING-DECISIONS.md), entre ellas la priorización de alcance y precio, que actualiza las historias de usuario.
