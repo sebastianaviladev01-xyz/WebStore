@@ -64,6 +64,7 @@ const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
   'link/storeBackground': 'Enlaces sobre el fondo de la tienda',
   'focusRing/storeBackground': 'Contorno de foco sobre el fondo de la tienda',
   'borderStrong/surface': 'Contorno de los campos sobre el fondo secundario',
+  'onLink/link': 'Texto y marcas sobre el color de los enlaces',
 };
 
 /** «Texto sobre el fondo principal: 2.1:1, mínimo 4.5:1», el formato de AC-14. */

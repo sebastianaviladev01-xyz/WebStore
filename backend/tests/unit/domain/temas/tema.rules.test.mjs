@@ -16,6 +16,7 @@ import {
   revisarContraste,
   tokensDelTema,
 } from '../../../../src/domain/temas/tema.rules.mjs';
+import { exigirTemaValido } from '../../../../src/domain/temas/tema-propio.rules.mjs';
 
 const casos = JSON.parse(readFileSync(new URL('./casos-tema.json', import.meta.url), 'utf8'));
 const centesimas = (pares) =>
@@ -104,8 +105,8 @@ test('la barra superior de un tema propio es su principal fuerte, con el texto m
   });
 });
 
-test('se miden 20 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
-  assert.equal(PARES_DE_CONTRASTE.length, 20);
+test('se miden 21 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
+  assert.equal(PARES_DE_CONTRASTE.length, 21);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
@@ -114,9 +115,9 @@ test('se miden 20 pares; solo los del contraste sobre los fondos bloquean (D7) y
     assert.equal(minimo, par.startsWith('focusRing/') || par.startsWith('borderStrong/') ? 3 : 4.5, par);
 });
 
-test('los cinco pares nuevos van al final, después de disabledText/disabled, con sus mínimos y sin bloquear (AC-07, AC-09)', () => {
+test('los cinco pares de la feature 004 van después de disabledText/disabled, con sus mínimos y sin bloquear (AC-07, AC-09)', () => {
   assert.equal(PARES_DE_CONTRASTE[14].par, 'disabledText/disabled');
-  assert.deepEqual(PARES_DE_CONTRASTE.slice(15), [
+  assert.deepEqual(PARES_DE_CONTRASTE.slice(15, 20), [
     {
       par: 'contrast/storeBackground',
       texto: '--ws-ink',
@@ -149,10 +150,132 @@ test('los cinco pares nuevos van al final, después de disabledText/disabled, co
   ]);
 });
 
-test('el mapa tiene 31 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 31);
+test('el mapa tiene 32 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 32);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.equal(ESCALA_NEUTRA.includes('--ws-store-bg'), false);
+});
+
+// TEST-01 (feature 005, ADR-0014): el texto y las marcas sobre el color de los enlaces.
+test('el texto sobre el enlace va justo después del enlace y antes del foco, fuera de la escala neutra (ADR-0014)', () => {
+  const indice = TOKENS_DEL_TEMA.indexOf('--ws-on-link');
+  assert.ok(indice > 0, 'falta --ws-on-link');
+  assert.equal(TOKENS_DEL_TEMA[indice - 1], '--ws-link');
+  assert.equal(TOKENS_DEL_TEMA[indice + 1], '--ws-focus-ring');
+  assert.equal(ESCALA_NEUTRA.includes('--ws-on-link'), false);
+});
+
+test('con un principal legible sobre los fondos, el enlace es el principal y el texto sobre él, el blanco', () => {
+  const tokens = tokensDelTema(caso('#123456').colores, casos.predefinidos);
+  assert.equal(tokens['--ws-link'], '#123456');
+  assert.equal(tokens['--ws-on-link'], '#FFFFFF');
+});
+
+test('cuando el enlace pasa al contraste, el texto sobre él es el blanco', () => {
+  const tokens = tokensDelTema(caso('principal claro').colores, casos.predefinidos);
+  assert.equal(tokens['--ws-link'], '#0F172A');
+  assert.equal(tokens['--ws-on-link'], '#FFFFFF');
+});
+
+test('con la base de un predefinido, el texto sobre el enlace se calcula y no se hereda', () => {
+  const tokens = tokensDelTema(caso('#123456').colores, casos.predefinidos);
+  assert.equal(tokensB['--ws-on-link'], '#ffffff', 'B lo fija con su literal en minúsculas');
+  assert.equal(tokens['--ws-on-link'], '#FFFFFF', 'calculado, en mayúsculas');
+  assert.equal(tokens['--ws-bg'], tokensB['--ws-bg'], 'la escala neutra sí se hereda');
+});
+
+test('en un tema oscuro, el texto sobre el enlace es la superficie: #1B1E25 en la base oscura (4.54:1), distinto del texto sobre el principal', () => {
+  const tokens = tokensDelTema(caso('base oscura').colores, casos.predefinidos);
+  assert.equal(tokens['--ws-link'], '#3B82F6');
+  assert.equal(tokens['--ws-on-link'], '#1B1E25');
+  assert.equal(tokens['--ws-on-primary'], '#FFFFFF');
+  const relacion = medirPares(tokens)['onLink/link'];
+  assert.equal(Math.round(relacion * 100) / 100, 4.54);
+});
+
+test('en un tema oscuro cuyo enlace pasa a un contraste claro, el texto sobre él también es la superficie', () => {
+  const colores = {
+    primary: '#1E3A8A',
+    secondary: '#F97316',
+    background: '#111318',
+    surface: '#1B1E25',
+    contrast: '#F5F7FA',
+  };
+  const tokens = tokensDelTema(colores, casos.predefinidos);
+  assert.equal(tokens['--ws-link'], '#F5F7FA');
+  assert.equal(tokens['--ws-on-link'], '#1B1E25');
+  assert.ok(medirPares(tokens)['onLink/link'] >= 4.5);
+});
+
+// TEST-03 (feature 005, ADR-0014): el par del texto sobre el enlace solo avisa.
+test('onLink/link es el último par: texto sobre el enlace, mínimo 4.5:1 y sin bloquear (ADR-0014)', () => {
+  assert.equal(PARES_DE_CONTRASTE[19].par, 'borderStrong/surface');
+  assert.deepEqual(PARES_DE_CONTRASTE.at(-1), {
+    par: 'onLink/link',
+    texto: '--ws-on-link',
+    fondo: '--ws-link',
+    minimo: 4.5,
+    bloquea: false,
+  });
+});
+
+const coloresAC05 = {
+  primary: '#F2B705',
+  secondary: '#C2410C',
+  background: '#F2F3F5',
+  surface: '#FFFFFF',
+  contrast: '#1F2328',
+};
+
+test('con el tema propio de AC-05, el par del texto sobre el enlace llega a su mínimo y el tema se guarda', () => {
+  const par = revisarContraste(coloresAC05, casos.predefinidos).find(({ par }) => par === 'onLink/link');
+  // 15.80:1 en centésimas; revisarContraste redondea a un decimal hacia abajo (15.797 → 15.7).
+  assert.deepEqual(par, { par: 'onLink/link', relacion: 15.7, minimo: 4.5, bloquea: false });
+  assert.deepEqual(exigirTemaValido({ name: 'AC-05', colors: coloresAC05 }, []).colors, coloresAC05);
+});
+
+test('INSUFFICIENT_THEME_CONTRAST sigue listando solo contrast/background y contrast/surface', () => {
+  const gris = casos.revisarContraste.find(({ nombre }) => nombre.startsWith('un contraste gris')).colores;
+  assert.throws(
+    () => exigirTemaValido({ name: 'Gris', colors: gris }, []),
+    (error) =>
+      error.code === 'INSUFFICIENT_THEME_CONTRAST' &&
+      error.details.pairs.map(({ pair }) => pair).join() === 'contrast/background,contrast/surface',
+  );
+});
+
+test('un tema que pasa los dos pares que bloquean nunca deja onLink/link bajo 4.5: la superficie es candidata', () => {
+  // Si el enlace es el principal, se lee sobre la superficie; si es el contraste, la superficie se lee sobre él
+  // (contrast/surface bloquea). Por eso no existe un tema válido con este par bajo su mínimo: el par avisa
+  // de temas que no deberían darse y no puede impedir guardar.
+  const principales = [
+    '#1D4ED8',
+    '#F2B705',
+    '#123456',
+    '#3B82F6',
+    '#1E3A8A',
+    '#E5E7EB',
+    '#C2410C',
+    '#10B981',
+  ];
+  const bases = [
+    { background: '#F3F5F8', surface: '#FFFFFF', contrast: '#0F172A' },
+    { background: '#F2F3F5', surface: '#FFFFFF', contrast: '#1F2328' },
+    { background: '#111318', surface: '#1B1E25', contrast: '#F5F7FA' },
+    { background: '#FFFFFF', surface: '#F0F0F0', contrast: '#595959' },
+  ];
+  let validos = 0;
+  for (const primary of principales)
+    for (const base of bases) {
+      const colores = { primary, secondary: '#C2410C', ...base };
+      const pares = revisarContraste(colores, casos.predefinidos);
+      if (pares.some(({ bloquea, relacion, minimo }) => bloquea && relacion < minimo)) continue;
+      validos += 1;
+      const par = pares.find(({ par }) => par === 'onLink/link');
+      assert.ok(par, 'falta el par onLink/link');
+      assert.ok(par.relacion >= 4.5, `${primary} sobre ${base.surface}: ${par.relacion}`);
+    }
+  assert.equal(validos, principales.length * bases.length, 'los 32 temas de la rejilla son válidos');
 });
 
 test('en un tema propio, el lienzo de la tienda es su fondo principal, herede o no la escala de B (AC-05, REQ-14)', () => {
@@ -188,11 +311,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve siempre los 20 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
+test('revisarContraste devuelve siempre los 21 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 20);
+    assert.equal(pares.length, 21);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),

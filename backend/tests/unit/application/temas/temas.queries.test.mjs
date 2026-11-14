@@ -146,17 +146,33 @@ test('hojaDeEstilos: formato exacto, cada token una vez y en orden', () => {
   assert.ok(css.includes('  --ws-primary: #1d4ed8;\n'));
 });
 
-test('hojaDeEstilos: 31 declaraciones, con el lienzo de la tienda justo antes del fondo principal (B y un propio)', () => {
-  const declaraciones = (css) => css.slice(':root:root {\n'.length, -'}\n'.length).trimEnd().split('\n');
+const declaraciones = (css) => css.slice(':root:root {\n'.length, -'}\n'.length).trimEnd().split('\n');
+
+test('hojaDeEstilos: 32 declaraciones, con el lienzo de la tienda justo antes del fondo principal (B y un propio)', () => {
   const casos = [
     ['b', '  --ws-store-bg: #f9fafc;', '  --ws-bg: #f3f5f8;'],
     ['n', '  --ws-store-bg: #F0F0F0;', '  --ws-bg: #F0F0F0;'],
   ];
   for (const [id, lienzo, fondo] of casos) {
     const lineas = declaraciones(consultas(id).hojaDeEstilos(false));
-    assert.equal(lineas.length, 31, id);
+    assert.equal(lineas.length, 32, id);
     const indice = lineas.indexOf(lienzo);
     assert.ok(indice >= 0, `${id}: falta «${lienzo.trim()}»`);
     assert.equal(lineas[indice + 1], fondo, id);
+  }
+});
+
+// TEST-04 (feature 005, ADR-0014): theme.css declara el texto sobre el enlace justo después del enlace.
+test('hojaDeEstilos: --ws-on-link justo después de --ws-link, con su valor (B y un propio)', () => {
+  const casos = [
+    ['b', '  --ws-link: var(--ws-primary);', '  --ws-on-link: #ffffff;'],
+    ['n', '  --ws-link: #0A7A5A;', '  --ws-on-link: #FFFFFF;'],
+  ];
+  for (const [id, enlace, sobreEnlace] of casos) {
+    const lineas = declaraciones(consultas(id).hojaDeEstilos(false));
+    const indice = lineas.indexOf(enlace);
+    assert.ok(indice >= 0, `${id}: falta «${enlace.trim()}»`);
+    assert.equal(lineas[indice + 1], sobreEnlace, id);
+    assert.equal(lineas.filter((linea) => linea.startsWith('  --ws-on-link:')).length, 1, id);
   }
 });

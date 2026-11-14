@@ -88,6 +88,9 @@ export const TOKENS_DEL_TEMA: readonly NombreToken[] = Object.freeze<NombreToken
   '--ws-accent-soft',
   '--ws-on-accent',
   '--ws-link',
+  // Texto y marcas sobre el color de los enlaces (ADR-0014): justo después de su fondo, para quedar fuera de
+  // `ESCALA_NEUTRA`.
+  '--ws-on-link',
   '--ws-focus-ring',
   '--ws-topbar',
   '--ws-on-topbar',
@@ -183,6 +186,7 @@ function tokensDeMarca({
   const colorFuerte = fuerteLegible ? mezclarSrgb(P, pesoFuerte / 100, C) : P;
   const legibleSobreFondos = (minimo: number): boolean =>
     relacionDeContraste(P, F) >= minimo && relacionDeContraste(P, Sf) >= minimo;
+  const enlace = legibleSobreFondos(TEXTO_MINIMO) ? P : C;
   return {
     '--ws-primary': P,
     '--ws-primary-strong': principalFuerte,
@@ -194,7 +198,10 @@ function tokensDeMarca({
     '--ws-accent-strong': mezcla(S, 78, C),
     '--ws-accent-soft': mezcla(S, 9, Sf),
     '--ws-on-accent': textoMasLegible(S, [BLANCO, C]),
-    '--ws-link': legibleSobreFondos(TEXTO_MINIMO) ? P : C,
+    '--ws-link': enlace,
+    // A diferencia de `--ws-on-primary`, la superficie también es candidata: en un tema oscuro el contraste es
+    // claro y solo la superficie se lee sobre un enlace claro (ADR-0014).
+    '--ws-on-link': textoMasLegible(enlace, [BLANCO, C, Sf]),
     '--ws-focus-ring': legibleSobreFondos(INTERFAZ_MINIMO) ? P : C,
     // Franja superior de la tienda: en un tema propio, el principal fuerte; A y C la fijan como se presentó.
     '--ws-topbar': principalFuerte,
@@ -370,6 +377,8 @@ export const PARES_DE_CONTRASTE: readonly DefinicionDePar[] = Object.freeze<Defi
     minimo: INTERFAZ_MINIMO,
     bloquea: false,
   },
+  // Texto y marcas sobre el enlace, que Material pinta con su `on-primary` (ADR-0014): pide texto y solo avisa.
+  { par: 'onLink/link', texto: '--ws-on-link', fondo: '--ws-link', minimo: TEXTO_MINIMO, bloquea: false },
 ]);
 
 /** Relación de contraste, sin redondear, de cada par de `PARES_DE_CONTRASTE` en un mapa de tokens. */
@@ -384,7 +393,7 @@ export function medirPares(tokens: ValoresDeToken): Record<string, number> {
 }
 
 /**
- * Revisión de contraste de un tema (AC-14, D7): los 20 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
+ * Revisión de contraste de un tema (AC-14, D7): los 21 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
  * sobre los tokens que derivan de sus cinco colores. `bloquea` dice si ese par impide guardar cuando queda
  * bajo su mínimo y no depende de la medida.
  *

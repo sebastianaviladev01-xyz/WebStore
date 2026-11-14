@@ -17,6 +17,8 @@
   --ws-accent-soft: color-mix(in srgb, var(--ws-accent) 9%, #ffffff);
   --ws-on-accent: #ffffff;
   --ws-link: var(--ws-primary);
+  /* Texto y marcas sobre el color de los enlaces (ADR-0014): lo calcula el BFF en cada tema. */
+  --ws-on-link: #ffffff;
   --ws-focus-ring: var(--ws-primary);
   /* Franja superior de la tienda: en B, el principal oscuro; A y C la fijan como se presentó. */
   --ws-topbar: var(--ws-primary-strong);

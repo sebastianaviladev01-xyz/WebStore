@@ -65,17 +65,30 @@ test('predefinidos: mapa completo de tokens en orden y pares de contraste en cen
   }
 });
 
-test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 31 tokens, 20 pares y solo dos bloquean', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 31);
+test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 32 tokens, 21 pares y solo dos bloquean', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 32);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.ok(Object.isFrozen(TOKENS_DEL_TEMA) && Object.isFrozen(PARES_DE_CONTRASTE));
-  assert.equal(PARES_DE_CONTRASTE.length, 20);
+  assert.equal(PARES_DE_CONTRASTE.length, 21);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
   );
   for (const { par, minimo } of PARES_DE_CONTRASTE)
     assert.equal(minimo, par.startsWith('focusRing/') || par.startsWith('borderStrong/') ? 3 : 4.5, par);
+});
+
+test('el texto sobre el enlace va justo después del enlace, fuera de la escala neutra, y su par es el último (ADR-0014)', () => {
+  const indice = TOKENS_DEL_TEMA.indexOf('--ws-on-link');
+  assert.equal(TOKENS_DEL_TEMA[indice - 1], '--ws-link');
+  assert.ok(indice < TOKENS_DEL_TEMA.indexOf('--ws-bg'), 'antes de la escala neutra');
+  assert.deepEqual(PARES_DE_CONTRASTE.at(-1), {
+    par: 'onLink/link',
+    texto: '--ws-on-link',
+    fondo: '--ws-link',
+    minimo: 4.5,
+    bloquea: false,
+  });
 });
 
 for (const { nombre, colores, tokens, pares } of casos.tokensDelTema) {
@@ -121,11 +134,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve los 20 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
+test('revisarContraste devuelve los 21 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 20);
+    assert.equal(pares.length, 21);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),
