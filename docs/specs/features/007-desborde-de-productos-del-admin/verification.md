@@ -147,12 +147,12 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 - [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
 - [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las cuentas de las e2e y de los guiones son las de la semilla local; la copia de datos y las capturas están ignoradas por git. `backend/data.json` no se modificó (sha256 `f4480a1c…ae34e` antes y después).
 - [x] Los controles no ejecutados figuran como tales: el CI y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
-- [ ] Revisión humana del hito correspondiente registrada: los hitos de alcance, arquitectura y tareas, las dos tareas ⚠ y los tres bloques están aprobados y registrados en `tasks.md`; falta el [hito de entrega](#hito-de-entrega).
+- [x] Revisión humana del hito correspondiente registrada: los hitos de alcance, arquitectura y tareas, las dos tareas ⚠ y los tres bloques están aprobados y registrados en `tasks.md`, y el [hito de entrega](#hito-de-entrega), en este documento.
 - [ ] Todas las etapas están en la rama y se entregan en un solo PR: las etapas, sí; el PR único se abre con el hito de entrega aprobado.
 
 ## Riesgos remanentes y excepciones
 
-- **Convención de los commits (excepción que aceptar).** Los 18 commits de la rama (`git log dev..HEAD`, con el de esta verificación) están en español, con Conventional Commits y `Refs: 007-desborde-de-productos-del-admin` (con `/TASK-NN` en los de tarea); ninguno lleva `Co-Authored-By` ni firmas de herramientas, y ninguno es un merge. Todos son de Sebastián Avila. Una desviación: `21992b7` («test: escribir las e2e del desborde de productos del Admin») no lleva el ámbito `frontend`, aunque solo toca `frontend/` y documentos de la feature (la convención pide el ámbito de la carpeta de primer nivel), y añade los tres atributos de nombre accesible de la plantilla, como fija TASK-02. No se reescribe: cambiaría los SHA citados en esta verificación, en `tasks.md` y en el índice.
+- **Convención de los commits (excepción aceptada con el hito de entrega).** Los 18 commits de la rama (`git log dev..HEAD`, con el de esta verificación) están en español, con Conventional Commits y `Refs: 007-desborde-de-productos-del-admin` (con `/TASK-NN` en los de tarea); ninguno lleva `Co-Authored-By` ni firmas de herramientas, y ninguno es un merge. Todos son de Sebastián Avila. Una desviación: `21992b7` («test: escribir las e2e del desborde de productos del Admin») no lleva el ámbito `frontend`, aunque solo toca `frontend/` y documentos de la feature (la convención pide el ámbito de la carpeta de primer nivel), y añade los tres atributos de nombre accesible de la plantilla, como fija TASK-02. No se reescribe: cambiaría los SHA citados en esta verificación, en `tasks.md` y en el índice.
 - **CI.** No ejecutado: se ejecuta en el PR único de la feature.
 - **Desviaciones ya aprobadas**, en sus filas de «Ejecución por tarea»: la medida de TEST-05 (aprobada con el bloque 1) y «Stock» seguido de `&nbsp;` en lugar de un espacio (paquete de ⚠ TASK-03).
 - **Ruido de decodificación de la foto.** La miniatura de la galería varía de 1 a 6 niveles por canal entre tomas (TASK-01 midió hasta 5; esta verificación, 6 con C). Se trató como ruido porque la diferencia está dentro de la foto y se reprodujo entre dos tomas del mismo árbol. El plan no fija un umbral numérico.
@@ -185,14 +185,14 @@ Para la [revisión del piloto](../../../architecture/development-workflow.md#imp
 
 ## Hito de entrega
 
-pendiente
+Aprobado por Sebastián Avila el 2026-11-14 («Sí, lo apruebo», en la sesión principal, a la pregunta «¿Apruebas el hito de entrega de la feature 007, con la excepción del commit sin ámbito?»), antes de publicar la rama y abrir el PR único hacia `dev`. Antes de recomendar la aprobación, la sesión principal revisó esta verificación sobre `47526bc`: volvió a ejecutar el e2e completo (`127 passed` en 4.8 min, sin fallos ni reintentos, con las 6 de `admin-productos-movil`); comparó por hash las capturas de la toma «verificacion» con las aprobadas (11 de 12 idénticas byte a byte; la de edición con C a 375 px difiere solo dentro de la foto de la miniatura, y los dos recortes no se distinguen a la vista) y con la base a 1440 px (6 de 6 idénticas); y comprobó que el código no cambia desde `14fe3a5`, los 18 commits de la rama (con `Refs:`, sin coautoría y sin merges), que la rama no está publicada, los puertos libres y el hash de `backend/data.json`. No repitió `npm run verify` sobre `47526bc` (lo ejecutó sobre `99b8997`; los commits posteriores solo tocan documentos), ni `audit:all`, ni el typecheck a mano, ni la reproducción del rojo: son los de `sdd-verify`.
 
-Preparado por `sdd-verify` el 2026-11-14 sobre `d2392eb`, para que Sebastián Avila lo apruebe o lo rechace. No está aprobado.
+Preparado por `sdd-verify` el 2026-11-14 sobre `d2392eb`.
 
-Evidencia para decidir: la de esta verificación.
+Evidencia presentada antes de aprobar: la de esta verificación.
 
 - `npm run verify` (118 s) y `npm run audit:all` en verde; el typecheck de las dos apps y de la spec nueva, a mano; el e2e completo con `127 passed`; y el rojo de TEST-01 a TEST-05 reproducido sobre la plantilla de `21992b7`, con el verde en la punta.
 - Las capturas de la punta con A, B y C: a 1440 px, iguales a la base; a 375 px, la franja de arriba igual y solo cambian la lista y el formulario; frente a lo aprobado en ⚠ TASK-04, iguales salvo la decodificación de una foto con C. La consola, sin mensajes nuevos.
 - La trazabilidad completa y la Definition of Done, salvo este hito y el PR único.
 
-Excepción que aceptar con el hito: `21992b7` sin el ámbito `frontend`, que no se reescribe. Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones), entre ellos el CI, que se ejecuta en el PR, y el conflicto de `backlog.md` con `dev`, que se resuelve al abrirlo.
+Excepción aceptada con el hito: `21992b7` sin el ámbito `frontend`, que no se reescribe. Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones), entre ellos el CI, que se ejecuta en el PR, y el conflicto de `backlog.md` con `dev`, que se resuelve al abrirlo.
