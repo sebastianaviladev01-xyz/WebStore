@@ -2,9 +2,9 @@
 
 - Feature: `007-desborde-de-productos-del-admin`
 - Historia de usuario: ninguna. Sale de [PBI-0045](../../../planning/backlog.md) (desborde horizontal de `/productos` del Admin a 375 px, en los tres temas), detectado en la verificación de la feature [003](../003-ajustes-del-admin/verification.md#riesgos-remanentes-y-excepciones). Sebastián Avila lo eligió el 2026-11-14 como piloto del flujo de [un solo pull request por feature](../../../architecture/development-workflow.md#implantación-con-un-piloto): un solo módulo, el de productos, como pidió Daniel Avila el 2026-11-13.
-- Estado: borrador
+- Estado: aprobada
 - Fecha: 2026-11-14
-- Hito de alcance: pendiente
+- Hito de alcance: aprobado por Sebastián Avila el 2026-11-14, con las tres [decisiones del hito](#decisiones-del-hito-de-alcance)
 
 ## Problema y actores
 
@@ -47,8 +47,8 @@ Actores: el `superadmin`, el `admin` y el `vendedor`, que gestionan productos de
 |---|---|---|---|
 | REQ-01 | La página `/productos` del Admin no tiene desplazamiento horizontal a 375 px (`scrollWidth` igual a `clientWidth`), con A, B y C | PBI-0045; STD-12 («sin desborde horizontal») | Alta |
 | REQ-02 | El formulario de producto, incluida la galería de fotos, cabe en su tarjeta y se puede usar a 375 px: ningún campo ni botón sale de la tarjeta | PBI-0045 (la causa del desborde) | Alta |
-| REQ-03 | A 375 px, cada producto de la lista muestra su nombre, su SKU, su precio, su stock y las acciones «Editar» y «Eliminar» sin texto partido letra a letra, sin solaparse y sin quedar recortados | PBI-0045 (la lista desborda su tarjeta); **propuesto** | Alta |
-| REQ-04 | REQ-01 a REQ-03 se cumplen también en los otros anchos de referencia móviles (360 y 390 px) | [Validación](../../../../frontend/docs/VALIDATION.md#responsive-y-revisión-visual) (anchos de referencia); **propuesto** | Media |
+| REQ-03 | A 375 px, cada producto de la lista muestra su nombre, su SKU, su precio, su stock y las acciones «Editar» y «Eliminar» sin desplazar en horizontal, sin texto partido letra a letra, sin solaparse y sin quedar recortados | PBI-0045 (la lista desborda su tarjeta); [D1 y D3](#decisiones-del-hito-de-alcance) | Alta |
+| REQ-04 | REQ-01 a REQ-03 se cumplen también en los otros anchos de referencia móviles (360 y 390 px) | [Validación](../../../../frontend/docs/VALIDATION.md#responsive-y-revisión-visual) (anchos de referencia); [D2](#decisiones-del-hito-de-alcance) | Media |
 | REQ-05 | A 768 px o más, `/productos` se ve igual que antes de la feature, con A, B y C | STD-12 | Alta |
 
 ## Criterios de aceptación
@@ -74,16 +74,16 @@ Actores: el `superadmin`, el `admin` y el `vendedor`, que gestionan productos de
 ### AC-03 — Lista legible a 375 px
 
 - Cubre: REQ-03
-- Origen: **propuesto**
+- Origen: propuesto y aprobado en el hito de alcance ([D1 y D3](#decisiones-del-hito-de-alcance))
 
 **Dado** el Admin a 375 px, con A, B o C y los seis productos del seed
 **Cuando** se mira la lista de productos
-**Entonces** de cada producto se leen el nombre, el SKU, el precio y el stock sin partirse letra a letra ni solaparse (hoy la columna «Producto» mide 0 px), los botones «Editar» y «Eliminar» se ven completos y se pueden pulsar, y las cabeceras de la lista no salen recortadas.
+**Entonces** de cada producto se leen el nombre, el SKU, el precio y el stock sin desplazar en horizontal, ni la página ni la tarjeta de la lista, y sin partirse letra a letra ni solaparse (hoy la columna «Producto» mide 0 px); los botones «Editar» y «Eliminar» se ven completos y se pueden pulsar, y las cabeceras de la lista, si se muestran, no salen recortadas.
 
 ### AC-04 — Anchos móviles de referencia
 
 - Cubre: REQ-04
-- Origen: **propuesto**
+- Origen: propuesto y aprobado en el hito de alcance ([D2](#decisiones-del-hito-de-alcance))
 
 **Dado** el Admin a 360 y a 390 px, con A, B o C
 **Cuando** se abre `/productos`
@@ -181,11 +181,17 @@ Capturas de la base, fuera del repositorio: `b-productos-375-viewport.png` muest
 
 ## Preguntas abiertas
 
-Para el hito de alcance, de una en una:
+Ninguna. Las tres del hito de alcance están respondidas en [decisiones del hito](#decisiones-del-hito-de-alcance). Son preguntas técnicas y de maquetación de un defecto, sin reglas de negocio, así que las responde la persona que aprueba el hito ([hitos humanos](../../../architecture/development-workflow.md#hitos-humanos)).
 
-1. **Alcance de la corrección.** ¿Se corrige solo el desborde de la página (el formulario) o también la lista de productos, que hoy no se lee a 375 px aunque no desplace la página? Recomendación: las dos (REQ-02 y REQ-03).
-2. **Anchos.** ¿Basta con 375 px, como dice PBI-0045, o se exigen también los otros anchos móviles de referencia, 360 y 390 px? Recomendación: los tres (REQ-04).
-3. **La lista en móvil.** ¿Se acepta que la lista se desplace en horizontal dentro de su tarjeta, como `/pedidos`, o cada producto debe leerse completo sin desplazar? Recomendación: sin desplazar (AC-03).
+## Decisiones del hito de alcance
+
+Sebastián Avila respondió el 2026-11-14 las tres preguntas, presentadas de una en una con sus alternativas, la recomendación y las medidas de la base, y aprobó el alcance. En las tres eligió la alternativa recomendada.
+
+| ID | Pregunta | Alternativas | Decisión | Efecto en la especificación |
+|---|---|---|---|---|
+| D1 | ¿Qué se corrige: el desborde de la página (el formulario) o también la lista, que no desplaza la página pero no se lee? | Formulario y lista; solo el formulario (la lista, a un PBI aparte); también `/clientes` e `/inventario` (fuera del piloto de un solo módulo) | **Formulario y lista** | REQ-02 y REQ-03; `/clientes` e `/inventario` siguen en [PBI-0059](../../../planning/backlog.md) |
+| D2 | ¿En qué anchos móviles se exige? | 360, 375 y 390 px (los de referencia); solo 375 px (lo literal de PBI-0045); hasta 320 px (reflow de WCAG 1.4.10, que ninguna fuente pide) | **360, 375 y 390 px** | REQ-04 y AC-04, aprobados |
+| D3 | ¿La lista puede desplazarse en horizontal dentro de su tarjeta, como `/pedidos`, o cada producto se lee sin desplazar? | Leer sin desplazar (la fila se reorganiza en móvil); desplazar en la tarjeta (cambio mínimo, pero «Eliminar» queda fuera de la vista) | **Leer sin desplazar** | REQ-03 y AC-03, aprobados: ni la página ni la tarjeta de la lista se desplazan. Cómo se reorganiza la fila lo fija el plan |
 
 ## Referencias
 
