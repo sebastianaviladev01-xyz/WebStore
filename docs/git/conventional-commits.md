@@ -57,6 +57,7 @@ revision; el Admin debe enviarla en cada guardado
 Cuando el trabajo corresponda a una feature, una historia o un ADR, añade su identificador en una nota al pie `Refs:`. Si hay varios, sepáralos con comas. Usa los formatos del proyecto:
 
 - TASK o AC de una feature, con la carpeta delante: `001-slug/TASK-01` ([convenciones de especificaciones](../specs/README.md#convenciones)).
+- Etapa o hito de una feature, sin una tarea concreta: la carpeta, `001-slug` ([commits de una feature](#commits-de-una-feature)).
 - Historia de usuario: `US06`.
 - Decisión: `ADR-0005`.
 - Elemento del backlog: `PBI-0001`.
@@ -72,6 +73,14 @@ Refs: 001-slug/TASK-01, ADR-0003
 No uses palabras clave de cierre de GitHub, como `Closes #12` o `Fixes #12`, salvo solicitud expresa. El estado de una feature se gestiona en su [índice](../specs/features/README.md).
 
 El nombre de la rama de trabajo sigue la [convención de ramas](conventional-pull-requests.md#nombres-de-rama), por ejemplo `feature/001-slug`.
+
+## Commits de una feature
+
+Una feature se entrega en [un solo pull request](../architecture/development-workflow.md#un-pull-request-por-feature). Sus etapas y sus hitos no tienen un PR propio: quedan en el historial de la rama `feature/NNN-slug`, que el merge commit conserva.
+
+- Cada etapa deja al menos un commit. La especificación, el plan, cada ADR, las tareas y la verificación son commits `docs`; cada tarea de implementación tiene el suyo, con su tipo.
+- Cada hito o aprobación de una persona queda en un commit `docs` que lo registra en el artefacto de la etapa: quién aprobó y cuándo. Si la aprobación llega antes de confirmar el artefacto, puede ir en el mismo commit.
+- Un commit de etapa o de hito lleva la carpeta de la feature en `Refs:`. Así las etapas de una feature se consultan con `git log --grep "Refs: 001-slug"`.
 
 ## Ejemplos
 
@@ -100,6 +109,12 @@ Refs: PBI-0022, ADR-0003
 
 ```text
 test(backend): cubrir la ventana de 24 h al cancelar un pedido
+```
+
+```text
+docs: registrar el hito de alcance de comprar como invitado
+
+Refs: 001-comprar-como-invitado
 ```
 
 ## Antes de confirmar

@@ -3,6 +3,7 @@
 - Feature: `NNN-slug`
 - Plan: [planning.md](planning.md)
 - Fecha: AAAA-MM-DD
+- Aprobación de las tareas: pendiente | aprobadas por <persona> el AAAA-MM-DD
 
 <!-- Reemplaza cada texto de ejemplo. Al copiar esta plantilla a docs/specs/features/NNN-slug/, añade un "../" a cada enlace relativo (el enlace a planning.md ya es correcto). -->
 

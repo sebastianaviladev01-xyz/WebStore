@@ -42,7 +42,7 @@ Argumentos: el `NNN-slug` de la feature y el bloque, que es una fase o un tramo 
    - Prettier sobre los archivos tocados, en el mismo commit.
 9. Registra la evidencia en el mismo commit de la tarea: una fila breve en `verification.md` (una línea por control, con el SHA vacío, y en la primera, con qué se ejecutó: herramienta, modelo real, esfuerzo y si fue delegada) y la tarea marcada `hecha` en `tasks.md`, solo si la aceptación y la evidencia se cumplen. Los SHA se rellenan en un commit `docs` al cerrar la fase.
 10. La última tarea del bloque actualiza la sección Traspaso de `tasks.md` en su mismo commit. Si una tarea se bloquea o se desbloquea, actualiza también la columna «Bloqueos y siguiente paso» de `docs/specs/features/README.md`.
-11. Al cerrar el bloque, detén los servidores que levantaste, informa a la persona (commits, árbol limpio y Traspaso) y pide su aprobación. No empieces el bloque siguiente: se ejecuta en una sesión nueva cuando la persona lo aprueba.
+11. Al cerrar el bloque, detén los servidores que levantaste, informa a la persona (commits, árbol limpio y Traspaso) y pide su aprobación. No empieces el bloque siguiente: se ejecuta en una sesión nueva cuando la persona lo aprueba. La aprobación de un bloque o de una tarea ⚠ se anota en `tasks.md` (quién y cuándo) y va en un commit de la rama (`docs/development/agent-execution.md`, apartado «Una sesión por bloque»).
 12. Si la herramienta bloquea la escritura de la sesión, no escribas por la terminal: haz commit de lo que se pueda y continúa en una sesión nueva (`docs/development/agent-execution.md`, apartado «Bloqueo de escritura de la sesión»).
 
 Continúa los pasos rutinarios y reversibles sin pedir aprobación en cada uno. Ante una acción de alto impacto (ver `development-workflow.md`), prepara diff, riesgos y pruebas, y espera la revisión humana.
@@ -60,3 +60,4 @@ Código y pruebas del incremento, `tasks.md` actualizado, evidencia de ejecució
 - No hagas operaciones externas no autorizadas ni uses datos reales de clientes.
 - No releas archivos completos ya leídos ni pegues logs o diffs largos en el chat.
 - No archives ni desarchives sesiones para continuar un bloque.
+- No abras un PR al cerrar un bloque o una fase ni hagas push sin que la persona lo pida: la feature se entrega en un solo PR, después de `sdd-verify` (`docs/architecture/development-workflow.md`, apartado «Un pull request por feature»).

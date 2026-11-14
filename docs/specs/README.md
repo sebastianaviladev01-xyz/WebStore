@@ -46,7 +46,9 @@ Las historias de WebStore describen lo que la demo ya implementa ([trazabilidad]
 | 4. Desglosar | `sdd-tasks` | `tasks.md` | — |
 | 5. Implementar | `sdd-implement` | Código y pruebas | Solo en alto impacto |
 | 6. Verificar | `sdd-verify` | `verification.md` | — |
-| 7. Entregar | — | Release y ADR actualizados | Entrega |
+| 7. Entregar | `pr-create` y `post-merge` | El PR único de la feature, los ADR actualizados y el registro de la entrega | Entrega |
+
+Las etapas 1 a 6 son commits de una misma rama `feature/NNN-slug`, y los hitos se registran en ella: la feature se entrega en [un solo pull request](../architecture/development-workflow.md#un-pull-request-por-feature).
 
 Los skills viven en [`.agents/skills/`](../../.agents/README.md) y se pueden usar desde cualquier herramienta compatible con el estándar Agent Skills. Cómo se invocan en cada herramienta está en su [adaptador](../../.agents/adapters/).
 
@@ -58,4 +60,5 @@ Los skills viven en [`.agents/skills/`](../../.agents/README.md) y se pueden usa
 
 1. Pide el skill `sdd-specify` con el objetivo o la historia de usuario (por ejemplo, `sdd-specify` con `US06 comprar como invitado`).
 2. Revisa la especificación y aprueba el hito de alcance.
-3. Continúa con `sdd-plan` y el `NNN-slug` de la feature, y con las etapas siguientes.
+3. Continúa con `sdd-plan` y el `NNN-slug` de la feature, y con las etapas siguientes, en la misma rama.
+4. Con el hito de entrega aprobado, abre el PR de la feature con `pr-create`.

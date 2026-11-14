@@ -33,6 +33,7 @@ Argumentos: el `NNN-slug` de la feature.
 9. Escribe el Traspaso inicial al principio de `tasks.md`, con el primer bloque como siguiente bloque.
 10. Evalúa la Definition of Ready de cada tarea con honestidad. Una tarea que depende de una decisión pendiente queda `bloqueada`.
 11. Actualiza el estado en `docs/specs/features/README.md` a `desglosada`, con las tareas bloqueadas y su motivo en «Bloqueos y siguiente paso».
+12. Haz commit en la rama `feature/NNN-slug` de la feature y pide a la persona que apruebe las tareas. Cuando las apruebe, registra quién y cuándo en la cabecera de `tasks.md`, en un commit de la rama (`docs/architecture/development-workflow.md`, apartado «Hitos humanos»).
 
 ## Salida
 
@@ -42,3 +43,4 @@ Argumentos: el `NNN-slug` de la feature.
 
 - No marques tareas como hechas por figurar en un plan.
 - No crees issues ni sincronices gestores externos sin autorización explícita.
+- No abras un PR al terminar la etapa ni hagas push sin que la persona lo pida: la feature se entrega en un solo PR, después de `sdd-verify` (`docs/architecture/development-workflow.md`, apartado «Un pull request por feature»).

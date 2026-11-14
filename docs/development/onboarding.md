@@ -39,7 +39,7 @@ En este orden:
 | 2 | [Producto](../planning/PRODUCT.md) y [alcance](../planning/SCOPE.md) | Qué es WebStore, para quién y qué entra en el MVP |
 | 3 | [Arquitectura del sistema](../architecture/README.md) | Storefront, Admin y BFF de prueba, una sola fuente de datos y los roles |
 | 4 | [Glosario](../architecture/glosario.md) | Los nombres de negocio en español y su nombre en el código y en el contrato |
-| 5 | [Flujo SDD + TDD](../architecture/development-workflow.md) | Las 7 etapas, los hitos humanos, el ciclo TDD y un PR por hito |
+| 5 | [Flujo SDD + TDD](../architecture/development-workflow.md) | Las 7 etapas, los hitos humanos, el ciclo TDD y un solo PR por feature |
 | 6 | [Especificaciones por feature](../specs/README.md) y su [índice](../specs/features/README.md) | La carpeta de una feature, los identificadores REQ, AC, TASK y TEST, y los estados |
 | 7 | [Historias de usuario](../planning/user-stories/user-stories.md) y [backlog](../planning/backlog.md) | De dónde salen los requisitos y qué queda pendiente |
 | 8 | [Ejecución por agentes](agent-execution.md) | Sesiones por etapa y por bloque, worktrees, nivel y esfuerzo, controles y evidencia |
@@ -89,7 +89,7 @@ Los ADR, agrupados por tema:
 
 | Tema | ADR |
 |---|---|
-| Proceso y convenciones | [0001](../adrs/0001-registrar-decisiones-de-arquitectura.md), [0002](../adrs/0002-adoptar-sdd-y-tdd.md), [0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md), [0004](../adrs/0004-adoptar-la-estructura-de-repositorio-de-idshield.md), [0005](../adrs/0005-adoptar-convenciones-de-versionamiento-y-entrega.md) y [0008](../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md) |
+| Proceso y convenciones | [0001](../adrs/0001-registrar-decisiones-de-arquitectura.md), [0002](../adrs/0002-adoptar-sdd-y-tdd.md), [0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md), [0004](../adrs/0004-adoptar-la-estructura-de-repositorio-de-idshield.md), [0005](../adrs/0005-adoptar-convenciones-de-versionamiento-y-entrega.md), [0008](../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md) y [0015](../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md) |
 | Frontend | [0006](../adrs/0006-organizar-el-frontend-por-features-y-capas.md) |
 | Backend (BFF de prueba) | [0007](../adrs/0007-organizar-el-bff-en-capas.md) |
 | Pruebas | [0009](../adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md) |
@@ -109,13 +109,17 @@ Las preguntas de un hito llegan [de una en una](../architecture/development-work
 
 ## Recorrido de una feature
 
-1. `sdd-specify` en la sesión donde empieza el trabajo. Hito de alcance y primer PR.
-2. `post-merge`. En sesiones nuevas, `sdd-plan` y `sdd-decide`. Hito de arquitectura y segundo PR.
-3. `post-merge`. En una sesión nueva, `sdd-tasks`: tareas, bloques, Traspaso y nivel y esfuerzo.
-4. En el worktree de la feature, un bloque de `sdd-implement` por sesión. Entre un bloque y el siguiente, una persona del equipo aprueba.
-5. `sdd-verify` en una sesión nueva. PR de implementación, que pueden ser varios, e hito de entrega.
+Todo el recorrido va en una sola rama, `feature/NNN-slug`, y cada hito se registra en ella con un commit:
 
-Las reglas de cada paso: [etapas](../architecture/development-workflow.md#etapas), [pull requests de una feature](../architecture/development-workflow.md#pull-requests-de-una-feature), [una sesión por etapa](agent-execution.md#una-sesión-por-etapa) y [una sesión por bloque](agent-execution.md#una-sesión-por-bloque).
+1. `sdd-specify` en la sesión donde empieza el trabajo: crea la rama. Hito de alcance.
+2. En sesiones nuevas, `sdd-plan` y `sdd-decide`. Hito de arquitectura.
+3. En una sesión nueva, `sdd-tasks`: tareas, bloques, Traspaso y nivel y esfuerzo. Una persona aprueba las tareas.
+4. En el worktree de la feature, un bloque de `sdd-implement` por sesión. Entre un bloque y el siguiente, una persona del equipo aprueba.
+5. `sdd-verify` en una sesión nueva. Hito de entrega.
+6. El PR único de la feature, con `pr-create`. Una persona lo revisa y lo fusiona.
+7. `post-merge` y el registro de la entrega, en un PR nuevo.
+
+Las reglas de cada paso: [etapas](../architecture/development-workflow.md#etapas), [un pull request por feature](../architecture/development-workflow.md#un-pull-request-por-feature), [registro de la entrega](../architecture/development-workflow.md#registro-de-la-entrega), [una sesión por etapa](agent-execution.md#una-sesión-por-etapa) y [una sesión por bloque](agent-execution.md#una-sesión-por-bloque).
 
 ## Trabajar con un agente
 
@@ -134,7 +138,7 @@ Las reglas de cada paso: [etapas](../architecture/development-workflow.md#etapas
 - Un cambio del contrato HTTP cambia a la vez el BFF, `BFF-CONTRACT.md`, el smoke test y los adaptadores `Bff*Gateway`.
 - Si Sheriff o ESLint bloquean un cambio, se corrige el diseño, no la regla.
 - Sin evidencia no hay tarea hecha, y lo que no se ejecutó se dice.
-- Un PR por hito, y a `dev` solo se llega por PR ([convención de ramas](../git/conventional-pull-requests.md)).
+- Un solo PR por feature, con los hitos registrados en commits de su rama, y a `dev` solo se llega por PR ([un pull request por feature](../architecture/development-workflow.md#un-pull-request-por-feature) y [convención de ramas](../git/conventional-pull-requests.md)).
 - Sin credenciales, hosts, secretos ni datos personales reales en el código, la documentación, los PR o los logs.
 - Los documentos de `docs/changelog/` son historia: no se reescriben.
 

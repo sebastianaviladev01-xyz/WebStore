@@ -2,6 +2,8 @@
 
 Añade una fila al crear la carpeta de una feature. Al avanzar de etapa, actualiza su estado ([estados](../README.md#estados-de-una-feature)) y la columna de bloqueos.
 
+Esos cambios se hacen en la rama de la feature y llegan a `dev` con su [PR único](../../architecture/development-workflow.md#un-pull-request-por-feature): mientras una feature está en curso, su fila solo está al día en su rama `feature/NNN-slug`. El estado `entregada` lo pone el [registro de la entrega](../../architecture/development-workflow.md#registro-de-la-entrega), con el PR y el SHA del merge. Las features 001 a 005 se entregaron con la regla anterior, de un PR por hito, y la 006 tiene su especificación en `dev` por esa misma regla.
+
 | NNN | Slug | Historia | Estado | Bloqueos y siguiente paso | Última revisión |
 |---|---|---|---|---|---|
 | 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | entregada | [PR #4](https://github.com/sebastianaviladev01-xyz/WebStore/pull/4) fusionado en `dev` (`304dcc5`) con el CI en verde; [hito de entrega](001-reorganizar-resumen-del-admin/verification.md#hito-de-entrega) aceptado por Sebastián Avila el 2026-11-07. Daniel revisó el Resumen en la reunión del 11/11 y pidió los bloques plegables, entregados con la feature [003](003-ajustes-del-admin/specification.md) (PBI-0031). Sin siguiente paso: las mejoras están en el backlog (PBI-0027 a PBI-0029) | 2026-11-13 |
