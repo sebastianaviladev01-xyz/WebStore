@@ -1,0 +1,30 @@
+# 008. Filtros y registro del catálogo del Admin — Verificación
+
+- Feature: `008-filtros-y-registro-del-catalogo`
+- Tareas: [tasks.md](tasks.md)
+
+Documento creado por TASK-01 desde la [plantilla](../../templates/verification-template.md). Cada tarea rellena su fila de ejecución; `sdd-verify` completa las demás secciones.
+
+## Revisión
+
+| Dato | Valor |
+|---|---|
+| Rama y commit | `feature/008-filtros-y-registro-del-catalogo`, en el worktree `.worktrees/008-filtros-y-registro-del-catalogo`. Base de la implementación: `63e42c8` («docs: desglosar las tareas de los filtros y el registro del catálogo»), sobre `dev` (`85c5348`); su código es el de `dev`. Se completa en `sdd-verify` |
+| Fecha | 2026-11-14 |
+| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas y el e2e |
+| Datos | Capturas: copia `backend/data-capturas.json` del worktree (creada por el BFF desde el seed, ignorada por git), con el BFF del worktree en 3400 sin modo demo. E2E: archivo temporal de Playwright. Nunca `backend/data.json`: su SHA-256 en el checkout principal es `f4480a1c…7aae34e` antes y después de cada tarea con servidores; el worktree no tiene `backend/data.json` |
+
+## Ejecución por tarea
+
+Durante la implementación, cada tarea añade aquí una fila breve en su mismo commit ([guía](../../../development/agent-execution.md#evidencia-en-el-commit-de-la-tarea)). Una línea por control. La primera línea de cada tarea dice con qué se ejecutó: herramienta, modelo real, esfuerzo y si fue delegada. El SHA se rellena en un commit `docs` al cerrar la fase. `sdd-verify` completa el resto del documento a partir de estas filas.
+
+| Tarea | Commit | Control | Resultado | Ejecutado con |
+|---|---|---|---|---|
+| TASK-01 | | Ejecución | — | Claude Code, `claude-opus-5-5`, sin delegar (el catálogo pide estándar · medio, `claude-sonnet-5-5`, `medium`; la hizo el agente principal del bloque, que trabaja en avanzado: la tarea es sobre todo entorno, servidores y el guion). El esfuerzo de la sesión no se puede leer desde dentro; el tope es `high` |
+| TASK-01 | | Worktree | Con el checkout principal limpio en `dev` (`85c5348`), `git worktree add .worktrees/008-filtros-y-registro-del-catalogo feature/008-filtros-y-registro-del-catalogo` sobre la rama existente (`63e42c8`, también en `origin`, PR #48 en borrador), sin `-b` desde `dev` ([decisiones de ejecución](tasks.md#traspaso)); `npm run setup` en él (exit 0; npm avisa de que no ejecuta los scripts de instalación de `esbuild`, `lmdb` y `msgpackr-extract` sin aprobarlos, sin efecto en el build ni en el e2e) | — |
+| TASK-01 | | Capturas «antes» con A, B y C | 32 por tema, 96 en total, en `frontend/output/visual-qa/008-filtros-y-registro-del-catalogo/antes/{a,b,c}/`: `/login`, `/` (Resumen), `/productos`, `/inventario`, `/categorias`, `/marcas`, `/clientes`, `/usuarios`, `/pedidos`, `/banners`, `/contenido`, `/temas`, `/envios`, `/reclamaciones` y `/perfil` con la sesión de `superadmin`, y `/productos` con la de `vendedor`, a 1440 × 900 y 375 × 812 px, página completa, al entrar. Método: guion `capturas.mjs` (Playwright con el Chrome instalado, `reducedMotion: 'reduce'`, temas por la API en el orden A, B y C y B al terminar), con el BFF en 3400 sin modo demo sobre `backend/data-capturas.json` y el Admin en 4500 con `proxy.e2e.conf.json`. `LEEME.md` con el SHA base, las rutas, las sesiones, los anchos, los temas, el método, los datos y la fecha | — |
+| TASK-01 | | Ruido de rasterizado | Segunda toma con B de las 32 rutas (`control-ruido/b/`) y `comparar.mjs antes control-ruido b`: 32 de 32 iguales, sin ningún píxel distinto | — |
+| TASK-01 | | Consola de la base | `antes/consola-abc.json`: solo mensajes de desarrollo (`[vite] connecting…`, `[vite] connected.`, «Angular is running in development mode.»), un `404` de `/favicon.ico` en la primera carga de la ejecución (A, 1440 px, `/login`) y, en `/usuarios`, el aviso `verbose` de Chrome «Input elements should have autocomplete attributes» con los tres temas y los dos anchos. Ningún error de la aplicación | — |
+| TASK-01 | | `npm run verify` sobre la base `63e42c8`, con los servidores detenidos | Pasa (exit 0): agentes, sintaxis de 68 archivos, formato, lint y Sheriff, 29 pruebas de arquitectura, TEST-18 (a), (b) y (c) de la feature 005, «Estructura contractual WebStore: OK», 84 pruebas del frontend, 131 del BFF, build de las dos apps y «Smoke test BFF: OK» | — |
+| TASK-01 | | `npm run test:e2e` completo (línea base de caracterización) | Pasa (exit 0): 127 pruebas en 5.0 min, sin fallos ni pruebas inestables, con los puertos 3400, 4400 y 4500 libres antes | — |
+| TASK-01 | | Datos y servidores | Hash de `backend/data.json` del checkout principal igual antes y después (`f4480a1c…7aae34e`). Copia con B activo (`appearance.activeThemeId: "b"`, revisión 6), sin temas propios, `schemaVersion` 3 y 6 productos; ningún registro guardado ni borrado. Servidores detenidos con `taskkill /T` antes de `verify` y del e2e; puertos 3000, 3400, 4200, 4300, 4400 y 4500 libres al terminar | — |
