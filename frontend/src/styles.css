@@ -46,6 +46,14 @@ textarea::placeholder {
   p {
     margin-block-start: 0;
   }
+
+  /* Por lo mismo, los enlaces: fuera de una capa, esta regla anulaba las utilidades de color y de subrayado
+     (text-on-primary, text-link, hover:underline…) de los enlaces de la tienda (PBI-0048, D1 de la feature 005).
+     Las clases ws-* siguen fuera de capa y ganan como antes. */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 
 h1,
@@ -70,11 +78,6 @@ a {
 button:not(:disabled),
 summary {
   cursor: pointer;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
 }
 
 img {
