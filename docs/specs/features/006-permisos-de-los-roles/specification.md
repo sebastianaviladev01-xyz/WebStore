@@ -40,7 +40,7 @@ Actores: `superadmin`, `admin` y `vendedor` del Admin. El BFF es la autoridad de
 
 **Excluye:**
 
-- Las integraciones con servicios externos y las claves de API de la pasarela: no existen todavía. Cuando se hagan, serán del superadministrador ([PBI-0002](../../../planning/backlog.md), pasarela).
+- Las integraciones con servicios externos y las claves de API de la pasarela: no existen todavía. Cuando se hagan, serán del superadministrador ([PBI-0058](../../../planning/backlog.md), que depende de la pasarela, PBI-0002).
 - La edición de los datos propios del usuario (perfil), según la [pregunta 6](#preguntas-abiertas). Hoy `/perfil` es de solo lectura ([PBI-0034](../../../planning/backlog.md)).
 - Productos propios de cada vendedor (que un vendedor solo vea o edite los que creó), según la [pregunta 2](#preguntas-abiertas). Depende del modelo de datos que prepara Daniel ([PBI-0043](../../../planning/backlog.md)).
 - Crear o editar roles: siguen siendo fijos (05/11).
