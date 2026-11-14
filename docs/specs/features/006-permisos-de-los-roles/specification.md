@@ -4,7 +4,7 @@
 - Historia de usuario: modifica US26 (Gestionar usuarios y roles), US15 (Gestionar productos), US16 (Gestionar inventario) y US19 (Gestionar pedidos), en el [índice de historias](../../../planning/user-stories/user-stories.md). Sale de [PBI-0013](../../../planning/backlog.md) y de la decisión pendiente «Permisos exactos del rol Vendedor» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)). Sebastián Avila la eligió como siguiente trabajo el 2026-11-14.
 - Estado: borrador
 - Fecha: 2026-11-14
-- Hito de alcance: pendiente
+- Hito de alcance: pendiente y bloqueado. Las seis [preguntas](#preguntas-abiertas) dependen de lo que quiera Daniel y las fuentes no las responden de forma explícita: Sebastián Avila decidió el 2026-11-14 no responderlas él y llevarlas a Daniel ([decisiones pendientes](../../../planning/PENDING-DECISIONS.md), «Permisos exactos del rol Vendedor»)
 
 ## Problema y actores
 
@@ -209,12 +209,12 @@ Ninguna.
 
 **Decisiones pendientes:**
 
-- «Permisos exactos del rol Vendedor» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)). Esta feature la cierra con las respuestas del hito.
+- «Permisos exactos del rol Vendedor» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)), que ahora cubre los tres roles. Recoge las seis preguntas para Daniel. Esta feature la cierra con sus respuestas.
 - «Arquitectura y modelo de datos base» (PBI-0043, Daniel). Afecta a la pregunta 2 si algún día los productos tienen dueño.
 
 ## Preguntas abiertas
 
-Se presentan de una en una en el hito de alcance.
+Las responde Daniel: las fuentes no lo dicen de forma explícita (Sebastián Avila, 2026-11-14). Cada una lleva una recomendación, que no es una decisión. Con sus respuestas se cierra el hito de alcance.
 
 1. **¿Qué campos de un producto puede modificar el vendedor?**
    - **A (recomendada).** Todos: nombre, descripción, imágenes, características, stock, SKU, precio, categoría y marca. Es lo que dijo Daniel («crear un nuevo producto, modificarle estos productos»), y un vendedor que crea un producto necesita ponerle precio y categoría.
