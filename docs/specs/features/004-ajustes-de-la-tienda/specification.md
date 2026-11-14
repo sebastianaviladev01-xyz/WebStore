@@ -228,6 +228,8 @@ Ningún AC sale de una historia de usuario como origen. AC-01 reemplaza el Escen
 **Entonces** solo cambian el color del lienzo (y del relleno del buscador, si hace falta para AC-06), los botones del diálogo, los textos de D1 (los dos botones y el título del checkout), el panel del checkout y el aspecto de sus campos. Los textos, el contenido y el resto del diseño no cambian, y no hay desborde horizontal ni errores de consola.
 **Y dado** las capturas del Admin antes y después con A, B y C (login, Resumen y Temas, en escritorio y móvil), **entonces** solo cambia el fondo de la vista previa de Temas; el lienzo del Admin no cambia (D3).
 
+> Nota del hito de arquitectura (2026-11-12, [plan](planning.md#respuestas-del-hito)): con B, `--ws-border-strong` pasa de `#8a96a8` a `#8894a6` para que el contorno de los campos llegue a 3:1 (3.07:1), así que en la tienda también cambian un poco los bordes que lo usan (botones secundarios, contornos de Material y el punto de «sin stock»); con A y C, no. En el Admin ese token no llega a ninguna pantalla capturada (hallazgo de ⚠ TASK-02, 2026-11-13), y la vista previa de Temas solo está en el diálogo de un tema propio: las capturas del Admin salieron iguales con A, B y C (⚠ TASK-08).
+
 ### AC-14 — Comparación con el blanco
 
 - Cubre: REQ-13
@@ -290,6 +292,7 @@ Ninguna. El pago sigue simulado ([PBI-0002](../../../planning/backlog.md)).
 | Fondo más claro que `surface-subtle` (`#F6F8FA` en B) | Las zonas que usan `subtle` (colecciones alternadas, fondo de las fotos) pasan a verse algo más oscuras que el lienzo; se revisa en las capturas | REQ-12, AC-13 |
 | Tema propio que copió la base de un predefinido (fondo, superficie y contraste) | No cambia: el «fondo principal» de los predefinidos sigue igual, así que sigue heredando la escala neutra, y su lienzo de la tienda es su propio fondo (el plomo de la base). Con ese tema activo, la tienda se ve más oscura que con su predefinido; para aclararla, el `superadmin` cambia el fondo del tema (D3) | REQ-12, REQ-14 |
 | Tema propio creado desde el formulario (parte de los colores del tema activo, con el plomo como fondo) | Igual que la fila anterior: su tienda usa ese plomo salvo que el `superadmin` cambie el fondo | REQ-14 |
+| Tema propio que hereda la escala neutra de B (nota del hito de arquitectura, 2026-11-12) | Hereda también el `--ws-border-strong` nuevo de B (`#8894a6`): sus contornos y botones secundarios se ven un poco más oscuros, como con B; su lienzo de la tienda sigue siendo su fondo | REQ-09, REQ-12, REQ-14 |
 | Tema propio activo | La tienda y el Admin se ven igual que hoy: el lienzo de la tienda es su «fondo principal» | REQ-14, AC-05 |
 | Tema propio oscuro (el guardado lo permite si cumple el contraste bloqueante) | Su lienzo de la tienda es su fondo, así que el contraste es el mismo que ya se midió al guardarlo | REQ-07, REQ-14 |
 | Vista previa del modo demo con otro tema | Muestra el fondo nuevo de la tienda para ese tema predefinido | AC-12 |

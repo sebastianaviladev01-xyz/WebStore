@@ -34,7 +34,7 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 |---|---|---|---|
 | Carrito | Productos y cantidades elegidos antes de comprar. Guarda solo id y cantidad; precio y stock salen del catálogo vigente. | `CarritoFacade`, `LineaCarrito`, `CarritoPage` | `localStorage` del navegador |
 | Valor de venta e IGV | Desglose del precio: valor sin impuesto e IGV, mostrados en carrito y checkout. | `CarritoFacade` (`taxableBase`, `igv`) | `subtotal`, `igv` |
-| Checkout | Paso donde el comprador da sus datos, la dirección, la fecha de entrega y el método de pago, y crea el pedido. | `CheckoutFacade`, `CheckoutCommand`, `CheckoutPage` | `/bff/checkout/orders`; `application/checkout/` |
+| Checkout | Paso donde el comprador da sus datos, la dirección, la fecha de entrega y el método de pago, y crea el pedido. En la interfaz se titula «Finalizar compra» desde la feature 004 (en su rama). | `CheckoutFacade`, `CheckoutCommand`, `CheckoutPage` | `/bff/checkout/orders`; `application/checkout/` |
 | Compra como invitado | Compra sin cuenta. El invitado consulta su pedido con un token de acceso guardado en el dispositivo. | `CredencialesPedido` | `accessToken`, cabecera `x-order-token` |
 | Pedido | Compra registrada, con líneas, montos recalculados en el servidor, dirección y fecha de entrega. | `Pedido`, `PedidoRegistrado`, `ComprobantePedido`, `LineaPedido` (Admin); `PedidosFacade` | `orders`; `/bff/orders` |
 | Estado del pedido | Etapa del pedido. Valores en [Estado del pedido](#estado-del-pedido-estadopedido). | `EstadoPedido`, `ETIQUETAS_ESTADO_PEDIDO` | `status` |
@@ -93,6 +93,7 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Tema activo | Único tema que ven todas las personas. Siempre existe; si el guardado no existe, pasa a B. Lo elige el `superadmin` (permiso `themes.manage`). | `TemasFacade`; `temaVisible()` | `appearance.activeThemeId`; `/bff/appearance/theme.css` |
 | Modo demo | Instalación con la tuerca «Cambiar tema», que permite ver otro tema sin cambiar el activo. Se enciende con `WEBSTORE_DEMO_MODE=true`; apagado por defecto, también en producción. | `SelectorTemaComponent` (tienda y Admin) | `WEBSTORE_DEMO_MODE`; `demoMode` |
 | Vista previa del tema | Tema que una persona elige con la tuerca en el modo demo. Solo vale en su navegador y no cambia el tema activo. | `COOKIE_VISTA_PREVIA`, `TemasFacade.verTema` | Cookie `ws_tema_vista_previa` |
+| Lienzo de la tienda | Fondo de las páginas de la tienda, más claro que el fondo principal del tema, que sigue siendo el lienzo del Admin. En A, B y C es el tono intermedio entre su fondo principal y el blanco; en un tema propio, su fondo principal. Implementado en la rama de la feature 004 ([ADR-0013](../adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md)). | Token `--ws-store-bg`; clase `bg-store-canvas` (`--color-store-canvas` en `tokens.css`) | `Tema.tokens['--ws-store-bg']`; `/bff/appearance/theme.css` |
 | Revisión de temas | Número propio de los temas que impide guardar sobre una lista desactualizada. Es independiente de la revisión del snapshot. | `TemasDesactualizadosError` (Admin) | `appearance.revision`; `409 STALE_THEMES` |
 
 ## Valores
