@@ -1,7 +1,9 @@
 # 0015. Entregar cada feature en un solo pull request
 
-- Estado: Propuesta
+- Estado: Aceptada
 - Fecha: 2026-11-14
+
+Aceptada por Sebastián Avila el 2026-11-14, según la instrucción escrita de Daniel Avila del 2026-11-13, que pidió el cambio.
 
 ## Contexto
 
