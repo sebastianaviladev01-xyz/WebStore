@@ -3,6 +3,8 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 const root = new URL('../', import.meta.url);
 const path = (p) => new URL(p, root);
 const read = (p) => readFileSync(path(p), 'utf8');
+// Un archivo que falta ya sale como ✗ en `checks`; sus comprobaciones de contenido fallan sin detener el resto.
+const readIfExists = (p) => (existsSync(path(p)) ? read(p) : '');
 const checks = [
   ['Storefront separado', 'frontend/src/app/app.routes.ts'],
   ['Admin separado', 'frontend/projects/admin/src/app/app.routes.ts'],
@@ -14,6 +16,10 @@ const checks = [
   ['Cuenta', 'frontend/src/app/features/cuenta/application/cuenta.facade.ts'],
   ['Pedidos', 'frontend/src/app/features/pedidos/application/pedidos.facade.ts'],
   ['CMS', 'frontend/projects/admin/src/app/features/tienda/presentation/contenido.page.ts'],
+  [
+    'Registro de producto',
+    'frontend/projects/admin/src/app/features/tienda/presentation/registro-producto.page.ts',
+  ],
   ['Inventario', 'frontend/projects/admin/src/app/features/tienda/presentation/inventario.page.ts'],
   ['Banners', 'frontend/projects/admin/src/app/features/tienda/presentation/banners.page.ts'],
   ['Reclamos', 'frontend/src/app/features/reclamos/presentation/libro-reclamaciones.page.ts'],
@@ -30,6 +36,10 @@ for (const [label, file] of checks) {
 const appConfig = read('frontend/src/app/app.config.ts');
 const adminConfig = read('frontend/projects/admin/src/app/app.config.ts');
 const products = read('frontend/projects/admin/src/app/features/tienda/presentation/productos.page.ts');
+// Feature 008 (TEST-09): el formulario de producto vive en su interfaz de registro, con ruta propia.
+const productForm = readIfExists(
+  'frontend/projects/admin/src/app/features/tienda/presentation/registro-producto.page.ts',
+);
 const shell = read('frontend/src/app/layout/app.layout.ts');
 const routes = read('frontend/src/app/app.routes.ts');
 const contentService = read('frontend/src/app/features/contenido/application/contenido.facade.ts');
@@ -44,6 +54,9 @@ const bff = readdirSync(path('backend/src/'), { recursive: true })
 const adminRoles = read('frontend/projects/admin/src/app/features/sesion/domain/rol.rules.ts');
 const bffRoles = read('backend/src/domain/sesion/rol.rules.mjs');
 const adminRoutes = read('frontend/projects/admin/src/app/app.routes.ts');
+// `productos/nuevo` va antes que `productos/:id`: si no, «nuevo» llegaría como identificador con products.edit.
+const productNewRoute = adminRoutes.indexOf("path: 'productos/nuevo'");
+const productEditRoute = adminRoutes.indexOf("path: 'productos/:id'");
 const applicationSources = [
   'frontend/src/app/features/cuenta/application/cuenta.facade.ts',
   'frontend/src/app/features/pedidos/application/pedidos.facade.ts',
@@ -60,7 +73,13 @@ for (const [label, ok] of [
   ['Admin usa BffTiendaGateway', adminConfig.includes('BffTiendaGateway')],
   [
     'Solo products.manage crea productos',
-    products.includes("!this.session.can('products.manage') && !this.editingId()"),
+    productForm.includes("!this.session.can('products.manage') && !this.editingId()"),
+  ],
+  [
+    'Registro de producto nuevo protegido por products.manage, antes que productos/:id',
+    /path: 'productos\/nuevo',\s*canMatch: \[permisoGuard\('products\.manage'\)\]/.test(adminRoutes) &&
+      productNewRoute >= 0 &&
+      productNewRoute < productEditRoute,
   ],
   [
     'Eliminación de producto protegida por products.manage',

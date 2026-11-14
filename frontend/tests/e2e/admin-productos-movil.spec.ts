@@ -21,8 +21,11 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  *   celda solo con el número, la ayuda de la miniatura en una línea); a 767 px, la cabecera se oculta y la celda
  *   dice «Stock N».
  *
+ * Desde la feature 008, el formulario está en su interfaz de registro: «Nuevo producto» en `/productos/nuevo` y
+ * «Editar» (un enlace) en `/productos/:id`. La lista sigue en `/productos`.
+ *
  * Los localizadores usan roles y textos visibles (`frontend/architecture.md` §6). La fila de un producto es un
- * `div` sin otro rol: se localiza como el `div` de la lista que tiene el botón «Editar» y el nombre, y sus hijos
+ * `div` sin otro rol: se localiza como el `div` de la lista que tiene el enlace «Editar» y el nombre, y sus hijos
  * directos son, en orden, el bloque del producto (nombre en `strong` y línea del SKU en `p`), el precio, el
  * stock y las acciones. Se leen con `evaluate` para medir sus cajas. Las aserciones son `expect.soft`, con el
  * tema, el ancho y lo que se comprueba, para que el informe muestre todas las causas de un rojo.
@@ -100,7 +103,7 @@ const cabecera = (page: Page) =>
 const filaDe = (page: Page, nombre: string) =>
   lista(page)
     .locator('div')
-    .filter({ has: page.getByRole('button', { name: 'Editar', exact: true }) })
+    .filter({ has: page.getByRole('link', { name: 'Editar', exact: true }) })
     .filter({ hasText: nombre });
 
 /** Hijos directos de la fila (bloque, precio, stock, acciones): cajas, y texto visible de cada uno. */
@@ -157,9 +160,14 @@ async function abrirProductos(page: Page, ancho: number, alto: number): Promise<
   await page.goto('/productos');
   await expect(page.getByRole('heading', { level: 1, name: 'Productos' })).toBeVisible();
   await expect(lista(page)).toBeVisible();
-  await expect(lista(page).getByRole('button', { name: 'Editar', exact: true })).toHaveCount(
-    PRODUCTOS.length,
-  );
+  await expect(lista(page).getByRole('link', { name: 'Editar', exact: true })).toHaveCount(PRODUCTOS.length);
+  await page.evaluate(() => document.fonts.ready);
+}
+
+/** Carga `/productos/nuevo` (feature 008) y espera el formulario «Nuevo producto». */
+async function abrirNuevoProducto(page: Page): Promise<void> {
+  await page.goto('/productos/nuevo');
+  await expect(page.getByRole('form', { name: 'Nuevo producto' })).toBeVisible();
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -229,7 +237,7 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
     const visibles: [string, Locator][] = [
       ['nombre', fila.getByText(producto.nombre, { exact: true })],
       ['línea del SKU', fila.getByText(producto.sku)],
-      ['Editar', fila.getByRole('button', { name: 'Editar', exact: true })],
+      ['Editar', fila.getByRole('link', { name: 'Editar', exact: true })],
     ];
     if (conEliminar) {
       visibles.push(['Eliminar', fila.getByRole('button', { name: `Eliminar producto ${producto.nombre}` })]);
@@ -291,15 +299,16 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
 
   if (!conEliminar) {
     await expect(page.getByRole('button', { name: /^Eliminar producto/ })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Nuevo producto', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toHaveCount(0);
   }
 }
 
-/** Pulsa «Editar» en una fila y espera el formulario «Editar producto». No guarda. */
+/** Pulsa «Editar» en una fila, espera `/productos/:id` y el formulario «Editar producto». No guarda. */
 async function editarProducto(page: Page, nombre: string): Promise<Locator> {
-  const editar = filaDe(page, nombre).getByRole('button', { name: 'Editar', exact: true });
+  const editar = filaDe(page, nombre).getByRole('link', { name: 'Editar', exact: true });
   await editar.evaluate((nodo) => nodo.scrollIntoView({ block: 'center' }));
   await editar.click();
+  await expect(page).toHaveURL(/\/productos\/(?!nuevo)[^/?]+$/);
   const formulario = page.getByRole('form', { name: 'Editar producto' });
   await expect(formulario).toBeVisible();
   return formulario;
@@ -443,7 +452,9 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
         await abrirProductos(page, ancho, ALTO_MOVIL);
         await comprobarSinDesborde(page, lugar, 'al entrar');
         await comprobarLista(page, lugar, true);
+        await abrirNuevoProducto(page);
         await comprobarFormularioNuevo(page, lugar);
+        await abrirProductos(page, ancho, ALTO_MOVIL);
         await comprobarGaleria(page, lugar);
       }
     });
@@ -459,23 +470,6 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
     await abrirProductos(page, lugar.ancho, ALTO_MOVIL);
     await comprobarSinDesborde(page, lugar, 'al entrar');
     await comprobarLista(page, lugar, false);
-
-    const formulario = page.getByRole('form', { name: 'Nuevo producto' });
-    const indicacion = formulario.getByText(
-      'Elige un producto de la lista para actualizar su ficha o su stock.',
-    );
-    expect.soft(await indicacion.isVisible(), etiqueta(lugar, 'indicación del vendedor visible')).toBe(true);
-    const cajaDeLaIndicacion = await caja(indicacion);
-    const cajaDelFormulario = await caja(formulario);
-    expect
-      .soft(
-        dentro(cajaDeLaIndicacion, cajaDelFormulario),
-        etiqueta(
-          lugar,
-          `indicación dentro del formulario (${texto(cajaDeLaIndicacion)} en ${texto(cajaDelFormulario)})`,
-        ),
-      )
-      .toBe(true);
 
     const nombreDelPrimero = PRODUCTOS[0].nombre;
     await editarProducto(page, nombreDelPrimero);
@@ -546,6 +540,7 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
         expect.soft(stock.texto, que('celda del stock')).toMatch(STOCK_SOLO_NUMERO);
       }
 
+      await abrirNuevoProducto(page);
       const formulario = page.getByRole('form', { name: 'Nuevo producto' });
       const lineas = await lineasDeTexto(formulario.getByText(AYUDA_MINIATURA));
       expect.soft(lineas, etiqueta(lugar, 'líneas de la ayuda de la miniatura')).toBe(1);

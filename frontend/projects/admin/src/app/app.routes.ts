@@ -28,6 +28,22 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Productos',
       },
       {
+        // Antes que `productos/:id`: sin `products.manage`, `permisoGuard` redirige al Resumen y el router no
+        // prueba la ruta siguiente, así que «nuevo» nunca llega como identificador (AC-11).
+        path: 'productos/nuevo',
+        canMatch: [permisoGuard('products.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-producto.page').then((m) => m.RegistroProductoPage),
+        title: 'WebStore Admin | Nuevo producto',
+      },
+      {
+        path: 'productos/:id',
+        canMatch: [permisoGuard('products.edit')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-producto.page').then((m) => m.RegistroProductoPage),
+        title: 'WebStore Admin | Editar producto',
+      },
+      {
         path: 'inventario',
         canMatch: [permisoGuard('inventory.manage')],
         loadComponent: () =>
