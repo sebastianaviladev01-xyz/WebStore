@@ -79,6 +79,12 @@ Las elecciones son las de Sebastián Avila del 2026-11-13: D2 en el [hito de alc
 - Los temas propios ya guardados ganan el token y el par al leer. En uno oscuro, el diálogo de Temas puede mostrar un aviso nuevo, que no impide guardar ni activar.
 - El `ETag` de `theme.css` cambia para todos con el despliegue: la primera carga descarga la hoja otra vez ([ADR-0010](0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)).
 
+> Nota de la implementación (2026-11-14, feature 005, [verificación](../specs/features/005-contraste-de-controles-con-los-temas/verification.md#ejecución-por-tarea)): con las reglas actuales, el aviso de `onLink/link` no llega a salir. El par no baja de 4.5:1 en ningún tema válido:
+> - si el enlace es el principal, es porque se lee sobre la superficie, que es candidata del cálculo;
+> - si es el color de contraste, la superficie se lee sobre él por el par `contrast/surface`, que bloquea por debajo de 4.5:1.
+>
+> Por eso, un tema propio oscuro ya guardado no muestra un aviso nuevo. El par es una red de seguridad: avisaría si un cambio futuro en el cálculo o en los pares que bloquean lo dejara por debajo del mínimo. La rejilla de 32 temas válidos de TEST-03 lo comprueba.
+
 **Fuera de alcance:**
 
 - Cambiar el cálculo de `--ws-on-primary`, que tiene el mismo límite en los temas oscuros y ya lo avisa el par `onPrimary/primary`. Hacerlo cambiaría el aspecto de temas propios oscuros sin que nadie lo pida (REQ-06); necesitaría su propia decisión.
