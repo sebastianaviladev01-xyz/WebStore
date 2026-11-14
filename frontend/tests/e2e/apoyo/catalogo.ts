@@ -4,7 +4,7 @@ import { cuentasAdmin, urls } from './entorno';
 
 /**
  * Apoyo de las e2e del catálogo del Admin (feature 008, `admin-catalogo-filtros.spec.ts`). Hace de «otra sesión»:
- * crea, cambia y retira productos por la API del Admin (`GET` y `PUT /bff/admin/snapshot`) con la cuenta de
+ * crea, cambia y retira productos y categorías por la API del Admin (`GET` y `PUT /bff/admin/snapshot`) con la cuenta de
  * superadministrador, como `conApi` de `contraste.ts`. Las pruebas que la usan dejan el estado como estaba en un
  * `finally`: las suites van en serie y otras cuentan los seis productos del seed.
  */
@@ -51,18 +51,21 @@ export async function leerProductos(): Promise<ProductoApi[]> {
 }
 
 /**
- * Reemplaza los productos del BFF por los que devuelve `cambio` a partir de los actuales. Si otra escritura cambió
- * la revisión entre la lectura y el guardado (`409 STALE_SNAPSHOT`), vuelve a leer y lo intenta otra vez.
+ * Reemplaza una colección del snapshot del BFF por lo que devuelve `cambio` a partir de la actual. Si otra escritura
+ * cambió la revisión entre la lectura y el guardado (`409 STALE_SNAPSHOT`), vuelve a leer y lo intenta otra vez.
  */
-export async function cambiarProductos(cambio: (actuales: ProductoApi[]) => ProductoApi[]): Promise<void> {
+async function cambiarColeccion<T>(
+  clave: 'products' | 'categories',
+  cambio: (actuales: T[]) => T[],
+): Promise<void> {
   await conAdmin(async (api, headers) => {
     for (let intento = 1; intento <= 3; intento++) {
       const lectura = await api.get('/bff/admin/snapshot', { headers });
       expect(lectura.ok()).toBe(true);
-      const { revision, products } = await lectura.json();
+      const snapshot = await lectura.json();
       const guardado = await api.put('/bff/admin/snapshot', {
         headers,
-        data: { revision, products: cambio(products as ProductoApi[]) },
+        data: { revision: snapshot.revision, [clave]: cambio(snapshot[clave] as T[]) },
       });
       if (guardado.ok()) return;
       if (guardado.status() !== 409 || intento === 3) {
@@ -71,6 +74,10 @@ export async function cambiarProductos(cambio: (actuales: ProductoApi[]) => Prod
     }
   });
 }
+
+/** Reemplaza los productos del BFF por los que devuelve `cambio` a partir de los actuales. */
+export const cambiarProductos = (cambio: (actuales: ProductoApi[]) => ProductoApi[]) =>
+  cambiarColeccion('products', cambio);
 
 /** Añade productos al final del catálogo. */
 export const agregarProductos = (nuevos: readonly ProductoApi[]) =>
@@ -104,3 +111,32 @@ export function productoDePrueba(
     ...campos,
   };
 }
+
+/** Una categoría tal como la guarda el BFF. */
+export interface CategoriaApi {
+  id: string;
+  name: string;
+  parentId?: string;
+  order?: number;
+}
+
+/** Categorías del BFF en este momento. */
+export async function leerCategorias(): Promise<CategoriaApi[]> {
+  return conAdmin(async (api, headers) => {
+    const respuesta = await api.get('/bff/admin/snapshot', { headers });
+    expect(respuesta.ok()).toBe(true);
+    return (await respuesta.json()).categories as CategoriaApi[];
+  });
+}
+
+/** Reemplaza las categorías del BFF por las que devuelve `cambio` a partir de las actuales. */
+export const cambiarCategorias = (cambio: (actuales: CategoriaApi[]) => CategoriaApi[]) =>
+  cambiarColeccion('categories', cambio);
+
+/** Añade categorías al final de la lista (el BFF exige que su padre exista). */
+export const agregarCategorias = (nuevas: readonly CategoriaApi[]) =>
+  cambiarCategorias((actuales) => [...actuales, ...nuevas]);
+
+/** Retira las categorías con esos ids, si existen. */
+export const retirarCategorias = (ids: readonly string[]) =>
+  cambiarCategorias((actuales) => actuales.filter((categoria) => !ids.includes(categoria.id)));

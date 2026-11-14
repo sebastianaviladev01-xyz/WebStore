@@ -58,6 +58,25 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Categorías',
       },
       {
+        // Antes que `categorias/:id`, para que «nueva» no llegue como identificador.
+        path: 'categorias/nueva',
+        canMatch: [permisoGuard('categories.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-categoria.page').then(
+            (m) => m.RegistroCategoriaPage,
+          ),
+        title: 'WebStore Admin | Nueva categoría',
+      },
+      {
+        path: 'categorias/:id',
+        canMatch: [permisoGuard('categories.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-categoria.page').then(
+            (m) => m.RegistroCategoriaPage,
+          ),
+        title: 'WebStore Admin | Editar categoría',
+      },
+      {
         path: 'marcas',
         canMatch: [permisoGuard('brands.manage')],
         loadComponent: () => import('./features/tienda/presentation/marcas.page').then((m) => m.MarcasPage),

@@ -2,10 +2,14 @@ import { expect, request as nuevoRequest, test, type Locator, type Page } from '
 
 import {
   actualizarProducto,
+  agregarCategorias,
   agregarProductos,
+  cambiarCategorias,
   cambiarProductos,
+  leerCategorias,
   leerProductos,
   productoDePrueba,
+  retirarCategorias,
   retirarProductos,
   type ProductoApi,
 } from './apoyo/catalogo';
@@ -27,8 +31,14 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
  * - TEST-17 (AC-11): el vendedor filtra, busca y edita la ficha con SKU, precio, categoría, marca y estado
  *   bloqueados (el BFF los conserva); no ve «Nuevo producto» ni «Eliminar»; `/productos/nuevo` lo lleva al Resumen.
  *
+ * Categorías (⚠ TASK-09):
+ *
+ * - TEST-15 (AC-08): «oled» deja una sola fila, la de siempre, con «↳ OLED» y «Padre: TV y audio» aunque el padre no
+ *   salga (D7); «Categoría padre» deja solo las hijas directas y «Sin padre», las de primer nivel; «Nueva categoría»
+ *   y «Editar» abren su interfaz de registro, y el padre excluye a la misma categoría y a sus subcategorías.
+ *
  * Los cambios de datos se hacen como «otra sesión» con la API del Admin (`apoyo/catalogo.ts`) y cada prueba deja
- * los productos como estaban en un `finally`. A 1440 px, el tamaño por defecto de la suite.
+ * los productos o las categorías como estaban en un `finally`. A 1440 px, el tamaño por defecto de la suite.
  */
 
 const lista = (page: Page) => page.getByRole('region', { name: 'Lista de productos' });
@@ -300,6 +310,133 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(page.getByRole('form', { name: 'Nuevo producto' })).toHaveCount(0);
     } finally {
       await restaurar(originales);
+    }
+  });
+});
+
+const listaCategorias = (page: Page) => page.getByRole('region', { name: 'Lista de categorías' });
+const panelCategorias = (page: Page) => page.getByRole('search', { name: 'Filtros de categorías' });
+/** Filas de la lista de categorías: cada una con su nombre, «Orden: … · Padre: …», «Editar» y «Eliminar». */
+const filasCategorias = (page: Page) => listaCategorias(page).locator(':scope > div');
+const filaCategoria = (page: Page, nombre: string) =>
+  filasCategorias(page).filter({ has: page.locator('strong', { hasText: nombre }) });
+
+async function abrirCategorias(page: Page): Promise<void> {
+  await page.goto('/categorias');
+  await expect(page.getByRole('heading', { level: 1, name: 'Categorías' })).toBeVisible();
+  await expect(panelCategorias(page)).toBeVisible();
+}
+
+async function buscarCategorias(page: Page): Promise<void> {
+  await panelCategorias(page)
+    .getByRole('button', { name: /^Busca/ })
+    .click();
+  await expect(panelCategorias(page).getByRole('button', { name: 'Buscar', exact: true })).toBeEnabled();
+}
+
+test.describe('Filtros y registro de categorías del Admin', () => {
+  test('TEST-15 · filtros por nombre y por padre, y registro en su propia ruta', async ({ page }) => {
+    const originales = await leerCategorias();
+    try {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await abrirCategorias(page);
+      await expect(filasCategorias(page)).toHaveCount(originales.length);
+
+      // «oled»: una sola fila, la de hoy (sangría de su profundidad, «↳» y el nombre del padre), aunque «TV y audio»
+      // no esté en los resultados (D7).
+      await panelCategorias(page).getByRole('textbox', { name: 'Nombre' }).fill('oled');
+      await buscarCategorias(page);
+      await expect(page).toHaveURL(/\/categorias\?nombre=oled$/);
+      await expect(filasCategorias(page)).toHaveCount(1);
+      await expect(filasCategorias(page).locator('strong')).toHaveText('↳ OLED');
+      await expect(filasCategorias(page)).toContainText('Orden: 1 · Padre: TV y audio');
+      await expect(filasCategorias(page)).toHaveCSS('padding-left', '36px');
+
+      // Otra sesión añade una hija de «TV y audio» y una nieta (hija de «OLED»); «Buscar» las trae.
+      await agregarCategorias([
+        { id: 'e2e-008-barras', name: 'Barras de sonido 008', parentId: 'cat-tv', order: 2 },
+        { id: 'e2e-008-qd', name: 'QD-OLED 008', parentId: 'cat-tv-oled' },
+      ]);
+      await panelCategorias(page).getByRole('button', { name: 'Limpiar filtros' }).click();
+      await expect(panelCategorias(page).getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
+      await elegir(page, panelCategorias(page), 'Categoría padre', 'TV y audio');
+      await buscarCategorias(page);
+      await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
+      // Solo las hijas directas, en orden de árbol; la nieta no sale.
+      await expect(filasCategorias(page).locator('strong')).toHaveText(['↳ OLED', '↳ Barras de sonido 008']);
+      for (const fila of await filasCategorias(page).all()) {
+        await expect(fila).toContainText('Padre: TV y audio');
+      }
+
+      // «Sin padre»: solo las de primer nivel.
+      await elegir(page, panelCategorias(page), 'Categoría padre', 'Sin padre');
+      await buscarCategorias(page);
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
+      await expect(filasCategorias(page).locator('strong')).toHaveText([
+        'TV y audio',
+        'Electrohogar',
+        'Monitores',
+        'Cocina',
+      ]);
+
+      // «Nueva categoría» abre el registro sin la lista; «Volver a categorías» conserva los filtros.
+      await page.getByRole('link', { name: 'Nueva categoría', exact: true }).click();
+      await expect(page).toHaveURL(/\/categorias\/nueva\?padre=sin-padre$/);
+      const nueva = page.getByRole('form', { name: 'Nueva categoría' });
+      await expect(nueva).toBeVisible();
+      await expect(listaCategorias(page)).toHaveCount(0);
+      await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toBeVisible();
+      await expect(nueva.getByRole('combobox', { name: 'Categoría padre' })).toBeVisible();
+      await expect(nueva.getByRole('spinbutton', { name: 'Orden (opcional)' })).toBeVisible();
+      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
+
+      // Guardar vuelve al listado con los mismos filtros; la categoría nueva cuelga de «TV y audio».
+      await page.getByRole('link', { name: 'Nueva categoría', exact: true }).click();
+      await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Proyectores 008');
+      await elegir(page, nueva, 'Categoría padre', 'TV y audio');
+      await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
+      expect((await leerCategorias()).find((c) => c.name === 'Proyectores 008')).toMatchObject({
+        parentId: 'cat-tv',
+      });
+
+      // «Editar» de «OLED»: el padre no ofrece la misma categoría ni su subcategoría.
+      await elegir(page, panelCategorias(page), 'Categoría padre', 'TV y audio');
+      await buscarCategorias(page);
+      await expect(filaCategoria(page, 'Proyectores 008')).toHaveCount(1);
+      await filaCategoria(page, 'OLED').getByRole('link', { name: 'Editar', exact: true }).click();
+      await expect(page).toHaveURL(/\/categorias\/cat-tv-oled\?padre=cat-tv$/);
+      const edicion = page.getByRole('form', { name: 'Editar categoría' });
+      await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('OLED');
+      await expect(
+        edicion.getByText('No se puede elegir la misma categoría ni una de sus subcategorías.'),
+      ).toBeVisible();
+      await edicion.getByRole('combobox', { name: 'Categoría padre' }).click();
+      await expect(page.getByRole('option', { name: 'Sin padre', exact: true })).toBeVisible();
+      await expect(page.getByRole('option', { name: 'TV y audio', exact: true })).toBeVisible();
+      await expect(page.getByRole('option', { name: /Barras de sonido 008/ })).toBeVisible();
+      await expect(page.getByRole('option', { name: /OLED/ })).toHaveCount(0);
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('listbox')).toHaveCount(0);
+
+      await edicion.getByRole('textbox', { name: 'Nombre', exact: true }).fill('OLED 008');
+      await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
+      await expect(filaCategoria(page, 'OLED 008')).toContainText('Padre: TV y audio');
+
+      // Otra sesión elimina una categoría con la lista abierta: al abrirla, ya no existe.
+      await retirarCategorias(['e2e-008-barras']);
+      await filaCategoria(page, 'Barras de sonido 008')
+        .getByRole('link', { name: 'Editar', exact: true })
+        .click();
+      await expect(page).toHaveURL(/\/categorias\/e2e-008-barras\?padre=cat-tv$/);
+      await expect(page.getByText('Esta categoría ya no existe')).toBeVisible();
+      await expect(page.getByRole('form', { name: 'Editar categoría' })).toHaveCount(0);
+      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
+    } finally {
+      await cambiarCategorias(() => originales);
     }
   });
 });
