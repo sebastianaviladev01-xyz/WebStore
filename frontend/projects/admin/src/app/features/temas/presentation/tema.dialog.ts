@@ -59,6 +59,11 @@ const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
   'footerText/footer': 'Texto del pie de página',
   'onTopbar/topbar': 'Texto de la barra superior',
   'disabledText/disabled': 'Texto deshabilitado',
+  'contrast/storeBackground': 'Texto sobre el fondo de la tienda',
+  'muted/storeBackground': 'Texto secundario sobre el fondo de la tienda',
+  'link/storeBackground': 'Enlaces sobre el fondo de la tienda',
+  'focusRing/storeBackground': 'Contorno de foco sobre el fondo de la tienda',
+  'borderStrong/surface': 'Contorno de los campos sobre el fondo secundario',
 };
 
 /** «Texto sobre el fondo principal: 2.1:1, mínimo 4.5:1», el formato de AC-14. */

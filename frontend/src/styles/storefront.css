@@ -715,16 +715,33 @@
   padding: 16px;
 }
 
-.ws-order-summary {
+/* El panel de los tres pasos del checkout tiene el aspecto del resumen del pedido, sin su sticky (feature 004,
+   D4). */
+.ws-order-summary,
+.ws-checkout-panel {
   padding: 28px;
   border: 1px solid var(--ws-border);
   border-radius: 14px;
   background: var(--ws-surface);
 }
 
+/* Campos del checkout con contorno (feature 004, D5): solo con los tokens de Material, sin tocar sus clases
+   internas (STD-04). En reposo, el borde fuerte del tema (3:1 sobre la superficie); con el foco, 2 px en el color
+   de foco. El error usa --mat-sys-error (--ws-danger), también al pasar el ratón, que Material pintaría con su
+   rojo fijo. La etiqueta sube con la transición de Material, que se quita sola con movimiento reducido. */
+.ws-checkout-panel {
+  --mat-form-field-outlined-outline-color: var(--ws-border-strong);
+  --mat-form-field-outlined-focus-outline-color: var(--ws-focus-ring);
+  --mat-form-field-outlined-focus-outline-width: 2px;
+  --mat-form-field-outlined-container-shape: var(--ws-radius);
+  --mat-form-field-outlined-error-hover-outline-color: var(--ws-danger);
+  --mat-form-field-outlined-error-hover-label-text-color: var(--ws-danger);
+}
+
 /* Resumen del carrito y del checkout: acompaña al scroll desde escritorio, a la misma distancia de
    la cabecera que los filtros (antes se metía 11 px debajo de ella). En pantallas bajas se
-   desplaza por dentro para que "Confirmar pedido" nunca quede fuera de la vista. */
+   desplaza por dentro para que su botón principal ("Confirmar pedido" en el carrito y "Finalizar
+   compra" en el checkout) nunca quede fuera de la vista. */
 @media (min-width: 1024px) {
   .ws-order-summary {
     position: sticky;
@@ -742,6 +759,11 @@
 .ws-checkout-step:first-child {
   padding-top: 0;
   border-top: 0;
+}
+
+/* Dentro del panel, el relleno de abajo es el del panel, como el de arriba: el espacio entre los pasos no cambia. */
+.ws-checkout-step:last-child {
+  padding-bottom: 0;
 }
 
 .ws-checkout-step-title {
@@ -1138,7 +1160,8 @@
   .ws-pdp-assurances {
     grid-template-columns: minmax(0, 1fr);
   }
-  .ws-order-summary {
+  .ws-order-summary,
+  .ws-checkout-panel {
     padding: 22px;
   }
 }

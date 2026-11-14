@@ -22,6 +22,8 @@
   --ws-topbar: var(--ws-primary-strong);
   --ws-on-topbar: #ffffff;
 
+  /* Lienzo de la tienda (ADR-0013): fuera de la escala neutra; el Admin sigue con --ws-bg. */
+  --ws-store-bg: #f9fafc;
   --ws-bg: #f3f5f8;
   --ws-surface: #ffffff;
   --ws-surface-subtle: #f6f8fa;
@@ -31,7 +33,7 @@
   --ws-muted-strong: #3b4759;
   --ws-muted: #526075;
   --ws-border: #dde3ec;
-  --ws-border-strong: #8a96a8;
+  --ws-border-strong: #8894a6;
   --ws-disabled: #e6e9ee;
   --ws-disabled-text: #5a6577;
   --ws-dot: #b9c8f2;
@@ -72,6 +74,10 @@
   --mat-sys-outline: var(--ws-border-strong);
   --mat-sys-outline-variant: var(--ws-border);
   --mat-sys-error: var(--ws-danger);
+  /* El botón relleno es el principal: fondo y texto del principal, no del enlace. Con C, --ws-link y
+     --ws-on-primary son el mismo gris oscuro y el texto no se leería. */
+  --mat-button-filled-container-color: var(--ws-primary);
+  --mat-button-filled-label-text-color: var(--ws-on-primary);
   color-scheme: light;
 }
 
@@ -90,6 +96,7 @@
   --color-focus-ring: var(--ws-focus-ring);
   --color-topbar: var(--ws-topbar);
   --color-on-topbar: var(--ws-on-topbar);
+  --color-store-canvas: var(--ws-store-bg);
   --color-canvas: var(--ws-bg);
   --color-surface: var(--ws-surface);
   --color-subtle: var(--ws-surface-subtle);

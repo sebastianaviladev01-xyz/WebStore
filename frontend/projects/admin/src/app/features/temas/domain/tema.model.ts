@@ -22,6 +22,7 @@ export type NombreToken =
   | '--ws-focus-ring'
   | '--ws-topbar'
   | '--ws-on-topbar'
+  | '--ws-store-bg'
   | '--ws-bg'
   | '--ws-surface'
   | '--ws-surface-subtle'
@@ -69,7 +70,12 @@ export interface ParContraste {
     | 'focusRing/surface'
     | 'footerText/footer'
     | 'onTopbar/topbar'
-    | 'disabledText/disabled';
+    | 'disabledText/disabled'
+    | 'contrast/storeBackground'
+    | 'muted/storeBackground'
+    | 'link/storeBackground'
+    | 'focusRing/storeBackground'
+    | 'borderStrong/surface';
   /** Relación de contraste redondeada a un decimal hacia abajo. */
   readonly relacion: number;
   readonly minimo: 4.5 | 3;

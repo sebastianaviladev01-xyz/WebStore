@@ -4,19 +4,27 @@ import { correoUnico, cuentasAdmin, desplegarGrupo, ingresarAlAdmin, urls } from
 
 /**
  * Compra como invitado: el checkout cotiza el envío por distrito, crea el pedido en el BFF, lo muestra en
- * «Mis pedidos» del dispositivo y el Admin lo ve en Pedidos y al comprador en Clientes.
+ * «Mis pedidos» del dispositivo y el Admin lo ve en Pedidos y al comprador en Clientes. Feature 004 (D1, TEST-11):
+ * se llega por «Ver carrito» y «Confirmar pedido», y el checkout dice «Finalizar compra» en el `h1`, en el título
+ * del navegador y en el botón que crea el pedido. Como el `h1` y el botón comparten el texto, se buscan por rol.
  */
 test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ page }) => {
   const correo = correoUnico('invitado');
   const nombre = 'Invitada E2E';
+  const finalizar = page.getByRole('button', { name: 'Finalizar compra' });
 
   await page.goto('/catalogo/soundbar-cinema-500');
   await page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Finalizar compra' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Ver carrito' }).click();
+  await expect(page).toHaveURL('/carrito');
+  await page.getByRole('main').getByRole('link', { name: 'Confirmar pedido' }).click();
 
   await expect(page).toHaveURL('/checkout');
-  await expect(page.getByRole('heading', { level: 1, name: 'Checkout' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Confirmar pedido' })).toBeDisabled();
+  await expect(page).toHaveTitle('WebStore | Finalizar compra');
+  await expect(page.getByRole('heading', { level: 1, name: 'Finalizar compra', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Checkout' })).toHaveCount(0);
+  await expect(finalizar).toBeDisabled();
+  await expect(page.getByRole('link', { name: 'Volver al carrito' })).toBeVisible();
 
   await page.getByRole('textbox', { name: 'Nombres y apellidos' }).fill(nombre);
   await page.getByRole('textbox', { name: 'Correo' }).fill(correo);
@@ -30,7 +38,18 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await expect(page.getByText(/Envío cotizado:\s*S\/\s*12\.00/)).toBeVisible();
   // 699 del producto + 12 de envío a Miraflores.
   await expect(page.getByRole('main')).toContainText('S/ 711.00');
-  await page.getByRole('button', { name: 'Confirmar pedido' }).click();
+  await expect(finalizar).toBeEnabled();
+
+  // El BFF responde enseguida: se retiene la respuesta para ver «Procesando…» mientras se envía.
+  let soltar = () => {};
+  const retenida = new Promise<void>((resolver) => (soltar = resolver));
+  await page.route('**/bff/checkout/orders', async (ruta) => {
+    await retenida;
+    await ruta.continue();
+  });
+  await finalizar.click();
+  await expect(page.getByRole('button', { name: 'Procesando…' })).toBeDisabled();
+  soltar();
 
   await expect(page.getByRole('heading', { level: 1, name: 'Gracias por tu compra' })).toBeVisible();
   await expect(page).toHaveURL(/\/pedido\//);
@@ -114,4 +133,15 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
     .click();
   await expect(page.getByRole('heading', { level: 1, name: 'Clientes' })).toBeVisible();
   await expect(page.getByRole('main')).toContainText(correo);
+});
+
+test('TEST-11: con el carrito vacío, el checkout se titula «Finalizar compra» sobre el estado vacío', async ({
+  page,
+}) => {
+  await page.goto('/checkout');
+  await expect(page).toHaveURL('/checkout');
+  await expect(page).toHaveTitle('WebStore | Finalizar compra');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Finalizar compra');
+  await expect(page.getByRole('heading', { level: 2, name: 'No hay productos para comprar' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finalizar compra' })).toHaveCount(0);
 });

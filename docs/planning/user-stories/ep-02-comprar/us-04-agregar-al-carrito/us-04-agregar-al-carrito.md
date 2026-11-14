@@ -19,4 +19,6 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que un producto tiene stock
 - **Cuando** el comprador lo agrega al carrito
-- **Entonces** la tienda muestra una confirmación con las opciones Seguir comprando, Ver carrito y Finalizar compra.
+- **Entonces** la tienda muestra la confirmación «Producto agregado» con dos opciones, Seguir comprando y Ver carrito, en ese orden, y Ver carrito como botón principal.
+
+> Actualizado el 2026-11-13 por la feature [004](../../../../specs/features/004-ajustes-de-la-tienda/specification.md#ac-01--diálogo-al-agregar-al-carrito) (AC-01, PBI-0035), implementada en su rama y pendiente de entrega. Antes, la confirmación tenía tres opciones: Seguir comprando, Ver carrito y Finalizar compra.

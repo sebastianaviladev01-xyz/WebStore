@@ -32,6 +32,8 @@ const COLORES_PROPIOS = {
   contrast: '#16202E',
 } as const;
 const PRIMARIO_C = 'rgb(242, 183, 5)';
+/** TEST-15 (feature 004): el lienzo del Admin con B sigue en `--ws-bg`; el de la tienda no llega al Admin. */
+const FONDO_PRINCIPAL = { b: 'rgb(243, 245, 248)' } as const;
 
 /** Sesión del `superadmin` contra la API del Admin, para preparar y limpiar el estado sin pasar por la interfaz. */
 async function conApi<T>(accion: (api: ClienteTemas) => Promise<T>): Promise<T> {
@@ -182,6 +184,71 @@ test.describe('Temas del Admin', () => {
     await expect.poll(() => primarioDe(vista)).not.toBe(antes.vista);
     expect((await primarioDe(vista)).toLowerCase()).toBe('#0f766e');
     expect(await primarioDe(raiz)).toBe(antes.raiz);
+  });
+
+  test('TEST-15: con B, el Admin sigue en el fondo principal y la vista previa usa el lienzo de la tienda', async ({
+    page,
+  }) => {
+    const fondoDelBody = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+    await page.goto('/login');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    expect(await fondoDelBody()).toBe(FONDO_PRINCIPAL.b);
+    expect(await page.locator('main').evaluate((main) => getComputedStyle(main).backgroundColor)).toBe(
+      FONDO_PRINCIPAL.b,
+    );
+
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+    expect(await fondoDelBody()).toBe(FONDO_PRINCIPAL.b);
+
+    await desplegarGrupo(page, 'Tienda');
+    await menu(page).getByRole('link', { name: 'Temas', exact: true }).click();
+    await expect(nuevoTema(page)).toBeEnabled();
+    expect(await fondoDelBody()).toBe(FONDO_PRINCIPAL.b);
+
+    // La muestra de cada tema enseña su fondo principal de siempre (el tercer color), no el de la tienda.
+    const muestraDeB = fila(predefinidos(page), 'Azul cobalto').locator('span[aria-hidden="true"] > span');
+    await expect(muestraDeB).toHaveCount(5);
+    await expect(muestraDeB.nth(2)).toHaveCSS('background-color', FONDO_PRINCIPAL.b);
+
+    // La vista previa se pinta con el lienzo de la tienda del tema que se edita (`--ws-store-bg`), no con `--ws-bg`.
+    await nuevoTema(page).click();
+    const vista = dialogo(page).locator('ws-admin-vista-previa-tema');
+    const figura = vista.locator('figure');
+    await expect(figura).toBeVisible();
+    const lienzo = () => figura.evaluate((nodo) => getComputedStyle(nodo).backgroundColor);
+    const variable = (nombre: string) =>
+      vista.evaluate((nodo, n) => getComputedStyle(nodo).getPropertyValue(n).trim(), nombre);
+    expect((await variable('--ws-store-bg')).toUpperCase()).toBe('#F3F5F8');
+    expect(await lienzo()).toBe(FONDO_PRINCIPAL.b);
+
+    await vista.evaluate((nodo: HTMLElement) => nodo.style.setProperty('--ws-store-bg', '#123456'));
+    await expect.poll(lienzo).toBe('rgb(18, 52, 86)');
+    expect((await variable('--ws-bg')).toUpperCase()).toBe('#F3F5F8');
+    expect(await fondoDelBody()).toBe(FONDO_PRINCIPAL.b);
+  });
+
+  test('TEST-15: un texto secundario bajo su mínimo avisa también sobre el fondo de la tienda y se guarda', async ({
+    page,
+  }) => {
+    const nombre = nombreUnico('secundario');
+    await abrirTemas(page);
+    await nuevoTema(page).click();
+    const formulario = dialogo(page);
+    await formulario.getByLabel('Nombre').fill(nombre);
+    await formulario.getByLabel('Contraste', { exact: true }).fill('#5f6b7a');
+
+    const aviso = formulario.locator('[data-contraste="aviso"]');
+    await expect(aviso).toContainText(/Texto secundario sobre el fondo principal: \d+\.\d:1, mínimo 4\.5:1/);
+    await expect(aviso).toContainText(
+      /Texto secundario sobre el fondo de la tienda: \d+\.\d:1, mínimo 4\.5:1/,
+    );
+    await expect(formulario.locator('[data-contraste="bloqueo"]')).toHaveCount(0);
+
+    await formulario.getByRole('button', { name: 'Guardar tema' }).click();
+    await expect(formulario).toBeHidden();
+    await expect(fila(propios(page), nombre)).toHaveCount(1);
   });
 
   test('editar un tema propio abre el diálogo con su nombre y guarda el nuevo', async ({ page }) => {

@@ -65,16 +65,17 @@ test('predefinidos: mapa completo de tokens en orden y pares de contraste en cen
   }
 });
 
-test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 30 tokens, 15 pares y solo dos bloquean', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 30);
+test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 31 tokens, 20 pares y solo dos bloquean', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 31);
+  assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.ok(Object.isFrozen(TOKENS_DEL_TEMA) && Object.isFrozen(PARES_DE_CONTRASTE));
-  assert.equal(PARES_DE_CONTRASTE.length, 15);
+  assert.equal(PARES_DE_CONTRASTE.length, 20);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
   );
   for (const { par, minimo } of PARES_DE_CONTRASTE)
-    assert.equal(minimo, par.startsWith('focusRing/') ? 3 : 4.5, par);
+    assert.equal(minimo, par.startsWith('focusRing/') || par.startsWith('borderStrong/') ? 3 : 4.5, par);
 });
 
 for (const { nombre, colores, tokens, pares } of casos.tokensDelTema) {
@@ -120,11 +121,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve los 15 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
+test('revisarContraste devuelve los 20 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 15);
+    assert.equal(pares.length, 20);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),

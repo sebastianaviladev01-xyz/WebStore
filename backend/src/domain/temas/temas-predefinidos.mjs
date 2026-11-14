@@ -5,6 +5,8 @@ import { tokensDelTema } from './tema.rules.mjs';
  * A y C toman los valores presentados el 05/11 y derivan el resto con la fórmula de los temas propios
  * (D2). B copia `frontend/src/styles/tokens.css` al pie de la letra (AC-01). La franja superior
  * (`--ws-topbar`) de A y C es la presentada: `#2E1A5C` y el grafito `#1F2328`, con texto blanco.
+ * El lienzo de la tienda (`--ws-store-bg`, ADR-0013) es un literal en los tres (D2 de la feature 004), hasta
+ * que se elija entre ese tono y el blanco (AC-14). `--ws-border-strong` de B es `#8894a6` (WCAG 1.4.11).
  */
 const predefinido = (id, name, colors, tokens) =>
   Object.freeze({ id, name, colors: Object.freeze(colors), tokens: Object.freeze(tokens) });
@@ -43,6 +45,7 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-on-accent': '#2B1700',
     '--ws-topbar': '#2E1A5C',
     '--ws-on-topbar': '#FFFFFF',
+    '--ws-store-bg': '#FAFAFB',
     '--ws-muted': '#5B5866',
     '--ws-footer': '#1E1530',
     '--ws-footer-text': '#CFC8E0',
@@ -62,6 +65,7 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-focus-ring': 'var(--ws-primary)',
     '--ws-topbar': 'var(--ws-primary-strong)',
     '--ws-on-topbar': '#ffffff',
+    '--ws-store-bg': '#f9fafc',
     '--ws-bg': '#f3f5f8',
     '--ws-surface': '#ffffff',
     '--ws-surface-subtle': '#f6f8fa',
@@ -71,7 +75,7 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-muted-strong': '#3b4759',
     '--ws-muted': '#526075',
     '--ws-border': '#dde3ec',
-    '--ws-border-strong': '#8a96a8',
+    '--ws-border-strong': '#8894a6',
     '--ws-disabled': '#e6e9ee',
     '--ws-disabled-text': '#5a6577',
     '--ws-dot': '#b9c8f2',
@@ -91,6 +95,7 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     // La franja superior presentada el 05/11 es grafito con texto blanco, no el ámbar oscuro derivado.
     '--ws-topbar': '#1F2328',
     '--ws-on-topbar': '#FFFFFF',
+    '--ws-store-bg': '#F9F9FA',
     '--ws-muted': '#555B65',
     '--ws-footer': '#16181C',
     '--ws-footer-text': '#C9CDD3',

@@ -28,8 +28,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
   template: `
     <section class="ws-container py-10 sm:py-14">
       <div class="mb-9">
-        <p class="ws-eyebrow">Finalizar compra</p>
-        <h1 class="ws-title mt-2">Checkout</h1>
+        <h1 class="ws-title">Finalizar compra</h1>
       </div>
       @if (cart.isEmpty()) {
         <ws-empty-state
@@ -43,35 +42,35 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
           class="grid gap-7 lg:grid-cols-[1fr_380px] lg:items-start"
         >
           <div class="grid gap-6">
-            <div>
+            <div class="ws-checkout-panel">
               <section class="ws-checkout-step">
                 <h2 class="ws-checkout-step-title">1. Datos del cliente</h2>
                 <p class="mt-2 text-sm leading-6 text-muted">
                   Puedes comprar sin crear una cuenta. Usaremos estos datos para confirmar tu pedido.
                 </p>
                 <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Nombres y apellidos</mat-label>
                     <input matInput formControlName="fullName" autocomplete="name" />
                     @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
                       <mat-error>Ingresa al menos 3 caracteres.</mat-error>
                     }
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Correo</mat-label>
                     <input matInput type="email" formControlName="email" autocomplete="email" />
                     @if (form.controls.email.touched && form.controls.email.invalid) {
                       <mat-error>Ingresa un correo válido.</mat-error>
                     }
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Teléfono</mat-label>
                     <input matInput formControlName="phone" autocomplete="tel" />
                     @if (form.controls.phone.touched && form.controls.phone.invalid) {
                       <mat-error>Ingresa un teléfono válido.</mat-error>
                     }
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>DNI / documento</mat-label>
                     <input matInput formControlName="document" autocomplete="off" />
                     @if (form.controls.document.touched && form.controls.document.invalid) {
@@ -86,7 +85,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                   Calculamos el costo según el distrito de destino y despachamos desde la tienda más cercana.
                 </p>
                 <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Distrito destino</mat-label>
                     <mat-select formControlName="district" (selectionChange)="refreshQuote()">
                       @for (d of destinations(); track d) {
@@ -97,26 +96,26 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                       <mat-error>Selecciona un distrito.</mat-error>
                     }
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Dirección</mat-label>
                     <input matInput formControlName="addressLine" autocomplete="street-address" />
                     @if (form.controls.addressLine.touched && form.controls.addressLine.invalid) {
                       <mat-error>Ingresa una dirección válida.</mat-error>
                     }
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Provincia</mat-label>
                     <input matInput formControlName="province" />
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Departamento</mat-label>
                     <input matInput formControlName="department" />
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Fecha de entrega preferida</mat-label>
                     <input matInput type="date" formControlName="deliveryDate" />
                   </mat-form-field>
-                  <mat-form-field>
+                  <mat-form-field appearance="outline">
                     <mat-label>Referencia</mat-label>
                     <input matInput formControlName="reference" />
                   </mat-form-field>
@@ -212,7 +211,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
               class="ws-btn-primary mt-6 w-full disabled:opacity-50"
               [disabled]="checkout.submitting() || quoting() || shippingCost() === null"
             >
-              {{ checkout.submitting() ? 'Procesando…' : 'Confirmar pedido' }}
+              {{ checkout.submitting() ? 'Procesando…' : 'Finalizar compra' }}
             </button>
             <a routerLink="/carrito" class="ws-btn-secondary mt-3 w-full">Volver al carrito</a>
           </aside>

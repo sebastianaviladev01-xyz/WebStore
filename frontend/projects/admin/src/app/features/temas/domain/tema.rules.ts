@@ -91,6 +91,8 @@ export const TOKENS_DEL_TEMA: readonly NombreToken[] = Object.freeze<NombreToken
   '--ws-focus-ring',
   '--ws-topbar',
   '--ws-on-topbar',
+  // Lienzo de la tienda (ADR-0013): justo antes de `--ws-bg`, para quedar fuera de `ESCALA_NEUTRA`.
+  '--ws-store-bg',
   '--ws-bg',
   '--ws-surface',
   '--ws-surface-subtle',
@@ -203,8 +205,9 @@ function tokensDeMarca({
 /**
  * Mapa completo de tokens de un tema a partir de sus cinco colores (derivación D2). Si el fondo, la
  * superficie y el contraste coinciden con los de un predefinido, hereda su escala neutra; los tokens de
- * marca se derivan siempre. `predefinidos` llega como parámetro: el Admin lo toma de la lista del BFF.
- * Los colores se escriben en mayúsculas, como se guardan.
+ * marca se derivan siempre. El lienzo de la tienda (`--ws-store-bg`, ADR-0013) es siempre el fondo principal:
+ * no se hereda con la escala, y A, B y C lo fijan con su literal. `predefinidos` llega como parámetro: el
+ * Admin lo toma de la lista del BFF. Los colores se escriben en mayúsculas, como se guardan.
  */
 export function tokensDelTema(entrada: ColoresTema, predefinidos: Predefinidos = []): TokensTema {
   const colores = Object.fromEntries(
@@ -214,7 +217,7 @@ export function tokensDelTema(entrada: ColoresTema, predefinidos: Predefinidos =
   const neutra: Partial<Record<NombreToken, string>> = base
     ? Object.fromEntries(ESCALA_NEUTRA.map((nombre) => [nombre, base.tokens[nombre]]))
     : escalaNeutraDerivada(colores);
-  const tokens = { ...tokensDeMarca(colores), ...neutra };
+  const tokens = { ...tokensDeMarca(colores), '--ws-store-bg': colores.background, ...neutra };
   return Object.freeze(
     Object.fromEntries(TOKENS_DEL_TEMA.map((nombre) => [nombre, tokens[nombre]])),
   ) as TokensTema;
@@ -331,6 +334,42 @@ export const PARES_DE_CONTRASTE: readonly DefinicionDePar[] = Object.freeze<Defi
     minimo: TEXTO_MINIMO,
     bloquea: false,
   },
+  // Sobre el lienzo de la tienda (ADR-0013) y el contorno de los campos (WCAG 1.4.11): solo avisan.
+  {
+    par: 'contrast/storeBackground',
+    texto: '--ws-ink',
+    fondo: '--ws-store-bg',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'muted/storeBackground',
+    texto: '--ws-muted',
+    fondo: '--ws-store-bg',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'link/storeBackground',
+    texto: '--ws-link',
+    fondo: '--ws-store-bg',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'focusRing/storeBackground',
+    texto: '--ws-focus-ring',
+    fondo: '--ws-store-bg',
+    minimo: INTERFAZ_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'borderStrong/surface',
+    texto: '--ws-border-strong',
+    fondo: '--ws-surface',
+    minimo: INTERFAZ_MINIMO,
+    bloquea: false,
+  },
 ]);
 
 /** Relación de contraste, sin redondear, de cada par de `PARES_DE_CONTRASTE` en un mapa de tokens. */
@@ -345,7 +384,7 @@ export function medirPares(tokens: ValoresDeToken): Record<string, number> {
 }
 
 /**
- * Revisión de contraste de un tema (AC-14, D7): los 15 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
+ * Revisión de contraste de un tema (AC-14, D7): los 20 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
  * sobre los tokens que derivan de sus cinco colores. `bloquea` dice si ese par impide guardar cuando queda
  * bajo su mínimo y no depende de la medida.
  *

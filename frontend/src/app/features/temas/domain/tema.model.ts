@@ -22,6 +22,7 @@ export type NombreToken =
   | '--ws-focus-ring'
   | '--ws-topbar'
   | '--ws-on-topbar'
+  | '--ws-store-bg'
   | '--ws-bg'
   | '--ws-surface'
   | '--ws-surface-subtle'

@@ -12,6 +12,7 @@ import {
   TOKENS_DEL_TEMA,
   coloresCalculados,
   medirPares,
+  tokensDelTema,
 } from '../../../../src/domain/temas/tema.rules.mjs';
 
 const casos = JSON.parse(readFileSync(new URL('./casos-tema.json', import.meta.url), 'utf8'));
@@ -117,6 +118,37 @@ test('B copia los tokens de tokens.css, con var() y color-mix()', () => {
   assert.equal(tokens['--ws-topbar'], 'var(--ws-primary-strong)');
   assert.equal(tokens['--ws-on-topbar'], '#ffffff');
   assert.equal(tokens['--ws-footer-rule'], '#22314f');
+});
+
+test('A, B y C fijan el lienzo de la tienda con su literal de D2 y no cambian el fondo principal (AC-05, ADR-0013)', () => {
+  const esperados = {
+    a: { lienzo: '#FAFAFB', fondo: '#F4F4F6', background: '#F4F4F6' },
+    b: { lienzo: '#f9fafc', fondo: '#f3f5f8', background: '#F3F5F8' },
+    c: { lienzo: '#F9F9FA', fondo: '#F2F3F5', background: '#F2F3F5' },
+  };
+  for (const [id, { lienzo, fondo, background }] of Object.entries(esperados)) {
+    const { colors, tokens } = tema(id);
+    assert.equal(tokens['--ws-store-bg'], lienzo, id);
+    assert.equal(tokens['--ws-bg'], fondo, id);
+    assert.equal(colors.background, background, id);
+  }
+});
+
+test('el contorno fuerte de B es #8894a6, en minúsculas como el resto de su mapa, y llega a 3:1 sobre la superficie (AC-09)', () => {
+  assert.equal(tema('b').tokens['--ws-border-strong'], '#8894a6');
+  const relaciones = Object.fromEntries(
+    ['a', 'b', 'c'].map((id) => [
+      id,
+      Math.round(medirPares(tema(id).tokens)['borderStrong/surface'] * 100) / 100,
+    ]),
+  );
+  assert.deepEqual(relaciones, { a: 3.43, b: 3.07, c: 3.16 });
+});
+
+test('un tema propio con la base de B hereda el contorno fuerte nuevo y conserva su propio lienzo (AC-15)', () => {
+  const tokens = tokensDelTema({ ...tema('b').colors, primary: '#123456' }, TEMAS_PREDEFINIDOS);
+  assert.equal(tokens['--ws-border-strong'], '#8894a6');
+  assert.equal(tokens['--ws-store-bg'], '#F3F5F8');
 });
 
 test('cada predefinido tiene el mapa completo de tokens, en orden, y no se puede modificar', () => {

@@ -15,13 +15,13 @@
 html {
   min-width: 320px;
   scroll-behavior: smooth;
-  background: var(--ws-bg);
+  background: var(--ws-store-bg);
 }
 
 body {
   min-height: 100vh;
   margin: 0;
-  background: var(--ws-bg);
+  background: var(--ws-store-bg);
   color: var(--ws-text);
   font-family:
     var(--ws-font), 'Source Sans 3', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
