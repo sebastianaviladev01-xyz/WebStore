@@ -34,6 +34,12 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 - No uses los modelos de `excludedModels`.
 - El tope es el modelo del nivel avanzado con esfuerzo `alto` (hoy, Opus 5.5 con `high`). No fijes `xhigh` ni `max` ni uses un modelo por encima, ni en la sesión ni al delegar, aunque Claude Code los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)). Si la sesión está en un modelo o un esfuerzo superior sin que una persona lo haya pedido para ella, pide el cambio.
 
+## Commits y pull requests
+
+- Claude Code añade por defecto una línea `Co-Authored-By` al final del mensaje de cada commit y «Generated with Claude Code» al final del cuerpo de cada pull request. No las pongas: la [convención de commits](../../docs/git/conventional-commits.md#formato) y la [de pull requests](../../docs/git/conventional-pull-requests.md#3-completar-la-descripción) las prohíben, y la regla del repositorio gana a la de la herramienta.
+- Antes de informar de un commit, comprueba que su mensaje no la lleva: `git log -1 --format=%B`. Si la lleva y el commit es local y no está publicado, reescribe solo el mensaje. Si ya está publicado, no reescribas el historial: avisa a la persona.
+- Al delegar con `Agent` o con una sesión nueva, dilo en el encargo. Quien recibe el encargo tiene la misma instrucción por defecto.
+
 ## CI de un pull request
 
 En la app de escritorio, vigila el CI del PR con las herramientas `ccd_pr`, que avisan al terminar. Fuera de la app, usa `gh pr checks <n>` una vez al informar, sin bucles de espera.
