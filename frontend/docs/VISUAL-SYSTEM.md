@@ -227,6 +227,8 @@ La versión anterior a esta alineación sigue disponible en `/inicio-anterior` p
 - El panel del menú de usuario (`ws-menu-usuario-panel`) es un `MatMenu` con los tokens del tema: superficie, borde, radio de 14 px y `shadow-lg`. Muestra el nombre, el correo y el rol, un separador, «Perfil» y «Cerrar sesión», y cabe en la pantalla a 375 px.
 - Perfil (`/perfil`) es una tarjeta de solo lectura con el nombre, el correo y el rol con su descripción, en dos columnas desde `sm:` y en una en móvil.
 - Tablas con encabezado `subtle`, filas con borde `line` y la fila seleccionada en `primary-soft`.
+- La lista de productos (`/productos`) por debajo de 768 px va en dos líneas por producto y sin la cabecera de columnas: el nombre y la línea «SKU · características · fotos» a todo el ancho; debajo y a la derecha, el precio, «Stock N» y las acciones «Editar» y «Eliminar». La etiqueta «Stock» va en `text-muted`, con peso normal, solo en móvil (`md:hidden`); el número sigue en `text-danger` cuando el stock es 0. Desde 768 px es la tabla de cuatro columnas de siempre.
+- Para cambiar solo el móvil se añaden clases `max-md:` (y `md:hidden` para lo que solo se ve en móvil) a las de escritorio, sin cambiar ni quitar ninguna, de modo que el escritorio queda igual.
 - Los mensajes de error del BFF (por ejemplo, "Debe quedar al menos un superadministrador activo") se muestran tal cual en el aviso del panel.
 
 ## Recursos
