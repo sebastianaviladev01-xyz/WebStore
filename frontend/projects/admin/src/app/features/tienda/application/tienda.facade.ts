@@ -52,6 +52,19 @@ export class TiendaFacade {
       this.loading.set(false);
     }
   }
+  /**
+   * Vuelve a pedir el snapshot para trabajar con los datos actuales («Buscar» y la edición de un registro). Si el
+   * BFF responde, reemplaza el estado y devuelve `true`; si falla, conserva el estado y devuelve `false`. No toca
+   * `loading` ni `error`, para que la página avise junto a su panel sin el aviso global de la cabecera.
+   */
+  async refresh(): Promise<boolean> {
+    try {
+      this.state.set(await this.repo.load(this.session.requireToken()));
+      return true;
+    } catch {
+      return false;
+    }
+  }
   /** Guarda el cambio; devuelve false si no se pudo y deja el motivo en `error`. */
   private async patch(mutate: Mutation): Promise<boolean> {
     const original = this.state();
