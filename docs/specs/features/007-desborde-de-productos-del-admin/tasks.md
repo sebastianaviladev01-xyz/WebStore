@@ -9,6 +9,7 @@
 - Aprobación del paquete de ⚠ TASK-03 (bloque 2, fase 2): aprobado por Sebastián Avila el 2026-11-14 en la sesión principal («Sí, lo apruebo», en respuesta a «¿Apruebas el paquete de TASK-03, la corrección de /productos en móvil?»), que lo transmitió con sus palabras a la sesión del bloque ([evidencia](verification.md#ejecución-por-tarea))
 - Aprobación del bloque 2 (⚠ TASK-03, fase 2): aprobado por Sebastián Avila el 2026-11-14 («Sí, abre el bloque 3», en respuesta a «¿Das por bueno el bloque 2 y abro el bloque 3 del piloto?»), transmitido con sus palabras por la sesión principal a la sesión del bloque 3
 - Aprobación del paquete de ⚠ TASK-04 (bloque 3, fase 3): aprobado por Sebastián Avila el 2026-11-14 en la sesión principal («Sí, lo apruebo», en respuesta a «¿Apruebas el paquete de TASK-04, la comparación de capturas antes y después?»), que lo transmitió con sus palabras a la sesión del bloque ([evidencia](verification.md#ejecución-por-tarea))
+- Aprobación del bloque 3 (⚠ TASK-04 y TASK-05, fase 3): aprobado por Sebastián Avila el 2026-11-14 («Sí, abre sdd-verify», en respuesta a «¿Das por bueno el bloque 3 y abro la sesión de sdd-verify?»), transmitido con sus palabras por la sesión principal a la sesión de `sdd-verify`
 
 Las rutas de código son relativas a la raíz del repositorio. Los TEST son los de la [estrategia de pruebas del plan](planning.md#estrategia-de-pruebas); las clases, los nombres accesibles, la etiqueta «Stock», la spec, la carpeta de capturas y la copia de datos, los de [tipos intermedios y nombres](planning.md#tipos-intermedios-y-nombres). Ninguna tarea los vuelve a decidir.
 
@@ -154,6 +155,7 @@ Antes de cada ⚠, Sebastián Avila revisa el bloque anterior y da el sí para e
   2. A 375 px solo cambia lo de la [tabla del plan](planning.md#capturas-antes-y-después): la lista y el formulario; la cabecera de la página y la tira de navegación, iguales.
   3. Sin errores de consola nuevos frente a la base.
   4. `npm run verify` y el e2e completo en verde.
+- **Antes de `sdd-verify` (fin del bloque 3):** paquete de ⚠ TASK-04 aprobado y su commit hecho; documentos de TASK-05 revisados. Bloque 3 aprobado por Sebastián Avila el 2026-11-14 («Sí, abre sdd-verify»).
 
 ## Contradicciones encontradas
 
