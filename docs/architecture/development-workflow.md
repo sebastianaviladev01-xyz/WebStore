@@ -18,28 +18,60 @@ Los identificadores `REQ-01`, `AC-01`, `TASK-01` y `TEST-01` son únicos dentro 
 | 4. Desglosar | `sdd-tasks` | Spec, plan y ADR aceptados | `tasks.md`: tareas pequeñas con dependencias, REQ/AC, TEST a escribir primero y evidencia esperada | Cada tarea cumple la [Definition of Ready](../development/definition-of-ready.md). |
 | 5. Implementar | `sdd-implement` | Tarea preparada y alcance autorizado | Cambios incrementales siguiendo el ciclo TDD | Avance registrado solo con evidencia. Revisión adicional ante alto impacto; no pedir aprobación por cada cambio rutinario. |
 | 6. Verificar e integrar | `sdd-verify` | Diff, contrato, tareas y entorno | `verification.md` con comandos, resultados, capturas y pendientes | [Definition of Done](../development/definition-of-done.md) y [revisión de PR](../development/pull-request-checklist.md); lo no ejecutado se etiqueta como tal. |
-| 7. Entregar y aprender | — | Resultado funcional y verificación | Hito funcional aprobado, limitaciones y ADR actualizados | **Hito de entrega** aceptado por una persona; riesgos remanentes registrados en el [backlog](../planning/backlog.md). |
+| 7. Entregar y aprender | `pr-create` y `post-merge` | Resultado funcional y verificación | Hito funcional aprobado, limitaciones y ADR actualizados; el [PR único](#un-pull-request-por-feature) de la feature y, tras su merge, el [registro de la entrega](#registro-de-la-entrega) | **Hito de entrega** aceptado por una persona; riesgos remanentes registrados en el [backlog](../planning/backlog.md). |
 
-Con agentes, cada etapa empieza en una sesión nueva ([una sesión por etapa](../development/agent-execution.md#una-sesión-por-etapa)).
+Con agentes, cada etapa empieza en una sesión nueva ([una sesión por etapa](../development/agent-execution.md#una-sesión-por-etapa)). Todas las etapas hacen commit en la misma rama y la feature se entrega en [un solo pull request](#un-pull-request-por-feature).
 
 ### Hitos humanos
 
 Los hitos de alcance, arquitectura y entrega los aprueba una persona del equipo:
 
 - Las preguntas del hito se presentan **de una en una**. Cada una lleva sus alternativas, con lo que significaría elegir cada una, la recomendación y la evidencia que la respalda (un archivo, una historia, una medida), para que la persona pueda rebatirla.
+- Si una pregunta depende de una regla de negocio que las fuentes (notas de reunión, chats) no dicen de forma explícita, no se le pide a la persona que aprueba el hito que la decida. Se registra en [decisiones pendientes](../planning/PENDING-DECISIONS.md) para quien decide el producto (hoy, Daniel Avila), con las citas explícitas y cada pregunta, y la feature y su PBI quedan bloqueados hasta la respuesta. La recomendación se conserva en el artefacto como recomendación, no como decisión. Las preguntas técnicas o de proceso (alternativas de arquitectura, estrategia de pruebas, redacción que solo sigue lo dicho) sí las responde la persona que aprueba el hito.
 - La decisión se registra en el artefacto de la etapa: quién aprobó y cuándo. Si da lugar a un ADR, sus alternativas pasan a la tabla de opciones de la [plantilla](../adrs/0000-template.md).
+- El registro es un commit de la rama de la feature. Un hito no abre un pull request, y la etapa siguiente no empieza hasta que el hito anterior está aprobado y registrado.
 
-### Pull requests de una feature
+Las demás aprobaciones de una persona (las tareas de `tasks.md`, cada tarea ⚠ y cada bloque de implementación) se registran igual: en el artefacto y en un commit de la rama.
 
-Cada hito cierra un PR hacia `dev`, abierto con el skill [`pr-create`](../../.agents/skills/pr-create/SKILL.md):
+### Un pull request por feature
 
-| Hito | Contenido del PR |
+Cada feature se entrega en un solo PR hacia `dev` ([ADR-0015](../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)). Todo su trabajo va en commits de la misma rama `feature/NNN-slug`:
+
+| Qué | Dónde queda |
 |---|---|
-| Alcance | `specification.md` y la fila del [índice de features](../specs/features/README.md) |
-| Arquitectura | `planning.md`, los ADR y los documentos de arquitectura que cambien |
-| Implementación, antes del hito de entrega | `tasks.md`, código, pruebas y `verification.md`. Puede repartirse en varios PR, por bloques o fases |
+| Etapas 1 a 6: `specification.md` y la fila del [índice de features](../specs/features/README.md), `planning.md`, los ADR y los documentos de arquitectura que cambien, `tasks.md`, el código, las pruebas y `verification.md` | Commits de la rama, según la [convención de commits](../git/conventional-commits.md#commits-de-una-feature) |
+| Hitos de alcance, arquitectura y entrega, y aprobación de las tareas, de cada tarea ⚠ y de cada bloque | Un commit de la rama que registra en el artefacto quién aprobó y cuándo |
+| Entrega | El PR único de la rama hacia `dev` |
+| [Registro de la entrega](#registro-de-la-entrega) | Un PR nuevo, después del merge |
 
-Tras el merge de cada PR, el skill [`post-merge`](../../.agents/skills/post-merge/SKILL.md) cierra la rama local, y la etapa siguiente vuelve a crear `feature/NNN-slug` desde la rama base ([transición](../git/conventional-pull-requests.md#transición)).
+- **La rama.** `sdd-specify` crea `feature/NNN-slug` desde la rama base ([transición](../git/conventional-pull-requests.md#transición)) y las etapas siguientes continúan en ella. Si la rama no existe porque las etapas anteriores ya están en `dev`, se vuelve a crear desde la base. La rama no se cierra entre etapas.
+- **El PR.** Se abre con el skill [`pr-create`](../../.agents/skills/pr-create/SKILL.md) cuando `sdd-verify` ha terminado y el hito de entrega está aprobado. Una persona lo revisa, por commits y en el orden de las etapas, y lo fusiona. Ninguna etapa anterior abre un PR.
+- **El CI** se ejecuta en ese PR. Hasta entonces, cada tarea ejecuta en local los [controles de su área](../development/agent-execution.md#controles-proporcionados).
+- **Publicar la rama.** La rama se puede publicar en `origin` sin abrir el PR, para tener una copia y para que el equipo vea el avance. Un agente la publica solo si la persona lo pide.
+- **Mientras la feature está en curso**, su fila del índice y sus artefactos están en su rama, no en `dev`.
+
+Los cambios que no son una feature (documentación, una corrección) van, como siempre, en una rama `feature/<slug>` y un PR.
+
+### Registro de la entrega
+
+El PR de la feature no puede citar su propio número ni el SHA de su merge. Por eso, después de que una persona lo fusiona:
+
+1. El skill [`post-merge`](../../.agents/skills/post-merge/SKILL.md) cierra el worktree y la rama local.
+2. Una rama `feature/registrar-entrega-NNN-slug`, creada desde la rama base, lleva un commit `docs` con el registro:
+   - la fila del [índice de features](../specs/features/README.md) pasa a `entregada`, con el PR y el SHA del merge;
+   - `verification.md` y el Traspaso de `tasks.md` anotan el resultado del CI del PR y la entrega;
+   - los documentos que la feature dejó como pendientes de entregar (arquitectura, [trazabilidad](../planning/TRACEABILITY.md)) y los elementos del [backlog](../planning/backlog.md) que cierra pasan a entregados. Parte de la lista «Tras la fusión del PR» que `sdd-verify` deja en el Traspaso, con archivo y línea, y se completa buscando el estado pendiente con varias formulaciones (por ejemplo, «pendiente de entregar», «en su rama», «implementado en la rama», «sin push»), no con una sola. Lo que siga apareciendo fuera de los registros históricos de `tasks.md` y `verification.md` se corrige en el mismo commit.
+3. Su PR se abre con `pr-create`. Es el único PR adicional de una feature.
+
+El registro no cambia código ni reabre decisiones: lo que se descubra después de la entrega va al backlog.
+
+### Implantación con un piloto
+
+La regla de un pull request por feature se estrena con un piloto, como pidió Daniel Avila el 2026-11-13:
+
+1. La primera feature que se entrega así se limita a un solo módulo, por ejemplo productos. Qué feature es la decide el equipo.
+2. Con su PR fusionado y su registro de la entrega hecho, el equipo comprueba que el flujo funcionó como necesita. El resultado se anota en ese registro.
+3. Solo después se aplica a las features siguientes. Si la revisión pide cambios en el flujo, se hacen antes, en una rama de documentación, y con un ADR nuevo si cambia la decisión de [ADR-0015](../adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md).
 
 ## Etapa 5 en detalle: ciclo TDD
 

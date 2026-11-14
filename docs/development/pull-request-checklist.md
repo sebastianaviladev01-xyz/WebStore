@@ -4,7 +4,7 @@ Se aplica a todo incremento listo para integrar. Es obligatoria según [STD-13, 
 
 | Revisión | Evidencia requerida |
 |---|---|
-| Flujo y título | Origen y destino según la [convención de ramas y pull requests](../git/conventional-pull-requests.md#política-de-pull-requests); título y commits según la [convención de commits](../git/conventional-commits.md). |
+| Flujo y título | Origen y destino según la [convención de ramas y pull requests](../git/conventional-pull-requests.md#política-de-pull-requests); título y commits según la [convención de commits](../git/conventional-commits.md). El PR de una feature es [uno solo](../architecture/development-workflow.md#un-pull-request-por-feature): trae todas sus etapas y sus hitos registrados, con el de entrega aprobado. |
 | Problema y alcance | REQ/AC/TASK enlazados (o el requisito de [`TRACEABILITY.md`](../planning/TRACEABILITY.md) y el ADR), comportamiento esperado y exclusiones. |
 | Diseño | Capas y dependencias entre features respetadas (Sheriff y ESLint en verde sin desactivar reglas), dependencias justificadas y ADR si cambia una decisión. |
 | TDD | En áreas obligatorias, el diff o los commits muestran la prueba antes de la implementación; código existente modificado con prueba de caracterización. |

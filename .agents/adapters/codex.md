@@ -15,7 +15,7 @@ Estado: **provisional** hasta que una persona lo valide con Codex. Si algo de es
 
 - Crea el worktree de la feature según [Un worktree por feature](../../docs/development/agent-execution.md#un-worktree-por-feature) y empieza la sesión dentro de él (`.worktrees/NNN-slug`). Así Codex toma su `AGENTS.md` como el de la raíz del proyecto.
 - Si Codex crea su propio worktree o su propia rama de sesión, lleva el trabajo a `feature/*` según [Ramas creadas por la herramienta](../../docs/development/agent-execution.md#ramas-creadas-por-la-herramienta).
-- Una sesión nueva por etapa y por bloque, como en cualquier herramienta: [Una sesión por etapa](../../docs/development/agent-execution.md#una-sesión-por-etapa).
+- Una sesión nueva por etapa y por bloque, como en cualquier herramienta, todas sobre la misma rama `feature/NNN-slug`: [Una sesión por etapa](../../docs/development/agent-execution.md#una-sesión-por-etapa).
 - Si Codex bloquea la escritura de la sesión, aplica [Bloqueo de escritura de la sesión](../../docs/development/agent-execution.md#bloqueo-de-escritura-de-la-sesión).
 
 ## Servidores de desarrollo y capturas
@@ -31,7 +31,8 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 
 - El modelo y el esfuerzo de la sesión se fijan con `/model` o con `model` y `model_reasoning_effort` en la configuración de Codex. El agente comprueba que coinciden con los que da el catálogo para la tarea y, si no coinciden, pide el cambio.
 - Si tu versión de Codex permite subagentes con otro modelo, delega según la [guía](../../docs/development/agent-execution.md#delegar-por-nivel-y-esfuerzo). Si no, la sesión principal ejecuta las tareas en orden, con el nivel y el esfuerzo de cada una.
-- Un esfuerzo con valor `null` (hoy, `máximo`) no está disponible: se registra así y no se sustituye por otro.
+- El tope es el modelo del nivel avanzado con esfuerzo `alto` (`high`). No fijes `xhigh` en `model_reasoning_effort` ni uses un modelo por encima, aunque Codex los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)).
+- Un esfuerzo con valor `null` en el catálogo no está disponible: se registra así y no se sustituye por otro. Hoy no hay ninguno.
 - Si el modelo de un nivel no está disponible, usa sus `fallbacks` en orden y regístralo. Si no tiene, la tarea queda en `Falta`. Los modelos con `onlyFor` (GPT‑6 Sol y GPT‑6.1 Sol) solo sirven para ese rol, nunca como respaldo.
 - [Revisión ciega](../../docs/development/agent-execution.md#revisión-ciega): el modelo y el esfuerzo de `roles`, en una sesión aparte que recibe solo los artefactos que revisa y la pregunta o la lista de comprobación.
 - Los modelos de OpenAI tienen `modelId: null` y `status: provisional`. La persona que valide este adaptador anota en el catálogo el identificador real de cada uno y pasa su estado a `validated`.
@@ -39,3 +40,5 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 ## CI de un pull request
 
 Consulta `gh pr checks <n>` una vez al informar, sin bucles de espera.
+
+Una feature tiene un solo PR, que se abre al final ([un pull request por feature](../../docs/architecture/development-workflow.md#un-pull-request-por-feature)): hasta entonces no hay CI que consultar, y los controles se ejecutan en local.

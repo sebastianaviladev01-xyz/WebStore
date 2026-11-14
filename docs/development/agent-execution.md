@@ -14,12 +14,13 @@ La implementación de cada feature se hace en un worktree propio, creado a mano 
 git worktree add .worktrees/NNN-slug feature/NNN-slug
 ```
 
-- Se crea al empezar la implementación. Si la rama todavía no existe, `git worktree add -b feature/NNN-slug .worktrees/NNN-slug <base>` la crea desde la base que fija la [convención de ramas](../git/conventional-pull-requests.md).
+- Se crea al empezar la implementación, sobre la rama que ya tiene la especificación, el plan y las tareas ([un pull request por feature](../architecture/development-workflow.md#un-pull-request-por-feature)). Git no permite la misma rama en dos carpetas: deja antes el checkout principal en `dev`.
+- Si la rama todavía no existe, `git worktree add -b feature/NNN-slug .worktrees/NNN-slug <base>` la crea desde la base que fija la [convención de ramas](../git/conventional-pull-requests.md).
 - La carpeta `.worktrees/` está ignorada por git y es la misma para cualquier herramienta.
 - Cada sesión entra en él por su ruta, como indica el adaptador de su herramienta. Como la herramienta no lo creó, no lo gestiona ni lo borra al salir.
 - Cada worktree tiene sus propias dependencias: la primera vez hay que ejecutar `npm run setup` en él. También tiene su propio `backend/data.json`, que el BFF crea desde el seed al arrancar por primera vez.
 - Los servidores de desarrollo usan puertos fijos (3000, 4200 y 4300): solo puede haber un juego levantado a la vez ([varios checkouts](local-environment.md#varios-checkouts)). Antes de levantar los de un worktree, detén los del checkout principal o los de otro worktree.
-- Cuando el PR está fusionado, se [cierra](#cerrar-el-worktree) junto con su carpeta y su rama local.
+- Cuando el PR de la feature está fusionado, se [cierra](#cerrar-el-worktree) junto con su carpeta y su rama local. No se cierra entre etapas ni entre bloques.
 
 ### Ramas creadas por la herramienta
 
@@ -32,7 +33,7 @@ Algunas herramientas abren su propia rama de sesión (su nombre está en el adap
 
 ### Cerrar el worktree
 
-El skill [`post-merge`](../../.agents/skills/post-merge/SKILL.md) automatiza este cierre y el de una [rama sin worktree](#cerrar-una-rama-sin-worktree): basta con decirle al agente que el PR está aprobado y fusionado.
+El skill [`post-merge`](../../.agents/skills/post-merge/SKILL.md) automatiza este cierre y el de una [rama sin worktree](#cerrar-una-rama-sin-worktree): basta con decirle al agente que el PR está aprobado y fusionado. Si la rama era la de una feature, después viene el [registro de la entrega](../architecture/development-workflow.md#registro-de-la-entrega).
 
 Todos los comandos se ejecutan desde el checkout principal:
 
@@ -70,8 +71,10 @@ Si el pull no es *fast-forward*, `dev` local tiene commits que no están en `ori
 
 Cada etapa del flujo empieza en una **sesión nueva** sobre la rama de la feature (o su worktree, desde la implementación): `sdd-plan`, `sdd-decide`, `sdd-tasks`, cada bloque de `sdd-implement` y `sdd-verify`. `sdd-specify` abre la feature en la sesión donde empieza el trabajo.
 
-- La sesión nueva parte de los artefactos del repositorio, no del historial de la anterior: lo que no está en `specification.md`, `planning.md`, `tasks.md` o un ADR no existe para ella.
-- Las preguntas del hito de una etapa se responden en la sesión que lo plantea, una cada vez, según «Hitos humanos» del [flujo de trabajo](../architecture/development-workflow.md).
+- Todas las sesiones de una feature hacen commit en la misma rama `feature/NNN-slug`. Ninguna abre un pull request al terminar su etapa: la feature se entrega en [un solo PR](../architecture/development-workflow.md#un-pull-request-por-feature), que se abre después de `sdd-verify` y del hito de entrega.
+- La sesión nueva parte de los artefactos de la rama, no del historial de la anterior: lo que no está en `specification.md`, `planning.md`, `tasks.md` o un ADR no existe para ella.
+- Las preguntas del hito de una etapa se responden en la sesión que lo plantea, una cada vez, según «Hitos humanos» del [flujo de trabajo](../architecture/development-workflow.md). La aprobación se registra en el artefacto de la etapa y en un commit de la rama, antes de empezar la etapa siguiente.
+- Al terminar, la sesión deja el árbol limpio e informa de los commits. No hace push si la persona no lo pide.
 - Continuar una etapa es empezar otra sesión, **nunca desarchivar** una anterior ([bloqueo de escritura](#bloqueo-de-escritura-de-la-sesión)).
 
 ## Una sesión por bloque
@@ -84,6 +87,7 @@ Cada etapa del flujo empieza en una **sesión nueva** sobre la rama de la featur
 - Las tareas ⚠ se preparan en la sesión de su bloque y se detienen con el paquete de revisión. La aprobación y el commit pueden hacerse en la sesión siguiente.
 - Al terminar el bloque: commit de la última tarea con el Traspaso actualizado y servidores detenidos. Después, la sesión se puede archivar.
 - El agente informa a la persona del bloque terminado (commits, árbol limpio y Traspaso) y pide su aprobación. **No empieza el bloque siguiente** hasta recibir un sí explícito.
+- La aprobación de un bloque o de una tarea ⚠ se anota en `tasks.md` (quién y cuándo) y va en un commit de la rama: el de la tarea ⚠ o el primero de la sesión siguiente. Un bloque no abre un pull request.
 - No se archiva una sesión a mitad de un bloque, ni a mano ni desde otra sesión, mientras haya cambios sin commit.
 
 ### Traspaso
@@ -112,7 +116,7 @@ Para evitarlo, se usa un worktree propio y se continúa siempre en una sesión n
 
 ## Delegar por nivel y esfuerzo
 
-`tasks.md` indica en la columna **Nivel y esfuerzo** quién ejecuta cada tarea (por ejemplo, `estándar · medio`). El nivel no nombra un modelo: cada herramienta lo resuelve en el [catálogo de niveles](../../.agents/execution-catalog.json), la única fuente de los modelos concretos, como explica su adaptador ([ADR-0008](../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)). El agente principal trabaja en el nivel avanzado y orquesta el bloque:
+`tasks.md` indica en la columna **Nivel y esfuerzo** quién ejecuta cada tarea (por ejemplo, `estándar · medio`). El nivel no nombra un modelo: cada herramienta lo resuelve en el [catálogo de niveles](../../.agents/execution-catalog.json), la única fuente de los modelos concretos, como explica su adaptador ([ADR-0008](../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)). El agente principal trabaja en el nivel avanzado, con el esfuerzo alto como [tope](#reglas-de-escalado), y orquesta el bloque:
 
 - Delega con un **brief cerrado**: archivos, tabla de correspondencias o casos de prueba, comandos y criterio de terminado.
 - Revisa el diff y la evidencia de lo delegado antes de aceptarlo.
@@ -144,13 +148,14 @@ Los ejemplos de las tablas son tipos de trabajo de WebStore, no tareas registrad
 | Esfuerzo | Tareas | Ejemplos en WebStore |
 |---|---|---|
 | Medio | Revisar diffs y evidencia de lo delegado; montar un paquete ⚠ cuando la evidencia ya existe; preguntas de hito | Paquete de revisión de una tarea ⚠ a partir de los logs y las capturas |
-| Alto | Caracterización de código complejo con dobles; TDD de cambios de modelo o contrato que cruzan Storefront, Admin y BFF; diagnóstico de fallos del build, de Sheriff, del e2e o de diferencias en las capturas | Un campo nuevo del estado que llega del BFF al Admin y al Storefront |
-| Muy alto | `sdd-plan`, `sdd-decide` y revisiones del hito de arquitectura; tareas ⚠ con riesgo de pérdida de datos o sobre permisos por rol | Una migración del esquema del estado del BFF; un permiso nuevo |
+| Alto | `sdd-plan`, `sdd-decide` y revisiones del hito de arquitectura; tareas ⚠ con riesgo de pérdida de datos o sobre permisos por rol; caracterización de código complejo con dobles; TDD de cambios de modelo o contrato que cruzan Storefront, Admin y BFF; diagnóstico de fallos del build, de Sheriff, del e2e o de diferencias en las capturas | Una migración del esquema del estado del BFF; un permiso nuevo; un campo nuevo del estado que llega del BFF al Admin y al Storefront |
 
 ### Reglas de escalado
 
 - Si una ejecución delegada falla dos veces, o necesita una decisión que no está en el brief, sube al nivel superior. No se repite con el mismo nivel.
-- El esfuerzo máximo no se usa por defecto: solo lo pide la persona.
+- **El esfuerzo más alto es `alto`.** El catálogo no tiene esfuerzos por encima y ninguna sesión ni subagente los usa, aunque la herramienta los ofrezca: consumen los tokens demasiado deprisa (decisión de Daniel Avila del 2026-11-13).
+- **El modelo más alto es el del nivel avanzado.** Ninguna sesión ni subagente usa un modelo por encima del que el catálogo da a ese nivel. Solo una persona puede pedirlo para una sesión concreta, y la evidencia de esa sesión lo dice.
+- Si una tarea del nivel avanzado con esfuerzo alto falla dos veces, no hay nivel al que subir: el agente se detiene, explica qué intentó y pregunta a la persona.
 - Las tareas ⚠, los hitos y las decisiones de diseño no se delegan.
 - Si el modelo o el esfuerzo de una tarea no están disponibles en la herramienta, la tarea queda en `Falta` o se usa el respaldo (`fallbacks`) del catálogo, y se registra. No se cambia de modelo en silencio.
 - Un modelo con `onlyFor` en el catálogo solo se usa para ese rol, nunca para un nivel ni como respaldo de uno.

@@ -28,6 +28,7 @@ Argumentos: el `NNN-slug` de la feature y, opcionalmente, la decisión concreta.
 4. Al aceptarse, actualiza el estado vigente en `docs/architecture/README.md`, `backend/architecture.md` o `frontend/architecture.md`, y en `docs/planning/PENDING-DECISIONS.md` si la decisión estaba pendiente allí.
 5. Actualiza `backend/docs/BFF-CONTRACT.md`, `frontend/sheriff.config.ts` o los diagramas solo si cambia su alcance, y en la tarea que corresponda si el cambio es de código.
 6. Enlaza los ADR desde `planning.md`.
+7. Haz commit de cada ADR y de su aceptación en la rama `feature/NNN-slug` de la feature (`docs/architecture/development-workflow.md`, apartado «Un pull request por feature»).
 
 ## Salida
 
@@ -40,3 +41,4 @@ ADR en `docs/adrs/` y, si aplica, documentos de arquitectura actualizados.
 - No conviertas el ADR en una tesis: los detalles se enlazan.
 - No escribas ADR retroactivos de decisiones que nadie ha tomado.
 - No reescribas `docs/changelog/`: es historia.
+- No abras un PR al terminar la etapa ni hagas push sin que la persona lo pida: los ADR se entregan en el PR único de la feature.

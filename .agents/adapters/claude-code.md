@@ -32,7 +32,10 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 - Delega con la herramienta `Agent`: `model` con el alias de `agentAliases` y `effort` con el valor del catálogo.
 - [Revisión ciega](../../docs/development/agent-execution.md#revisión-ciega): un `Agent` nuevo, no una bifurcación de la sesión, con el modelo y el esfuerzo de `roles`. Recibe solo los artefactos que revisa y la pregunta o la lista de comprobación.
 - No uses los modelos de `excludedModels`.
+- El tope es el modelo del nivel avanzado con esfuerzo `alto` (hoy, Opus 5.5 con `high`). No fijes `xhigh` ni `max` ni uses un modelo por encima, ni en la sesión ni al delegar, aunque Claude Code los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)). Si la sesión está en un modelo o un esfuerzo superior sin que una persona lo haya pedido para ella, pide el cambio.
 
 ## CI de un pull request
 
 En la app de escritorio, vigila el CI del PR con las herramientas `ccd_pr`, que avisan al terminar. Fuera de la app, usa `gh pr checks <n>` una vez al informar, sin bucles de espera.
+
+Una feature tiene un solo PR, que se abre al final ([un pull request por feature](../../docs/architecture/development-workflow.md#un-pull-request-por-feature)): hasta entonces no hay CI que vigilar, y los controles se ejecutan en local.

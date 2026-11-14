@@ -3,6 +3,7 @@
 - Feature: `NNN-slug`
 - Plan: [planning.md](planning.md)
 - Fecha: AAAA-MM-DD
+- Aprobación de las tareas: pendiente | aprobadas por <persona> el AAAA-MM-DD
 
 <!-- Reemplaza cada texto de ejemplo. Al copiar esta plantilla a docs/specs/features/NNN-slug/, añade un "../" a cada enlace relativo (el enlace a planning.md ya es correcto). -->
 
@@ -46,7 +47,7 @@ Cada bloque se ejecuta en una sesión nueva ([guía](../../development/agent-exe
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | TASK-01 | 1 | … | … | REQ-xx / AC-xx | TEST-xx | — | Bajo | estándar · medio | No | No | … | pendiente |
 
-- **Nivel y esfuerzo:** quién ejecuta la tarea, según las [tablas de la guía](../../development/agent-execution.md#delegar-por-nivel-y-esfuerzo): `ligero`, `estándar` o `avanzado`, y `bajo`, `medio`, `alto` o `muy alto`. No nombres un modelo: cada herramienta lo resuelve en el [catálogo de niveles](../../../.agents/execution-catalog.json).
+- **Nivel y esfuerzo:** quién ejecuta la tarea, según las [tablas de la guía](../../development/agent-execution.md#delegar-por-nivel-y-esfuerzo): `ligero`, `estándar` o `avanzado`, y `bajo`, `medio` o `alto`. No nombres un modelo: cada herramienta lo resuelve en el [catálogo de niveles](../../../.agents/execution-catalog.json).
 - **E2E:** `Sí` si la tarea cambia plantillas, rutas, datos guardados o el contrato; `Spec <nombre>` si basta una spec; `No` en otro caso.
 - **Capturas:** `Sí` si la tarea toca plantillas, estilos o tokens.
 

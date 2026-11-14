@@ -35,7 +35,7 @@ Ejecuta todo desde la raíz del repositorio. Las comprobaciones de solo lectura 
    - Di si tu herramienta puede delegar en subagentes con otro modelo. Si no puede, es `Aviso`, no `Falta`: el bloque se ejecuta en orden en la sesión principal.
    - Ejecuta `node tools/check-agents.mjs`: comprueba el catálogo, los punteros de `.claude/skills/` y los imports de los `CLAUDE.md`.
 6. **Flujo SDD.** Existen las plantillas de `docs/specs/templates/` y `docs/adrs/0000-template.md`.
-7. **Estado del proyecto.** Del índice de features: las que están en curso, sus bloqueos y el siguiente trabajo. Si figura «Por decidir», dilo y pregunta a la persona; no lo elijas.
+7. **Estado del proyecto.** Del índice de features: las que están en curso, sus bloqueos y el siguiente trabajo. Una feature en curso solo figura en el índice de su rama: lista también las ramas `feature/NNN-*` locales y de `origin`, y lee la fila de cada una con `git show <rama>:docs/specs/features/README.md`. Si figura «Por decidir», dilo y pregunta a la persona; no lo elijas.
 
 ## Salida
 

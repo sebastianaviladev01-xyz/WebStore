@@ -2,6 +2,8 @@
 
 Añade una fila al crear la carpeta de una feature. Al avanzar de etapa, actualiza su estado ([estados](../README.md#estados-de-una-feature)) y la columna de bloqueos.
 
+Esos cambios se hacen en la rama de la feature y llegan a `dev` con su [PR único](../../architecture/development-workflow.md#un-pull-request-por-feature): mientras una feature está en curso, su fila solo está al día en su rama `feature/NNN-slug`. El estado `entregada` lo pone el [registro de la entrega](../../architecture/development-workflow.md#registro-de-la-entrega), con el PR y el SHA del merge. Las features 001 a 005 se entregaron con la regla anterior, de un PR por hito, y la 006 tiene su especificación en `dev` por esa misma regla.
+
 | NNN | Slug | Historia | Estado | Bloqueos y siguiente paso | Última revisión |
 |---|---|---|---|---|---|
 | 001 | [`reorganizar-resumen-del-admin`](001-reorganizar-resumen-del-admin/specification.md) | Ninguna: pedido de Daniel del 2026-11-06 (estructura del dashboard de OpenCart) | entregada | [PR #4](https://github.com/sebastianaviladev01-xyz/WebStore/pull/4) fusionado en `dev` (`304dcc5`) con el CI en verde; [hito de entrega](001-reorganizar-resumen-del-admin/verification.md#hito-de-entrega) aceptado por Sebastián Avila el 2026-11-07. Daniel revisó el Resumen en la reunión del 11/11 y pidió los bloques plegables, entregados con la feature [003](003-ajustes-del-admin/specification.md) (PBI-0031). Sin siguiente paso: las mejoras están en el backlog (PBI-0027 a PBI-0029) | 2026-11-13 |
@@ -16,6 +18,8 @@ Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia e
 ## Siguiente trabajo del proyecto
 
 **Por decidir por el equipo.** Un agente no lo elige: pregunta a la persona.
+
+La primera feature que se entregue con el flujo de un solo PR es un piloto sobre un solo módulo, por ejemplo productos, y se revisa antes de empezar las siguientes ([implantación con un piloto](../../architecture/development-workflow.md#implantación-con-un-piloto)). Qué feature es el piloto también lo decide el equipo.
 
 Orientación de la reunión del equipo (notas pegadas el 2026-11-11): lo primero eran los temas configurables ([PBI-0030](../../planning/backlog.md)), ya entregados con la feature 002, antes de la gestión de banners; después vienen los ajustes priorizados del Admin y de la tienda (PBI-0031, PBI-0032 y PBI-0035 a PBI-0038). Sebastián Avila eligió el 2026-11-12 empezar por los del Admin, ya entregados con la feature 003; los de la tienda (PBI-0035 a PBI-0038), elegidos el 2026-11-12, quedaron entregados con la feature 004. Siguen en el backlog, entre otros, los fallos PBI-0048 y PBI-0049 (este último afecta al Admin con el tema C, el de Ecom) y la gestión de banners. El orden exacto y el cronograma los fija el equipo.
 

@@ -18,6 +18,7 @@ Argumentos opcionales: una rama `feature/*` o un número de PR.
 
 - `docs/development/agent-execution.md`, apartados «Cerrar el worktree», «Cerrar una rama sin worktree» y «Actualizar `dev` local». Son el procedimiento: este skill no lo repite.
 - `docs/git/conventional-pull-requests.md`, apartado «Comprobar que un cambio ya está en `dev`».
+- `docs/architecture/development-workflow.md`, apartado «Registro de la entrega», si la rama es la de una feature.
 
 ## Pasos
 
@@ -36,6 +37,7 @@ Argumentos opcionales: una rama `feature/*` o un número de PR.
    Si el worktree está bloqueado por un proceso que sigue vivo, o Windows no deja borrar la carpeta, termina el resto y deja ese paso pendiente en el informe.
 6. Aplica «Actualizar `dev` local» una sola vez, al final. Si el checkout principal tiene cambios sin commit, no cambies de rama: informa.
 7. Informa en pocas líneas, por cada rama: el PR, el SHA de la punta y qué se eliminó (servidores detenidos, worktree, rama local y copias de datos). Indica también si su rama remota sigue en `origin`, el SHA final de `dev` y lo que quedó pendiente con su motivo.
+8. Si una rama cerrada era la de una feature (`feature/NNN-slug`), di que falta el registro de la entrega, con el número del PR y el SHA del merge que necesita, y propón hacerlo: una rama `feature/registrar-entrega-NNN-slug` desde `origin/dev`, un commit `docs` y su PR con el skill `pr-create`. No lo empieces sin que la persona lo pida.
 
 ## No hacer
 

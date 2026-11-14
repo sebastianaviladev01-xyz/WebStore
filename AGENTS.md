@@ -46,7 +46,8 @@ WebStore es una tienda en línea: Storefront (tienda pública) y Admin (backoffi
 - Si encuentras un hueco o una contradicción real en la documentación, repórtalo aparte, con archivo y línea, y propón el cambio en una rama `feature/*` de documentación. No lo mezcles con la tarea.
 - El estado de cada feature y el siguiente trabajo están en el [índice de features](docs/specs/features/README.md). Si el siguiente trabajo figura como «por decidir», pregunta; no lo elijas.
 - Si una persona te enseña una regla del flujo que no está en el repositorio, propón escribirla en el documento que corresponda, no solo en tu memoria.
-- Una mejora o deuda fuera del alcance de la tarea se anota en el [backlog](docs/planning/backlog.md) con su origen. No la priorizas sin que te lo pidan.
+- Una mejora o deuda fuera del alcance de la tarea se anota en el [backlog](docs/planning/backlog.md) con su origen. No la priorizas sin que te lo pidan. Todo hallazgo fuera de alcance (defecto, deuda o prueba intermitente) tiene su PBI, no solo una línea en `verification.md` o en un PR.
+- Una pregunta de negocio que las fuentes (notas de reunión, chats) no responden de forma explícita no la decide quien aprueba el hito: va a [decisiones pendientes](docs/planning/PENDING-DECISIONS.md) para quien decide el producto, con las citas y la pregunta, y la feature queda bloqueada hasta su respuesta. Las preguntas técnicas o de proceso sí las responde quien aprueba el hito ([hitos humanos](docs/architecture/development-workflow.md#hitos-humanos)).
 
 ## Mapa del repositorio
 
@@ -83,8 +84,8 @@ Qué control corresponde a cada tarea: [controles proporcionados](docs/developme
 
 Cada feature se desarrolla en `docs/specs/features/NNN-slug/` siguiendo el [flujo de trabajo](docs/architecture/development-workflow.md) ([ADR-0002](docs/adrs/0002-adoptar-sdd-y-tdd.md)):
 
-1. `sdd-specify` → `sdd-plan` → `sdd-decide` → `sdd-tasks` → `sdd-implement` → `sdd-verify`. Cada etapa empieza en una sesión nueva y cada hito cierra un PR.
-2. Hay hitos humanos de alcance, arquitectura y entrega. No los des por aprobados sin evidencia.
+1. `sdd-specify` → `sdd-plan` → `sdd-decide` → `sdd-tasks` → `sdd-implement` → `sdd-verify`. Cada etapa empieza en una sesión nueva y hace commit en la misma rama `feature/NNN-slug`. La feature se entrega en un solo PR, que se abre con el hito de entrega aprobado; solo el registro de la entrega, después del merge, va en un PR nuevo ([un pull request por feature](docs/architecture/development-workflow.md#un-pull-request-por-feature), [ADR-0015](docs/adrs/0015-entregar-cada-feature-en-un-solo-pull-request.md)).
+2. Hay hitos humanos de alcance, arquitectura y entrega. No los des por aprobados sin evidencia. Cada hito se registra en un commit de la rama; no abre un PR.
 3. En las áreas de STD-18 la prueba se escribe antes que el código.
 4. La implementación se hace en un worktree por feature y por bloques de tareas, cada uno con el nivel y el esfuerzo que indica `tasks.md`, resueltos para tu herramienta en el [catálogo](.agents/execution-catalog.json). Al terminar un bloque, informa y espera la aprobación antes del siguiente.
 5. Cada tarea ejecuta los controles de su área y deja la evidencia en el commit. Si toca la interfaz, compara capturas antes y después (STD-12).
