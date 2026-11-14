@@ -40,7 +40,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
       }
     </div>
     <div class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_440px]">
-      <section class="admin-card overflow-hidden">
+      <section class="admin-card overflow-hidden" aria-label="Lista de productos">
         <div
           class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted"
         >
@@ -75,8 +75,15 @@ const MAX_PHOTO_BYTES = 400 * 1024;
           </div>
         }
       </section>
-      <form [formGroup]="form" (ngSubmit)="save()" class="admin-card h-fit p-6">
-        <h2 class="text-xl font-semibold">{{ editingId() ? 'Editar' : 'Nuevo' }} producto</h2>
+      <form
+        [formGroup]="form"
+        (ngSubmit)="save()"
+        class="admin-card h-fit p-6"
+        aria-labelledby="titulo-formulario-producto"
+      >
+        <h2 id="titulo-formulario-producto" class="text-xl font-semibold">
+          {{ editingId() ? 'Editar' : 'Nuevo' }} producto
+        </h2>
         @if (!editingId() && !session.can('products.manage')) {
           <p class="mt-2 text-sm text-muted">
             Elige un producto de la lista para actualizar su ficha o su stock.
