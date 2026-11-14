@@ -32,6 +32,7 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 - Delega con la herramienta `Agent`: `model` con el alias de `agentAliases` y `effort` con el valor del catálogo.
 - [Revisión ciega](../../docs/development/agent-execution.md#revisión-ciega): un `Agent` nuevo, no una bifurcación de la sesión, con el modelo y el esfuerzo de `roles`. Recibe solo los artefactos que revisa y la pregunta o la lista de comprobación.
 - No uses los modelos de `excludedModels`.
+- El esfuerzo más alto del catálogo es `alto` (`high`). No fijes `xhigh` ni `max` en la sesión ni al delegar, aunque Claude Code los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)).
 
 ## CI de un pull request
 

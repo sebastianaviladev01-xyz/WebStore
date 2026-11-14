@@ -31,7 +31,8 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 
 - El modelo y el esfuerzo de la sesión se fijan con `/model` o con `model` y `model_reasoning_effort` en la configuración de Codex. El agente comprueba que coinciden con los que da el catálogo para la tarea y, si no coinciden, pide el cambio.
 - Si tu versión de Codex permite subagentes con otro modelo, delega según la [guía](../../docs/development/agent-execution.md#delegar-por-nivel-y-esfuerzo). Si no, la sesión principal ejecuta las tareas en orden, con el nivel y el esfuerzo de cada una.
-- Un esfuerzo con valor `null` (hoy, `máximo`) no está disponible: se registra así y no se sustituye por otro.
+- El esfuerzo más alto del catálogo es `alto` (`high`). No fijes `xhigh` en `model_reasoning_effort`, aunque Codex lo ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)).
+- Un esfuerzo con valor `null` en el catálogo no está disponible: se registra así y no se sustituye por otro. Hoy no hay ninguno.
 - Si el modelo de un nivel no está disponible, usa sus `fallbacks` en orden y regístralo. Si no tiene, la tarea queda en `Falta`. Los modelos con `onlyFor` (GPT‑6 Sol y GPT‑6.1 Sol) solo sirven para ese rol, nunca como respaldo.
 - [Revisión ciega](../../docs/development/agent-execution.md#revisión-ciega): el modelo y el esfuerzo de `roles`, en una sesión aparte que recibe solo los artefactos que revisa y la pregunta o la lista de comprobación.
 - Los modelos de OpenAI tienen `modelId: null` y `status: provisional`. La persona que valide este adaptador anota en el catálogo el identificador real de cada uno y pasa su estado a `validated`.
