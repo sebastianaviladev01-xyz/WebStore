@@ -1,10 +1,10 @@
 # 006. Permisos de los roles — Especificación
 
 - Feature: `006-permisos-de-los-roles`
-- Historia de usuario: modifica US26 (Gestionar usuarios y roles), US15 (Gestionar productos), US16 (Gestionar inventario) y US19 (Gestionar pedidos), en el [índice de historias](../../../planning/user-stories/user-stories.md). Sale de [PBI-0013](../../../planning/backlog.md) y de la decisión pendiente «Permisos exactos del rol Vendedor» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)). Sebastián Avila la eligió como siguiente trabajo el 2026-11-14.
+- Historia de usuario: modifica US26 (Gestionar usuarios y roles), US15 (Gestionar productos), US16 (Gestionar inventario) y US19 (Gestionar pedidos), en el [índice de historias](../../../planning/user-stories/user-stories.md). Sale de [PBI-0013](../../../planning/backlog.md) y de la decisión pendiente «Permisos de los roles» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)). Sebastián Avila la eligió como siguiente trabajo el 2026-11-14.
 - Estado: borrador
 - Fecha: 2026-11-14
-- Hito de alcance: pendiente y bloqueado. Las seis [preguntas](#preguntas-abiertas) dependen de lo que quiera Daniel y las fuentes no las responden de forma explícita: Sebastián Avila decidió el 2026-11-14 no responderlas él y llevarlas a Daniel ([decisiones pendientes](../../../planning/PENDING-DECISIONS.md), «Permisos exactos del rol Vendedor»)
+- Hito de alcance: pendiente y bloqueado. Las seis [preguntas](#preguntas-abiertas) dependen de lo que quiera Daniel y las fuentes no las responden de forma explícita: Sebastián Avila decidió el 2026-11-14 no responderlas él y llevarlas a Daniel ([decisiones pendientes](../../../planning/PENDING-DECISIONS.md), «Permisos de los roles»)
 
 ## Problema y actores
 
@@ -209,7 +209,7 @@ Ninguna.
 
 **Decisiones pendientes:**
 
-- «Permisos exactos del rol Vendedor» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)), que ahora cubre los tres roles. Recoge las seis preguntas para Daniel. Esta feature la cierra con sus respuestas.
+- «Permisos de los roles» ([`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md)), antes «Permisos exactos del rol Vendedor», renombrada porque ahora cubre los tres roles. Recoge las seis preguntas para Daniel. Esta feature la cierra con sus respuestas.
 - «Arquitectura y modelo de datos base» (PBI-0043, Daniel). Afecta a la pregunta 2 si algún día los productos tienen dueño.
 
 ## Preguntas abiertas
