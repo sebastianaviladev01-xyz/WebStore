@@ -7,6 +7,7 @@
 - Aprobación de las tareas: aprobadas por Sebastián Avila el 2026-11-14 en la sesión de esta etapa («Aprobar las tareas (Recomendado)»), después de responder la [pregunta del desglose](#respuesta-del-desglose)
 - Aprobación del bloque 1 (TASK-01 y TASK-02, fase 1): aprobado por Sebastián Avila el 2026-11-14 («Sí, lo apruebo», en respuesta a «¿Apruebas el bloque 1 del piloto, con la medida adaptada de TEST-05?»), incluida la medida adaptada de TEST-05 ([decisiones de ejecución](#traspaso))
 - Aprobación del paquete de ⚠ TASK-03 (bloque 2, fase 2): aprobado por Sebastián Avila el 2026-11-14 en la sesión principal («Sí, lo apruebo», en respuesta a «¿Apruebas el paquete de TASK-03, la corrección de /productos en móvil?»), que lo transmitió con sus palabras a la sesión del bloque ([evidencia](verification.md#ejecución-por-tarea))
+- Aprobación del bloque 2 (⚠ TASK-03, fase 2): aprobado por Sebastián Avila el 2026-11-14 («Sí, abre el bloque 3», en respuesta a «¿Das por bueno el bloque 2 y abro el bloque 3 del piloto?»), transmitido con sus palabras por la sesión principal a la sesión del bloque 3
 
 Las rutas de código son relativas a la raíz del repositorio. Los TEST son los de la [estrategia de pruebas del plan](planning.md#estrategia-de-pruebas); las clases, los nombres accesibles, la etiqueta «Stock», la spec, la carpeta de capturas y la copia de datos, los de [tipos intermedios y nombres](planning.md#tipos-intermedios-y-nombres). Ninguna tarea los vuelve a decidir.
 
@@ -146,7 +147,7 @@ Antes de cada ⚠, Sebastián Avila revisa el bloque anterior y da el sí para e
   3. El diff solo añade clases `max-md:`, `md:hidden` y `min-w-0`, `subscriptSizing="dynamic"` y la etiqueta «Stock»: ninguna clase de hoy cambia ni se quita.
   4. Sin colores fijos ni estilos globales.
   5. Una captura a 375 px con B de cada estado muestra la forma aprobada en la [pregunta 1](planning.md#respuestas-del-hito): el producto arriba a todo el ancho y, debajo, el precio, «Stock N» y las acciones a la derecha, sin cabecera; el formulario y la galería dentro de su tarjeta, con la ayuda de «Miniatura optimizada» sin pisar la galería.
-- **Antes de ⚠ TASK-04 (fin del bloque 2):** paquete de ⚠ TASK-03 aprobado y su commit hecho.
+- **Antes de ⚠ TASK-04 (fin del bloque 2):** paquete de ⚠ TASK-03 aprobado y su commit hecho. Bloque 2 aprobado por Sebastián Avila el 2026-11-14 («Sí, abre el bloque 3»).
 - **⚠ TASK-04** (comparación final; criterios del plan para T3):
   1. Sebastián aprueba las capturas: a 1440 px, iguales con A, B y C.
   2. A 375 px solo cambia lo de la [tabla del plan](planning.md#capturas-antes-y-después): la lista y el formulario; la cabecera de la página y la tira de navegación, iguales.
