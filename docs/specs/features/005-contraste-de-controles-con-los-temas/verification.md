@@ -3,16 +3,16 @@
 - Feature: `005-contraste-de-controles-con-los-temas`
 - Tareas: [tasks.md](tasks.md)
 
-Documento creado por TASK-01 desde la [plantilla](../../templates/verification-template.md). La revisión y la ejecución por tarea las rellena cada tarea; `sdd-verify` completa las demás secciones.
+Documento creado por TASK-01 desde la [plantilla](../../templates/verification-template.md). La revisión y la ejecución por tarea las rellenó cada tarea; `sdd-verify` completó las demás secciones el 2026-11-14.
 
 ## Revisión
 
 | Dato | Valor |
 |---|---|
-| Rama y commit | `feature/005-contraste-de-controles-con-los-temas`, base `9efc62a` (`dev`). Sin push |
-| Fecha | 2026-11-13 |
-| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas, las medidas y el e2e |
-| Datos | Capturas y medidas: copia `backend/data-capturas.json` del worktree (creada por el BFF desde la semilla, ignorada por git), con el BFF del worktree en 3400. E2E: archivo temporal de Playwright. Nunca `backend/data.json`: su sha256 en el checkout principal es `f4480a1c…ae34e` antes y después de cada tarea con servidores; el worktree no tiene `backend/data.json` |
+| Rama y commit | `feature/005-contraste-de-controles-con-los-temas`, base `9efc62a` (`dev`). Punta verificada: `1eecab7` («docs: cerrar la fase 4 de la feature 005 con los SHA»), con el árbol limpio y sin push. El código no cambia desde ⚠ TASK-04: `git diff 1152d18 1eecab7 -- frontend/src frontend/projects frontend/tests backend tools` solo toca `backend/architecture.md`, así que las capturas «después» de ⚠ TASK-05, tomadas sobre `4dce3a4`, son las del código de la punta |
+| Fecha | 2026-11-13 y 2026-11-14 (implementación); 2026-11-14 (`sdd-verify`) |
+| Entorno | Windows 10 Pro 10.0.19045, Node v24.20.0, npm 11.19.0 (leídas con `node --version` y `npm --version`, también en `sdd-verify`); Google Chrome instalado (headless, con Playwright `channel: 'chrome'`) para las capturas, las medidas y el e2e |
+| Datos | Capturas y medidas: copia `backend/data-capturas.json` del worktree (creada por el BFF desde la semilla, ignorada por git), con el BFF del worktree en 3400. E2E: archivo temporal de Playwright. Nunca `backend/data.json`: su sha256 en el checkout principal es `f4480a1c…ae34e` antes y después de cada tarea con servidores, y también antes y después de `sdd-verify`; el worktree no tiene `backend/data.json` |
 
 ## Ejecución por tarea
 
@@ -112,53 +112,143 @@ Al abrir la lista, la opción seleccionada es también la activa y Material pint
 
 ## Estado de los controles
 
+Ejecuciones finales de `sdd-verify` del 2026-11-14, todas sobre `1eecab7` con el árbol limpio, en el worktree `.worktrees/005-contraste-de-controles-con-los-temas`, en segundo plano y sin servidores levantados durante `verify` ni durante el e2e (puertos 3000, 3107, 3400, 4200, 4300, 4400 y 4500 libres antes). Ejecutado con Claude Code, Opus 5.5 (`claude-opus-5-5`); el esfuerzo de la sesión no se puede leer desde ella; sin delegar. Logs completos en el directorio temporal de la sesión.
+
 | Control | Documentado | Configurado | Ejecutado |
 |---|---|---|---|
-| Sintaxis del BFF (`check:syntax`) | … | … | … |
-| Formato (`format:check`) | … | … | … |
-| Lint y límites de arquitectura | … | … | … |
-| Pruebas unitarias | … | … | … |
-| Pruebas de integración y contrato del BFF | … | … | … |
-| Pruebas E2E | … | … | … |
-| Build de Storefront y Admin | … | … | … |
-| Capturas antes y después | … | … | … |
-| Auditoría de dependencias | … | … | … |
-| CI | … | … | … |
+| Agentes (`check:agents`) | Sí ([ADR-0008](../../../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md)) | Sí (`tools/check-agents.mjs`, en `verify`) | Sí: «catálogo 1.0.0, 2 herramientas, 10 skills, 10 referencias a niveles y 3 CLAUDE.md revisados» |
+| Sintaxis del BFF (`check:syntax`) | Sí | Sí (en `verify`) | Sí: «Sintaxis correcta en 68 archivos» |
+| Formato (`format:check`) | Sí | Sí (en `verify`; no revisa los `.md`) | Sí: «All matched files use Prettier code style!» en la raíz y en `frontend/` |
+| Lint y límites de arquitectura | Sí ([`frontend/architecture.md`](../../../../frontend/architecture.md) §2 y §3; TEST-07) | Sí (ESLint con `templateAccessibility`, Sheriff y `test:architecture`, en `verify`) | Sí: `eslint src projects` sin errores ni avisos; `test:architecture` `tests 29`, `pass 29`, `fail 0`, con «Sheriff rechaza las dependencias prohibidas». Lo que el diff añade en `frontend/src`, `frontend/projects`, `backend/src` y `tools` no tiene `eslint-disable`, `localStorage`, `sessionStorage`, `::ng-deep`, `.mdc-` ni `HttpClient`, y sus dos colores fijos (`--ws-on-link: #ffffff` de B) están en `temas-predefinidos.mjs` y `tokens.css`, los dos sitios permitidos. Las e2e nuevas no localizan por clases: por rol y nombre y, dentro de cada control, por las etiquetas `mat-checkbox`, `mat-radio-button` y `mat-pseudo-checkbox` y por posición |
+| Pruebas unitarias | Sí ([estrategia del plan](planning.md#estrategia-de-pruebas), TEST-01 a TEST-04 y TEST-06) | Sí (`npm test`, en `verify`) | Sí: frontend `tests 84`, `pass 84`, `fail 0` (con las 29 de `tema.rules.spec.mjs` del Admin, TEST-06); BFF `tests 131`, `pass 131`, `fail 0` (unitarias e integración, con TEST-01 a TEST-04) |
+| Typecheck del Storefront, del Admin y de las e2e nuevas | Sí (PBI-0029) | No en `verify` (PBI-0029): lo cubre el build, que solo compila lo que se importa; el lint no cubre `tests/e2e/` | Sí, a mano, desde `frontend/`: `npx tsc -p tsconfig.app.json --noEmit` y `npx tsc -p projects/admin/tsconfig.app.json --noEmit`, código de salida 0 en los dos; y `npx tsc --ignoreConfig --noEmit --strict` (ES2022, `bundler`, `es2022,dom`) sobre `apoyo/contraste.ts`, `admin-casillas`, `admin-material-contraste`, `storefront-material-contraste` y `storefront-enlaces`, código de salida 0 |
+| Pruebas de integración y contrato del BFF | Sí ([contrato](../../../../backend/docs/BFF-CONTRACT.md): `Tema.tokens` con 32 claves, 21 pares y `theme.css` con 32 declaraciones, actualizado en ⚠ TASK-02) | Sí (`validate:contract`, en `verify`) | Sí: «Estructura contractual WebStore: OK», con «TEST-18 (a): el tema B del BFF es igual a tokens.css», «(b): ningún color fijo fuera de tokens.css» y «(c)» (TEST-07), y «Smoke test BFF: OK» (TEST-05) |
+| Pruebas E2E | Sí (TEST-08 a TEST-12 y la caracterización de TASK-01) | Sí (`playwright.config.ts`: BFF 3400, Storefront 4400, Admin 4500, estado temporal y modo demo) | Sí: `npm run test:e2e` desde `frontend/`, en segundo plano: `121 passed (5.0m)`, 0 fallos, sin pruebas inestables, código de salida 0, las mismas 121 de ⚠ TASK-04 y ⚠ TASK-05. Después, puertos libres y sha256 de `backend/data.json` sin cambios |
+| Build de Storefront y Admin | Sí | Sí (`build:all`, en `verify`, con presupuestos) | Sí: «Application bundle generation complete» en los dos, sin avisos |
+| `npm run verify` completo | Sí | Sí | Sí: código de salida 0, en 91 s |
+| Capturas antes y después | Sí ([capturas del plan](planning.md#capturas-antes-y-después)) | Sí (guiones de `frontend/output/visual-qa/005-contraste-de-controles-con-los-temas/`, con Playwright y el Chrome instalado, mismos datos, rutas, anchos, carrito, pedido y sesión) | Sí: la comparación final con la base, con A, B y C, es la de ⚠ TASK-05; en `sdd-verify` se repitió con B sobre la punta. Ver [Capturas antes y después](#capturas-antes-y-después) |
+| Auditoría de dependencias | Sí | Sí (`audit:all`) | Sí: «found 0 vulnerabilities» en la raíz y en `frontend/`, código de salida 0. Ningún `package.json` ni `package-lock.json` cambia en la rama |
+| Enlaces de los documentos | Sí (paso 9 de `sdd-verify`) | No en `verify` | Sí, con un guion sobre los 13 `.md` que cambian en la rama (con este documento, el Traspaso, el índice y el backlog ya editados): 459 enlaces relativos, 0 rotos, con sus anclas |
+| CI | Sí ([`ci.yml`](../../../../.github/workflows/ci.yml): «Verificar», con `verify` y `audit:all`, y «E2E») | Sí | No ejecutado: la rama no tiene push. Se ejecuta en el PR de la implementación |
+| Revisión ciega | Sí ([guía](../../../development/agent-execution.md#revisión-ciega)) | Sí (catálogo, `roles`) | No ejecutada: ni `sdd-verify` ni la guía la piden en esta etapa. Aunque se hiciera, no contaría como evidencia |
 
 ## Resultados de las pruebas
 
+Resultados de `sdd-verify` sobre `1eecab7`, salvo donde se indica.
+
 | ID | AC | Comando | Resultado | Evidencia |
 |---|---|---|---|---|
-| TEST-01 | AC-03, AC-05 | … | … | … |
+| TEST-01 | AC-03, AC-05 | `npm test --prefix backend` (en `verify`) | Pasa | `tema.rules.test.mjs`: 32 de 32 dentro de `pass 131` (con TEST-03). Rojo y verde reproducidos en `sdd-verify`, ver [Cumplimiento TDD](#cumplimiento-tdd) |
+| TEST-02 | AC-03, AC-04 | `npm test --prefix backend` | Pasa | `temas-predefinidos.test.mjs`: 15 de 15 (`--ws-on-link` con `#FFFFFF`, `#ffffff` y `#FFFFFF`; `onLink/link` con 10.23, 6.70 y 15.80) |
+| TEST-03 | AC-05 | `npm test --prefix backend` | Pasa, sustituido (desviación aprobada) | En `tema.rules.test.mjs`: 21 pares, `onLink/link` el último, a 4.5 y sin bloquear; el tema de AC-05 se guarda y su par llega (15.7); `INSUFFICIENT_THEME_CONTRAST` solo con `contrast/background` y `contrast/surface`; la rejilla de 32 temas válidos nunca baja de 4.5:1 |
+| TEST-04 | AC-03 | `npm test --prefix backend` | Pasa | `temas.queries.test.mjs`: 13 de 13 (`theme.css` con 32 declaraciones y `--ws-on-link` justo después de `--ws-link`) |
+| TEST-05 | AC-03 | `npm run test:contract --prefix backend` (en `verify`) | Pasa | «Smoke test BFF: OK» |
+| TEST-06 | AC-03, AC-05 | `npm test --prefix frontend` (en `verify`) | Pasa | `tema.rules.spec.mjs` del Admin: 29 de 29 dentro de `pass 84` |
+| TEST-07 | AC-03, AC-07 | `npm run verify` (`validate:structure`, lint, Sheriff y build) | Pasa | «TEST-18 (a)», «(b)» y «(c)»: `tokens.css` igual al mapa de B del BFF, con `--ws-on-link: #ffffff`; lint, `pass 29` de arquitectura y el build de las dos apps; `tsc` a mano en las dos |
+| TEST-08 | AC-01 | `npm run test:e2e` | Pasa | `storefront-enlaces.spec.ts` (⚠ TASK-04, `1152d18`): 3 de 3, con A, B y C a 375 px. Medidas de ⚠ TASK-04 y ⚠ TASK-05: 10.23, 6.70 y 8.69:1 (antes 1.77, 2.18 y 8.69) |
+| TEST-09 | AC-02, AC-07 | `npm run test:e2e` | Pasa | `storefront-enlaces.spec.ts`: 1 de 1, los diez enlaces con B en reposo y con el puntero, y «Olvidé mi contraseña» sin cambios |
+| TEST-10 | AC-03, AC-04, AC-07 | `npm run test:e2e` | Pasa | `admin-casillas.spec.ts` (⚠ TASK-03, `a930f41`): 3 de 3, con A, B y C. Con C, marca blanca sobre el grafito, 15.80:1 (antes 1:1); con A y B, 10.23 y 6.70:1. Casilla sin marcar con `--ws-muted` (desviación aprobada) |
+| TEST-11 | AC-05 | `npm run test:e2e` | Pasa | `admin-casillas.spec.ts`: 1 de 1, el tema de AC-05 creado y activado, 15.80:1; al terminar, B activo y sin el tema |
+| TEST-12 | AC-06 | `npm run test:e2e` | Pasa | `admin-material-contraste.spec.ts` y `storefront-material-contraste.spec.ts`: 3 de 3 cada una, con A, B y C. Medidas en [Medidas de los componentes de Material](#medidas-de-los-componentes-de-material-test-12) |
+| TEST-13 | AC-01 a AC-05, AC-07 | `capturas.mjs`, `comparar.mjs` y `medidas.mjs` | Pasa (solo cambios pedidos) | ⚠ TASK-05 (`259f0b9`), aprobada por Sebastián Avila; repetición con B en `sdd-verify`. Ver [Capturas antes y después](#capturas-antes-y-después) |
+| Caracterización | AC-07 | `npm run test:e2e` | Pasa | Línea base `107` pruebas sobre `9efc62a` (TASK-01, `b38ac10`); las 107 siguen en la suite sin cambios, con TEST-20 de la feature 002 (`storefront-temas.spec.ts`) en verde |
+
+Por spec, en el e2e de `sdd-verify` (`121 passed`): tienda, `storefront-navegacion` 15, `storefront-temas` 11, `storefront-checkout-panel` 7, `storefront-carrito` 6, `storefront-catalogo` 5, `storefront-enlaces` 4, `storefront-modo-demo` 4, `storefront-material-contraste` 3, `storefront-checkout` 2, `storefront-cuenta` 2 y `storefront-reclamaciones` 1; Admin, `admin-menu-lateral` 12, `admin-menu-usuario` 12, `admin-temas` 12, `admin-resumen` 9, `admin-acceso` 4, `admin-casillas` 4, `admin-modo-demo` 4, `admin-material-contraste` 3 y `admin-contenido` 1. Las 14 nuevas son de esta feature; las otras 107, las de la base.
 
 ## Capturas antes y después
 
+Método, copia de datos (`backend/data-capturas.json`), pedido de invitado `WS-27735473`, carrito (`p-004`), sesión de `superadmin` y anchos (1440 y 375 px; cajón solo a 375 y menús del Admin solo a 1440) de TASK-01, en todas las tomas. «Antes»: `antes/{a,b,c}`, sobre `9efc62a`. «Después»: `despues/{a,b,c}`, sobre `4dce3a4` (⚠ TASK-05), con el mismo código que la punta. Todo en `frontend/output/visual-qa/005-contraste-de-controles-con-los-temas/` (ignorada por git), con el `LEEME.md` de `antes/`. Las comparaciones intermedias de ⚠ TASK-02 a ⚠ TASK-04 (`tarea-02/b`, `tarea-03/{a,b,c}`, `tarea-04/{a,b,c}`) y sus controles (`control-ruido/b`, `control-ruido-03/{a,b,c}`, `control-base-03/a` y `control-ruido-05/{a,b,c}`) están en sus filas de [Ejecución por tarea](#ejecución-por-tarea).
+
 | Pantalla o ruta | Anchos | Resultado | Evidencia |
 |---|---|---|---|
-| … | … | … | … |
+| Tienda: cajón móvil con «TV y audio» desplegada | 375 | Cambios pedidos: con A y B, «Ver todos los productos», «Ver toda la categoría» y «OLED» (AC-01 y AC-02, enlaces 1 a 3); con C, solo «OLED», porque `--ws-link`, `--ws-text` y `--ws-on-primary` de C son el mismo `#1F2328` | ⚠ TASK-05, `comparar.mjs` frente a `antes/` (1914 px con A y B, 193 px con C) |
+| Tienda: `/cuenta/login` | 1440 y 375 | Cambios pedidos: «Crear cuenta» con el color del enlace, con A y B (AC-02, enlace 4); con C no cambia, por lo mismo | ⚠ TASK-05 |
+| Tienda: detalle del pedido | 1440 y 375 | Cambios pedidos: «Mis pedidos» con el texto secundario, con A, B y C (AC-02, enlace 5) | ⚠ TASK-05 (514 a 523 px en (85,211)–(172,223) a 1440) |
+| Tienda: `/pedidos` sin sesión | 1440 y 375 | Cambios pedidos: «Inicia sesión» subrayado, con A, B y C ([pregunta 1](planning.md#pregunta-1-qué-se-hace-con-los-cuatro-enlaces-que-d1-cambia-y-ac-02-no-lista), enlace 8) | ⚠ TASK-05 (una fila de 75 px) |
+| Tienda: inicio, catálogo, ficha, carrito, diálogo «Producto agregado» (también con el puntero sobre «Ver carrito») y checkout | 1440 y 375 | Iguales con A, B y C, salvo ruido de fotos. Los enlaces 6, 7, 9 y 10 solo cambian con el puntero (TEST-09) | ⚠ TASK-05, con `control-ruido-05/` |
+| Admin: `/contenido`, `/banners`, `/marcas`, `/productos` y `/usuarios` | 1440 y 375 | Cambios pedidos solo con C: la marca de las casillas marcadas, de grafito a blanco (AC-03 y AC-04; 172 px en `/contenido` y 43 px en las demás). Con A y B, iguales | ⚠ TASK-03 y ⚠ TASK-05 |
+| Admin: `/login`, `/`, `/temas` con el diálogo del tema de AC-05, menú de usuario y lista «Ubicación» abiertos | 1440 y 375 (menús, 1440) | Iguales con A, B y C; el diálogo no muestra un aviso nuevo | ⚠ TASK-05 |
+| Repetición de `sdd-verify` sobre la punta, con B (39 tomas) | 1440 y 375 | Iguales a las aprobadas en ⚠ TASK-05, salvo ruido: 33 de 39 sin ningún píxel distinto frente a `despues/b`; las otras 6 son cajas de ruido ya registradas, todas de 1 a 4 niveles por canal: 13 px de la línea y = 925 de `admin-banners-375`, 4 px en x = 988 de `admin-lista-desplegable-1440`, la foto de `tienda-detalle-pedido-375` (116 px), las de `tienda-dialogo-1440` y `tienda-dialogo-hover-ver-carrito-1440` (3555 px) y la de `tienda-ficha-1440` (1423 px). Frente a `control-ruido-05/b` (el mismo código, otra toma), las mismas cajas. Frente a `antes/b`, 27 iguales y solo los cambios pedidos (cajón, «Crear cuenta», «Mis pedidos» y el subrayado de «Inicia sesión») más ese ruido. Ninguna captura cambia de tamaño: sin desborde horizontal. Consola: los mismos códigos y en las mismas rutas que `despues/` con B (`NG02952` en el detalle, `NG0913` en la ficha y el diálogo, `NG02955` en el carrito a 375), más el `404` de `/favicon.ico`, que sale en la primera página de cada aplicación porque la toma solo cargó B. Mismo método, copia y sesión, con el BFF en 3400 sin modo demo, la tienda en 4400 y el Admin en 4500 levantados desde el worktree después del e2e y detenidos al terminar. Copia: sha256 `eb79c969…a8a37f` antes de la toma, con B activo (revisión 62) y el tema de AC-05 como único tema propio; después, B activo (revisión 64, por las dos activaciones de B del guion) y el mismo tema | `verificacion/b/` y `verificacion/consola-b.json` frente a `despues/b`, `control-ruido-05/b` y `antes/b` (`comparar.mjs`) |
+
+Medidas: las «después» de ⚠ TASK-05 (`despues/medidas.json`), sobre el mismo código que la punta. En `sdd-verify` las vuelven a comprobar TEST-08 a TEST-12 del e2e completo.
 
 ## Cumplimiento TDD
 
+Las pruebas y el código de las áreas con TDD obligatorio entraron en el mismo commit (`8cad801`), así que el historial no muestra el rojo por sí solo. ⚠ TASK-02 lo registró en su fila antes del código, y `sdd-verify` lo reprodujo en dos copias dentro de `frontend/output/verify-tdd/005/` (ignorada por git), sin tocar el árbol: `rojo/`, con las pruebas de la punta (y su `casos-tema.json`) y `tema.rules.mjs`, `temas-predefinidos.mjs`, `tema.rules.ts` y `tema.model.ts` de la base `9efc62a`; y `verde/`, con los archivos de la punta. Cada prueba se ejecutó con `node --test <archivo>` desde el `backend/` o la carpeta `domain/` de cada copia, y el smoke con `node tests/integration/contrato.smoke.mjs`.
+
 | Área | TDD obligatorio | Prueba antes del código | Evidencia |
 |---|---|---|---|
-| … | … | … | … |
+| BFF `domain/temas/` (`TOKENS_DEL_TEMA`, `tokensDelTema`, `PARES_DE_CONTRASTE` y los predefinidos; TEST-01 a TEST-03) | Sí ([STD-18](../../../architecture/standards.md)) | Sí | ⚠ TASK-02 (`8cad801`). Reproducción: `tema.rules.test.mjs` da `tests 32`, `pass 17`, `fail 15` con el código de la base, y 32 de 32 con el de la punta; `temas-predefinidos.test.mjs`, `tests 15`, `pass 12`, `fail 3`, y 15 de 15. Todos los fallos son `ERR_ASSERTION`, sin errores de sintaxis, de importación ni de tipo. Las mismas cifras que registró ⚠ TASK-02 |
+| BFF `application/temas/` (`theme.css`; TEST-04) | Sí | Sí | Misma reproducción: `temas.queries.test.mjs`, `tests 13`, `pass 11`, `fail 2` con la base y 13 de 13 con la punta |
+| Contrato del BFF (TEST-05) | Sí | Sí | Misma reproducción: el smoke falla con la base (código de salida 1, «theme.css de B debe tener 32 declaraciones…») y da «Smoke test BFF: OK» con la punta. `BFF-CONTRACT.md` cambia en el mismo commit |
+| Admin `features/temas/domain/` (réplica de las reglas; TEST-06) | Sí | Sí | Misma reproducción, con `tema.rules.ts` y `tema.model.ts` de la base: `tema.rules.spec.mjs`, `tests 29`, `pass 22`, `fail 7`, por aserción; con los de la punta, 29 de 29 |
+| Storefront `features/temas/domain/` (`NombreToken`) | No: solo gana un nombre en un tipo, sin reglas | No aplica | ⚠ TASK-02 (`8cad801`); lo comprueban el build y `tsc` |
+| `tokens.css` (mapeo de Material) y regla `a` de `styles.css` | No (no es área de STD-18) | No aplica | E2E derivadas de los AC, escritas junto al código, con el fallo «antes» registrado antes de tocarlo: ⚠ TASK-03 (3 fallos de TEST-10 a TEST-12, la marca con C a 1:1) y ⚠ TASK-04 (TEST-08 a 2.18:1 con B y 1.77:1 con A, y TEST-09 en los diez enlaces). La caracterización es el e2e completo de TASK-01 (`b38ac10`), `107` pruebas en verde sobre `9efc62a`, y sus medidas «antes» |
 
 ## Trazabilidad
 
+Los SHA son los de «Ejecución por tarea». TASK-06 (`639ac34`) documenta la feature en [`TRACEABILITY.md`](../../../planning/TRACEABILITY.md), la arquitectura y el [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md).
+
 | REQ | AC | TASK | Commit o PR | TEST | Resultado |
 |---|---|---|---|---|---|
-| … | … | … | … | … | … |
+| REQ-01 | AC-01 | TASK-01, ⚠ TASK-04, ⚠ TASK-05 | `b38ac10`, `1152d18`, `259f0b9` | TEST-08, TEST-13 | Pasa |
+| REQ-02 | AC-02 | TASK-01, ⚠ TASK-04, ⚠ TASK-05, TASK-06 | `b38ac10`, `1152d18`, `259f0b9`, `639ac34` | TEST-09, TEST-13 | Pasa: los diez enlaces (los seis de AC-02 y los cuatro de la [pregunta 1](planning.md#pregunta-1-qué-se-hace-con-los-cuatro-enlaces-que-d1-cambia-y-ac-02-no-lista)) |
+| REQ-03 | AC-03 | TASK-01, ⚠ TASK-02, ⚠ TASK-03, ⚠ TASK-05 | `b38ac10`, `8cad801`, `a930f41`, `259f0b9` | TEST-01, TEST-02, TEST-04, TEST-05, TEST-06, TEST-07, TEST-10, TEST-13 | Pasa |
+| REQ-03, REQ-06 | AC-04 | ⚠ TASK-02, ⚠ TASK-03, ⚠ TASK-05 | `8cad801`, `a930f41`, `259f0b9` | TEST-02, TEST-10, TEST-13 | Pasa |
+| REQ-04 | AC-05 | ⚠ TASK-02, ⚠ TASK-03, ⚠ TASK-05 | `8cad801`, `a930f41`, `259f0b9` | TEST-01, TEST-03, TEST-06, TEST-11, TEST-13 | Pasa, con TEST-03 sustituido (desviación aprobada) |
+| REQ-05 | AC-06 | ⚠ TASK-03 | `a930f41` | TEST-12 | Pasa |
+| REQ-06 | AC-07 | TASK-01, ⚠ TASK-03, ⚠ TASK-04, ⚠ TASK-05, TASK-06 | `b38ac10`, `a930f41`, `1152d18`, `259f0b9`, `639ac34` | TEST-07, TEST-09, TEST-10, TEST-13 | Pasa (solo cambios pedidos), con el borde de la casilla sin marcar en `--ws-muted` (desviación aprobada) |
+
+Los seis REQ tienen al menos un AC, una tarea y un TEST, y los siete AC, al menos una tarea y un TEST. Las seis tareas están `hechas` y cada una tiene su fila y su SHA en «Ejecución por tarea»; los trece TEST tienen resultado en [Resultados de las pruebas](#resultados-de-las-pruebas).
 
 ## Definition of Done
 
 Marca solo lo que se cumple ([criterios](../../../development/definition-of-done.md)).
 
-- [ ] …
+- [x] AC aplicables demostrados (AC-01 a AC-07), con el comportamiento normal (los diez enlaces y la casilla con A, B y C), los límites (cajón a 375 px tras su animación, enlaces con el puntero, «Olvidé mi contraseña» sin utilidades, tema propio de principal claro, caso «base oscura» de las reglas, capa de estado de «Ver carrito» con C) y los fallos (un tema con contraste insuficiente sigue bloqueado solo por los dos pares de siempre; el par nuevo no bloquea).
+- [x] En las áreas con TDD obligatorio (reglas de temas y `theme.css` del BFF, contrato y réplica del Admin), las pruebas existían antes del código. La evidencia está en la fila de ⚠ TASK-02 y en [Cumplimiento TDD](#cumplimiento-tdd), con el rojo y el verde reproducidos en `sdd-verify`.
+- [x] `npm run verify` ejecutado desde la raíz sobre `1eecab7` (código de salida 0), `npm run test:e2e` (`121 passed`) y `npm run audit:all` (0 vulnerabilidades), aunque las dependencias no cambian.
+- [x] El contrato HTTP cambia (solo crece: una clave en `Tema.tokens` y una declaración en `theme.css`): [`BFF-CONTRACT.md`](../../../../backend/docs/BFF-CONTRACT.md) y el smoke test cambian en el mismo commit (⚠ TASK-02). Los adaptadores `Bff*Gateway` no necesitan cambios: los tokens llegan por `theme.css` y el tipo `NombreToken` de las dos apps suma la clave.
+- [x] Autorización, validación, confidencialidad y accesibilidad revisadas. Sin rutas nuevas del BFF ni cambios de permisos: `theme.css` sigue siendo de lectura pública y los temas propios siguen bajo `themes.manage`. El par nuevo solo avisa, y la validación en servidor sigue bloqueando por los dos pares de siempre (TEST-03). Accesibilidad: es el objeto de la feature. «Ver todos los productos» pasa a 10.23, 6.70 y 8.69:1 con A, B y C (WCAG 1.4.3); la marca de la casilla con C, de 1:1 a 15.80:1 (WCAG 1.4.11); los componentes de Material llegan a su mínimo con los tres temas (TEST-12); el contorno de foco (`a:focus-visible`) no cambia.
+- [x] Capturas antes y después a 1440 y 375 px, con A, B y C, sin cambios visuales no pedidos (STD-12): solo los de la [tabla del plan](planning.md#capturas-antes-y-después), con los cuatro enlaces de la pregunta 1 del hito de arquitectura; el resto, iguales salvo ruido de rasterizado reproducido entre dos tomas del mismo árbol. La punta, repetida con B en `sdd-verify`, sale igual a lo aprobado en ⚠ TASK-05.
+- [x] Documentación, ADR y diagramas coherentes con la implementación: ADR-0014, `BFF-CONTRACT.md`, la arquitectura del sistema, del BFF y del frontend, el sistema visual, `TRACEABILITY.md`, el backlog y el índice de features (⚠ TASK-02 y TASK-06), con las notas fechadas de la especificación, el plan y el ADR. Lo que depende del merge sigue como «implementado en su rama, pendiente de entregar» ([riesgos](#riesgos-remanentes-y-excepciones)). Los 459 enlaces relativos de los 13 `.md` que cambian en la rama resuelven, también sus anclas (comprobado en `sdd-verify` con un guion, después de editar este documento, el Traspaso, el índice y el backlog). `BFF-CONTRACT.md` y `TRACEABILITY.md` reflejan el cambio; el glosario no cambia.
+- [x] Trazabilidad REQ → AC → TASK → commit → TEST → resultado completa.
+- [x] Sin secretos, hosts ni datos personales reales en Git ni en la evidencia. Las cuentas de las e2e y de los guiones son las de la semilla local; las copias de datos, las capturas y la copia de la reproducción TDD están ignoradas por git. `backend/data.json` no se modificó (sha256 `f4480a1c…ae34e` antes y después).
+- [x] Los controles no ejecutados figuran como tales: el CI, que se ejecuta en el PR, y la revisión ciega. Las excepciones están en [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones).
+- [x] Revisión humana del hito correspondiente registrada: las cuatro tareas ⚠ (TASK-02 a TASK-05) y los cinco bloques, aprobados por Sebastián Avila el 2026-11-13 y el 2026-11-14, y el [hito de entrega](#hito-de-entrega), el 2026-11-14.
 
 ## Riesgos remanentes y excepciones
 
-- …
+- **Convención de los commits.** Los diez commits de la rama cumplen la [convención](../../../git/conventional-commits.md): `feat:` sin ámbito en `8cad801`, que toca `backend/` y `frontend/`; `fix(frontend):` en `a930f41` y `1152d18`, que solo tocan `frontend/` y documentos de la feature; y `docs:` en los otros siete, solo de documentación. Todos llevan `Refs: 005-contraste-de-controles-con-los-temas` (con `/TASK-NN` en los de tarea, y `ADR-0014` en `8cad801` y `a930f41`), y ninguno lleva `Co-Authored-By` ni firmas de herramientas (`git log 9efc62a..1eecab7`).
+- **CI.** No ejecutado: la rama no tiene push. Se ejecuta en el PR único de la implementación hacia `dev` («Verificar», con `verify` y `audit:all`, y «E2E»), que abre la sesión principal.
+- **Desviaciones aprobadas.** Las dos están en sus filas de «Ejecución por tarea» y en las notas fechadas de TASK-06:
+  - **TEST-03** (⚠ TASK-02, aprobada por Sebastián Avila el 2026-11-13). El plan pedía «un tema con `onLink/link` bajo el mínimo se guarda», pero ese tema no se puede construir con el cálculo de ADR-0014. Se sustituyó por: el par no bloquea, el tema de AC-05 se guarda y su par llega, `INSUFFICIENT_THEME_CONTRAST` lista solo los dos pares de siempre y, en una rejilla de 32 temas válidos, `onLink/link` nunca baja de 4.5:1.
+  - **Borde de la casilla sin marcar** (⚠ TASK-03, aprobada por Sebastián Avila el 2026-11-14). El plan y la especificación decían `--ws-border-strong`; Material 22.2.4 lo pinta con `--ws-muted` (a través de `--mat-sys-on-surface-variant`), también en la base. TEST-10 comprueba `--ws-muted` y que no cambia (AC-07).
+- **Fallos previos, fuera de alcance.** Ya estaban en la base `9efc62a` y siguen igual; no se corrigen en esta feature:
+  - [PBI-0046](../../../planning/backlog.md): `404` de `/favicon.ico` en la consola de la tienda y del Admin.
+  - [PBI-0026](../../../planning/backlog.md): aviso `NG02952` de `NgOptimizedImage` en el detalle del pedido.
+  - [PBI-0054](../../../planning/backlog.md), anotado en esta verificación (`propuesta`): avisos `NG0913` (intermitente en la ficha y el diálogo) y `NG02955` (carrito a 375 px) de `NgOptimizedImage`. La feature 004 ya los listaba en su consola de la base, sin PBI.
+  - [PBI-0053](../../../planning/backlog.md), anotado en el plan: la opción seleccionada de las listas desplegables no usa los colores del tema. Se lee (TEST-12) y no cambia.
+  - [PBI-0045](../../../planning/backlog.md): desborde de `/productos` del Admin a 375 px. Las capturas `admin-productos-375` salen iguales en la base y en la punta, también de tamaño.
+- **Ruido de rasterizado.** Las fotos de producto y del banner alternan entre dos rasterizados de 1 a 5 niveles por canal, y el catálogo a 1440 px con A difiere de `antes/a` en dos fotos (hasta 13 niveles) desde TASK-01, también con el `tokens.css` previo a los cambios visuales (`control-base-03/a`). Se trató como ruido con un control del mismo árbol en cada toma ([Capturas antes y después](#capturas-antes-y-después)).
+- **Enlaces que solo cambian con el puntero.** Los enlaces 6, 7, 9 y 10 de la [tabla del plan](planning.md#enlaces-afectados-por-d1) no cambian en las capturas en reposo; los cubren TEST-09 y las medidas «después».
+- **TDD en un solo commit.** TEST-01 a TEST-06 y su código entraron juntos en `8cad801`. El rojo está registrado en su fila y se reprodujo en `sdd-verify`; el historial por sí solo no lo muestra.
+- **Ejecutado con.** Todas las tareas registraron la herramienta y el modelo. Excepciones:
+  - El esfuerzo de la sesión no se pudo leer en ninguna tarea ni en esta verificación.
+  - TASK-01 y TASK-06 se ejecutaron con Opus 5.5 (`claude-opus-5-5`), un nivel por encima del catálogo (estándar · medio, Sonnet 5.5), por el agente principal de su bloque, sin delegar.
+- **Typecheck.** `verify` no comprueba los tipos de los archivos que nada importa (PBI-0029), y el lint no cubre `tests/e2e/`. En esta verificación se comprobaron a mano las dos aplicaciones y las cinco e2e nuevas con `tsc`.
+- **Pruebas de componentes.** Sigue sin entorno de pruebas de componentes de Angular (PBI-0025): la regla `a` y los componentes de Material se prueban con e2e.
+- **Temas propios ya guardados.** El par `onLink/link` es un aviso que no bloquea. Un tema propio guardado antes de la feature recibe su `--ws-on-link` calculado al leerse, sin migración ni cambio de `schemaVersion`. Con las reglas actuales, el aviso no llega a salir en ningún tema válido (nota fechada en el plan y en ADR-0014).
+- **Pendiente de la entrega.** Lo que depende de fusionar el PR no se marca como entregado en la rama. Se actualiza en el registro de la entrega, después del merge, con la lista del [Traspaso](tasks.md#traspaso).
 
 ## Hito de entrega
 
-pendiente
+Aprobado por Sebastián Avila el 2026-11-14 («Sí, apruébalo», desde su sesión principal, a la pregunta «¿Apruebas el hito de entrega de la feature 005?»), antes de publicar la rama y abrir el PR único de la implementación hacia `dev`. Antes de recomendar la aprobación, la sesión principal revisó esta sección y PBI-0054, volvió a ejecutar sobre la punta las pruebas del BFF (131 de 131), las del frontend (84 de 84) y el smoke del contrato, y comprobó los diez commits de la rama, que `data-capturas.json` y `output/visual-qa` no están versionados y el hash de `backend/data.json`.
+
+Evidencia presentada antes de aprobar: la de esta verificación sobre `1eecab7`.
+
+- `npm run verify` y `npm run audit:all` en verde, el typecheck de las dos apps y de las e2e nuevas, el e2e completo con `121 passed`, y el rojo y el verde de TEST-01 a TEST-06 reproducidos.
+- Las capturas de la punta con B, iguales a las aprobadas en ⚠ TASK-05 salvo ruido, y la consola sin mensajes nuevos.
+- La trazabilidad completa y la Definition of Done.
+
+Sin excepciones nuevas que aceptar: las dos desviaciones (TEST-03 y el borde de la casilla sin marcar) ya están aprobadas, y los commits de la rama cumplen la [convención](../../../git/conventional-commits.md). Limitaciones y riesgos remanentes: los de [Riesgos remanentes y excepciones](#riesgos-remanentes-y-excepciones), entre ellos el CI, que se ejecuta en el PR, y los fallos previos PBI-0026, PBI-0045, PBI-0046, PBI-0053 y PBI-0054.
