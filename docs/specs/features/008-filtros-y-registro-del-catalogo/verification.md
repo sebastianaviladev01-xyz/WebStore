@@ -122,7 +122,7 @@ Durante la implementación, cada tarea añade aquí una fila breve en su mismo c
 
 ## Decisiones tomadas por delegación
 
-Sebastián Avila delegó en la sesión principal que orquestó la feature (2026-11-14: «puedes continuar en automático porfavor tomando las mejores desiciones?, voy a salir a comer» y «ok registra todo para corregirlo despues»). Estas son las decisiones y aprobaciones que esa sesión tomó en su nombre, con cómo revertir cada una. Están **por revisar por Sebastián Avila**; no sustituyen el hito de entrega, que es suyo.
+Sebastián Avila delegó en la sesión principal que orquestó la feature (2026-11-14: «puedes continuar en automático porfavor tomando las mejores desiciones?, voy a salir a comer» y «ok registra todo para corregirlo despues»). Estas son las decisiones y aprobaciones que esa sesión tomó en su nombre, con cómo revertir cada una. Sebastián Avila las **confirmó todas** el 2026-11-14 en el [hito de entrega](#hito-de-entrega); no sustituyen ese hito, que aprobó él.
 
 | # | Fecha | Etapa | Decisión | Alternativas | Motivo | Cómo revertirla |
 |---|---|---|---|---|---|---|
@@ -288,14 +288,14 @@ Marca solo lo que se cumple ([criterios](../../../development/definition-of-done
 
 ## Hito de entrega
 
-**Pendiente de Sebastián Avila.** No se aprueba por delegación: la sesión principal solo tenía delegadas las etapas intermedias.
+**Aprobado por Sebastián Avila el 2026-11-14** en la sesión principal, a su vuelta, respondiendo las tres preguntas de una en una: «Confirmarlas todas (Recomendado)», «Aceptar la excepción (Recomendado)» y «Aprobar la entrega (Recomendado)». No se aprobó por delegación: la sesión principal solo tenía delegadas las etapas intermedias.
 
 Resumen de la verificación sobre `1bdee60`: `npm run verify` y `npm run audit:all` en verde, el typecheck de las dos apps y de las e2e en verde, el e2e completo `141 passed (6.3m)` sin fallos ni reintentos, el rojo de TEST-01 a TEST-06 y de `refresh()` de TEST-08 reproducido sobre la fuente anterior a su código, las capturas de la punta con B iguales a las aprobadas en ⚠ TASK-12 (44 de 44) y, frente a la base, solo cambian Productos, Categorías y Marcas, y la trazabilidad completa. Sin cambios en el BFF, el contrato, los permisos ni las dependencias.
 
-Preguntas para Sebastián, de una en una:
+Preguntas presentadas a Sebastián, de una en una, con su respuesta:
 
-1. **¿Confirmas las aprobaciones por delegación?** Revisa las 21 de [Decisiones tomadas por delegación](#decisiones-tomadas-por-delegación) (bloques 1 a 5 y paquetes de ⚠ TASK-08 a ⚠ TASK-12) y las decisiones (1) a (31) del [Traspaso](tasks.md#traspaso). En especial: la 3 (la aprobación de las tareas, atribuida a ti), la 8 (asuntos de seis commits reescritos para añadir el ámbito), la 12 (el localizador de «Editar» cambia a enlace en `admin-productos-movil`) y la 15 (los botones redondeados de Categorías y Marcas, distintos de los de Productos). Las capturas para revisar están en `frontend/output/visual-qa/008-filtros-y-registro-del-catalogo/despues/` del worktree, con `lado-a-lado-{a,b,c}-1440.png` para AC-10. Recomendación: confirmarlas. Esta verificación comprobó la evidencia de los paquetes (controles, rojos de TDD y capturas); las decisiones de diseño y de proceso son tuyas.
-2. **¿Aceptas como excepción los dos commits sin `Refs`** (`e3a6b59` y `0bd30fa`)? Recomendación: sí, como las excepciones de convención de la 004 y la 007; reescribirlos cambiaría siete SHA citados en la documentación.
-3. **¿Apruebas la entrega de la 008?** Recomendación: aprobarla si confirmas la pregunta 1. Después, `pr-create` publica la rama y convierte el [PR #48](https://github.com/sebastianaviladev01-xyz/WebStore/pull/48) (hoy en borrador, solo con `tasks.md`) en el PR único de la feature, con su título y su cuerpo ajustados; el CI corre entonces.
+1. **¿Confirmas las aprobaciones por delegación?** Revisa las 21 de [Decisiones tomadas por delegación](#decisiones-tomadas-por-delegación) (bloques 1 a 5 y paquetes de ⚠ TASK-08 a ⚠ TASK-12) y las decisiones (1) a (31) del [Traspaso](tasks.md#traspaso). En especial: la 3 (la aprobación de las tareas, atribuida a ti), la 8 (asuntos de seis commits reescritos para añadir el ámbito), la 12 (el localizador de «Editar» cambia a enlace en `admin-productos-movil`) y la 15 (los botones redondeados de Categorías y Marcas, distintos de los de Productos). Las capturas para revisar están en `frontend/output/visual-qa/008-filtros-y-registro-del-catalogo/despues/` del worktree, con `lado-a-lado-{a,b,c}-1440.png` para AC-10. Recomendación: confirmarlas. Esta verificación comprobó la evidencia de los paquetes (controles, rojos de TDD y capturas); las decisiones de diseño y de proceso son tuyas. **Respuesta:** confirmadas todas, incluidas la 3, la 8 y la 15.
+2. **¿Aceptas como excepción los dos commits sin `Refs`** (`e3a6b59` y `0bd30fa`)? Recomendación: sí, como las excepciones de convención de la 004 y la 007; reescribirlos cambiaría siete SHA citados en la documentación. **Respuesta:** excepción aceptada; los dos commits no se reescriben.
+3. **¿Apruebas la entrega de la 008?** Recomendación: aprobarla si confirmas la pregunta 1. Después, `pr-create` publica la rama y convierte el [PR #48](https://github.com/sebastianaviladev01-xyz/WebStore/pull/48) (hoy en borrador, solo con `tasks.md`) en el PR único de la feature, con su título y su cuerpo ajustados; el CI corre entonces. **Respuesta:** entrega aprobada. D1 a D4 siguen provisionales, pendientes de Daniel en las decisiones pendientes.
 
-Estado: pendiente
+Estado: aprobado. Siguiente paso: `pr-create` publica la rama y convierte el PR #48 en el PR único de la feature.
