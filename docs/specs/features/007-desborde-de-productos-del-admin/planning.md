@@ -2,17 +2,18 @@
 
 - Feature: `007-desborde-de-productos-del-admin`
 - Especificación: [specification.md](specification.md) (aprobada el 2026-11-14; 5 REQ, 6 AC, decisiones D1 a D3)
-- Estado: borrador
+- Estado: aprobado
 - Fecha: 2026-11-14
-- Hito de arquitectura: pendiente
+- Hito de arquitectura: aprobado por Sebastián Avila el 2026-11-14 en la sesión de esta etapa. Respondió las [tres preguntas](#hito-de-arquitectura) con la alternativa A, sin ajustes, y aprobó el resto del plan ([respuestas](#respuestas-del-hito))
 
 ## Enfoque
 
-Solo cambia la plantilla de [`productos.page.ts`](../../../../frontend/projects/admin/src/app/features/tienda/presentation/productos.page.ts), en `presentation/` de la feature `tienda` del Admin. No cambian el BFF, su contrato, los datos, los permisos, los tokens, los estilos globales ni la lógica de la página. Son dos correcciones de maquetación y un efecto secundario que la primera provoca:
+Solo cambia la plantilla de [`productos.page.ts`](../../../../frontend/projects/admin/src/app/features/tienda/presentation/productos.page.ts), en `presentation/` de la feature `tienda` del Admin. No cambian el BFF, su contrato, los datos, los permisos, los tokens, los estilos globales ni la lógica de la página. Son dos correcciones de maquetación, un efecto secundario que la primera provoca y dos nombres accesibles para las pruebas:
 
 1. **Galería de fotos.** El `fieldset` lleva `min-w-0` (`min-inline-size: 0`), así que deja de imponer su contenido a la rejilla del formulario. Dentro, el campo «URL de foto» lleva `min-w-0` junto a `flex-1`, así que se estrecha (el relleno interior de Material ya tiene `min-width: 0`) y el botón «Agregar» se queda a su derecha, como hoy. Las dos clases valen en todos los anchos: desde 768 px el contenido ya cabía y las medidas no cambian ([prototipo](#prototipo-medido)).
 2. **Ayuda de «Miniatura optimizada».** Al estrecharse el formulario a su ancho real (293 px a 375), la ayuda «Opcional. Si la dejas vacía se usa la imagen principal.» pasa a dos líneas y, como Material reserva una sola línea al subíndice, se monta 4 px sobre la leyenda «Galería de fotos». El campo pasa a `subscriptSizing="dynamic"`, la opción pública de Material que ya usa el campo «URL de foto»: el campo crece 16 px solo cuando la ayuda ocupa dos líneas. Desde 768 px la ayuda ocupa una línea y el campo mide lo mismo (77 px).
-3. **Lista de productos por debajo de 768 px.** Cada fila pasa a dos líneas: el producto (nombre y la línea del SKU) ocupa todo el ancho, y debajo van el precio, el stock con la etiqueta «Stock» y las acciones, alineadas a la derecha. La cabecera de la lista se oculta. Se escribe con las variantes `max-md:` de Tailwind, que solo se aplican por debajo de 768 px, añadidas a las clases de hoy: las clases de escritorio no cambian, y por eso tampoco el escritorio (REQ-05). La forma exacta depende de las [preguntas 1 y 2 del hito](#hito-de-arquitectura).
+3. **Lista de productos por debajo de 768 px.** Cada fila pasa a dos líneas: el producto (nombre y la línea del SKU) ocupa todo el ancho, y debajo van el precio, el stock con la etiqueta «Stock» y las acciones, alineadas a la derecha. La cabecera de la lista se oculta. Se escribe con las variantes `max-md:` de Tailwind, que solo se aplican por debajo de 768 px, añadidas a las clases de hoy: las clases de escritorio no cambian, y por eso tampoco el escritorio (REQ-05). Forma y escritura aprobadas en las [preguntas 1 y 2 del hito](#respuestas-del-hito).
+4. **Nombres accesibles.** La lista y el formulario reciben nombre accesible, para que las e2e los localicen por rol y nombre ([pregunta 3](#respuestas-del-hito)). Sin cambio visual.
 
 Alternativas descartadas en la especificación: desplazar la lista dentro de su tarjeta, como `/pedidos` (D3), y corregir también `/clientes` e `/inventario` (D1, siguen en PBI-0059). Alternativas de este plan, en el [hito](#hito-de-arquitectura).
 
@@ -36,7 +37,7 @@ En el prototipo, a 360, 375 y 390 px: ningún elemento de `main` acaba a la dere
 | Frontend: `domain/` | — | Sin cambios: no hay reglas nuevas | — |
 | Frontend: `application/` | `TiendaFacade` | Sin cambios | — |
 | Frontend: `data/` | — | Sin cambios | — |
-| Frontend: `presentation/` | `ProductosPage` (`productos.page.ts`), solo la plantilla | Galería y ayuda del formulario (REQ-02); fila de la lista en dos líneas por debajo de 768 px y cabecera oculta (REQ-03); nombres accesibles de la lista y del formulario, si se aprueba la [pregunta 3](#pregunta-3-cómo-localizan-las-e2e-la-lista-y-el-formulario) | REQ-01 a REQ-05 |
+| Frontend: `presentation/` | `ProductosPage` (`productos.page.ts`), solo la plantilla | Galería y ayuda del formulario (REQ-02); fila de la lista en dos líneas por debajo de 768 px y cabecera oculta (REQ-03); nombres accesibles de la lista y del formulario ([pregunta 3](#pregunta-3-cómo-localizan-las-e2e-la-lista-y-el-formulario)) | REQ-01 a REQ-05 |
 | BFF | — | Sin cambios: ni contrato, ni estado, ni permisos | — |
 
 ### Dependencias entre features
@@ -61,7 +62,7 @@ No hay tipos nuevos. Los nombres que las tareas no deben repensar:
 | Clases de la galería | `min-w-0` en el `fieldset` y en el `mat-form-field` «URL de foto» (junto a `flex-1`) | T2 |
 | Ayuda de «Miniatura optimizada» | `subscriptSizing="dynamic"` en su `mat-form-field` | T2 |
 | Etiqueta del stock en móvil | Texto «Stock» seguido de un espacio, dentro de la celda del stock, en `text-muted` y peso normal, con `md:hidden`. A 375 px la celda se lee «Stock 9»; desde 768 px, «9». El número conserva `text-danger` cuando el stock es 0 | T2, T1 |
-| Nombres accesibles (si se aprueba la pregunta 3, alternativa A) | La `section` de la lista, `aria-label="Lista de productos"`, como «Lista de pedidos» de `/pedidos`. El formulario, `aria-labelledby="titulo-formulario-producto"`, el `id` de su `h2` («Nuevo producto» o «Editar producto») | T1, T2 |
+| Nombres accesibles (pregunta 3, alternativa A) | La `section` de la lista, `aria-label="Lista de productos"`, como «Lista de pedidos» de `/pedidos`. El formulario, `aria-labelledby="titulo-formulario-producto"`, el `id` de su `h2` («Nuevo producto» o «Editar producto») | T1, T2 |
 | Spec e2e nueva | `frontend/tests/e2e/admin-productos-movil.spec.ts`; reutiliza `TEMAS`, `activarTema` y `restablecerTemas` de [`apoyo/contraste.ts`](../../../../frontend/tests/e2e/apoyo/contraste.ts) y `ingresarAlAdmin` y `cuentasAdmin` de [`apoyo/entorno.ts`](../../../../frontend/tests/e2e/apoyo/entorno.ts). Prefijo de los temas que restablece: ninguno (no crea temas) | T1 |
 | Capturas | `frontend/output/visual-qa/007-desborde-de-productos-del-admin/{antes,despues}/{a,b,c}/`, ignorada por git, con un `LEEME.md` del método | T0, T3 |
 | Copia de datos | `backend/data-capturas.json` del worktree, creada desde el seed por el BFF y sin modificar entre las dos tomas | T0, T3 |
@@ -72,7 +73,7 @@ No hay tipos nuevos. Los nombres que las tareas no deben repensar:
 |---|---|---|
 | La corrección del `fieldset` estrecha el formulario y la ayuda de «Miniatura optimizada» se monta sobre la leyenda de la galería (medido: 4 px a 360, 375 y 390) | Un defecto nuevo en móvil, causado por la feature | `subscriptSizing="dynamic"` en ese campo; TEST-02 comprueba que la ayuda acaba por encima de la leyenda |
 | Las clases de la lista cambian el escritorio por error | Rompe REQ-05 y AC-05 | Clases nuevas solo con `max-md:` (y `md:hidden` en la etiqueta), sin tocar las de hoy; TEST-05 a 768 y 1440 px, también antes del cambio; capturas a 1440 px iguales (TEST-07) |
-| Es el primer uso de `max-md:` en el proyecto | Una convención nueva sin precedente | Tailwind 4 la incluye sin configuración. Se anota en el [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md) junto a la lista; alternativa, en la [pregunta 2](#pregunta-2-cómo-se-escriben-las-clases-de-la-lista-para-que-el-escritorio-no-cambie) |
+| Es el primer uso de `max-md:` en el proyecto | Una convención nueva sin precedente | Tailwind 4 la incluye sin configuración. Se anota en el [sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md) junto a la lista; elegida frente a «móvil primero» en la [pregunta 2](#pregunta-2-cómo-se-escriben-las-clases-de-la-lista-para-que-el-escritorio-no-cambie) |
 | El espacio de «Stock » lo quita la compilación de la plantilla | Se leería «Stock9» | Angular solo elimina los nodos de texto que son todo espacio; TEST-03 comprueba el texto «Stock 9» de la celda |
 | La tuerca «Cambiar tema» del modo demo (el BFF de las e2e arranca en modo demo) queda fija abajo a la derecha, sobre la zona de «Eliminar» y «Agregar» | Un clic de las e2e podría caer en la tuerca | Las e2e de esta feature no pulsan «Eliminar»; antes de pulsar «Agregar» o «Editar», el elemento se lleva al centro de la vista. No cambia la tuerca (fuera de alcance) |
 | La rama va seis commits por detrás de `dev` y choca con él en `docs/planning/backlog.md` | Conflicto al abrir el PR | Esta feature no toca `backlog.md` hasta T4, y solo la fila de PBI-0045. Se resuelve al abrir el PR, como fija el piloto |
@@ -87,7 +88,8 @@ No hay tipos nuevos. Los nombres que las tareas no deben repensar:
   - La ayuda de «Miniatura optimizada» pasa a `subscriptSizing="dynamic"`, la opción pública de Material; sin sobrescribir internals (STD-04).
   - La cabecera de la lista solo se ve desde 768 px.
   - Sin TDD obligatorio: la feature no toca ningún `domain/` ([STD-18](../../../architecture/standards.md)). Las e2e se escriben antes del cambio, como prueba de caracterización del escritorio y para ver el rojo del móvil.
-- **Condicionadas** (bloquean T1 y T2 hasta el hito): la forma de la fila en móvil ([pregunta 1](#pregunta-1-cómo-se-reorganiza-cada-producto-de-la-lista-por-debajo-de-768-px)), cómo se escriben sus clases ([pregunta 2](#pregunta-2-cómo-se-escriben-las-clases-de-la-lista-para-que-el-escritorio-no-cambie)) y los localizadores de las e2e ([pregunta 3](#pregunta-3-cómo-localizan-las-e2e-la-lista-y-el-formulario)).
+  - Del hito ([respuestas](#respuestas-del-hito)): la fila en dos líneas por debajo de 768 px, sin cabecera y con «Stock» (pregunta 1); clases `max-md:` añadidas a las de hoy (pregunta 2); nombres accesibles de la lista y del formulario (pregunta 3).
+- **Condicionadas:** ninguna. Las tres preguntas del hito, que bloqueaban T1 y T2, están respondidas.
 - **ADR necesarios:** ninguno. Según [ADR-0001](../../../adrs/0001-registrar-decisiones-de-arquitectura.md) y STD-16, un ADR registra una decisión difícil de revertir o que afecta a más de un componente, al contrato HTTP o a las reglas de dependencia. Aquí cambia la plantilla de una sola página del Admin: se revierte con un commit, no toca el BFF, el contrato, los datos, los permisos ni las dependencias, y el patrón móvil de la lista se documenta en el sistema visual. `sdd-decide` no tiene nada que registrar; la siguiente etapa es `sdd-tasks`.
 
 ## Estrategia de pruebas
@@ -134,7 +136,7 @@ En el worktree de la feature (`.worktrees/007-desborde-de-productos-del-admin`),
 | Paso o tarea | Nivel y esfuerzo sugeridos | E2E | Criterios de aprobación (si es ⚠) |
 |---|---|---|---|
 | T0. Guion de capturas, capturas «antes» con A, B y C y e2e completo como línea base | estándar · medio | Sí | — |
-| T1. `admin-productos-movil.spec.ts` (TEST-01 a TEST-05) y, si se aprueba la pregunta 3, los dos nombres accesibles; ejecución sobre la base con el rojo y el verde esperados | estándar · alto | Sí | — |
+| T1. `admin-productos-movil.spec.ts` (TEST-01 a TEST-05) y los dos nombres accesibles de la pregunta 3; ejecución sobre la base con el rojo y el verde esperados | estándar · alto | Sí | — |
 | T2. ⚠ Corrección de la plantilla: galería, ayuda y fila de la lista en móvil | avanzado · alto | Sí | TEST-01 a TEST-05 en verde con A, B y C; e2e completo y `npm run verify` en verde. El diff solo añade clases `max-md:`, `md:hidden` y `min-w-0`, `subscriptSizing="dynamic"` y la etiqueta «Stock»: ninguna clase de hoy cambia ni se quita. Sin colores fijos ni estilos globales. Una captura a 375 px con B de cada estado, para ver la forma aprobada |
 | T3. ⚠ Capturas «después» y comparación (TEST-07), e2e completo y `npm run verify` | avanzado · alto | Sí | Sebastián aprueba las capturas: a 1440 px iguales con A, B y C; a 375 px solo cambia lo de la [tabla](#capturas-antes-y-después). Sin errores de consola nuevos. `verify` y el e2e completo en verde |
 | T4. Documentos afectados | estándar · bajo | No | — |
@@ -191,3 +193,15 @@ Evidencia: el proyecto usa Tailwind 4 ([`package.json`](../../../../frontend/pac
 | C. Atributos `data-testid` | Sin precedente en el proyecto, y solo sirven a las pruebas |
 
 Evidencia: §6 de [`frontend/architecture.md`](../../../../frontend/architecture.md#6-pruebas) («Las aserciones usan roles y textos visibles, no clases CSS»); [`pedidos.page.ts`](../../../../frontend/projects/admin/src/app/features/tienda/presentation/pedidos.page.ts) y [`usuarios.page.ts`](../../../../frontend/projects/admin/src/app/features/tienda/presentation/usuarios.page.ts) ya nombran su lista; `productos.page.ts` no nombra ni la lista ni el formulario.
+
+### Respuestas del hito
+
+Las preguntas se presentaron de una en una, cada una con sus alternativas, la recomendación y la evidencia: las medidas del [prototipo](#prototipo-medido) y dos capturas a 375 px con B, la de hoy y la del prototipo de la alternativa A de la pregunta 1. Sebastián Avila las respondió el 2026-11-14 en la sesión de esta etapa.
+
+| Pregunta | Decisión | Alternativas descartadas | Ajustes pedidos y dónde quedan |
+|---|---|---|---|
+| 1. Fila de la lista por debajo de 768 px | **A. Dos líneas**: el producto arriba, a todo el ancho; debajo, el precio, «Stock N» y las acciones a la derecha; sin cabecera. Elegida por Sebastián Avila el 2026-11-14 («A. Dos líneas (Recomendado)») | B. Como `/usuarios` (el precio y el stock, escritos dos veces en la plantilla, y la línea del SKU partida en varias líneas); C. tarjeta apilada con etiquetas (cada producto, de dos líneas a cuatro o cinco) | Ninguno |
+| 2. Clases de la lista | **A. Añadir clases `max-md:` a las de hoy**, sin cambiar las de escritorio; la convención se documenta en el sistema visual. Elegida por Sebastián Avila el 2026-11-14 («A. Añadir max-md: (Recomendado)») | B. Móvil primero con `md:` (reescribe las clases de escritorio, y que el escritorio no cambia solo lo demuestran las capturas y TEST-05) | Ninguno |
+| 3. Localizadores de las e2e | **A. Nombre accesible**: `aria-label="Lista de productos"` en la `section` y `aria-labelledby="titulo-formulario-producto"` en el formulario. Elegida por Sebastián Avila el 2026-11-14 («A. Nombre accesible (Recomendado)») | B. Por la estructura (frágil y contra §6 de `frontend/architecture.md`); C. `data-testid` (sin precedente, solo para las pruebas) | Ninguno |
+
+Después de las tres preguntas, Sebastián Avila aprobó el resto del plan el 2026-11-14 («Aprobar el plan (Recomendado)»), presentado en una pregunta aparte con sus cuatro puntos: solo cambia la plantilla de `ProductosPage`; la corrección de la galería y `subscriptSizing="dynamic"` en «Miniatura optimizada»; ningún ADR, así que la etapa `sdd-decide` no tiene nada que registrar y la siguiente es `sdd-tasks`; y la estrategia de pruebas, sin TDD obligatorio, con las e2e escritas antes del cambio y capturas con A, B y C a 1440 y 375 px. Con eso, el hito queda cerrado.
