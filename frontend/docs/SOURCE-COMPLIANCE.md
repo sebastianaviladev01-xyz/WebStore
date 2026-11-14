@@ -109,4 +109,4 @@ Abierto (ver `PENDING-DECISIONS.md`): opinión de Daniel, relación con OpenCart
 
 ## Nota del 2026-11-13 — diálogo de «producto agregado» (feature 004)
 
-Tras la reunión del 11/11, la feature [004](../../docs/specs/features/004-ajustes-de-la-tienda/specification.md) (PBI-0035) dejó el diálogo de «producto agregado» con dos botones, «Seguir comprando» y «Ver carrito» (el principal), sin «Finalizar compra». El carrito dice «Confirmar pedido» y el checkout, «Finalizar compra». Está implementado en la rama de la feature y pendiente de entrega. La revisión del 2026-11-05 no se reescribe: describe el diálogo de esa fecha.
+Tras la reunión del 11/11, la feature [004](../../docs/specs/features/004-ajustes-de-la-tienda/specification.md) (PBI-0035) dejó el diálogo de «producto agregado» con dos botones, «Seguir comprando» y «Ver carrito» (el principal), sin «Finalizar compra». El carrito dice «Confirmar pedido» y el checkout, «Finalizar compra». Se entregó con el [PR #26](https://github.com/sebastianaviladev01-xyz/WebStore/pull/26). La revisión del 2026-11-05 no se reescribe: describe el diálogo de esa fecha.
