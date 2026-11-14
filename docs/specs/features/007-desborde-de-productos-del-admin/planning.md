@@ -58,7 +58,7 @@ No hay tipos nuevos. Los nombres que las tareas no deben repensar:
 
 | Tipo o nombre | Definición | Tareas que lo usan |
 |---|---|---|
-| Punto de corte | 768 px (`md` de Tailwind 4). Las clases nuevas de la lista llevan `max-md:` (solo por debajo de 768 px); la etiqueta «Stock» lleva `md:hidden`, como `app.layout.ts` | T2, T1 (TEST-05 en 767 y 768 px) |
+| Punto de corte | 768 px (`md` de Tailwind 4). Las clases nuevas de la lista llevan `max-md:` (solo por debajo de 768 px); la etiqueta «Stock» lleva `md:hidden`, como el layout de la tienda (`frontend/src/app/layout/app.layout.ts`); en el Admin no hay ningún uso | T2, T1 (TEST-05 en 767 y 768 px) |
 | Clases de la galería | `min-w-0` en el `fieldset` y en el `mat-form-field` «URL de foto» (junto a `flex-1`) | T2 |
 | Ayuda de «Miniatura optimizada» | `subscriptSizing="dynamic"` en su `mat-form-field` | T2 |
 | Etiqueta del stock en móvil | Texto «Stock» seguido de un espacio, dentro de la celda del stock, en `text-muted` y peso normal, con `md:hidden`. A 375 px la celda se lee «Stock 9»; desde 768 px, «9». El número conserva `text-danger` cuando el stock es 0 | T2, T1 |
@@ -101,7 +101,7 @@ Todas las e2e de la tabla van en `admin-productos-movil.spec.ts`, con la sesión
 | ID | Nivel | Qué verifica | AC | TDD obligatorio | Comando |
 |---|---|---|---|---|---|
 | TEST-01 | E2E | Una prueba por tema (A, B y C) que recorre 360, 375 y 390 px: `scrollWidth` igual a `clientWidth`, y ningún elemento de `main` acaba a la derecha de `clientWidth` (la tira de navegación móvil está fuera de `main`) | AC-01, AC-04 | No | `npm run test:e2e -- admin-productos-movil` (desde `frontend/`) |
-| TEST-02 | E2E | En las mismas pruebas de TEST-01: el formulario «Nuevo producto» tiene todos sus campos, el bloque «Galería de fotos», «URL de foto», «Agregar», «Cargar foto» y «Guardar producto» dentro de su caja; la ayuda de «Miniatura optimizada» acaba por encima de la leyenda de la galería. Al editar «OLED Vision 55" 4K» (una foto en la galería) y añadir una URL con «Agregar», las miniaturas y sus botones «Quitar foto N» quedan dentro del `fieldset`; añadir la misma URL otra vez muestra «Esa foto ya está en el producto.» dentro del `fieldset`. Sin guardar | AC-02, AC-04 | No | Igual |
+| TEST-02 | E2E | En las mismas pruebas de TEST-01: el formulario «Nuevo producto» tiene todos sus campos, el bloque «Galería de fotos», «URL de foto», «Agregar», «Cargar foto» y «Guardar producto» dentro de su caja; la ayuda de «Miniatura optimizada» acaba por encima de la leyenda de la galería. Al editar «OLED Vision 55” 4K» (una foto en la galería) y añadir una URL con «Agregar», las miniaturas y sus botones «Quitar foto N» quedan dentro del `fieldset`; añadir la misma URL otra vez muestra «Esa foto ya está en el producto.» dentro del `fieldset`. Sin guardar | AC-02, AC-04 | No | Igual |
 | TEST-03 | E2E | En las mismas pruebas de TEST-01, para los seis productos del seed: el nombre, la línea del SKU, el precio, el stock, «Editar» y «Eliminar» se ven y caben en la caja de la lista; la lista no desplaza (`scrollWidth` de la `section` igual a su `clientWidth`); el SKU ocupa una sola línea (un solo rectángulo de su texto); el precio, el stock y las acciones no se solapan con el bloque del producto ni entre sí; la cabecera está oculta o cabe; la celda del stock dice «Stock N» y, en «Microondas EasyCook 30 L» (stock 0), el número tiene el color de `--ws-danger` (`colorDelToken`) | AC-03, AC-04 | No | Igual |
 | TEST-04 | E2E | Con el `vendedor` y B, a 375 px: TEST-01 y TEST-03 sin «Eliminar» ni «Nuevo producto», y el texto «Elige un producto de la lista…» dentro del formulario | AC-01, AC-03 (caso límite del vendedor) | No | Igual |
 | TEST-05 | E2E (caracterización del escritorio) | Con B, a 768 y 1440 px: la cabecera se ve con «Producto», «Precio» y «Stock»; en cada fila, el precio, el stock y las acciones están en la misma línea que el nombre (centros verticales a menos de 2 px); la celda del stock dice solo el número; la ayuda de «Miniatura optimizada» ocupa una línea. A 767 px, la cabecera está oculta y la celda dice «Stock N» (el punto de corte). En verde antes y después del cambio, salvo la comprobación de 767 px, que solo pasa después | AC-05 | No | Igual |
@@ -125,7 +125,7 @@ Con el mismo método, las mismas rutas, los mismos anchos y la misma sesión de 
 | Pantalla o ruta | Anchos | Cambio visual esperado |
 |---|---|---|
 | `/productos`, al entrar («Nuevo producto») | 1440 y 375 px | 1440: ninguno. 375: la lista en dos líneas por producto, sin cabecera y con «Stock»; el formulario dentro de su tarjeta, la galería con «Agregar» a la derecha del campo y la ayuda de «Miniatura optimizada» en dos líneas sin pisar la galería; la página ya no mide 376 px. La cabecera de la página y la tira de navegación, iguales |
-| `/productos`, editando «OLED Vision 55" 4K» (una foto en la galería) | 1440 y 375 px | Igual que la fila anterior, con la miniatura dentro del `fieldset` |
+| `/productos`, editando «OLED Vision 55” 4K» (una foto en la galería) | 1440 y 375 px | Igual que la fila anterior, con la miniatura dentro del `fieldset` |
 
 Comparación: a 1440 px, píxel a píxel, iguales salvo ruido de rasterizado documentado. A 375 px, la franja de arriba hasta el inicio de la lista, píxel a píxel; el resto, revisado por Sebastián en ⚠ T3 frente a esta tabla. Cada diferencia lleva el AC que la pide.
 
@@ -182,7 +182,7 @@ Evidencia: el [prototipo](#prototipo-medido) de A a 360, 375 y 390 px; [`usuario
 | **A. Añadir clases `max-md:` a las de hoy (recomendada)** | Las clases de escritorio se quedan como están (`grid-cols-[1fr_120px_110px_90px]` y el resto), y las del móvil se añaden con `max-md:`, que solo vale por debajo de 768 px. El diff demuestra por sí solo que el escritorio no cambia. Es el primer uso de `max-md:` en el proyecto: se documenta en el sistema visual |
 | B. Móvil primero: las clases base pasan a ser las del móvil y las de escritorio llevan `md:` | La convención más habitual de Tailwind y la del resto del proyecto, pero reescribe las clases de escritorio de la cabecera y de cada celda: el escritorio solo se demuestra igual con las capturas y TEST-05 |
 
-Evidencia: el proyecto usa Tailwind 4 ([`package.json`](../../../../frontend/package.json)), que incluye las variantes `max-*`; hoy no hay ninguna en el código, y sí `md:hidden` en [`app.layout.ts`](../../../../frontend/projects/admin/src/app/layout/app.layout.ts).
+Evidencia: el proyecto usa Tailwind 4 ([`package.json`](../../../../frontend/package.json)), que incluye las variantes `max-*`; hoy no hay ninguna en el código. `md:hidden` solo se usa en el layout de la tienda ([`app.layout.ts`](../../../../frontend/src/app/layout/app.layout.ts)); en el Admin, ninguna de las dos.
 
 ### Pregunta 3. ¿Cómo localizan las e2e la lista y el formulario?
 
