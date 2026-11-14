@@ -4,7 +4,7 @@
 - Especificación: [specification.md](specification.md) (alcance aprobado el 2026-11-14; D1 a D3)
 - Plan: [planning.md](planning.md) (hito de arquitectura aprobado el 2026-11-14; alternativa A en las tres preguntas; sin ADR)
 - Fecha: 2026-11-14
-- Aprobación de las tareas: pendiente
+- Aprobación de las tareas: aprobadas por Sebastián Avila el 2026-11-14 en la sesión de esta etapa («Aprobar las tareas (Recomendado)»), después de responder la [pregunta del desglose](#respuesta-del-desglose)
 
 Las rutas de código son relativas a la raíz del repositorio. Los TEST son los de la [estrategia de pruebas del plan](planning.md#estrategia-de-pruebas); las clases, los nombres accesibles, la etiqueta «Stock», la spec, la carpeta de capturas y la copia de datos, los de [tipos intermedios y nombres](planning.md#tipos-intermedios-y-nombres). Ninguna tarea los vuelve a decidir.
 
@@ -14,7 +14,7 @@ Permite empezar el bloque siguiente sin releer la feature. La actualiza la últi
 
 | Campo | Contenido |
 |---|---|
-| Punta de la rama | `feature/007-desborde-de-productos-del-admin`, local y sin push: especificación, plan y estas tareas, con su aprobación en el último commit `docs` de la etapa `sdd-tasks`. Ningún cambio de código todavía |
+| Punta de la rama | `feature/007-desborde-de-productos-del-admin`, local y sin push: especificación, plan y estas tareas, con su aprobación en el último commit `docs` de la etapa `sdd-tasks` («docs: aprobar las tareas del desborde de productos del Admin»). Ningún cambio de código todavía |
 | Siguiente bloque | Bloque 1 (fase 1): TASK-01 y TASK-02. Empieza por TASK-01, que crea el worktree |
 | Decisiones de ejecución | Ninguna todavía. Las del plan y de los hitos no se reabren |
 | Riesgos abiertos | Los de [Dependencias y riesgos](planning.md#dependencias-y-riesgos) del plan. La rama va por detrás de `dev` y choca con él en `docs/planning/backlog.md`: no se fusiona `dev` en la rama ni se rebasa; se resuelve al abrir el PR |
@@ -55,6 +55,14 @@ La [ejecución prevista](planning.md#ejecución-prevista) del plan sugería T0 a
 | Tres fases, una por bloque | El plan no las define, y el e2e completo se ejecuta al cerrar cada fase |
 | TASK-01 crea el worktree, `verification.md` y el guion, y guarda la consola de cada toma | La ejecución prevista del plan lo da por hecho sin asignarlo; los criterios de ⚠ TASK-04 piden «sin errores de consola nuevos», que necesita la consola de la base |
 | TASK-02 marca Capturas `Sí`, con B, los dos estados, a 1440 y 375 px, y espera «Iguales» frente a TASK-01 | Añade tres atributos a la plantilla (los nombres accesibles y el `id` del título), y `sdd-tasks` pide comparar capturas en cada tarea que toca plantillas. El plan solo captura en T0 y T3 |
+
+## Respuesta del desglose
+
+La única pregunta del desglose se presentó con sus alternativas, la recomendación y la evidencia (los tres atributos que TASK-02 añade a la plantilla, el paso 7 de `sdd-tasks` y STD-12). Sebastián Avila la respondió el 2026-11-14 en la sesión de esta etapa y después aprobó las tareas.
+
+| Pregunta | Decisión | Alternativas descartadas |
+|---|---|---|
+| ¿Qué captura TASK-02, que solo añade atributos sin efecto visual? | **Solo B**: los dos estados a 1440 y 375 px, con el guion de TASK-01, esperando «Iguales» («Solo B (Recomendado)») | A, B y C (triplica el tiempo sin aportar: los atributos no dependen del tema); ninguna (contradice `sdd-tasks` y no separaría un cambio de TASK-02 de uno de ⚠ TASK-03) |
 
 ## Fases
 
@@ -119,7 +127,7 @@ Comprobado contra los [criterios](../../../development/definition-of-ready.md) e
 
 | Tarea | Lista | Motivo si no lo está |
 |---|---|---|
-| TASK-01 | Sí, tras aprobar las tareas | Preparar el worktree (con el checkout principal en `dev`), `npm run setup`, la copia y el guion es parte de la tarea. No puede ejecutarse a la vez que la suite e2e |
+| TASK-01 | Sí | Tareas aprobadas el 2026-11-14. Preparar el worktree (con el checkout principal en `dev`), `npm run setup`, la copia y el guion es parte de la tarea. No puede ejecutarse a la vez que la suite e2e |
 | TASK-02 | Sí | Depende de TASK-01 (capturas «antes» tomadas antes de tocar la plantilla) |
 | ⚠ TASK-03 | Sí, tras el hito | Empieza cuando Sebastián aprueba el bloque 1 |
 | ⚠ TASK-04 | Sí, tras el hito | Empieza cuando Sebastián aprueba el paquete de ⚠ TASK-03 y el bloque 2 |
