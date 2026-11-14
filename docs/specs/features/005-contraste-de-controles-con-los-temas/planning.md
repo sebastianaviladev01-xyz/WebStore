@@ -159,7 +159,7 @@ Términos del [glosario](../../../architecture/glosario.md): «Tema», «Tema pr
   - Pregunta 2: respondida el 2026-11-13 con A; ya no bloquea T1 ni T2.
   - Pregunta 3: respondida el 2026-11-13 con A; ya no bloquea T1 ni T2.
   - Pregunta 4: respondida el 2026-11-13 con A; ya no bloquea T3.
-  - El ADR de `sdd-decide` bloquea T1.
+  - El ADR de `sdd-decide` bloquea T1. Registrado como [ADR-0014](../../../adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md), propuesto el 2026-11-13; bloquea T1 hasta que se acepte.
 - **ADR necesarios:** uno, que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md) como [ADR-0013](../../../adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md): el mapa del tema gana el token del texto sobre el enlace, calculado por el BFF, con su par de contraste, y Material pinta su `on-primary` con él. Propuesta de nombre: `0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md`. Lo redacta la etapa `sdd-decide` con las respuestas de las preguntas 2 a 4: el cálculo con la superficie como candidata (y por qué se aparta del de `--ws-on-primary`), el par a 4.5:1 que solo avisa y la capa de estado del botón relleno, que sigue en el principal. Bloquea T1. D1 no necesita ADR: aplica a la regla `a` la convención que `styles.css` ya sigue con los márgenes.
 
 ## Estrategia de pruebas
@@ -239,7 +239,7 @@ Bloques sugeridos para `sdd-implement`:
 
 ## Documentos afectados
 
-- El ADR nuevo, que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md), en `sdd-decide`. [`docs/architecture/README.md`](../../../architecture/README.md), [`backend/architecture.md`](../../../../backend/architecture.md) y [`frontend/architecture.md`](../../../../frontend/architecture.md) lo anotan como decidido y pendiente de implementar; T6 lo pasa al estado real (32 tokens y 21 pares).
+- [ADR-0014](../../../adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md), que amplía [ADR-0011](../../../adrs/0011-guardar-los-temas-como-recurso-propio-del-bff.md), en `sdd-decide`. [`docs/architecture/README.md`](../../../architecture/README.md), [`backend/architecture.md`](../../../../backend/architecture.md) y [`frontend/architecture.md`](../../../../frontend/architecture.md) lo anotan como decidido y pendiente de implementar; T6 lo pasa al estado real (32 tokens y 21 pares).
 - [Contrato del BFF](../../../../backend/docs/BFF-CONTRACT.md): `Tema.tokens` con 32 claves y `--ws-on-link` (su regla y sus valores en A, B y C), los 21 pares de `INSUFFICIENT_THEME_CONTRAST` y las 32 declaraciones de `theme.css`.
 - [Sistema visual](../../../../frontend/docs/VISUAL-SYSTEM.md): 32 tokens y 21 pares; `--ws-on-link` y su uso en Material; la regla `a` en la capa base y los enlaces que muestran su utilidad.
 - [`frontend/architecture.md`](../../../../frontend/architecture.md): §6, las e2e nuevas `storefront-enlaces`, `admin-casillas`, `storefront-material-contraste` y `admin-material-contraste`, y la ayuda `apoyo/contraste.ts`.
