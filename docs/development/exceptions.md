@@ -14,6 +14,10 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-| Excepción | Ámbito | Vigencia |
+Ninguna.
+
+## Excepciones cerradas
+
+| Excepción | Ámbito | Cierre |
 |---|---|---|
-| [ADR-0017](../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md): cerrar el backlog por lotes, sin las etapas SDD por elemento | Backlog abierto el 2026-11-14, en el Storefront, el Admin y el BFF | Hasta fusionar el último lote. Responsable: Sebastián Avila |
+| [ADR-0017](../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md): cerrar el backlog por lotes, sin las etapas SDD por elemento | Backlog abierto el 2026-11-14 y sus hallazgos, en el Storefront, el Admin y el BFF | 2026-11-15, con el PR del lote 09 ([cierre](../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md#cierre)). Responsable: Sebastián Avila |

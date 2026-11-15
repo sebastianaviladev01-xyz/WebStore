@@ -79,3 +79,32 @@ El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un 
 - Responsable: Sebastián Avila. Termina cuando se fusiona el último lote o cuando él la retira. No se aplica a elementos anotados después del 2026-11-14 salvo que él lo pida.
 - Aprobación: Sebastián Avila, 2026-11-14. Falta informar a Daniel Avila.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción. La feature 006 queda cubierta por el lote 07, con sus respuestas provisionales.
+
+## Cierre
+
+Se ejecutaron once lotes entre el 2026-11-14 y el 2026-11-15, cada uno con su PR hacia `dev`, auditado por la sesión principal (diff, `npm run verify` y e2e completo repetidos, y capturas cuando tocaba la interfaz) y fusionado por Sebastián Avila:
+
+| Lote | PR |
+|---|---|
+| 01, robustez y seguridad del BFF | [#50](https://github.com/sebastianaviladev01-xyz/WebStore/pull/50) |
+| 04, carrito y checkout | [#51](https://github.com/sebastianaviladev01-xyz/WebStore/pull/51) |
+| 06, guardado y datos del Admin | [#52](https://github.com/sebastianaviladev01-xyz/WebStore/pull/52) |
+| 03, temas y contraste | [#53](https://github.com/sebastianaviladev01-xyz/WebStore/pull/53) |
+| 05, cuenta, catálogo y accesibilidad de la tienda | [#54](https://github.com/sebastianaviladev01-xyz/WebStore/pull/54) |
+| 07, permisos, listados y accesibilidad del Admin | [#55](https://github.com/sebastianaviladev01-xyz/WebStore/pull/55) |
+| 07b, funciones nuevas del Admin | [#56](https://github.com/sebastianaviladev01-xyz/WebStore/pull/56) |
+| 02, pruebas y limpieza del BFF | [#57](https://github.com/sebastianaviladev01-xyz/WebStore/pull/57) |
+| 08, pruebas y deuda del frontend | [#58](https://github.com/sebastianaviladev01-xyz/WebStore/pull/58) |
+| 10, accesibilidad pendiente | [#59](https://github.com/sebastianaviladev01-xyz/WebStore/pull/59) |
+| 09, cierre documental | [#60](https://github.com/sebastianaviladev01-xyz/WebStore/pull/60) |
+
+Los hallazgos de cada lote se anotaron con su PBI y se asignaron a un lote posterior, como pide el reparto; por eso la excepción cubrió también los PBI-0143 a PBI-0166, anotados durante la entrega.
+
+**Lo que queda abierto**, con su motivo en la fila de cada elemento del [backlog](../planning/backlog.md):
+
+- **Decisiones de Daniel Avila:** las filas «Provisional, por confirmar con Daniel» de las [decisiones pendientes](../planning/PENDING-DECISIONS.md) y los elementos que solo él puede decidir (comparador, direcciones, Contenido frente a OpenCart, inicio, plazo de reclamos, priorización, banners e imagen de categoría). Cada respuesta que cambie lo construido es una feature nueva.
+- **Terceros o decisiones externas:** pasarela, facturación electrónica, multi-tenant, SSR, extorno, correo real, revisión legal, supresión de datos, ERP de Ecom, hosting y dominio, modelo de datos de Daniel e integraciones.
+- **Migrar al español el contrato (PBI-0022):** no se hizo, por ser un cambio incompatible de todo el contrato; lo deciden Sebastián Avila y Daniel Avila.
+- **Prueba con lector de pantalla (PBI-0165):** la ejecuta una persona con la lista del entorno local.
+
+La excepción termina al fusionar el PR de este cierre: desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.

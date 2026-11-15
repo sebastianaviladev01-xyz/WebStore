@@ -268,7 +268,7 @@ Ninguna.
 | Todos los bloques del Resumen plegados | Se ven solo los encabezados; la página no queda en blanco | REQ-03 |
 | Bloque que el rol no ve (por ejemplo, clientes para `vendedor`) | No aparece, como hoy; no hay encabezado plegable vacío | REQ-03, AC-03 |
 | Snapshot sin datos (tienda nueva) | Los bloques muestran su estado vacío de la feature 001 y siguen plegables | REQ-03 |
-| La sesión vence con el menú abierto | Al elegir una opción, el Admin vuelve a `/login`, como hoy con cualquier operación | REQ-07 |
+| La sesión vence con el menú abierto | Al elegir una opción, el Admin vuelve a `/login`, como hoy con cualquier operación. Nota posterior (lote 09 de [ADR-0017](../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0082): «Perfil» no consultaba al BFF (REQ-10) y mostraba los datos en memoria; desde el lote 06 (PBI-0124) cualquier consulta con la sesión vencida lleva a `/login`, y desde el 07b (PBI-0034) el perfil es editable y su guardado sí consulta al BFF | REQ-07 |
 | Fallo del BFF al cerrar sesión | Se borra el token local y se va a `/login` igual, como hoy | REQ-07, AC-10 |
 | Modo demo con la tuerca de temas | La tuerca flotante no se tapa con el menú de usuario ni con el lateral | REQ-11 |
 
