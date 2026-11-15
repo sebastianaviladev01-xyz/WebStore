@@ -53,7 +53,7 @@
 
   /* Fijos en todos los temas: no dependen de la paleta y no van en el mapa del tema. */
   --ws-on-media: #ffffff;
-  --ws-scrim: rgb(0 0 0 / 0.45);
+  --ws-scrim: rgb(0 0 0 / 0.55);
 
   --ws-focus: color-mix(in srgb, var(--ws-primary) 18%, transparent);
   --ws-radius: 10px;
