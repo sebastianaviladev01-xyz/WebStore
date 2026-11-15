@@ -1,5 +1,6 @@
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig, LOCALE_ID } from '@angular/core';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldDefaultOptions } from '@angular/material/form-field';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { routes } from './app.routes';
@@ -33,6 +34,11 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(),
     { provide: LOCALE_ID, useValue: 'es-PE' },
+    // Todos los campos de la tienda son de contorno (PBI-0081): se dice una vez aquí y no en cada `mat-form-field`.
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' } satisfies MatFormFieldDefaultOptions,
+    },
     { provide: BFF_BASE_URL, useValue: '/bff' },
     { provide: CatalogoGateway, useClass: BffCatalogoGateway },
     { provide: CheckoutGateway, useClass: BffCheckoutGateway },

@@ -24,7 +24,7 @@ import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
           contraseña nueva.
         </p>
         <div class="mt-6 grid gap-3">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Correo</mat-label>
             <input
               matInput
@@ -46,7 +46,7 @@ import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
                 {{ demoCode() }}
               </p>
             }
-            <mat-form-field appearance="outline">
+            <mat-form-field>
               <mat-label>Código de recuperación</mat-label>
               <input
                 matInput
@@ -57,7 +57,7 @@ import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
               />
               <mat-error>Ingresa el código de seis dígitos.</mat-error>
             </mat-form-field>
-            <mat-form-field appearance="outline">
+            <mat-form-field>
               <mat-label>Nueva contraseña</mat-label>
               <input matInput autocomplete="new-password" type="password" formControlName="password" />
               <mat-hint>10 caracteres como mínimo, con letras y números.</mat-hint>

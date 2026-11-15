@@ -108,7 +108,7 @@ const FOTOS_PRIORITARIAS = 6;
             </button>
           </div>
           <div class="grid gap-4">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Buscar por nombre</mat-label>
               <input
                 matInput
@@ -119,7 +119,7 @@ const FOTOS_PRIORITARIAS = 6;
               />
             </mat-form-field>
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Categoría</mat-label>
               <mat-select
                 [value]="filtros().categoria"
@@ -132,7 +132,7 @@ const FOTOS_PRIORITARIAS = 6;
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Precio máximo</mat-label>
               <mat-select
                 canSelectNullableOptions

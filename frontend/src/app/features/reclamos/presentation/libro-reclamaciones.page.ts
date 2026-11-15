@@ -57,54 +57,54 @@ import { ConstanciaReclamo, TipoReclamo } from '../domain/reclamo.model';
           (ngSubmit)="submit()"
           class="ws-card ws-outline-fields mt-8 grid gap-4 p-7 sm:grid-cols-2"
         >
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Nombre completo</mat-label>
             <input matInput autocomplete="name" formControlName="name" />
             <mat-error>Ingresa tu nombre completo (al menos 3 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>DNI / documento</mat-label>
             <input matInput inputmode="numeric" formControlName="document" />
             <mat-error>Ingresa tu documento (al menos 8 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Correo</mat-label>
             <input matInput autocomplete="email" type="email" formControlName="email" />
             <mat-error>Ingresa un correo válido.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Teléfono</mat-label>
             <input matInput autocomplete="tel" formControlName="phone" />
             <mat-error>Ingresa un teléfono válido.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline" class="sm:col-span-2">
+          <mat-form-field class="sm:col-span-2">
             <mat-label>Domicilio</mat-label>
             <input matInput autocomplete="street-address" formControlName="address" />
             <mat-error>Ingresa tu domicilio (al menos 5 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Producto o servicio</mat-label>
             <input matInput formControlName="subject" />
             <mat-error>Indica el producto o servicio.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Monto del bien</mat-label>
             <input matInput min="0" type="number" formControlName="amount" />
             <mat-error>Ingresa un monto de 0 o más.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Tipo de solicitud</mat-label>
             <mat-select formControlName="type">
               <mat-option value="reclamo">Reclamo sobre producto o servicio</mat-option>
               <mat-option value="queja">Queja sobre la atención</mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field appearance="outline" class="sm:col-span-2">
+          <mat-form-field class="sm:col-span-2">
             <mat-label>Detalle de lo ocurrido</mat-label>
             <textarea matInput rows="5" formControlName="detail"></textarea>
             <mat-error>Cuéntanos qué pasó (al menos 10 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline" class="sm:col-span-2">
+          <mat-form-field class="sm:col-span-2">
             <mat-label>Pedido del consumidor</mat-label>
             <textarea matInput rows="3" formControlName="request"></textarea>
             <mat-error>Indica qué solicitas (al menos 5 caracteres).</mat-error>

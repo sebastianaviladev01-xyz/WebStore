@@ -28,7 +28,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
           </p>
         }
         <div class="mt-6 grid gap-3">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Correo</mat-label>
             <input matInput type="email" autocomplete="email" formControlName="email" />
             @if (form.controls.email.hasError('required')) {
@@ -37,7 +37,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
               <mat-error>Ingresa un correo válido.</mat-error>
             }
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Código</mat-label>
             <input
               matInput
