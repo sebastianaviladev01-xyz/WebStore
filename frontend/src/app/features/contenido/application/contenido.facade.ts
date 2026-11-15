@@ -2,13 +2,18 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { Banner, ConfiguracionTienda } from '../domain/contenido.model';
 import { ContenidoGateway } from '../domain/contenido.gateway';
+import { bannersDeZona, bannersVigentes } from '../domain/banner.rules';
 
+/**
+ * Contenido mientras no llega el del BFF, o si nunca llega (PBI-0111; provisional, por confirmar con Daniel): sin datos
+ * de contacto de la demo y con las páginas informativas cerradas, porque no se sabe si el Admin las desactivó.
+ */
 const FALLBACK: ConfiguracionTienda = {
   storeName: 'WebStore',
   logoText: 'W',
   logoUrl: '',
-  contactEmail: 'contacto@webstore.demo',
-  contactPhone: '+51 999 000 000',
+  contactEmail: '',
+  contactPhone: '',
   fontFamily: 'Source Sans 3 Variable',
   headerMessage: 'Despachos en Lima. Consulta cobertura y tarifas.',
   footerText: 'Tecnología y electrohogar para tu casa.',
@@ -25,10 +30,10 @@ const FALLBACK: ConfiguracionTienda = {
     'Usamos tus datos para gestionar la compra, coordinar la entrega, atender solicitudes y cumplir obligaciones aplicables. Puedes actualizar o eliminar tu cuenta desde el perfil.',
   termsContent:
     'Los precios incluyen IGV salvo indicación expresa. La disponibilidad se confirma al registrar el pedido. Puedes solicitar cambios o cancelación dentro de las 24 horas posteriores a la compra, siempre que el pedido aún lo permita.',
-  contactPageEnabled: true,
-  shippingPageEnabled: true,
-  privacyPageEnabled: true,
-  termsPageEnabled: true,
+  contactPageEnabled: false,
+  shippingPageEnabled: false,
+  privacyPageEnabled: false,
+  termsPageEnabled: false,
 };
 
 @Injectable({ providedIn: 'root' })
@@ -39,26 +44,13 @@ export class ContenidoFacade {
   private loadPromise: Promise<void> | null = null;
 
   readonly settings = this.settingsState.asReadonly();
-  readonly activeBanners = computed(() => {
-    const now = Date.now();
-    return this.bannersState().filter(
-      (banner) =>
-        banner.active && new Date(banner.startAt).getTime() <= now && new Date(banner.endAt).getTime() >= now,
-    );
-  });
-  readonly heroBanners = computed(() =>
-    this.activeBanners()
-      .filter((banner) => banner.placement === 'hero')
-      .slice(0, 3),
-  );
+  readonly activeBanners = computed(() => bannersVigentes(this.bannersState(), new Date()));
+  readonly heroBanners = computed(() => bannersDeZona(this.activeBanners(), ['hero']));
   readonly promotionalBanners = computed(() =>
-    this.activeBanners()
-      .filter((banner) => banner.placement === 'promotion' || banner.placement === 'secondary')
-      .slice(0, 3),
+    bannersDeZona(this.activeBanners(), ['promotion', 'secondary']),
   );
   readonly topNavigation = computed(() => this.parseList(this.settings().topNavigation));
   readonly sideNavigation = computed(() => this.parseList(this.settings().sideNavigation));
-  readonly quickLinks = computed(() => this.parseList(this.settings().quickLinks));
   readonly benefits = computed(() =>
     this.settings()
       .benefits.split(';')
@@ -97,7 +89,7 @@ export class ContenidoFacade {
         );
       }
     } catch {
-      this.settingsState.set(FALLBACK);
+      // Un fallo pasajero no reemplaza el contenido que ya llegó por el de respaldo (PBI-0111).
     }
   }
 
