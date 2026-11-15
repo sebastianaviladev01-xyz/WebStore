@@ -129,28 +129,37 @@ La obligación de responder en 15 días hábiles está descrita por [Indecopi](h
 | `GET` | `/admin/sessions/current` | Bearer | `200 { user }` | `401 ADMIN_AUTHENTICATION_REQUIRED` |
 | `DELETE` | `/admin/sessions/current` | Bearer | `204` | — |
 | `GET` | `/admin/snapshot` | Bearer | `200` snapshot | `401 ADMIN_AUTHENTICATION_REQUIRED` |
-| `PUT` | `/admin/snapshot` | Bearer; `{ revision, …colecciones modificadas }` | `200` snapshot actualizado | `401`, `403 INSUFFICIENT_ROLE` (`details.collection`), `403 CATALOG_SCOPE_VIOLATION`, `409 STALE_SNAPSHOT`, `400 INVALID_COLLECTION` (`details.collection`, `field`, `id`), `400 INVALID_PRODUCTS`, `400 INVALID_CATEGORY_TREE` (`details.categoryId`), `400 INVALID_ROLE`, `400 WEAK_PASSWORD`, `409 LAST_SUPERADMIN`, `409 SELF_LOCKOUT`, `409 COMPLAINTS_READ_ONLY`, `409 INSUFFICIENT_STOCK` |
+| `PUT` | `/admin/snapshot` | Bearer; `{ revision, …colecciones modificadas }` | `200` snapshot actualizado | `401`, `403 INSUFFICIENT_ROLE` (`details.collection`), `403 CATALOG_SCOPE_VIOLATION`, `409 STALE_SNAPSHOT`, `400 INVALID_COLLECTION` (`details.collection`, `field`, `id`), `400 INVALID_PRODUCTS`, `400 INVALID_CATEGORY_TREE` (`details.categoryId`), `400 INVALID_ROLE`, `400 WEAK_PASSWORD`, `409 LAST_SUPERADMIN`, `409 SELF_LOCKOUT`, `409 COMPLAINTS_READ_ONLY`, `409 INSUFFICIENT_STOCK`, `409 BRAND_IN_USE` (`details.brandId`, `products`), `409 CATEGORY_IN_USE` (`details.categoryId`, `products`), `409 CATEGORY_HAS_CHILDREN` (`details.categoryId`, `children`), `413 PAYLOAD_TOO_LARGE` |
 | `POST` | `/admin/reset` | Bearer | `200` snapshot de la demo | `401`, `403 INSUFFICIENT_ROLE`, `403 STORE_RESET_DISABLED` |
 
 El ingreso compara la contraseña aunque el correo no exista o el usuario esté inactivo, para tardar lo mismo.
 
 El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía.
 
-Los pedidos del snapshot traen el detalle para despachar: cliente, correo, teléfono, dirección, distrito, tienda de origen, fecha de entrega, medio de pago, líneas (`productId`, `name`, `quantity`, `unitPrice`), subtotal, envío y total. Nunca incluyen el token de acceso del cliente.
+Los pedidos del snapshot traen el detalle para despachar: cliente, correo, teléfono, dirección, distrito, tienda de origen, fecha de entrega, medio de pago, `termsAcceptedAt` (cuándo aceptó el comprador los términos; `null` en los pedidos anteriores a esa casilla, lote 06, PBI-0145), líneas (`productId`, `name`, `quantity`, `unitPrice`), subtotal, envío y total. Nunca incluyen el token de acceso del cliente.
 
-`PUT /admin/snapshot` recibe `revision` y solo las colecciones modificadas, y devuelve el snapshot actualizado. Si `revision` no coincide con la del BFF (hubo una venta, un cambio de pedido, un reclamo u otro guardado), responde `409 STALE_SNAPSHOT` sin aplicar nada. El Admin recarga y reaplica el cambio; si no tocó el stock de un producto, conserva el del BFF.
+`PUT /admin/snapshot` recibe `revision` y solo las colecciones modificadas, y devuelve el snapshot actualizado. Si `revision` no coincide con la del BFF (hubo una venta, un cambio de pedido, un reclamo u otro guardado), responde `409 STALE_SNAPSHOT` sin aplicar nada.
+
+Cambios por registro (lote 06, PBI-0119 y PBI-0120): cada colección puede llegar como la lista completa, que la reemplaza, o como cambios `{ upsert, remove }`:
+
+- `upsert`: registros con `id`. Si el registro existe, solo se aplican los campos que trae y el resto se conserva del servidor (fotos, stock vendido, lo que cambió otra persona); un campo con `null` se quita. Si no existe, se agrega al final y debe venir completo.
+- `remove`: los `id` que se eliminan. Un `id` no puede estar en los dos.
+- La lista resultante se valida entera, igual que si hubiera llegado completa. Otra forma responde `400 INVALID_COLLECTION`.
+- `orders` acepta solo `{ upsert: [{ id, status }] }`: los pedidos no se crean ni se eliminan desde el panel. En `complaints`, un `upsert` cambia `status` y `providerResponse` del reclamo; un `remove` responde `409 COMPLAINTS_READ_ONLY`. El vendedor no puede usar `remove` ni agregar productos (`403 CATALOG_SCOPE_VIOLATION`).
+
+El Admin envía siempre cambios: solo los registros y los campos que tocó la persona. Así un guardado no lleva las fotos de otros productos y no choca con el límite del cuerpo (`413 PAYLOAD_TOO_LARGE`, 2 MB). Ante `409 STALE_SNAPSHOT` recarga y vuelve a enviar el mismo cambio si ninguno de esos campos cambió en el servidor mientras tanto; si alguno cambió, o si el registro ya no existe, no guarda y avisa.
 
 Validación del guardado (lote 01): los cambios se aplican sobre una copia del estado y se confirman solo si todo es válido, así que cualquier error deja el estado como estaba. Antes de aplicar, cada colección se valida en forma y contenido (`INVALID_COLLECTION`):
 
 | Colección | Reglas |
 | --- | --- |
 | Todas | Lista de objetos con `id` de texto, no vacío y único |
-| `products` (rol con `products.manage`) | `name`, `sku` (único sin distinguir mayúsculas), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen |
-| `products` (Vendedor) | `name` con texto y `stock` entero `>= 0`; el resto de la ficha, del tipo que corresponde |
-| `categories` | `name` con texto; `parentId` texto o vacío; `order` número o vacío; sin ciclos ni padres inexistentes (`INVALID_CATEGORY_TREE`) |
-| `brands` | `name` con texto y `active` booleano |
+| `products` (rol con `products.manage`) | `name`, `sku` (único sin distinguir mayúsculas; el mensaje dice qué producto lo usa), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen. Dirección de ficha única (PBI-0129): un producto nuevo o renombrado cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otro se rechaza con `field: 'slug'` y el nombre del otro; dos que ya lo compartían no bloquean otros guardados |
+| `products` (Vendedor) | `name` con texto y `stock` entero `>= 0`; el resto de la ficha, del tipo que corresponde. También la dirección de ficha única |
+| `categories` | `name` con texto; `parentId` texto o vacío; `order` número o vacío; sin ciclos ni padres inexistentes (`INVALID_CATEGORY_TREE`). Una categoría eliminada no puede tener subcategorías (`409 CATEGORY_HAS_CHILDREN`) ni productos (`409 CATEGORY_IN_USE`) |
+| `brands` | `name` con texto y `active` booleano. Una marca eliminada no puede tener productos (`409 BRAND_IN_USE`, con cuántos en `details.products`). El uso se mide después de aplicar los productos del mismo guardado (PBI-0131) |
 | `customers` | `name` y `email` con texto; `orders` entero `>= 0` si viene |
-| `banners` | `title` texto; `placement` `hero`, `promotion` o `secondary`; `active` booleano; `imageFit`, `imageTone` e `imageFocusY` de sus valores si vienen |
+| `banners` | `title` texto; `placement` `hero`, `promotion` o `secondary`; `active` booleano; `imageFit`, `imageTone` e `imageFocusY` de sus valores si vienen; `endAt` igual o posterior a `startAt` (PBI-0128) |
 | `rates` | `origin` y `destination` con texto; `price` número `>= 0` |
 | `config` | Un objeto. Solo las claves conocidas, cada una del tipo de su valor vigente (texto o booleano), y `storeName` con texto. Las claves desconocidas se descartan; las ausentes conservan su valor |
 | `users` | `name` con texto, `email` válido y único, `active` booleano y un rol fijo (`INVALID_ROLE`) |

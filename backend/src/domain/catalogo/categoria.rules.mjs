@@ -40,3 +40,21 @@ export const sortCategories = (items) =>
     if (ao == null && bo != null) return 1;
     return a.name.localeCompare(b.name, 'es');
   });
+
+/**
+ * Una categoría eliminada no puede dejar subcategorías sin padre (PBI-0131). Se revisa antes del árbol, que solo
+ * diría «La categoría padre no existe.».
+ */
+export function requireRemovedWithoutChildren(categories, previous) {
+  for (const category of previous) {
+    if (categories.some((item) => item.id === category.id)) continue;
+    const count = categories.filter((item) => item.parentId === category.id).length;
+    if (count)
+      throw new DomainError(
+        'conflict',
+        'CATEGORY_HAS_CHILDREN',
+        `No se puede eliminar la categoría «${category.name}»: tiene ${count} ${count === 1 ? 'subcategoría' : 'subcategorías'}. ${count === 1 ? 'Muévela o elimínala' : 'Muévelas o elimínalas'} antes.`,
+        { categoryId: category.id, children: count },
+      );
+  }
+}

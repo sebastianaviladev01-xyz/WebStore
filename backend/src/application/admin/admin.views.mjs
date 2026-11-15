@@ -21,6 +21,8 @@ const orderToAdmin = (order) => ({
   deliveryDate: order.deliveryDate ?? '',
   shippingOrigin: order.shippingOrigin ?? '',
   paymentMethod: order.paymentMethod ?? '',
+  // PBI-0145: cuándo aceptó el comprador los términos (lote 04); null en pedidos anteriores a esa casilla.
+  termsAcceptedAt: order.termsAcceptedAt ?? null,
   subtotal: order.subtotal ?? order.total,
   shippingCost: order.shippingCost ?? 0,
   total: order.total,

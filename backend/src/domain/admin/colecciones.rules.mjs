@@ -66,7 +66,7 @@ const optionalText = (value) => value === undefined || value === null || isText(
 /** Productos completos (rol con `products.manage`): SKU único, precio y stock válidos. */
 export function requireValidProducts(products) {
   requireItems(products, 'products');
-  const skus = new Set();
+  const skus = new Map();
   for (const product of products) {
     check('products', product, [
       ['name', hasText, 'cada producto necesita un nombre'],
@@ -82,9 +82,11 @@ export function requireValidProducts(products) {
       ['highlights', textList, 'las características no son válidas', { optional: true }],
       ['gallery', textList, 'la galería no es válida', { optional: true }],
     ]);
+    // PBI-0129: el mensaje dice qué producto ya usa el SKU.
     const sku = product.sku.trim().toLowerCase();
-    if (skus.has(sku)) throw invalid('products', 'sku', `el SKU ${product.sku} está repetido`, product.id);
-    skus.add(sku);
+    if (skus.has(sku))
+      throw invalid('products', 'sku', `el SKU ${product.sku} ya lo usa «${skus.get(sku).name}»`, product.id);
+    skus.set(sku, product);
   }
   return products;
 }
@@ -172,6 +174,18 @@ export function requireValidBanners(banners) {
         { optional: true },
       ]),
     ]);
+  // PBI-0128: la vigencia termina el mismo día de inicio o después.
+  for (const banner of banners) {
+    const inicio = Date.parse(banner.startAt);
+    const fin = Date.parse(banner.endAt);
+    if (Number.isFinite(inicio) && Number.isFinite(fin) && fin < inicio)
+      throw invalid(
+        'banners',
+        'endAt',
+        'la fecha de fin debe ser igual o posterior a la de inicio',
+        banner.id,
+      );
+  }
   return banners;
 }
 
@@ -259,4 +273,51 @@ export function applyComplaintUpdates(current, incoming, now) {
       ? { ...complaint, status: update.status, providerResponse: update.providerResponse, updatedAt: now }
       : complaint;
   });
+}
+
+/**
+ * Cambios de una colección (lote 06, PBI-0119 y PBI-0120): en lugar de la lista completa, el Admin puede enviar
+ * `{ upsert, remove }`. `upsert` trae registros con `id`: si el registro existe, sus campos se aplican sobre el del
+ * servidor (un campo con `null` se quita) y lo demás se conserva; si no existe, se agrega al final. `remove` trae
+ * los `id` que se eliminan. Una lista se acepta como antes y reemplaza la colección. Devuelve la lista resultante,
+ * que después se valida entera como si hubiera llegado completa.
+ */
+export function resolveCollectionChanges(collection, current, value) {
+  if (Array.isArray(value)) return value;
+  const forma = 'los cambios no tienen la forma { upsert, remove }';
+  if (!isObject(value) || Object.keys(value).some((key) => key !== 'upsert' && key !== 'remove'))
+    throw invalid(collection, null, forma);
+  const upsert = value.upsert ?? [];
+  const remove = value.remove ?? [];
+  if (!Array.isArray(upsert) || !Array.isArray(remove) || !remove.every(hasText))
+    throw invalid(collection, null, forma);
+  requireItems(upsert, collection);
+  const removed = new Set(remove);
+  const patches = new Map(upsert.map((patch) => [patch.id, patch]));
+  const both = remove.find((id) => patches.has(id));
+  if (both !== undefined)
+    throw invalid(collection, 'id', `el identificador ${both} se cambia y se elimina a la vez`, both);
+  const merge = (base, patch) => {
+    const result = { ...base };
+    for (const [key, field] of Object.entries(patch)) {
+      if (field === null) delete result[key];
+      else result[key] = field;
+    }
+    return result;
+  };
+  const currentIds = new Set(current.map((item) => item.id));
+  return [
+    ...current
+      .filter((item) => !removed.has(item.id))
+      .map((item) => (patches.has(item.id) ? merge(item, patches.get(item.id)) : item)),
+    ...upsert.filter((patch) => !currentIds.has(patch.id)).map((patch) => merge({}, patch)),
+  ];
+}
+
+/** Cambios de estado de pedidos como lista o como `{ upsert }`: los pedidos no se crean ni se eliminan. */
+export function orderStatusChanges(value) {
+  if (Array.isArray(value)) return value;
+  if (!isObject(value) || Object.keys(value).some((key) => key !== 'upsert') || !Array.isArray(value.upsert))
+    throw invalid('orders', null, 'los cambios no tienen la forma { upsert }');
+  return value.upsert;
 }
