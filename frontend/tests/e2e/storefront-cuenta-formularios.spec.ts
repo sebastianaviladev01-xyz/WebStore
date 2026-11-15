@@ -286,8 +286,16 @@ test.describe('PBI-0146 y PBI-0113: detalle del pedido', () => {
       ([id, token]) => localStorage.setItem('webstore-order-access-v1', JSON.stringify({ [id]: token })),
       [pedido.id, pedido.accessToken] as const,
     );
+    // PBI-0026: la foto de la línea no avisa NG02952 (proporción distinta de la de la imagen).
+    const avisos: string[] = [];
+    page.on('console', (m) => {
+      if (m.text().includes('NG02952')) avisos.push(m.text().slice(0, 120));
+    });
     await page.goto(`/pedidos/${pedido.id}`);
     await expect(page.getByRole('heading', { level: 1, name: pedido.id })).toBeVisible();
+    await expect(page.getByRole('img', { name: soundbar.name })).toBeVisible();
+    await page.waitForTimeout(500);
+    expect(avisos).toEqual([]);
 
     const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
     const fecha = page.getByLabel('Fecha de entrega');

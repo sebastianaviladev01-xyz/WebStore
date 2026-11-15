@@ -74,13 +74,16 @@ import { esCambioDeFechaValido, fechaDeLima } from '../domain/fecha-entrega.rule
             </section>
             @for (item of o.items; track item.product.id) {
               <article class="ws-card flex gap-4 p-4">
-                <img
-                  [ngSrc]="item.product.imageUrl"
-                  [alt]="item.product.name"
-                  width="110"
-                  height="80"
-                  class="h-20 w-28 rounded-xl bg-soft object-contain p-2"
-                />
+                <!-- La caja conserva su tamaño; la foto va dentro con su proporción 4:3 (NG02952, PBI-0026). -->
+                <span class="grid h-20 w-28 shrink-0 place-items-center rounded-xl bg-soft p-2">
+                  <img
+                    [ngSrc]="item.product.imageUrl"
+                    [alt]="item.product.name"
+                    width="96"
+                    height="72"
+                    class="h-16 w-auto max-w-full"
+                  />
+                </span>
                 <div>
                   <h2 class="font-semibold">{{ item.product.name }}</h2>
                   <p class="text-sm text-muted">Cantidad: {{ item.quantity }}</p>
