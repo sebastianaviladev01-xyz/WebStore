@@ -1,6 +1,13 @@
 import { CurrencyPipe, DatePipe, NgOptimizedImage } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -8,6 +15,7 @@ import { RouterLink } from '@angular/router';
 import { PedidosFacade } from '../application/pedidos.facade';
 import { EnviosFacade } from '../../envios/application/envios.facade';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
+import { esCambioDeFechaValido, fechaDeLima } from '../domain/fecha-entrega.rules';
 @Component({
   selector: 'ws-order-detail-page',
   imports: [
@@ -87,34 +95,43 @@ import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
               @if (o.shippingOrigin) {
                 <p class="mt-1 text-sm text-muted">Despacho desde {{ o.shippingOrigin }}.</p>
               }
-              <form [formGroup]="form" class="mt-4 grid gap-3 sm:grid-cols-2">
-                <mat-form-field>
+              <form [formGroup]="form" class="ws-outline-fields mt-4 grid gap-3 sm:grid-cols-2">
+                <mat-form-field appearance="outline">
                   <mat-label>Dirección</mat-label>
                   <input matInput formControlName="addressLine" />
+                  <mat-error>Ingresa la dirección.</mat-error>
                 </mat-form-field>
-                <mat-form-field>
+                <mat-form-field appearance="outline">
                   <mat-label>Distrito</mat-label>
                   <mat-select formControlName="district">
                     @for (d of destinations(); track d) {
                       <mat-option [value]="d">{{ d }}</mat-option>
                     }
                   </mat-select>
+                  <mat-error>Selecciona un distrito.</mat-error>
                 </mat-form-field>
-                <mat-form-field>
+                <mat-form-field appearance="outline">
                   <mat-label>Provincia</mat-label>
                   <input matInput formControlName="province" />
+                  <mat-error>Ingresa la provincia.</mat-error>
                 </mat-form-field>
-                <mat-form-field>
+                <mat-form-field appearance="outline">
                   <mat-label>Departamento</mat-label>
                   <input matInput formControlName="department" />
+                  <mat-error>Ingresa el departamento.</mat-error>
                 </mat-form-field>
-                <mat-form-field>
+                <mat-form-field appearance="outline">
                   <mat-label>Referencia</mat-label>
                   <input matInput formControlName="reference" />
                 </mat-form-field>
-                <mat-form-field>
+                <mat-form-field appearance="outline">
                   <mat-label>Fecha de entrega</mat-label>
-                  <input matInput type="date" formControlName="deliveryDate" />
+                  <input matInput type="date" formControlName="deliveryDate" [attr.min]="today" />
+                  @if (form.controls.deliveryDate.hasError('required')) {
+                    <mat-error>Elige una fecha de entrega.</mat-error>
+                  } @else {
+                    <mat-error>Elige una fecha desde hoy.</mat-error>
+                  }
                 </mat-form-field>
               </form>
               @if (orders.canModify(o)) {
@@ -209,13 +226,23 @@ export class DetallePedidoPage implements OnInit {
   protected readonly destinations = computed(() =>
     [...new Set(this.shipping.rates().map((r) => r.destination))].sort(),
   );
+  /** Hoy en Lima: el mínimo del campo de fecha, la misma regla del checkout (PBI-0146). */
+  protected readonly today = fechaDeLima(new Date());
+  /** Desde hoy en Lima, o la fecha que el pedido ya tiene (el BFF la acepta aunque haya pasado). */
+  private readonly fechaValida = (control: AbstractControl<string>): ValidationErrors | null =>
+    !control.value || esCambioDeFechaValido(control.value, this.today, this.order()?.deliveryDate ?? '')
+      ? null
+      : { fechaPasada: true };
   protected readonly form = new FormGroup({
     addressLine: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     district: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     province: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     department: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     reference: new FormControl('', { nonNullable: true }),
-    deliveryDate: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    deliveryDate: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, this.fechaValida],
+    }),
   });
   async ngOnInit() {
     this.loading.set(true);

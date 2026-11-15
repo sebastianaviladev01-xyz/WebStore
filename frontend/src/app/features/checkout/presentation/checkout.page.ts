@@ -20,7 +20,11 @@ import { EnviosFacade } from '../../envios/application/envios.facade';
 import { MetodoPago } from '../../pedidos/domain/pedido.model';
 import { CotizacionEnvio } from '../../envios/domain/envio.model';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
-import { esFechaDeEntregaValida, fechaDeEntregaPropuesta, fechaDeLima } from '../domain/fecha-entrega.rules';
+import {
+  esFechaDeEntregaValida,
+  fechaDeEntregaPropuesta,
+  fechaDeLima,
+} from '../../pedidos/domain/fecha-entrega.rules';
 
 /** La fecha de entrega va desde hoy en Lima (PBI-0096); vacía, la marca `required`. */
 const desdeHoyEnLima =
@@ -209,7 +213,11 @@ const desdeHoyEnLima =
               </section>
               <section class="ws-checkout-step">
                 <h2 class="ws-checkout-step-title">3. Método de pago</h2>
-                <mat-radio-group formControlName="paymentMethod" class="mt-5 grid gap-3">
+                <mat-radio-group
+                  formControlName="paymentMethod"
+                  class="mt-5 grid gap-3"
+                  aria-label="Método de pago"
+                >
                   <mat-radio-button value="card">Tarjeta de crédito o débito</mat-radio-button>
                   <mat-radio-button value="yape-plin">Yape / Plin</mat-radio-button>
                   <mat-radio-button value="transfer">Transferencia bancaria</mat-radio-button>
