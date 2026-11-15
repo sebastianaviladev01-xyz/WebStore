@@ -6,6 +6,7 @@ import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
 import {
   canModify,
   changeOrderStatus,
+  isOrderOpen,
   orderBelongsTo,
   roundMoney,
 } from '../../domain/pedidos/pedido.rules.mjs';
@@ -38,6 +39,12 @@ export function createPedidosUseCases({ store, security }) {
 
   function requireModifiableOrder(id, credentials) {
     const order = requireOrderAccess(id, credentials);
+    if (!isOrderOpen(order))
+      throw new DomainError(
+        'conflict',
+        'ORDER_NOT_MODIFIABLE',
+        'El pedido ya se envió, se entregó o se canceló: no se puede cambiar.',
+      );
     if (!canModify(order))
       throw new DomainError('conflict', 'ORDER_WINDOW_EXPIRED', 'La ventana de modificación ya venció.');
     return order;

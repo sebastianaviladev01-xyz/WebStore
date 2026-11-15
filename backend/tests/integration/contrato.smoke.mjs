@@ -155,6 +155,44 @@ try {
   products = await request('/bff/catalog/products');
   if (products[0].stock !== 15) throw new Error('Cancelar desde Admin no liberó el stock reservado');
 
+  // Un pedido entregado no lo cancela el cliente, aunque siga dentro de las 24 horas (PBI-0094).
+  const entregado = await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      orders: snapshot.orders.map((item) =>
+        item.id === entregado.id ? { ...item, status: 'delivered' } : item,
+      ),
+    }),
+  });
+  const cancelarEntregado = await raw(`/bff/orders/${entregado.id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': entregado.accessToken },
+    body: '{}',
+  });
+  if (
+    cancelarEntregado.status !== 409 ||
+    (await cancelarEntregado.json()).error?.code !== 'ORDER_NOT_MODIFIABLE'
+  )
+    throw new Error('El cliente pudo cancelar un pedido entregado');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      orders: snapshot.orders.map((item) =>
+        item.id === entregado.id ? { ...item, status: 'cancelled' } : item,
+      ),
+    }),
+  });
+  products = await request('/bff/catalog/products');
+  if (products[0].stock !== 15)
+    throw new Error('Cancelar el pedido entregado desde Admin no liberó el stock');
+
   // Un Admin con datos viejos no debe pisar el stock vendido mientras tanto.
   const staleSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });

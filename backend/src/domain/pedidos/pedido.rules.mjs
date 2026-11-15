@@ -7,11 +7,21 @@ export const ORDER_MODIFICATION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const roundMoney = (value) => Math.round(value * 100) / 100;
 
+/** Estados de un pedido; el Admin solo puede asignar estos (PBI-0095). */
+export const ORDER_STATUSES = ['confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+/** Estados en los que el cliente ya no puede cambiar ni cancelar el pedido (PBI-0094). */
+const CLOSED_STATUSES = new Set(['shipped', 'delivered', 'cancelled']);
+
+/** El pedido sigue dentro de las 24 horas posteriores a la compra. */
+export const withinModificationWindow = (order) =>
+  Date.now() - new Date(order.createdAt).getTime() <= ORDER_MODIFICATION_WINDOW_MS;
+
+/** El pedido no se envió, no se entregó y no se canceló. */
+export const isOrderOpen = (order) => !CLOSED_STATUSES.has(order.status);
+
 export function canModify(order) {
-  return (
-    Date.now() - new Date(order.createdAt).getTime() <= ORDER_MODIFICATION_WINDOW_MS &&
-    order.status !== 'cancelled'
-  );
+  return withinModificationWindow(order) && isOrderOpen(order);
 }
 
 /** Un pedido pertenece a la cuenta que lo hizo o a la cuenta verificada con el mismo correo. */
