@@ -40,9 +40,10 @@ body:has(.ws-home-previous) .ws-site-header input[type='search'] {
   gap: 4px;
 }
 
+/* Texto: el color de los enlaces, no el principal, que con C o un principal claro no se lee (PBI-0084). */
 .ws-home-previous .ws-hero-counter {
   min-width: 36px;
-  color: var(--ws-primary-strong);
+  color: var(--ws-link);
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
@@ -200,7 +201,7 @@ body:has(.ws-home-previous) .ws-site-header input[type='search'] {
 
 .ws-shell-previous .ws-navigation-trigger:hover,
 .ws-shell-previous .ws-navigation-trigger.is-active {
-  color: var(--ws-primary);
+  color: var(--ws-link);
 }
 
 /* La flecha de las categorías se ve siempre entera, como antes (en la actual va tenue en reposo). */

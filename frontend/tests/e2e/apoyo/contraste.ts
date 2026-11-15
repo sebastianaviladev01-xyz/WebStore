@@ -78,6 +78,11 @@ export function relacionDeContraste(primerPlano: string, fondo: string): number 
   return (x + 0.05) / (y + 0.05);
 }
 
+/** Un color opaco calculado por el navegador (`rgb()` o `color(srgb …)`), como `rgb()` para compararlo. */
+export function enRgb(color: string): string {
+  return aTexto(aRgba(color));
+}
+
 /** Color opaco que resulta de `encima` sobre `debajo`, como `rgb()`. */
 export function componer(encima: string, debajo: string): string {
   return aTexto(sobre(aRgba(encima), aRgba(debajo)));
