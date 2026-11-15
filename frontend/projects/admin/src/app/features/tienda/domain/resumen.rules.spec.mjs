@@ -21,7 +21,25 @@ const {
   distritosConMasPedidos,
   ultimosPedidos,
   distribucionPorEstado,
+  actividadReciente,
 } = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+
+// Lote 07b (ADR-0017), PBI-0028: la actividad reciente del Resumen muestra los 10 últimos eventos.
+test('PBI-0028: la actividad reciente son los 10 eventos más recientes, del último al primero', () => {
+  const eventos = Array.from({ length: 14 }, (_, n) => ({
+    id: `e-${n}`,
+    at: new Date(Date.UTC(2026, 10, 15, 10, n)).toISOString(),
+    type: 'order-created',
+    description: `Evento ${n}`,
+  }));
+  const desordenados = [...eventos.slice(7), ...eventos.slice(0, 7)].reverse();
+  const recientes = actividadReciente(desordenados);
+  assert.equal(recientes.length, 10);
+  assert.equal(recientes[0].id, 'e-13');
+  assert.equal(recientes[9].id, 'e-4');
+  assert.deepEqual(actividadReciente([]), []);
+  assert.equal(actividadReciente(eventos, 3).length, 3);
+});
 
 test('la fecha de Lima de un instante no depende de la zona del equipo', () => {
   assert.deepEqual(fechaEnLima('2026-11-01T03:00:00Z'), { anio: 2026, mes: 10, dia: 31 }, '22:00 del 31/10');

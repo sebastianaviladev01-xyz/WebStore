@@ -10,6 +10,7 @@ import {
   distribucionPorEstado,
   distritosConMasPedidos,
   serieDelMes,
+  actividadReciente,
   ultimosPedidos,
   ZONA_IANA_LIMA,
 } from '../domain/resumen.rules';
@@ -26,7 +27,8 @@ const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
 });
 
 /** Bloques del Resumen con título, los que se pliegan (D1: la fila de tarjetas no). */
-type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedidos' | 'estados';
+type BloqueResumen =
+  'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedidos' | 'estados' | 'actividad';
 
 @Component({
   selector: 'ws-admin-dashboard',
@@ -358,6 +360,58 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
             </div>
           </div>
         </section>
+
+        <!--
+          Lote 07b (provisional, por confirmar con Daniel): «Actividad reciente» (PBI-0028), los 10 últimos eventos que
+          registra el BFF, y «Personas en línea» (PBI-0027), pestañas de la tienda abiertas en los últimos 5 minutos.
+          Van al final para no mover los bloques que ya había; solo para el Resumen completo.
+        -->
+        <div class="mt-5 grid gap-5 lg:grid-cols-3">
+          <section
+            class="admin-card min-w-0 p-6 lg:col-span-2"
+            [class.self-start]="!bloqueAbierto('actividad')"
+          >
+            <h2 class="text-lg font-semibold">
+              <ng-container
+                *ngTemplateOutlet="
+                  botonDeBloque;
+                  context: { $implicit: 'actividad', titulo: 'Actividad reciente' }
+                "
+              />
+            </h2>
+            <div
+              id="bloque-actividad"
+              class="ws-plegable"
+              [attr.data-plegado]="bloqueAbierto('actividad') ? null : ''"
+            >
+              <div class="ws-plegable-contenido">
+                <p class="mt-1 text-sm text-muted">Pedidos, cambios de estado, cuentas y reclamos</p>
+                @if (actividad().length) {
+                  <ol class="mt-4 grid gap-3">
+                    @for (evento of actividad(); track evento.id) {
+                      <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+                        <span class="min-w-0">{{ evento.description }}</span>
+                        <time class="shrink-0 text-xs text-muted tabular-nums" [attr.datetime]="evento.at">
+                          {{ evento.at | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+                        </time>
+                      </li>
+                    }
+                  </ol>
+                } @else {
+                  <p class="mt-4 text-sm text-muted">Todavía no hay actividad.</p>
+                }
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-card min-w-0 self-start p-6">
+            <h2 class="text-lg font-semibold">Personas en línea</h2>
+            <p class="mt-2 text-3xl font-semibold text-ink tabular-nums">
+              {{ admin.snapshot()?.onlineVisitors ?? 0 | number }}
+            </p>
+            <p class="mt-2 text-xs text-muted">Pestañas de la tienda abiertas en los últimos 5 minutos</p>
+          </section>
+        </div>
       }
     }
   `,
@@ -391,6 +445,7 @@ export class ResumenPage {
   protected readonly serie = computed(() => serieDelMes(this.admin.orders(), this.ahora()));
   protected readonly distritos = computed(() => distritosConMasPedidos(this.admin.orders()));
   protected readonly ultimos = computed(() => ultimosPedidos(this.admin.orders()));
+  protected readonly actividad = computed(() => actividadReciente(this.admin.snapshot()?.activity ?? []));
   protected readonly estados = computed(() => {
     const distribucion = distribucionPorEstado(this.admin.orders());
     const etiqueta = ETIQUETAS_ESTADO_PEDIDO;

@@ -20,6 +20,8 @@ import { BffContenidoGateway } from './features/contenido/data/bff-contenido.gat
 import { BffPedidoGateway } from './features/pedidos/data/bff-pedido.gateway';
 import { BffEnvioGateway } from './features/envios/data/bff-envio.gateway';
 import { BffAparienciaGateway } from './features/temas/data/bff-apariencia.gateway';
+import { VisitaGateway } from './features/visitas/domain/visita.gateway';
+import { BffVisitaGateway } from './features/visitas/data/bff-visita.gateway';
 
 /** Composición: cada puerto del dominio se resuelve con su adaptador HTTP hacia el BFF. */
 export const appConfig: ApplicationConfig = {
@@ -40,5 +42,6 @@ export const appConfig: ApplicationConfig = {
     { provide: ContenidoGateway, useClass: BffContenidoGateway },
     { provide: ReclamoGateway, useClass: BffReclamoGateway },
     { provide: AparienciaGateway, useClass: BffAparienciaGateway },
+    { provide: VisitaGateway, useClass: BffVisitaGateway },
   ],
 };

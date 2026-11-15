@@ -25,6 +25,8 @@ export interface Categoria {
   readonly name: string;
   readonly parentId?: string;
   readonly order?: number;
+  /** Imagen pequeña opcional, como Data URL (lote 07b, PBI-0052); sin ella, la tienda se ve como antes. */
+  readonly imageUrl?: string;
 }
 
 export interface Marca {
@@ -114,6 +116,14 @@ export interface Pedido {
   readonly items: readonly LineaPedido[];
 }
 
+/** Un evento de la actividad reciente del Resumen (lote 07b, PBI-0028). */
+export interface EventoActividad {
+  readonly id: string;
+  readonly at: string;
+  readonly type: 'order-created' | 'order-status-changed' | 'account-registered' | 'complaint-registered';
+  readonly description: string;
+}
+
 export interface ConfiguracionTienda {
   readonly storeName: string;
   readonly logoText: string;
@@ -152,6 +162,10 @@ export interface SnapshotTienda {
   readonly orders: readonly Pedido[];
   readonly complaints: readonly Reclamo[];
   readonly config: ConfiguracionTienda;
+  /** Últimos eventos para el Resumen completo (`orders.manage`); vacía para el vendedor (lote 07b, PBI-0028). */
+  readonly activity?: readonly EventoActividad[];
+  /** Pestañas de la tienda abiertas en los últimos 5 minutos; `null` para el vendedor (lote 07b, PBI-0027). */
+  readonly onlineVisitors?: number | null;
 }
 
 /** Etiquetas visibles: el panel nunca muestra los códigos internos. */

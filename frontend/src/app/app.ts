@@ -3,6 +3,7 @@ import { RouterOutlet } from '@angular/router';
 
 import { TemasFacade } from './features/temas/application/temas.facade';
 import { SelectorTemaComponent } from './features/temas/presentation/selector-tema.component';
+import { VisitasFacade } from './features/visitas/application/visitas.facade';
 
 @Component({
   selector: 'ws-root',
@@ -23,5 +24,7 @@ export class App {
 
   constructor() {
     void this.temas.cargar();
+    // PBI-0027: latido para «Personas en línea» del Admin, sin cookie ni datos de la persona.
+    inject(VisitasFacade).iniciar();
   }
 }

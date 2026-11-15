@@ -1,7 +1,7 @@
 // Cada import cabe en una línea: resumen.rules.spec.mjs borra las líneas que empiezan por «import» antes de transpilar.
 // prettier-ignore
 import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
-import type { Cliente, EstadoPedido, Pedido } from './tienda.model';
+import type { Cliente, EstadoPedido, EventoActividad, Pedido } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
 
 /** Zona horaria de la tienda: las fechas del Resumen son las de Lima (PBI-0080: una sola vez en el Admin). */
@@ -187,4 +187,12 @@ export function distribucionPorEstado(pedidos: readonly Pedido[]): DistribucionE
   const faltan = 100 - porcentajes.reduce((suma, valor) => suma + valor, 0);
   for (const indice of orden.slice(0, faltan)) porcentajes[indice]++;
   return { completados: porcentajes[0], enProceso: porcentajes[1], otros: porcentajes[2] };
+}
+
+/**
+ * Actividad reciente del Resumen (lote 07b, ADR-0017, PBI-0028): los `limite` eventos más recientes, del último al
+ * primero. El BFF guarda los últimos 50.
+ */
+export function actividadReciente(eventos: readonly EventoActividad[], limite = 10): EventoActividad[] {
+  return [...eventos].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, limite);
 }

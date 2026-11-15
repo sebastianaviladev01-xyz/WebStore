@@ -25,6 +25,9 @@ test('el superadministrador ve los bloques del Resumen en su orden', async ({ pa
     'Alertas de inventario',
     'Últimos pedidos',
     'Pedidos por estado',
+    // Lote 07b (PBI-0028 y PBI-0027): al final, para no mover los bloques que ya había.
+    'Actividad reciente',
+    'Personas en línea',
   ]);
 
   // Cada tarjeta lleva su «Ver más» hacia el módulo correspondiente.
@@ -90,6 +93,7 @@ const BLOQUES_SUPERADMIN = [
   'Alertas de inventario',
   'Últimos pedidos',
   'Pedidos por estado',
+  'Actividad reciente',
 ] as const;
 
 const botonDeBloque = (page: Page, titulo: string) =>
@@ -117,9 +121,7 @@ async function esperarBloques(page: Page, abiertos: readonly string[], plegados:
 }
 
 test.describe('Bloques plegables del Resumen', () => {
-  test('los cinco bloques con título tienen botón plegable dentro del h2 y las tarjetas no', async ({
-    page,
-  }) => {
+  test('los bloques con título tienen botón plegable dentro del h2 y las tarjetas no', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const main = page.getByRole('main');
 
