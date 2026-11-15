@@ -54,7 +54,7 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. La sesión principal re
 | 06 | Admin: guardado y datos | PBI-0023, 0066, 0067, 0070, 0071, 0119 a 0131, 0142, 0145 |
 | 07 | Admin: permisos, listados y accesibilidad | PBI-0013, 0059, 0132, 0139 a 0141, 0148 a 0151, 0153 |
 | 07b | Admin: funciones nuevas y lo que dejó el lote 07 | PBI-0027, 0028, 0033, 0034, 0044, 0052, 0155 a 0158 |
-| 08 | Pruebas y deuda del frontend | PBI-0022, 0025, 0029, 0050, 0055 a 0057, 0077 a 0079, 0081, 0082, 0085, 0133, 0134, 0136, 0144, 0154 |
+| 08 | Pruebas y deuda del frontend | PBI-0022, 0025, 0029, 0050, 0055 a 0057, 0077 a 0079, 0081, 0082, 0085, 0133, 0134, 0136, 0144, 0154, 0159 |
 | 09 | Cierre documental | Decisiones provisionales (PBI-0015 a 0019, 0021, 0051, 0083) y elementos externos (PBI-0001 a 0009, 0011, 0012, 0041 a 0043, 0058) |
 
 **Orden de ejecución, por prioridad** (Sebastián Avila, 2026-11-14: «ordénalos por orden de prioridad»): 01, 04, 06, 03, 05, 07, 07b, 02, 08 y 09. El lote 07 se partió en dos el 2026-11-15 (permisos, listados y accesibilidad; y funciones nuevas) para que cada PR siga siendo revisable. Va primero lo que puede perder datos, dinero o seguridad, y al final la deuda técnica y los documentos. El número de cada lote no cambia.
