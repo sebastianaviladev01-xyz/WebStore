@@ -72,6 +72,8 @@ test.describe('PBI-0140: datos al entrar y «Actualizar» del Resumen', () => {
   }) => {
     const antes = (await leerProductos()).find((producto) => producto.id === 'p-004')!;
     try {
+      // Las pruebas anteriores de la suite pueden haber vendido unidades: se parte de un stock alto conocido.
+      await actualizarProducto('p-004', { stock: 50 });
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await expect(page.getByRole('banner').getByRole('button', { name: 'Actualizar' })).toHaveCount(0);
       const alertas = page
