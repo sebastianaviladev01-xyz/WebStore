@@ -1164,8 +1164,118 @@ try {
     }),
   });
 
+  // Lote 07b (ADR-0017): latido de la tienda, actividad, notificaciones, perfil e imagen de categoría.
+  await esperarError(
+    await raw('/bff/visits', { method: 'POST', body: JSON.stringify({ visitId: 'corto' }) }),
+    400,
+    'INVALID_VISIT_ID',
+    'Latido con un identificador inválido',
+  );
+  await request('/bff/visits', {
+    method: 'POST',
+    body: JSON.stringify({ visitId: 'smoke-pestana-0000001' }),
+  });
+  owner = await adminLogin();
+  const resumen07b = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  if (resumen07b.onlineVisitors < 1 || !Array.isArray(resumen07b.activity) || !resumen07b.activity.length)
+    throw new Error('El snapshot del superadmin no trae onlineVisitors ni activity');
+  const vendedor07b = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
+  const resumenVendedor = await request('/bff/admin/snapshot', { headers: authorization(vendedor07b.token) });
+  if (resumenVendedor.onlineVisitors !== null || resumenVendedor.activity.length)
+    throw new Error('El vendedor no debe recibir onlineVisitors ni activity');
+  const campana = await request('/bff/admin/notifications', { headers: authorization(owner.token) });
+  if (typeof campana.total !== 'number' || !Array.isArray(campana.orders))
+    throw new Error('GET /admin/notifications no tiene la forma { seenAt, total, orders }');
+  await esperarError(
+    await raw('/bff/admin/notifications', { headers: authorization(vendedor07b.token) }),
+    403,
+    'INSUFFICIENT_ROLE',
+    'Notificaciones del vendedor',
+  );
+  await esperarError(
+    await raw('/bff/admin/notifications/seen', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ until: 'ayer' }),
+    }),
+    400,
+    'INVALID_SEEN_AT',
+    'Visto con una fecha inválida',
+  );
+  if (campana.orders.length) {
+    const vista = await request('/bff/admin/notifications/seen', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ until: campana.orders[0].createdAt }),
+    });
+    if (vista.total !== 0) throw new Error('Tras marcar «visto» no deben quedar pedidos nuevos');
+  }
+  const perfil07b = await request('/bff/admin/profile', {
+    method: 'PATCH',
+    headers: authorization(vendedor07b.token),
+    body: JSON.stringify({ name: 'Vendedor Demo', email: 'catalogo@webstore.demo' }),
+  });
+  if (perfil07b.user.email !== 'catalogo@webstore.demo')
+    throw new Error('PATCH /admin/profile no devolvió el usuario');
+  await esperarError(
+    await raw('/bff/admin/profile', {
+      method: 'PATCH',
+      headers: authorization(vendedor07b.token),
+      body: JSON.stringify({ name: 'Vendedor Demo', email: 'owner@webstore.demo' }),
+    }),
+    409,
+    'ADMIN_EMAIL_TAKEN',
+    'Perfil con el correo de otro usuario',
+  );
+  await esperarError(
+    await raw('/bff/admin/profile/password', {
+      method: 'PUT',
+      headers: authorization(vendedor07b.token),
+      body: JSON.stringify({ currentPassword: 'NoEsLaClave1', newPassword: 'Catalogo#2027' }),
+    }),
+    400,
+    'INVALID_CURRENT_PASSWORD',
+    'Cambio de contraseña con la actual equivocada',
+  );
+  await esperarError(
+    await raw('/bff/admin/profile/password', {
+      method: 'PUT',
+      headers: authorization(vendedor07b.token),
+      body: JSON.stringify({ currentPassword: 'Catalogo#2026', newPassword: 'corta' }),
+    }),
+    400,
+    'WEAK_PASSWORD',
+    'Cambio de contraseña débil',
+  );
+  await esperarError(
+    await raw('/bff/admin/profile', { method: 'PATCH', body: '{}' }),
+    401,
+    'ADMIN_AUTHENTICATION_REQUIRED',
+    'Perfil sin sesión',
+  );
+  const conImagen = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const categoria07b = conImagen.categories[0];
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: conImagen.revision,
+      categories: { upsert: [{ id: categoria07b.id, imageUrl: 'data:image/png;base64,iVBORw0KGgo=' }] },
+    }),
+  });
+  const publicas07b = await request('/bff/catalog/categories');
+  if (
+    publicas07b.find((item) => item.id === categoria07b.id).imageUrl !== 'data:image/png;base64,iVBORw0KGgo='
+  )
+    throw new Error('El catálogo no publica la imagen de la categoría');
+  if (publicas07b.some((item) => !('imageUrl' in item)))
+    throw new Error('Cada categoría pública trae imageUrl');
+
   console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
   console.log('✓ Storefront → Admin: pedido/cliente/inventario');
+  console.log(
+    '✓ Lote 07b: latido y personas en línea, actividad, notificaciones, perfil e imagen de categoría',
+  );
   console.log('✓ Pedidos: acceso por cuenta o token, stock liberado al cancelar, envío desde la tabla');
   console.log('✓ Concurrencia: un guardado desactualizado del Admin se rechaza (409) sin alterar el stock');
   console.log('✓ Categorías: se rechazan ciclos y padres inexistentes');

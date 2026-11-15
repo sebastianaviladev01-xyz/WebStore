@@ -40,6 +40,9 @@ import { EnlaceNavegacion } from '../features/contenido/domain/navegacion.rules'
               (mouseenter)="activeCategory.set(category.id)"
               (click)="toggle(category.id)"
             >
+              @if (category.imageUrl) {
+                <img class="ws-navigation-category-image" [src]="category.imageUrl" alt="" />
+              }
               {{ category.name }}
               <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
             </button>
@@ -92,6 +95,9 @@ import { EnlaceNavegacion } from '../features/contenido/domain/navegacion.rules'
               [queryParams]="{ categoria: category.id }"
               (mouseenter)="activeCategory.set(null)"
             >
+              @if (category.imageUrl) {
+                <img class="ws-navigation-category-image" [src]="category.imageUrl" alt="" />
+              }
               {{ category.name }}
             </a>
           }

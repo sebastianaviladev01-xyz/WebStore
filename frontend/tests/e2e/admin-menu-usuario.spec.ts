@@ -11,8 +11,8 @@ import {
 /**
  * Menú de usuario del Admin y página Perfil (feature 003, TEST-06). El botón de la cabecera muestra las
  * iniciales, el nombre y el rol en mayúsculas (AC-08); el panel, la cuenta, «Perfil» y «Cerrar sesión»
- * (AC-09, AC-10). Perfil es de solo lectura y muestra los datos de la sesión (AC-12, D5): ninguna petición al
- * BFF al llegar desde el menú.
+ * (AC-09, AC-10). Perfil muestra los datos de la sesión (AC-12, D5) sin pedirlos al BFF al llegar desde el menú;
+ * desde el lote 07b (PBI-0034) se pueden editar.
  */
 const perfiles = [
   {
@@ -143,12 +143,16 @@ test('«Cerrar sesión» lleva al acceso y borra el token, también si el BFF fa
 });
 
 for (const { rol, cuenta, nombre, etiqueta, descripcion } of perfiles) {
-  test(`el ${rol} abre su perfil de solo lectura desde el menú sin pedir datos al BFF`, async ({ page }) => {
+  // Lote 07b (PBI-0034): el perfil ya no es de solo lectura; sigue sin pedir datos propios al BFF al abrirse (la
+  // campana de la cabecera, PBI-0033, sí consulta los pedidos nuevos al cambiar de página).
+  test(`el ${rol} abre su perfil desde el menú, con sus datos y sin pedirlos al BFF`, async ({ page }) => {
     await ingresarAlAdmin(page, cuenta);
 
     const peticionesAlBff: string[] = [];
     page.on('request', (request) => {
-      if (new URL(request.url()).pathname.startsWith('/bff/')) peticionesAlBff.push(request.url());
+      const ruta = new URL(request.url()).pathname;
+      if (ruta.startsWith('/bff/') && ruta !== '/bff/admin/notifications')
+        peticionesAlBff.push(request.url());
     });
     const panel = await abrirMenuUsuario(page);
     await panel.getByRole('menuitem', { name: 'Perfil' }).click();
@@ -157,14 +161,12 @@ for (const { rol, cuenta, nombre, etiqueta, descripcion } of perfiles) {
     await expect(page).toHaveTitle('WebStore Admin | Perfil');
     const principal = page.getByRole('main');
     await expect(principal.getByRole('heading', { level: 1, name: 'Perfil' })).toBeVisible();
-    await expect(principal).toContainText(nombre);
-    await expect(principal).toContainText(cuenta.email);
+    await expect(principal.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
+    await expect(principal.getByRole('textbox', { name: 'Correo' })).toHaveValue(cuenta.email);
     await expect(principal).toContainText(etiqueta);
     await expect(principal).toContainText(descripcion);
-
-    // Solo lectura: ni campos ni botones (tampoco «Guardar»).
-    await expect(principal.getByRole('textbox')).toHaveCount(0);
-    await expect(principal.getByRole('button')).toHaveCount(0);
+    await expect(principal.getByRole('button', { name: 'Guardar datos' })).toBeVisible();
+    await expect(principal.getByRole('button', { name: 'Cambiar contraseña' })).toBeVisible();
 
     // El chunk de la página ya cargó y se pintó: lo que se haya pedido al BFF, ya está pedido.
     await page.waitForLoadState('networkidle');

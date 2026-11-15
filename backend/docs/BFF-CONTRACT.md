@@ -33,9 +33,21 @@ Errores comunes a todas las rutas:
 
 | Método | Ruta | Respuesta | Errores (`code`) |
 | --- | --- | --- | --- |
-| `GET` | `/catalog/categories` | `200` lista de categorías, ordenadas por padre, `order` y nombre | — |
+| `GET` | `/catalog/categories` | `200` lista de categorías, ordenadas por padre, `order` y nombre; cada una con `imageUrl` (la imagen pequeña de la categoría o `null`, lote 07b, PBI-0052) | — |
 | `GET` | `/catalog/products` | `200` lista de productos activos | — |
 | `GET` | `/catalog/products/:slug` | `200` el producto activo con ese slug | `404 PRODUCT_NOT_FOUND`, `400 INVALID_PATH` |
+
+## Visitas de la tienda
+
+Personas en línea (lote 07b, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0027; provisional, por confirmar con Daniel):
+
+| Método | Ruta | Petición | Respuesta | Errores (`code`) |
+| --- | --- | --- | --- | --- |
+| `POST` | `/visits` | `{ visitId }`: identificador aleatorio de la pestaña, de 16 a 128 caracteres `A-Z`, `a-z`, `0-9`, `-` o `_` | `204` | `400 INVALID_VISIT_ID` |
+
+- La tienda envía un latido al abrirse y cada minuto mientras la pestaña está visible. No hay cookie: el identificador vive en `sessionStorage` de esa pestaña y se pierde al cerrarla.
+- El BFF guarda solo el identificador y la hora del último latido, **en memoria** (nunca en el estado ni en disco; al reiniciar, la cuenta vuelve a cero), sin IP, agente de usuario ni otro dato del visitante. Cuenta las pestañas con un latido en los últimos 5 minutos y recuerda como mucho 10 000: con la memoria llena, una pestaña nueva no se cuenta hasta que vencen otras.
+- La cifra llega al Admin como `onlineVisitors` del snapshot.
 
 ## Contenido
 
@@ -131,10 +143,23 @@ La obligación de responder en 15 días hábiles está descrita por [Indecopi](h
 | `GET` | `/admin/snapshot` | Bearer | `200` snapshot | `401 ADMIN_AUTHENTICATION_REQUIRED` |
 | `PUT` | `/admin/snapshot` | Bearer; `{ revision, …colecciones modificadas }` | `200` snapshot actualizado | `401`, `403 INSUFFICIENT_ROLE` (`details.collection`), `403 CATALOG_SCOPE_VIOLATION`, `403 USER_SCOPE_VIOLATION`, `409 STALE_SNAPSHOT`, `400 INVALID_COLLECTION` (`details.collection`, `field`, `id`), `400 INVALID_PRODUCTS`, `400 INVALID_CATEGORY_TREE` (`details.categoryId`), `400 INVALID_ROLE`, `400 WEAK_PASSWORD`, `409 LAST_SUPERADMIN`, `409 SELF_LOCKOUT`, `409 COMPLAINTS_READ_ONLY`, `409 INSUFFICIENT_STOCK`, `409 BRAND_IN_USE` (`details.brandId`, `products`), `409 CATEGORY_IN_USE` (`details.categoryId`, `products`), `409 CATEGORY_HAS_CHILDREN` (`details.categoryId`, `children`), `413 PAYLOAD_TOO_LARGE` |
 | `POST` | `/admin/reset` | Bearer | `200` snapshot de la demo | `401`, `403 INSUFFICIENT_ROLE`, `403 STORE_RESET_DISABLED` |
+| `PATCH` | `/admin/profile` | Bearer; `{ name, email }` | `200 { user }` | `401 ADMIN_AUTHENTICATION_REQUIRED`, `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `409 ADMIN_EMAIL_TAKEN` |
+| `PUT` | `/admin/profile/password` | Bearer; `{ currentPassword, newPassword }` | `204`; cierra las demás sesiones de esa persona | `401 ADMIN_AUTHENTICATION_REQUIRED`, `400 VALIDATION_ERROR`, `400 INVALID_CURRENT_PASSWORD`, `400 WEAK_PASSWORD` |
+| `GET` | `/admin/notifications` | Bearer | `200 { seenAt, total, orders }` | `401`, `403 INSUFFICIENT_ROLE` (sin `orders.manage`) |
+| `PUT` | `/admin/notifications/seen` | Bearer; `{ until }` | `200 { seenAt, total, orders }` | `401`, `403 INSUFFICIENT_ROLE`, `400 INVALID_SEEN_AT` |
 
 El ingreso compara la contraseña aunque el correo no exista o el usuario esté inactivo, para tardar lo mismo.
 
+Perfil propio (lote 07b, PBI-0034; provisional, por confirmar con Daniel): los tres roles editan su nombre y su correo y cambian su contraseña, con una ruta propia que no pasa por el snapshot. Las rutas validan la sesión antes de leer el cuerpo. El nombre se recorta; el correo se guarda en minúsculas y no puede ser el de otro usuario del panel (`ADMIN_EMAIL_TAKEN`, «Ese correo ya lo usa otro usuario del panel.»). Cambiar los datos avanza la `revision` del snapshot (los usuarios viajan en él). La contraseña nueva sigue la política de las cuentas (10 caracteres, una letra y un número: `WEAK_PASSWORD`); la actual equivocada responde `INVALID_CURRENT_PASSWORD` («La contraseña actual no es correcta.») sin cerrar nada. Al cambiarla se cierran las demás sesiones de esa persona y se conserva la que hizo el cambio.
+
+Notificaciones (lote 07b, PBI-0033; provisional, por confirmar con Daniel), para los roles con `orders.manage`: `orders` son los pedidos en estado `confirmed` creados después de `seenAt` (todos si es `null`), del más reciente al más antiguo, como mucho 20, cada uno con `{ id, customer, total, createdAt }` (sin datos de contacto); `total` los cuenta todos. `PUT /admin/notifications/seen` recibe `until`, el `createdAt` del pedido más reciente que la persona vio en el menú (fecha ISO en UTC; si no, `INVALID_SEEN_AT`): así un pedido que llegó mientras tanto sigue siendo nuevo. «Visto» se guarda por usuario en el estado (`adminNotificationsSeen`), nunca retrocede ni pasa de la hora del BFF, no cambia la `revision` y se borra si se elimina el usuario.
+
 El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía.
+
+Desde el lote 07b, para el Resumen completo (roles con `orders.manage`; provisional, por confirmar con Daniel):
+
+- `onlineVisitors` (PBI-0027): pestañas de la tienda con un latido en los últimos 5 minutos ([Visitas de la tienda](#visitas-de-la-tienda)); `null` para el vendedor.
+- `activity` (PBI-0028): los últimos eventos, del más reciente al más antiguo, cada uno `{ id, at, type, description }`; `[]` para el vendedor. `type` es `order-created`, `order-status-changed` (desde el Admin, «El equipo pasó el pedido … a «…».», o una cancelación del cliente desde la tienda), `account-registered` o `complaint-registered`. La descripción no lleva correo, teléfono, documento ni dirección: solo el nombre que el Admin ya muestra (el comprador en Pedidos, quien reclama en Reclamaciones); la de una cuenta no dice de quién es, porque el Admin no muestra las cuentas. El estado guarda los últimos 50 (`activity`); no se edita desde el Admin.
 
 Los pedidos del snapshot traen el detalle para despachar: cliente, correo, teléfono, dirección, distrito, tienda de origen, fecha de entrega, medio de pago, `termsAcceptedAt` (cuándo aceptó el comprador los términos; `null` en los pedidos anteriores a esa casilla, lote 06, PBI-0145), líneas (`productId`, `name`, `quantity`, `unitPrice`), subtotal, envío y total. Nunca incluyen el token de acceso del cliente.
 
@@ -154,9 +179,8 @@ Validación del guardado (lote 01): los cambios se aplican sobre una copia del e
 | Colección | Reglas |
 | --- | --- |
 | Todas | Lista de objetos con `id` de texto, no vacío y único |
-| `products` (rol con `products.manage`: los tres roles fijos desde el lote 07) | `name`, `sku` (único sin distinguir mayúsculas; el mensaje dice qué producto lo usa), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen. Dirección de ficha única (PBI-0129): un producto nuevo o renombrado cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otro se rechaza con `field: 'slug'` y el nombre del otro; dos que ya lo compartían no bloquean otros guardados |
-| `products` (rol con `products.edit` sin `products.manage`; ninguno de los roles fijos desde el lote 07) | `name` con texto y `stock` entero `>= 0`; el resto de la ficha, del tipo que corresponde; precio, SKU, categoría, marca y estado se conservan del servidor. También la dirección de ficha única |
-| `categories` | `name` con texto; `parentId` texto o vacío; `order` número o vacío; sin ciclos ni padres inexistentes (`INVALID_CATEGORY_TREE`). Dirección única (lote 07, PBI-0148): una categoría nueva o renombrada cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otra se rechaza con `field: 'slug'` y el nombre de la otra; dos que ya lo compartían no bloquean otros guardados. Una categoría eliminada no puede tener subcategorías (`409 CATEGORY_HAS_CHILDREN`) ni productos (`409 CATEGORY_IN_USE`) |
+| `products` (rol con `products.manage`: los tres roles fijos desde el lote 07; sin él, `403 INSUFFICIENT_ROLE`) | `name`, `sku` (único sin distinguir mayúsculas; el mensaje dice qué producto lo usa), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen. Dirección de ficha única (PBI-0129): un producto nuevo o renombrado cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otro se rechaza con `field: 'slug'` y el nombre del otro; dos que ya lo compartían no bloquean otros guardados |
+| `categories` | `name` con texto; `parentId` texto o vacío; `order` número o vacío; `imageUrl` opcional (lote 07b, PBI-0052): Data URL de una imagen PNG, JPG, WebP o SVG en base64 de hasta 100 000 caracteres, o `null` para quitarla (`field: 'imageUrl'`); sin ciclos ni padres inexistentes (`INVALID_CATEGORY_TREE`). Dirección única (lote 07, PBI-0148): una categoría nueva o renombrada cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otra se rechaza con `field: 'slug'` y el nombre de la otra; dos que ya lo compartían no bloquean otros guardados. Una categoría eliminada no puede tener subcategorías (`409 CATEGORY_HAS_CHILDREN`) ni productos (`409 CATEGORY_IN_USE`) |
 | `brands` | `name` con texto y `active` booleano. Una marca eliminada no puede tener productos (`409 BRAND_IN_USE`, con cuántos en `details.products`). El uso se mide después de aplicar los productos del mismo guardado (PBI-0131) |
 | `customers` | `name` y `email` con texto; `orders` entero `>= 0` si viene |
 | `banners` | `title` texto; `placement` `hero`, `promotion` o `secondary`; `active` booleano; `imageFit`, `imageTone` e `imageFocusY` de sus valores si vienen; `endAt` igual o posterior a `startAt` (PBI-0128) |
@@ -185,7 +209,7 @@ Permisos de la reunión del 11/11 (lote 07, [ADR-0017](../../docs/adrs/0017-cerr
 Reglas del servidor:
 
 - Si el `PUT` incluye una colección que el rol no puede modificar, responde `403 INSUFFICIENT_ROLE` con `details.collection` (por ejemplo, `config` del administrador u `orders` del vendedor).
-- Un rol con `products.manage` sin `products.delete` (el vendedor) no puede eliminar productos, ni con `remove` ni enviando la lista sin uno: `403 CATALOG_SCOPE_VIOLATION` («Tu rol no puede eliminar productos.»). Un rol con `products.edit` sin `products.manage` (ninguno de los fijos) solo cambia la ficha: no crea ni elimina, y precio, SKU, categoría, marca y estado se conservan del servidor.
+- Un rol con `products.manage` sin `products.delete` (el vendedor) no puede eliminar productos, ni con `remove` ni enviando la lista sin uno: `403 CATALOG_SCOPE_VIOLATION` («Tu rol no puede eliminar productos.»). Cambiar productos pide `products.manage`; sin él, `403 INSUFFICIENT_ROLE` (lote 07b, PBI-0158: se quitó la rama de «solo la ficha», que ningún rol fijo usaba; si Daniel decide un vendedor con permisos parciales, hay que volver a añadirla).
 - Usuarios: el snapshot solo trae los usuarios de los roles que gestiona quien pide (el administrador, los vendedores). Crear, cambiar o dejar en otro rol a un usuario fuera de esos roles, o eliminar usuarios sin `users.delete`, responde `403 USER_SCOPE_VIOLATION` sin cambiar nada («Tu rol solo puede gestionar usuarios con rol Vendedor.» o «Tu rol no puede eliminar usuarios. Desactívalo para quitarle el acceso.»). Se comprueba antes que `INVALID_ROLE`, `LAST_SUPERADMIN` y `SELF_LOCKOUT`; un rol fuera de los fijos responde `INVALID_ROLE`.
 - Un usuario con un rol fuera de los tres fijos se rechaza con `400 INVALID_ROLE`.
 - Debe quedar al menos un superadministrador activo (`409 LAST_SUPERADMIN`) y nadie puede eliminarse, desactivarse ni cambiarse el rol a sí mismo (`409 SELF_LOCKOUT`).
@@ -195,6 +219,7 @@ Migraciones de los datos guardados por versiones anteriores. Cada una se ejecuta
 
 - `schemaVersion: 2`: sin `schemaVersion`, los roles pasan `owner` → `superadmin` y `catalog-maintainer` → `vendedor`, y se agrega la cuenta demo `admin@webstore.demo` si no existe.
 - `schemaVersion: 3`: el estado gana `appearance` (`revision`, `activeThemeId` y `customThemes`), con B activo. Si los colores de Contenido difieren de los de B (`#1D4ED8` y `#C2410C`, sin distinguir mayúsculas), se crea con ellos el tema propio «Colores de Contenido» (con el fondo principal, el fondo secundario y el contraste de B) y queda activo; si el nombre ya existe, «Colores de Contenido (2)», «(3)»… Un color ausente, que no es `#RRGGBB` o el anterior por defecto (borgoña `#6E173C` o bronce `#8C6845`) cuenta como el de B. Después, `primaryColor` y `secondaryColor` se quitan de la configuración. Un tema activo que no existe pasa a B. `POST /admin/reset` vuelve a B, sin temas propios.
+- Lote 07b, sin migración ni cambio de `schemaVersion`: un estado sin `activity` ni `adminNotificationsSeen` las carga vacías; al cargar se descartan los elementos mal formados y `activity` se recorta a 50.
 
 En cada arranque, además, cada tema propio guardado pasa por las reglas con que se crea (lote 03, PBI-0068): un nombre con caracteres invisibles los pierde y uno repetido se renombra con «(2)», «(3)»…; un tema que no es un objeto, sin `id` de texto, con un `id` repetido o de un predefinido, con un color que no es `#RRGGBB`, un nombre inválido o un contraste que impediría guardarlo se descarta. Si el descartado era el activo, queda B. Cada cambio se escribe en el log del BFF (`console.warn`), con el tema descartado completo para poder recuperarlo. Así, un tema guardado a mano o por una versión anterior ya no deja `/appearance` ni `/appearance/theme.css` respondiendo `500`.
 

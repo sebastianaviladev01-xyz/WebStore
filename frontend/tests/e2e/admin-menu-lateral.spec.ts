@@ -201,8 +201,12 @@ test.describe('Menú lateral en escritorio', () => {
 test.describe('Menú lateral en móvil (375 px)', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
-  test('la tira tiene los 13 enlaces, sin títulos de grupo ni desborde horizontal', async ({ page }) => {
+  // Lote 07b (PBI-0044): la tira horizontal pasa a un panel lateral que se abre con la hamburguesa.
+  test('el panel lateral tiene los 13 enlaces, sin títulos de grupo plegables ni desborde horizontal', async ({
+    page,
+  }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await page.getByRole('button', { name: 'Abrir el menú' }).click();
 
     await expect(menuAdmin(page).getByRole('button')).toHaveCount(0);
     const enlaces = menuAdmin(page).getByRole('link');

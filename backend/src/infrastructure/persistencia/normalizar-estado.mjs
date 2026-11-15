@@ -1,4 +1,6 @@
+import { normalizarActividad } from '../../domain/admin/actividad.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
+import { normalizarVistos } from '../../domain/admin/notificaciones.rules.mjs';
 import { nowIso } from '../../domain/comun/reloj.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { migrateRole } from '../../domain/sesion/rol.rules.mjs';
@@ -212,6 +214,9 @@ export function normalizeState(input, demoPasswords, avisar = () => {}) {
         userId: user.id,
         ...hashPassword(demoPasswordFor(demoPasswords, migrateRole(user.role))),
       }));
+  // Lote 07b (PBI-0028 y PBI-0033): listas nuevas; sin ellas quedan vacías, sin migración ni cambio de versión.
+  next.activity = normalizarActividad(input.activity);
+  next.adminNotificationsSeen = normalizarVistos(input.adminNotificationsSeen);
   next.appearance = normalizarApariencia(input.appearance ?? structuredClone(seed.appearance), avisar);
   // Cada migración se ejecuta una sola vez, al pasar de una versión anterior a la suya.
   const versionGuardada = input.schemaVersion ?? 1;

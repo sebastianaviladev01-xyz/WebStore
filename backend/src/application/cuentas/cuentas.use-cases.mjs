@@ -1,3 +1,4 @@
+import { conEvento, eventoCuentaRegistrada } from '../../domain/admin/actividad.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { nowIso } from '../../domain/comun/reloj.mjs';
 import { normalizeEmail, requireEmail, requireFields } from '../../domain/comun/validacion.rules.mjs';
@@ -122,6 +123,11 @@ export function createCuentasUseCases({ store, security, exposeTestCodes }) {
     });
     const code = issueCode(account, 'verification');
     if (!existing) store.state.accounts.push(account);
+    // PBI-0028: la actividad reciente del Resumen; no dice de quién es la cuenta (el Admin no muestra las cuentas).
+    store.state.activity = conEvento(
+      store.state.activity ?? [],
+      eventoCuentaRegistrada({ at: nowIso() }, account),
+    );
     store.save();
     return withCode({ verificationRequired: true, message: REGISTRATION_MESSAGE }, code);
   }

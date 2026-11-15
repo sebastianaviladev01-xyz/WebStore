@@ -7,16 +7,32 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
-import { filtrarTarifas, paginarTarifas, leerDistritos } from '../domain/tarifa-envio.rules';
+import { BorradorTarifas, borradorDeTarifasVigente, leerDistritos } from '../domain/tarifa-envio.rules';
 import { TarifaEnvio } from '../domain/tienda.model';
+import {
+  FILTROS_TARIFAS_VACIOS,
+  filtrarTarifasDeEnvio,
+  leerFiltrosTarifas,
+  parametrosDeFiltrosTarifas,
+} from '../domain/filtro-listado.rules';
+import { conservarBorrador } from './borrador';
+import { filtrosDeListado } from './filtros-de-listado';
+import { PaginacionComponent } from './paginacion.component';
+import { PanelFiltrosComponent } from './panel-filtros.component';
 
 const EMPTY_RATE = { origin: '', destinations: '', price: 0 };
-/** Filas por página: con unas 1.600 tarifas, la tabla se recorre en páginas cortas. */
-const PAGE_SIZE = 25;
 
 @Component({
   selector: 'ws-shipping-page',
-  imports: [CurrencyPipe, ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [
+    CurrencyPipe,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    PanelFiltrosComponent,
+    PaginacionComponent,
+  ],
   template: `
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Tarifas de envío</h1>
     <p class="mt-2 max-w-2xl text-sm text-muted">
@@ -24,54 +40,49 @@ const PAGE_SIZE = 25;
       corresponde a la tienda más cercana.
     </p>
 
+    <!-- PBI-0155: la búsqueda y el origen van en el panel estándar de la feature 008, con los filtros en la URL. -->
+    <ws-filter-panel
+      class="mt-7"
+      etiqueta="Filtros de tarifas"
+      [formGroup]="filtros.borrador"
+      [buscando]="filtros.buscando()"
+      [error]="filtros.error()"
+      (buscar)="filtros.buscar()"
+      (limpiar)="filtros.limpiar()"
+    >
+      <mat-form-field>
+        <mat-label>Buscar tarifa</mat-label>
+        <input matInput formControlName="texto" />
+        <mat-hint>Por distrito u origen</mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Filtrar por origen</mat-label>
+        <mat-select formControlName="origen">
+          <mat-option value="">Todos los orígenes</mat-option>
+          @for (origin of origins(); track origin) {
+            <mat-option [value]="origin">{{ origin }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </ws-filter-panel>
+    @if (borrador.aviso(); as aviso) {
+      <p class="mt-6 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">{{ aviso }}</p>
+    }
+
     <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
       <section class="admin-card overflow-x-auto" aria-label="Tarifas registradas">
-        <div class="flex flex-wrap items-center gap-3 border-b border-line p-4">
-          <label class="relative min-w-56 flex-1">
-            <span class="sr-only">Buscar distrito u origen</span>
-            <svg
-              class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="6.5" />
-              <path d="m16 16 4 4" />
-            </svg>
-            <input
-              type="search"
-              class="h-10 w-full rounded-lg border border-line bg-surface pl-9 pr-3 text-sm outline-none focus:border-link"
-              placeholder="Buscar distrito u origen"
-              [value]="query()"
-              (input)="search($any($event.target).value)"
-            />
-          </label>
-          <mat-select
-            class="max-w-56"
-            aria-label="Filtrar por origen"
-            [value]="originFilter()"
-            (selectionChange)="filterOrigin($event.value)"
-          >
-            <mat-option value="">Todos los orígenes</mat-option>
-            @for (origin of origins(); track origin) {
-              <mat-option [value]="origin">{{ origin }}</mat-option>
+        <p class="border-b border-line p-4 text-sm text-muted" aria-live="polite">
+          @if (ratePage().total) {
+            Mostrando {{ ratePage().from }}–{{ ratePage().to }} de {{ ratePage().total }} tarifas
+            @if (ratePage().total !== admin.rates().length) {
+              (de {{ admin.rates().length }} en total)
             }
-          </mat-select>
-          <p class="w-full text-sm text-muted" aria-live="polite">
-            @if (ratePage().total) {
-              Mostrando {{ ratePage().from }}–{{ ratePage().to }} de {{ ratePage().total }} tarifas
-              @if (ratePage().total !== admin.rates().length) {
-                (de {{ admin.rates().length }} en total)
-              }
-            } @else if (admin.rates().length) {
-              Ninguna tarifa coincide con la búsqueda.
-            } @else {
-              0 tarifas
-            }
-          </p>
-        </div>
+          } @else if (admin.rates().length) {
+            Ninguna tarifa cumple los filtros.
+          } @else {
+            0 tarifas
+          }
+        </p>
         <table class="w-full min-w-[520px] text-left text-sm">
           <thead class="bg-subtle text-xs text-muted">
             <tr>
@@ -121,32 +132,11 @@ const PAGE_SIZE = 25;
             }
           </tbody>
         </table>
-        @if (ratePage().pages > 1) {
-          <nav
-            class="flex items-center justify-between gap-3 border-t border-line p-4 text-sm"
-            aria-label="Páginas de tarifas"
-          >
-            <button
-              type="button"
-              class="rounded-lg border border-line px-4 py-2 font-medium disabled:opacity-40"
-              [disabled]="ratePage().page === 1"
-              (click)="goToPage(ratePage().page - 1)"
-            >
-              Anterior
-            </button>
-            <span class="tabular-nums text-muted">
-              Página {{ ratePage().page }} de {{ ratePage().pages }}
-            </span>
-            <button
-              type="button"
-              class="rounded-lg border border-line px-4 py-2 font-medium disabled:opacity-40"
-              [disabled]="ratePage().page === ratePage().pages"
-              (click)="goToPage(ratePage().page + 1)"
-            >
-              Siguiente
-            </button>
-          </nav>
-        }
+        <ws-pagination
+          [pagina]="ratePage()"
+          etiqueta="Páginas de tarifas"
+          (cambiar)="filtros.irAPagina($event)"
+        />
       </section>
 
       <div class="grid h-fit gap-6">
@@ -239,9 +229,12 @@ export class TarifasEnvioPage {
   protected readonly editing = signal<string | null>(null);
   /** La tarifa tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra ella (PBI-0120). */
   private base: TarifaEnvio | null = null;
-  protected readonly originFilter = signal('');
-  protected readonly query = signal('');
-  private readonly page = signal(1);
+  protected readonly filtros = filtrosDeListado({
+    leer: leerFiltrosTarifas,
+    escribir: parametrosDeFiltrosTarifas,
+    vacios: FILTROS_TARIFAS_VACIOS,
+    que: 'las tarifas',
+  });
 
   protected readonly form = new FormGroup({
     origin: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -267,9 +260,10 @@ export class TarifasEnvioPage {
     [...new Set(this.admin.rates().map((rate) => rate.origin))].sort((a, b) => a.localeCompare(b, 'es')),
   );
   private readonly visibleRates = computed(() =>
-    filtrarTarifas(this.admin.rates(), this.originFilter(), this.query()),
+    filtrarTarifasDeEnvio(this.admin.rates(), this.filtros.aplicados()),
   );
-  protected readonly ratePage = computed(() => paginarTarifas(this.visibleRates(), this.page(), PAGE_SIZE));
+  /** Páginas de 25 (con unas 1.600 tarifas), con la página en la URL como los demás listados. */
+  protected readonly ratePage = computed(() => this.filtros.paginar(this.visibleRates()));
   protected readonly districtCount = computed(() => leerDistritos(this.destinationsText()).length);
   protected readonly adjustmentScope = computed(() => {
     const origin = this.adjustmentOrigin();
@@ -278,19 +272,27 @@ export class TarifasEnvioPage {
       : this.admin.rates().length;
   });
 
-  protected search(value: string): void {
-    this.query.set(value);
-    this.page.set(1);
-  }
-
-  protected filterOrigin(origin: string): void {
-    this.originFilter.set(origin);
-    this.page.set(1);
-  }
-
-  protected goToPage(page: number): void {
-    this.page.set(page);
-  }
+  /**
+   * PBI-0157: si la sesión vence, lo escrito en los dos formularios (y si se editaba una tarifa) vuelve al ingresar de
+   * nuevo; la edición de una tarifa que otra persona eliminó no se restaura (`borradorDeTarifasVigente`).
+   */
+  protected readonly borrador = conservarBorrador<BorradorTarifas>({
+    form: new FormGroup({ tarifa: this.form, ajuste: this.adjustment }),
+    guardar: () => ({
+      editando: this.editing() ? this.base : null,
+      tarifa: this.form.getRawValue(),
+      ajuste: this.adjustment.getRawValue(),
+    }),
+    restaurar: (guardado) => {
+      const vigente = borradorDeTarifasVigente(guardado, this.admin.rates());
+      if (!vigente) return false;
+      this.base = vigente.editando;
+      this.editing.set(vigente.editando?.id ?? null);
+      this.form.setValue(vigente.tarifa);
+      this.adjustment.setValue(vigente.ajuste);
+      return true;
+    },
+  });
 
   protected edit(id: string): void {
     const rate = this.admin.rates().find((candidate) => candidate.id === id);

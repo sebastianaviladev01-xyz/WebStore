@@ -21,9 +21,29 @@ export class SesionVencidaError extends Error {
 /** Aviso del acceso cuando la sesión venció a mitad de una operación (PBI-0124). */
 export const AVISO_SESION_VENCIDA = 'Tu sesión venció. Vuelve a iniciar sesión para continuar.';
 
+/**
+ * El BFF rechazó un cambio del perfil propio (lote 07b, PBI-0034): el mensaje ya está listo para mostrarse y `campo`
+ * dice junto a qué campo va (`email` o `currentPassword`), si corresponde a uno.
+ */
+export class PerfilError extends Error {
+  constructor(
+    message: string,
+    readonly campo: 'email' | 'currentPassword' | 'newPassword' | null = null,
+  ) {
+    super(message);
+  }
+}
+
 /** Puerto de autenticación del Admin: la capa de aplicación no conoce HTTP. */
 export abstract class SesionGateway {
   abstract login(email: string, password: string): Promise<SesionConcedida>;
   abstract current(token: string): Promise<UsuarioAdmin>;
   abstract logout(token: string): Promise<void>;
+  /** `PATCH /bff/admin/profile` (lote 07b, PBI-0034): devuelve el usuario con sus datos nuevos. */
+  abstract actualizarPerfil(
+    datos: { readonly name: string; readonly email: string },
+    token: string,
+  ): Promise<UsuarioAdmin>;
+  /** `PUT /bff/admin/profile/password` (lote 07b, PBI-0034): cierra las demás sesiones de la persona. */
+  abstract cambiarContrasena(actual: string, nueva: string, token: string): Promise<void>;
 }

@@ -264,6 +264,11 @@ label:has(> input[type='file']:focus-visible) {
   border: 1px solid var(--ws-border);
 }
 
+/* Lote 07b (PBI-0033): el menú de la campana usa el panel del menú de usuario, algo más ancho para los pedidos. */
+.ws-menu-notificaciones-panel.mat-mdc-menu-panel {
+  min-width: 288px;
+}
+
 .ws-menu-usuario-cuenta {
   display: grid;
   gap: 2px;

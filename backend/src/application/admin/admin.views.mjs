@@ -34,8 +34,12 @@ const orderToAdmin = (order) => ({
   })),
 });
 
-/** Cada colección solo viaja al rol que puede gestionarla; catálogo y configuración son lectura común. */
-export function buildAdminSnapshot(state, role) {
+/**
+ * Cada colección solo viaja al rol que puede gestionarla; catálogo y configuración son lectura común. La actividad
+ * reciente (PBI-0028) y las personas en línea (PBI-0027) son del Resumen completo (`orders.manage`): para el vendedor
+ * llegan vacías (`[]` y `null`).
+ */
+export function buildAdminSnapshot(state, role, personasEnLinea = () => 0) {
   const visible = (permission, value) => (can(role, permission) ? value : []);
   // PBI-0013: cada rol ve solo los usuarios que gestiona (el administrador, los vendedores).
   const gestionables = new Set(managedUserRoles(role));
@@ -52,5 +56,7 @@ export function buildAdminSnapshot(state, role) {
     complaints: visible('complaints.manage', state.complaints),
     orders: visible('orders.manage', state.orders.map(orderToAdmin)),
     config: state.config,
+    activity: visible('orders.manage', state.activity ?? []),
+    onlineVisitors: can(role, 'orders.manage') ? personasEnLinea() : null,
   };
 }

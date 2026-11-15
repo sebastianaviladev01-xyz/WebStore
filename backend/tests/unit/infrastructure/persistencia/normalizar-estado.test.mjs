@@ -339,3 +339,20 @@ test('PBI-0068 y PBI-0069: un nombre guardado con caracteres invisibles los pier
   assert.equal(avisos.length, 3);
   assert.match(avisos[1], /descartado.*INVALID_THEME_NAME/);
 });
+
+test('lote 07b (PBI-0028 y PBI-0033): un estado sin actividad ni «visto» carga con listas vacías, sin migración', () => {
+  const guardado = { ...estadoV2(), schemaVersion: SCHEMA_VERSION };
+  delete guardado.activity;
+  delete guardado.adminNotificationsSeen;
+  const estado = normalizeState(guardado, demoPasswords);
+  assert.deepEqual(estado.activity, []);
+  assert.deepEqual(estado.adminNotificationsSeen, []);
+  assert.equal(estado.schemaVersion, 3, 'las listas nuevas no cambian la versión del esquema');
+  const larga = Array.from({ length: 70 }, (_, n) => ({
+    id: `e-${n}`,
+    at: 'x',
+    type: 't',
+    description: 'd',
+  }));
+  assert.equal(normalizeState({ ...guardado, activity: larga }, demoPasswords).activity.length, 50);
+});

@@ -265,6 +265,24 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
         );
     });
   }
+
+  // Lote 07b (PBI-0156): en el celular la fila de encabezados de Productos e Inventario sigue oculta (conserva la
+  // medida de admin-productos-movil), pero cada celda de datos dice de qué columna es a un lector de pantalla.
+  for (const { ruta, tabla, columnas } of [
+    { ruta: '/productos', tabla: 'Productos', columnas: ['Producto', 'Precio', 'Stock'] },
+    { ruta: '/inventario', tabla: 'Inventario', columnas: ['Producto', 'Stock', 'Estado'] },
+  ]) {
+    test(`${ruta}: cada celda dice su columna a un lector de pantalla (PBI-0156)`, async ({ page }) => {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto(ruta);
+      const tablaLista = page.getByRole('table', { name: tabla });
+      // La fila de encabezados no está en el árbol de accesibilidad: la primera fila ya es de datos.
+      const fila = tablaLista.getByRole('row').first();
+      await expect(fila.getByRole('cell').first()).toBeVisible();
+      for (const [i, columna] of columnas.entries())
+        await expect(fila.getByRole('cell').nth(i)).toHaveAccessibleName(new RegExp(`^${columna}\\b`));
+    });
+  }
 });
 
 test.describe('PBI-0132: accesibilidad de formularios y listas', () => {

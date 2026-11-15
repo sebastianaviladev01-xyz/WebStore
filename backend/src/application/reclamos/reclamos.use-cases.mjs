@@ -1,5 +1,6 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { limaDate } from '../../domain/comun/reloj.mjs';
+import { conEvento, eventoReclamoRegistrado } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { requireEmail, requireFields } from '../../domain/comun/validacion.rules.mjs';
 import {
@@ -57,6 +58,8 @@ export function createReclamosUseCases({ store, nonWorkingDates, now = () => new
       dueAt: addPeruBusinessDays(createdAt, COMPLAINT_DUE_BUSINESS_DAYS, nonWorkingDates),
     };
     state.complaints.unshift(complaint);
+    // PBI-0028: la actividad reciente del Resumen.
+    state.activity = conEvento(state.activity ?? [], eventoReclamoRegistrado({ at: createdAt }, complaint));
     bumpRevision(state);
     store.save();
     return complaint;

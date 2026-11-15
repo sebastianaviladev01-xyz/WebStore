@@ -27,6 +27,23 @@ test('PBI-0119: se usa la primera calidad cuya foto cabe, y ninguna si ni la úl
   assert.equal(primeraQueCabe([dataUrl(300_000), dataUrl(260_000)]), null);
 });
 
+// Lote 07b (ADR-0017), PBI-0052: la imagen de la categoría se reduce más (es pequeña) y cabe en lo que acepta el BFF.
+test('PBI-0052: la imagen de la categoría se reduce a 160 px y debe caber en el máximo del BFF', async () => {
+  const { LADO_IMAGEN_CATEGORIA, MAX_CARACTERES_IMAGEN_CATEGORIA } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  const { MAX_IMAGEN_DE_CATEGORIA } =
+    await import('../../../../../../../../backend/src/domain/admin/colecciones.rules.mjs');
+  assert.equal(LADO_IMAGEN_CATEGORIA, 160);
+  assert.equal(MAX_CARACTERES_IMAGEN_CATEGORIA, MAX_IMAGEN_DE_CATEGORIA);
+  const dataUrl = (n) => `data:image/webp;base64,${'A'.repeat(n)}`;
+  assert.equal(
+    primeraQueCabe([dataUrl(120_000), dataUrl(90_000)], MAX_CARACTERES_IMAGEN_CATEGORIA),
+    dataUrl(90_000),
+  );
+  assert.equal(primeraQueCabe([dataUrl(120_000)], MAX_CARACTERES_IMAGEN_CATEGORIA), null);
+});
+
 test('PBI-0119: seis fotos al máximo, con el resto del producto, caben en un guardado de 2 MB', () => {
   assert.ok(7 * BYTES_MAXIMOS_FOTO < 2 * 1024 * 1024 - 64 * 1024);
 });

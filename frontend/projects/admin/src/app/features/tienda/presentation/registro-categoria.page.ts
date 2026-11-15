@@ -12,12 +12,15 @@ import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { motivoDeCategoriaRepetida, slugDe } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
+import { BYTES_MAXIMOS_ARCHIVO, reducirFoto } from './reducir-foto';
+import { LADO_IMAGEN_CATEGORIA, MAX_CARACTERES_IMAGEN_CATEGORIA } from '../domain/foto.rules';
 import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.rules';
 import { Categoria } from '../domain/tienda.model';
 
@@ -88,6 +91,45 @@ import { Categoria } from '../domain/tienda.model';
             <mat-label>Orden (opcional)</mat-label>
             <input matInput type="number" formControlName="order" />
           </mat-form-field>
+          <!-- Lote 07b (PBI-0052): imagen pequeña opcional; sin ella, la tienda se ve como antes. -->
+          <fieldset class="min-w-0 rounded-xl border border-line p-4">
+            <legend class="px-1 text-sm font-semibold">Imagen de la categoría (opcional)</legend>
+            <p class="text-xs text-muted">
+              La tienda la muestra junto al nombre en el menú de categorías. Se reduce a {{ ladoImagen }} px.
+            </p>
+            @if (imagen()) {
+              <img
+                [src]="imagen()"
+                alt="Imagen actual de la categoría"
+                class="mt-3 h-16 w-16 rounded-lg border border-line bg-subtle object-contain p-1"
+              />
+            }
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+              <label
+                class="inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+              >
+                {{ imagen() ? 'Cambiar imagen' : 'Cargar imagen' }}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  class="sr-only"
+                  (change)="onImageSelected($event)"
+                />
+              </label>
+              @if (imagen()) {
+                <button
+                  type="button"
+                  class="min-h-10 text-sm font-semibold text-danger"
+                  (click)="quitarImagen()"
+                >
+                  Quitar imagen
+                </button>
+              }
+            </div>
+            @if (imageError()) {
+              <p class="mt-2 text-xs font-semibold text-danger" role="alert">{{ imageError() }}</p>
+            }
+          </fieldset>
         </div>
         @if (error()) {
           <p class="mt-3 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
@@ -137,7 +179,12 @@ export class RegistroCategoriaPage {
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     parentId: new FormControl('', { nonNullable: true }),
     order: new FormControl<number | null>(null),
+    /** Data URL de la imagen pequeña (PBI-0052); vacía si no tiene. */
+    imageUrl: new FormControl('', { nonNullable: true }),
   });
+  protected readonly imagen = toSignal(this.form.controls.imageUrl.valueChanges, { initialValue: '' });
+  protected readonly imageError = signal<string | null>(null);
+  protected readonly ladoImagen = LADO_IMAGEN_CATEGORIA;
   protected readonly mensaje = mensajeDeError;
   /** PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición; se aplica después de traer la categoría. */
   protected readonly borrador = conservarBorrador({
@@ -163,6 +210,37 @@ export class RegistroCategoriaPage {
       else untracked(() => this.borrador.aplicar());
     });
   }
+  /** Reduce la imagen a 160 px y la comprime para que quepa en lo que acepta el BFF (PBI-0052). */
+  protected onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.imageError.set(null);
+    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+      this.imageError.set('Usa una imagen PNG, JPG o WebP.');
+      return;
+    }
+    if (file.size > BYTES_MAXIMOS_ARCHIVO) {
+      this.imageError.set('La imagen pesa más de 15 MB. Usa una más liviana.');
+      return;
+    }
+    void reducirFoto(file, {
+      ladoMaximo: LADO_IMAGEN_CATEGORIA,
+      maximo: MAX_CARACTERES_IMAGEN_CATEGORIA,
+    }).then((url) => {
+      if (!url) {
+        this.imageError.set('No pudimos reducir la imagen. Usa otra más simple.');
+        return;
+      }
+      this.form.controls.imageUrl.setValue(url);
+      this.form.markAsDirty();
+    });
+  }
+  protected quitarImagen() {
+    this.form.controls.imageUrl.setValue('');
+    this.form.markAsDirty();
+  }
   protected indent(depth: number) {
     return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
@@ -181,7 +259,12 @@ export class RegistroCategoriaPage {
     const c = this.admin.categories().find((x) => x.id === id);
     this.base = c ?? null;
     if (c) {
-      this.form.setValue({ name: c.name, parentId: c.parentId ?? '', order: c.order ?? null });
+      this.form.setValue({
+        name: c.name,
+        parentId: c.parentId ?? '',
+        order: c.order ?? null,
+        imageUrl: c.imageUrl ?? '',
+      });
       this.borrador.aplicar();
     } else this.missing.set(true);
     this.loadingCategory.set(false);
@@ -212,6 +295,8 @@ export class RegistroCategoriaPage {
       name: v.name,
       parentId: v.parentId || undefined,
       order: v.order ?? undefined,
+      // Sin imagen, el campo no va: si la tenía, el cambio la quita (`null`, PBI-0052).
+      imageUrl: v.imageUrl || undefined,
     });
     if (saved) {
       await this.router.navigate(['/categorias'], { queryParamsHandling: 'preserve' });

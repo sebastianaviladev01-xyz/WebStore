@@ -1,6 +1,7 @@
 import { reserveStock } from '../../domain/catalogo/inventario.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
+import { conEvento, eventoPedidoCreado } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
@@ -136,6 +137,8 @@ export function createCheckoutUseCases({ store, security }) {
       ...(account ? { accountId: account.id } : {}),
     };
     state.orders.unshift(order);
+    // PBI-0028: la actividad reciente del Resumen.
+    state.activity = conEvento(state.activity ?? [], eventoPedidoCreado({ at: createdAt }, order));
     registerCustomer(state, customer, security);
     bumpRevision(state);
     store.save();

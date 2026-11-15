@@ -129,7 +129,12 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
             role="row"
             class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
           >
+            <!--
+              PBI-0156: en el celular la fila de encabezados se oculta (conserva la medida de admin-productos-movil);
+              cada celda dice su columna solo a un lector de pantalla. En escritorio la dice el encabezado.
+            -->
             <div role="cell" class="min-w-0 max-md:col-span-full">
+              <span class="sr-only md:hidden">Producto:</span>
               <strong class="block truncate">{{ p.name }}</strong>
               <p class="text-xs text-muted">
                 {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
@@ -137,6 +142,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
               </p>
             </div>
             <span role="cell" class="max-md:col-start-2">
+              <span class="sr-only md:hidden">Precio:</span>
               {{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}
             </span>
             <span role="cell" [class.text-danger]="p.stock === 0" class="font-semibold">

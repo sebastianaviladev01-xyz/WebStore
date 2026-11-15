@@ -79,23 +79,30 @@ export function filtrarTarifas(rates: readonly TarifaEnvio[], origin: string, qu
     );
 }
 
-export interface PaginaTarifas {
-  readonly items: readonly TarifaEnvio[];
-  /** Página actual, de 1 a `pages` (se ajusta si la pedida ya no existe tras filtrar). */
-  readonly page: number;
-  readonly pages: number;
-  /** Posición del primer y último elemento mostrados (1-based); 0 y 0 si no hay resultados. */
-  readonly from: number;
-  readonly to: number;
-  readonly total: number;
+/** Lo escrito en Tarifas de envío cuando vence la sesión (lote 07b, PBI-0157): sus dos formularios y el modo. */
+export interface BorradorTarifas {
+  /** La tarifa tal como estaba al pulsar «Editar» (modo «un distrito»); `null` en el modo «uno o varios distritos». */
+  readonly editando: TarifaEnvio | null;
+  readonly tarifa: { readonly origin: string; readonly destinations: string; readonly price: number };
+  readonly ajuste: { readonly percent: number; readonly origin: string };
 }
 
-/** Corta la lista en páginas de `size` elementos. */
-export function paginarTarifas(rates: readonly TarifaEnvio[], page: number, size: number): PaginaTarifas {
-  const total = rates.length;
-  const pages = Math.max(1, Math.ceil(total / size));
-  const current = Math.min(Math.max(1, Math.floor(page)), pages);
-  const start = (current - 1) * size;
-  const items = rates.slice(start, start + size);
-  return { items, page: current, pages, from: total ? start + 1 : 0, to: start + items.length, total };
+const TARIFA_VACIA = { origin: '', destinations: '', price: 0 };
+const sinTexto = (tarifa: BorradorTarifas['tarifa']) =>
+  !tarifa.origin.trim() && !tarifa.destinations.trim() && tarifa.price === 0;
+
+/**
+ * Lo que se puede restaurar sobre las tarifas vigentes: la edición de una tarifa solo si sigue existiendo (si otra
+ * persona la eliminó, restaurarla la volvería a crear: PBI-0122); el modo «uno o varios distritos» y el ajuste
+ * porcentual, tal como estaban. `null` si no queda nada que restaurar.
+ */
+export function borradorDeTarifasVigente(
+  borrador: BorradorTarifas,
+  vigentes: readonly TarifaEnvio[],
+): BorradorTarifas | null {
+  const editada = borrador.editando;
+  const sigue = !editada || vigentes.some((tarifa) => tarifa.id === editada.id);
+  const resultado = sigue ? borrador : { editando: null, tarifa: TARIFA_VACIA, ajuste: borrador.ajuste };
+  const nada = !resultado.editando && sinTexto(resultado.tarifa) && resultado.ajuste.percent === 0;
+  return nada ? null : resultado;
 }

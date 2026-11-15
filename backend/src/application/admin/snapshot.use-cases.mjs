@@ -7,7 +7,6 @@ import {
   requireValidConfig,
   requireValidCustomers,
   requireValidOrderStatuses,
-  requireValidProductContent,
   requireValidProducts,
   requireValidRates,
   requireValidUserShapes,
@@ -22,7 +21,6 @@ import {
   requireValidCategoryTree,
 } from '../../domain/catalogo/categoria.rules.mjs';
 import {
-  applyProductContentEdits,
   requireNoRemovedProducts,
   requireRemovedNotInUse,
   requireUniqueSlugs,
@@ -33,20 +31,20 @@ import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { requirePassword } from '../../domain/cuentas/cuenta.rules.mjs';
 import { changeOrderStatus } from '../../domain/pedidos/pedido.rules.mjs';
 import { can } from '../../domain/sesion/rol.rules.mjs';
+import { conEvento, eventoEstadoDePedido } from '../../domain/admin/actividad.rules.mjs';
 import { buildAdminSnapshot } from './admin.views.mjs';
 
 function applyProducts(state, value, role) {
   if (value === null || typeof value !== 'object')
     throw new DomainError('validation', 'INVALID_PRODUCTS', 'La colección de productos es obligatoria.');
   const products = resolveCollectionChanges('products', state.products, value);
-  let next;
-  if (can(role, 'products.manage')) {
-    next = requireValidProducts(products);
-    // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
-    if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
-  } else if (can(role, 'products.edit'))
-    next = applyProductContentEdits(state.products, requireValidProductContent(products));
-  else throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
+  // PBI-0158: los productos solo los cambia un rol con `products.manage` (los tres fijos). La rama de «solo la ficha»
+  // (`products.edit` sin `products.manage`) se quitó: si Daniel decide un vendedor con permisos parciales, vuelve.
+  if (!can(role, 'products.manage'))
+    throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
+  const next = requireValidProducts(products);
+  // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
+  if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
   requireUniqueSlugs(next, state.products);
   state.products = next;
 }
@@ -71,12 +69,23 @@ function applyUsers(state, value, actor, security) {
   // Un usuario eliminado o desactivado pierde sus sesiones abiertas.
   const activeIds = new Set(state.users.filter((item) => item.active).map((item) => item.id));
   state.adminSessions = state.adminSessions.filter((session) => activeIds.has(session.userId));
+  // Y un usuario eliminado, su «visto» de las notificaciones (PBI-0033).
+  const ids = new Set(state.users.map((item) => item.id));
+  state.adminNotificationsSeen = (state.adminNotificationsSeen ?? []).filter((item) => ids.has(item.userId));
 }
 
 function applyOrderStatuses(state, orders) {
   for (const summary of requireValidOrderStatuses(orderStatusChanges(orders))) {
     const order = state.orders.find((candidate) => candidate.id === summary.id);
-    if (order) state.products = changeOrderStatus(order, summary.status, state.products);
+    if (!order) continue;
+    const anterior = order.status;
+    state.products = changeOrderStatus(order, summary.status, state.products);
+    // PBI-0028: solo un cambio real deja su evento.
+    if (order.status !== anterior)
+      state.activity = conEvento(
+        state.activity ?? [],
+        eventoEstadoDePedido({ at: nowIso() }, order, order.status, 'equipo'),
+      );
   }
 }
 
@@ -130,7 +139,8 @@ function applyAdminChanges(state, next, user, security) {
 }
 
 /** Snapshot del Admin: lectura filtrada por rol, guardado parcial con control de revisión y reinicio. */
-export function createSnapshotUseCases({ store, security, resetEnabled = false }) {
+export function createSnapshotUseCases({ store, security, resetEnabled = false, personasEnLinea = () => 0 }) {
+  const vista = (user) => buildAdminSnapshot(store.state, user.role, personasEnLinea);
   function save(user, next) {
     // El Admin envía solo las colecciones que cambió, junto con la revisión sobre la que trabajó.
     if (next.revision !== store.state.revision)
@@ -145,7 +155,7 @@ export function createSnapshotUseCases({ store, security, resetEnabled = false }
     bumpRevision(draft);
     store.state = draft;
     store.save();
-    return buildAdminSnapshot(store.state, user.role);
+    return vista(user);
   }
 
   /**
@@ -166,11 +176,11 @@ export function createSnapshotUseCases({ store, security, resetEnabled = false }
     store.state.revision = previousRevision + 1;
     store.state.appearance.revision = previousThemesRevision + 1;
     store.save();
-    return buildAdminSnapshot(store.state, user.role);
+    return vista(user);
   }
 
   return {
-    get: (user) => buildAdminSnapshot(store.state, user.role),
+    get: vista,
     save,
     reset,
   };
