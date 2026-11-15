@@ -27,9 +27,15 @@ export function createRequestHandler({ routes, allowedOrigins }) {
 
   return async (req, res) => {
     if (req.method === 'OPTIONS') return respond.empty(req, res);
-    const url = new URL(req.url ?? '/', `http://${req.headers.host}`);
-    const path = url.pathname;
     try {
+      // La base es fija: el router solo usa la ruta y la consulta, y la cabecera `Host` puede no ser válida (PBI-0087).
+      let url;
+      try {
+        url = new URL(req.url ?? '/', 'http://localhost');
+      } catch {
+        throw new HttpError(400, 'INVALID_PATH', 'La dirección de la solicitud no es válida.');
+      }
+      const path = url.pathname;
       const route = routes.find(
         (candidate) => candidate.method === req.method && matchesPath(candidate.path, path),
       );
@@ -44,6 +50,7 @@ export function createRequestHandler({ routes, allowedOrigins }) {
       if (problem)
         return respond.problem(req, res, problem.status, problem.code, problem.message, problem.details);
       console.error(error);
+      if (res.headersSent) return res.end();
       return respond.problem(
         req,
         res,

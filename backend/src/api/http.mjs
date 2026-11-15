@@ -103,18 +103,38 @@ export function createResponder(allowedOrigins) {
   return { json, empty, problem, text };
 }
 
+/**
+ * Cuerpo JSON de la petición. Los fragmentos se juntan como bytes y se decodifican una sola vez, para no partir
+ * un carácter de varios bytes (PBI-0099). Sin cuerpo, `{}`; un cuerpo que no es un objeto JSON, `400`.
+ */
 export async function readJsonBody(req) {
-  let raw = '';
+  const chunks = [];
+  let size = 0;
   for await (const chunk of req) {
-    raw += chunk;
-    if (Buffer.byteLength(raw) > MAX_BODY_BYTES)
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES)
       throw new HttpError(413, 'PAYLOAD_TOO_LARGE', 'El contenido supera el límite permitido.');
+    chunks.push(chunk);
   }
+  const raw = Buffer.concat(chunks).toString('utf8');
   if (!raw) return {};
+  let body;
   try {
-    return JSON.parse(raw);
+    body = JSON.parse(raw);
   } catch {
     throw new HttpError(400, 'INVALID_JSON', 'El cuerpo de la solicitud no contiene JSON válido.');
+  }
+  if (body === null || typeof body !== 'object' || Array.isArray(body))
+    throw new HttpError(400, 'INVALID_BODY', 'El cuerpo de la solicitud debe ser un objeto JSON.');
+  return body;
+}
+
+/** Segmento de la ruta decodificado; una secuencia `%` mal formada responde `400 INVALID_PATH` (PBI-0099). */
+export function pathSegment(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    throw new HttpError(400, 'INVALID_PATH', 'La dirección de la solicitud no es válida.');
   }
 }
 

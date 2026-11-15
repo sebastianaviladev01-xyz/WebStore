@@ -681,6 +681,29 @@ try {
   const rates = await request('/bff/shipping/rates');
   if (!rates.length) throw new Error('Tarifas compartidas vacías');
 
+  // Entrada HTTP (lote 01): slug inexistente, URI mal codificada y cuerpo que no es un objeto.
+  await esperarError(
+    await raw('/bff/catalog/products/no-existe'),
+    404,
+    'PRODUCT_NOT_FOUND',
+    'Slug inexistente',
+  );
+  const fichaPublica = await request(`/bff/catalog/products/${products[0].slug}`);
+  if (fichaPublica.id !== products[0].id) throw new Error('La ficha por slug no devuelve el producto');
+  await esperarError(await raw('/bff/orders/%E0%A4%A'), 400, 'INVALID_PATH', 'URI mal codificada');
+  await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: 'null' }),
+    400,
+    'INVALID_BODY',
+    'Cuerpo null',
+  );
+  await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: '{' }),
+    400,
+    'INVALID_JSON',
+    'Cuerpo que no es JSON',
+  );
+
   console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
   console.log('✓ Storefront → Admin: pedido/cliente/inventario');
   console.log('✓ Pedidos: acceso por cuenta o token, stock liberado al cancelar, envío desde la tabla');

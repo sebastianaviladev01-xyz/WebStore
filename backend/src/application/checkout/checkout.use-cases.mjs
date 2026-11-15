@@ -17,8 +17,8 @@ function requireOrderCommand(command) {
     throw new DomainError('validation', 'EMPTY_ORDER', 'Agrega al menos un producto.');
   // El Storefront envía CartItem ({product, quantity}); precios y stock salen siempre del estado del BFF.
   const requested = command.items.map((item) => ({
-    productId: String(item.productId ?? item.product?.id ?? ''),
-    quantity: Math.floor(Number(item.quantity)),
+    productId: String(item?.productId ?? item?.product?.id ?? ''),
+    quantity: Math.floor(Number(item?.quantity)),
   }));
   if (requested.some((item) => !item.productId || !(item.quantity > 0)))
     throw new DomainError('validation', 'INVALID_ORDER_ITEMS', 'Revisa los productos del pedido.');

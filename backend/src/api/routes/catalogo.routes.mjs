@@ -1,4 +1,4 @@
-import { ok } from '../http.mjs';
+import { ok, pathSegment } from '../http.mjs';
 
 /** Catálogo público. El detalle se busca por el slug del último segmento de la ruta. */
 export const catalogoRoutes = (catalogo) => [
@@ -7,6 +7,6 @@ export const catalogoRoutes = (catalogo) => [
   {
     method: 'GET',
     path: /^\/bff\/catalog\/products\//,
-    handle: ({ path }) => ok(catalogo.findProductBySlug(decodeURIComponent(path.split('/').pop()))),
+    handle: ({ path }) => ok(catalogo.getProductBySlug(pathSegment(path.split('/').pop()))),
   },
 ];
