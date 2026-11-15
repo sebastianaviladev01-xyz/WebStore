@@ -15,6 +15,7 @@
     "check:syntax": "npm run check:syntax --prefix backend",
     "check:agents": "node tools/check-agents.mjs",
     "lint": "npm run lint --prefix frontend",
+    "typecheck": "npm run typecheck --prefix frontend",
     "format": "prettier --write \"backend/**/*.mjs\" \"tools/**/*.mjs\" && npm run format --prefix frontend",
     "format:check": "prettier --check \"backend/**/*.mjs\" \"tools/**/*.mjs\" && npm run format:check --prefix frontend",
     "build:all": "npm run build:all --prefix frontend",
@@ -24,7 +25,7 @@
     "validate:structure": "node tools/validate-structure.mjs",
     "validate:contract": "npm run validate:structure && npm test && npm run test:contract --prefix backend",
     "audit:all": "npm audit && npm audit --prefix frontend",
-    "verify": "npm run check:agents && npm run check:syntax && npm run format:check && npm run lint && npm run test:architecture && npm run build:all && npm run validate:contract"
+    "verify": "npm run check:agents && npm run check:syntax && npm run format:check && npm run lint && npm run typecheck && npm run test:architecture && npm run build:all && npm run validate:contract"
   },
   "devDependencies": {
     "prettier": "3.9.10"

@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  // Las e2e y su configuración usan unas pocas APIs de Node (`node:fs`, `node:os`, `node:path`, `process` y `Buffer`,
+  // declaradas en `tests/e2e/node.d.ts`) en lugar de sumar `@types/node` solo para esto. `skipLibCheck` evita que los
+  // tipos de Playwright, que sí los necesitan, fallen sin él: el código del proyecto se comprueba entero.
+  "compilerOptions": { "noEmit": true, "types": [], "skipLibCheck": true },
+  "include": ["tests/e2e/**/*.ts", "playwright.config.ts"]
+}

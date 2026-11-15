@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "noEmit": true, "types": [] },
+  "include": ["src/app/features/*/domain/**/*.ts", "projects/admin/src/app/features/*/domain/**/*.ts"]
+}

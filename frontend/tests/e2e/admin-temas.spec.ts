@@ -47,7 +47,7 @@ async function conApi<T>(accion: (api: ClienteTemas) => Promise<T>): Promise<T> 
 
     const leer = async (respuesta: Awaited<ReturnType<typeof contexto.get>>): Promise<TemasAdminDto> => {
       expect(respuesta.ok()).toBe(true);
-      return respuesta.json();
+      return (await respuesta.json()) as TemasAdminDto;
     };
     const listar = async () => leer(await contexto.get('/bff/admin/themes', { headers }));
     return await accion({

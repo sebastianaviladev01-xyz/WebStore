@@ -24,6 +24,12 @@ export default tseslint.config(
   },
   { files: sources, extends: [sheriff.configs.all] },
   {
+    // Las e2e y su configuración (PBI-0056): TypeScript sin reglas de Angular ni de Sheriff.
+    files: ['tests/e2e/**/*.ts', 'playwright.config.ts'],
+    extends: [eslint.configs.recommended, ...tseslint.configs.recommended],
+    rules: { '@typescript-eslint/no-unused-vars': ['error', { ignoreRestSiblings: true }] },
+  },
+  {
     files: ['src/**/*.html', 'projects/*/src/**/*.html'],
     extends: [...angular.configs.templateRecommended, ...angular.configs.templateAccessibility],
     rules: {

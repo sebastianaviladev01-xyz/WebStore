@@ -13,13 +13,16 @@
     "build:prod": "ng build storefront --configuration production",
     "typecheck:storefront": "tsc -p tsconfig.app.json --noEmit",
     "typecheck:admin": "tsc -p projects/admin/tsconfig.app.json --noEmit",
-    "lint": "eslint src projects",
+    "typecheck:domain": "tsc -p tsconfig.domain.json",
+    "typecheck:e2e": "tsc -p tsconfig.e2e.json",
+    "typecheck": "npm run typecheck:domain && npm run typecheck:e2e",
+    "lint": "eslint src projects tests playwright.config.ts",
     "format": "prettier --write \"src/**/*.{ts,html,css,mjs}\" \"projects/**/*.{ts,html,css,mjs}\" \"tests/**/*.{mjs,ts}\" \"tools/**/*.mjs\" \"*.{mjs,ts}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css,mjs}\" \"projects/**/*.{ts,html,css,mjs}\" \"tests/**/*.{mjs,ts}\" \"tools/**/*.mjs\" \"*.{mjs,ts}\"",
     "test": "node --test \"src/**/*.spec.mjs\" \"projects/**/*.spec.mjs\"",
     "test:architecture": "node --test \"tests/architecture/*.test.mjs\"",
     "test:e2e": "playwright test",
-    "verify": "npm run lint && npm test && npm run test:architecture && npm run build:all"
+    "verify": "npm run lint && npm run typecheck && npm test && npm run test:architecture && npm run build:all"
   },
   "dependencies": {
     "@angular/cdk": "22.2.4",
