@@ -25,10 +25,18 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el cliente compró como invitado en este dispositivo
 - **Cuando** abre sus pedidos
-- **Entonces** ve el detalle de sus pedidos gracias al token guardado en el dispositivo.
+- **Entonces** ve el detalle de sus pedidos gracias al token guardado en el dispositivo. Solo se guarda el token de los pedidos hechos como invitado (lote 04, PBI-0104).
 
 ### Escenario 03 – Pedido ajeno
 
 - **Dado** que alguien intenta abrir un pedido sin ser su dueño ni tener su token
 - **Cuando** lo solicita
 - **Entonces** el sistema responde como si el pedido no existiera.
+
+### Escenario 04 – Al cerrar sesión
+
+- **Dado** que el cliente compró con la sesión iniciada
+- **Cuando** cierra sesión, elimina su cuenta o inicia sesión otra persona en el mismo navegador
+- **Entonces** sus pedidos ya no se ven en «Mis pedidos» ni en el detalle, y el navegador no guarda su token.
+
+> Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0104), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.

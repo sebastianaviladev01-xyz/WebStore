@@ -8,8 +8,10 @@ import {
   pickCustomer,
   pickShipping,
   requireDeliveryDate,
+  requireIdempotencyKey,
   requireOrderLines,
   requirePaymentMethod,
+  requireTermsAccepted,
 } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
 import { roundMoney } from '../../domain/pedidos/pedido.rules.mjs';
 import { toPublicProduct } from '../catalogo/catalogo.queries.mjs';
@@ -27,7 +29,23 @@ function requireOrderCommand(command) {
     deliveryDate: requireDeliveryDate(command.deliveryDate, limaDate()),
     paymentMethod: requirePaymentMethod(command.paymentMethod),
     requested: requireOrderLines(command.items),
+    termsAccepted: requireTermsAccepted(command.termsAccepted),
   };
+}
+
+/**
+ * El total que el comprador vio (`command.total`), si llega, debe ser el que cobra el BFF (PBI-0106, lote 04): si
+ * el precio, el stock o el envío cambiaron, responde `409 ORDER_TOTAL_CHANGED` con los montos vigentes y no crea
+ * nada. Sin `total` no se compara.
+ */
+function requireShownTotal(shown, amounts) {
+  if (typeof shown !== 'number' || Math.abs(shown - amounts.total) < 0.005) return;
+  throw new DomainError(
+    'conflict',
+    'ORDER_TOTAL_CHANGED',
+    'El total de tu pedido cambió. Revisa el total actualizado y vuelve a finalizar la compra.',
+    amounts,
+  );
 }
 
 /** Cada compra actualiza (o crea) la ficha del cliente que ve el Admin. */
@@ -50,7 +68,25 @@ function registerCustomer(state, customer, security) {
 
 /** Checkout: reserva stock, toma el envío de la tabla de tarifas y emite el token de acceso del pedido. */
 export function createCheckoutUseCases({ store, security }) {
-  function placeOrder(command, bearerToken) {
+  const orderForKey = (key) =>
+    key ? store.state.orders.find((order) => order.idempotencyKeyHash === security.digest(key)) : undefined;
+
+  /**
+   * Doble envío (PBI-0086, lote 04): si la clave ya creó un pedido, lo devuelve sin crear otro ni tocar el stock.
+   * Como el BFF solo guarda el digest del token de acceso, emite uno nuevo que sustituye al anterior: solo quien
+   * conoce la clave, que es secreta y propia del intento, puede pedirlo. Sin pedido para la clave, `null`.
+   */
+  function replay(idempotencyKey) {
+    const order = orderForKey(requireIdempotencyKey(idempotencyKey));
+    if (!order) return null;
+    const accessToken = security.createToken();
+    order.accessTokenHash = security.digest(accessToken);
+    store.save();
+    return { ...orderToPublic(order), accessToken };
+  }
+
+  function placeOrder(command, bearerToken, idempotencyKey = '') {
+    const key = requireIdempotencyKey(idempotencyKey);
     const { customer, shipping, deliveryDate, paymentMethod, requested } = requireOrderCommand(command);
     const rate = bestShippingRate(store.state.rates, shipping.district);
     if (!rate)
@@ -59,17 +95,23 @@ export function createCheckoutUseCases({ store, security }) {
         'SHIPPING_UNAVAILABLE',
         'Todavía no contamos con una tarifa para ese destino.',
       );
-    store.state.products = reserveStock(store.state.products, requested, { requireActive: true });
+    const products = reserveStock(store.state.products, requested, { requireActive: true });
     const { state } = store;
     const items = requested.map((item) => ({
       productId: item.productId,
       quantity: item.quantity,
       product: toPublicProduct(state)(
-        state.products.find((product) => product.id === item.productId),
+        products.find((product) => product.id === item.productId),
         0,
       ),
     }));
     const subtotal = roundMoney(items.reduce((total, item) => total + item.product.price * item.quantity, 0));
+    requireShownTotal(command.total, {
+      subtotal,
+      shippingCost: rate.price,
+      total: roundMoney(subtotal + rate.price),
+    });
+    state.products = products;
     const account = accountForToken(state, bearerToken, security);
     const accessToken = security.createToken();
     const createdAt = nowIso();
@@ -88,7 +130,9 @@ export function createCheckoutUseCases({ store, security }) {
       igv: roundMoney(subtotal - subtotal / 1.18),
       shippingCost: rate.price,
       total: roundMoney(subtotal + rate.price),
+      termsAcceptedAt: createdAt,
       accessTokenHash: security.digest(accessToken),
+      ...(key ? { idempotencyKeyHash: security.digest(key) } : {}),
       ...(account ? { accountId: account.id } : {}),
     };
     state.orders.unshift(order);
@@ -98,5 +142,5 @@ export function createCheckoutUseCases({ store, security }) {
     return { ...orderToPublic(order), accessToken };
   }
 
-  return { placeOrder };
+  return { placeOrder, replay };
 }

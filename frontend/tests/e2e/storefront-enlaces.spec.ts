@@ -123,6 +123,7 @@ async function comprarComoInvitado(page: Page): Promise<void> {
   await page.getByRole('option', { name: 'Miraflores', exact: true }).click();
   await page.getByRole('textbox', { name: 'Dirección' }).fill('Av. Larco 123');
   await page.getByRole('radio', { name: 'Yape / Plin' }).check();
+  await page.getByRole('checkbox', { name: 'Acepto los términos y condiciones' }).check();
   const finalizar = page.getByRole('button', { name: 'Finalizar compra' });
   await expect(finalizar).toBeEnabled();
   await finalizar.click();

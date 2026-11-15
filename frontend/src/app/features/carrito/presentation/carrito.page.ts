@@ -13,7 +13,20 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
         <h1 class="ws-title">Carrito</h1>
         <p class="mt-3 text-muted">Revisa tus productos y confirma el total antes de continuar.</p>
       </div>
-      @if (cart.isEmpty()) {
+      @if (cart.cargando()) {
+        <div class="ws-card p-8 text-center text-muted" role="status">Cargando tu carrito…</div>
+      } @else if (cart.error()) {
+        <div class="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger" role="alert">
+          <p>No pudimos cargar tu carrito. Revisa tu conexión e inténtalo nuevamente.</p>
+          <button
+            type="button"
+            class="mt-2 font-semibold underline underline-offset-4"
+            (click)="cart.reintentar()"
+          >
+            Reintentar
+          </button>
+        </div>
+      } @else if (cart.isEmpty()) {
         <ws-empty-state
           title="Tu carrito está vacío"
           description="Explora el catálogo y agrega productos para continuar."
@@ -104,7 +117,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
               </div>
               <div class="flex justify-between text-muted">
                 <span>Envío</span>
-                <strong class="text-body">Se calcula en checkout</strong>
+                <strong class="text-body">Se calcula al elegir el distrito</strong>
               </div>
               <div class="h-px bg-line"></div>
               <div class="flex items-end justify-between">

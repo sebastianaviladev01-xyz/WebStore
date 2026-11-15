@@ -77,7 +77,7 @@ function corsHeaders(req, allowedOrigins) {
   const headers = {
     'content-type': 'application/json; charset=utf-8',
     'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
-    'access-control-allow-headers': 'content-type,authorization,x-order-token',
+    'access-control-allow-headers': 'content-type,authorization,x-order-token,idempotency-key',
     // Las respuestas llevan tokens y datos personales: ningún navegador ni intermediario las guarda (PBI-0100).
     'cache-control': 'no-store',
     'x-content-type-options': 'nosniff',
@@ -150,3 +150,6 @@ export function bearerToken(req) {
 
 /** Token de acceso del pedido para compras como invitado. */
 export const orderToken = (req) => String(req.headers['x-order-token'] ?? '');
+
+/** Clave de idempotencia del intento de compra (`Idempotency-Key`, PBI-0086); sin cabecera, `''`. */
+export const idempotencyKey = (req) => String(req.headers['idempotency-key'] ?? '');

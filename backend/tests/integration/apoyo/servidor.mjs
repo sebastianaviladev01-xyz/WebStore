@@ -96,5 +96,6 @@ export const pedidoValido = (cambios = {}) => ({
   deliveryDate: fechaDeLima(2),
   paymentMethod: 'card',
   items: [{ productId: 'p-004', quantity: 1 }],
+  termsAccepted: true,
   ...cambios,
 });

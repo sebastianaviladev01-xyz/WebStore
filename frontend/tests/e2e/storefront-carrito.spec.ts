@@ -61,7 +61,7 @@ test('agregar desde el catálogo, cambiar la cantidad y ver los totales con IGV'
   await expect(resumen(page, 'Valor de venta')).toContainText('S/ 1,184.75');
   await expect(resumen(page, 'IGV (18%)')).toContainText('S/ 213.25');
   await expect(resumen(page, 'Subtotal con IGV')).toContainText('S/ 1,398.00');
-  await expect(resumen(page, 'Envío')).toContainText('Se calcula en checkout');
+  await expect(resumen(page, 'Envío')).toContainText('Se calcula al elegir el distrito');
 
   await page.reload();
   await expect(fila(page, 'Soundbar Cinema 500')).toContainText('S/ 1,398.00');

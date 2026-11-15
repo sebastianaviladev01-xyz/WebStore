@@ -27,7 +27,10 @@ export interface CheckoutCommand {
   readonly subtotal: number;
   readonly igv: number;
   readonly shippingCost: number;
+  /** El total que ve el comprador: el BFF lo compara con el vigente (`ORDER_TOTAL_CHANGED`, PBI-0106). */
   readonly total: number;
+  /** Aceptó los términos y condiciones (PBI-0040). */
+  readonly termsAccepted: boolean;
 }
 
 export interface ComprobantePedido {
@@ -48,6 +51,8 @@ export interface Pedido extends ComprobantePedido {
   readonly shippingCost: number;
   readonly shippingOrigin?: string;
   readonly updatedAt: string;
+  /** Cuándo aceptó el comprador los términos y condiciones; los pedidos anteriores al lote 04 no lo tienen. */
+  readonly termsAcceptedAt?: string;
 }
 
 /** Respuesta del checkout: incluye una única vez el token que permite a un invitado consultar su pedido. */
