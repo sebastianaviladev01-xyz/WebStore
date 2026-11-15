@@ -80,11 +80,14 @@ const ETIQUETA_ESTADO = {
             role="row"
             class="grid grid-cols-[1fr_160px_130px] items-center border-t border-line p-4 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-4 max-md:gap-y-2"
           >
+            <!-- PBI-0156: como en Productos, cada celda dice su columna a un lector de pantalla en el celular. -->
             <div role="cell" class="min-w-0 max-md:col-span-full">
+              <span class="sr-only md:hidden">Producto:</span>
               <strong class="block break-words">{{ p.name }}</strong>
               <p class="text-xs text-muted">{{ p.sku }}</p>
             </div>
             <div role="cell">
+              <span class="sr-only md:hidden">Stock:</span>
               <input
                 #stock
                 type="number"
@@ -110,6 +113,7 @@ const ETIQUETA_ESTADO = {
               [class.text-warning]="estado(p.stock) === 'stock-bajo'"
               [class.text-on-primary-soft]="estado(p.stock) === 'disponible'"
             >
+              <span class="sr-only md:hidden">Estado:</span>
               {{ etiquetaEstado[estado(p.stock)] }}
             </span>
           </div>
