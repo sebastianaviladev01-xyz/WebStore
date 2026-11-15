@@ -371,6 +371,12 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
               {{ admin.error() }}
             </div>
           }
+          @if (admin.desactualizado()) {
+            <!-- PBI-0085: sin el aviso, las cifras de la consulta anterior parecerían las de ahora. -->
+            <p class="mb-5 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
+              No pudimos actualizar los datos de esta página: ves los de la última consulta.
+            </p>
+          }
           @if (admin.loading() && !admin.snapshot()) {
             <div class="admin-card p-8 text-center text-muted" role="status">Cargando operación…</div>
           } @else {

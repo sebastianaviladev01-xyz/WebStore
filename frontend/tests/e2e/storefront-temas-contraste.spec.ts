@@ -27,6 +27,18 @@ const PREFIJO = 'Lote03 Tienda';
 const BASE_OSCURA = { background: '#111318', surface: '#1B1E25', contrast: '#F5F7FA' };
 const OSCURO = { primary: '#3B82F6', secondary: '#F97316', ...BASE_OSCURA };
 const PRINCIPAL_CLARO = { primary: '#FFFFBB', secondary: '#F97316', ...BASE_OSCURA };
+/** Lote 08 (PBI-0085): un tema propio claro, para que no se pruebe solo con uno oscuro. */
+const CLARO = {
+  primary: '#1D4ED8',
+  secondary: '#B45309',
+  background: '#FFFFFF',
+  surface: '#F3F4F6',
+  contrast: '#111827',
+};
+const PROPIOS = [
+  { nombre: 'oscuro', colores: OSCURO },
+  { nombre: 'claro', colores: CLARO },
+] as const;
 
 test.describe('Temas y contraste en la tienda', () => {
   test.beforeEach(() => restablecerTemas(PREFIJO));
@@ -57,47 +69,49 @@ test.describe('Temas y contraste en la tienda', () => {
     });
   }
 
-  test('PBI-0060 y PBI-0061: con un tema propio oscuro, los campos, las listas y el error se leen', async ({
-    page,
-  }) => {
-    await activarTema(await crearTemaPropio(`${PREFIJO} oscuro`, OSCURO));
+  for (const { nombre, colores } of PROPIOS) {
+    test(`PBI-0060, PBI-0061 y PBI-0085: con un tema propio ${nombre}, los campos, las listas y el error se leen`, async ({
+      page,
+    }) => {
+      await activarTema(await crearTemaPropio(`${PREFIJO} ${nombre}`, colores));
 
-    await page.route('**/bff/account-sessions', (ruta) =>
-      ruta.request().method() === 'POST'
-        ? ruta.fulfill({
-            status: 401,
-            contentType: 'application/json',
-            body: JSON.stringify({
-              message: 'Correo o contraseña incorrectos.',
-              error: { code: 'INVALID_CREDENTIALS', message: 'Correo o contraseña incorrectos.' },
-            }),
-          })
-        : ruta.fallback(),
-    );
-    await page.goto('/cuenta/login');
-    const correo = page.getByRole('textbox', { name: 'Correo' });
-    await correo.fill('cliente@webstore.demo');
-    const escrito = await medirTexto(correo);
-    exigir('oscuro', 'texto escrito en el campo «Correo»', escrito.color, escrito.fondo, MINIMO.texto);
+      await page.route('**/bff/account-sessions', (ruta) =>
+        ruta.request().method() === 'POST'
+          ? ruta.fulfill({
+              status: 401,
+              contentType: 'application/json',
+              body: JSON.stringify({
+                message: 'Correo o contraseña incorrectos.',
+                error: { code: 'INVALID_CREDENTIALS', message: 'Correo o contraseña incorrectos.' },
+              }),
+            })
+          : ruta.fallback(),
+      );
+      await page.goto('/cuenta/login');
+      const correo = page.getByRole('textbox', { name: 'Correo' });
+      await correo.fill('cliente@webstore.demo');
+      const escrito = await medirTexto(correo);
+      exigir(nombre, 'texto escrito en el campo «Correo»', escrito.color, escrito.fondo, MINIMO.texto);
 
-    await page.getByLabel('Contraseña').fill('Incorrecta#2026');
-    await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
-    const error = page.getByRole('alert').filter({ hasText: 'Correo o contraseña incorrectos.' });
-    await expect(error).toBeVisible();
-    const aviso = await medirTexto(error);
-    exigir('oscuro', 'mensaje de error sobre su recuadro', aviso.color, aviso.fondo, MINIMO.texto);
+      await page.getByLabel('Contraseña').fill('Incorrecta#2026');
+      await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
+      const error = page.getByRole('alert').filter({ hasText: 'Correo o contraseña incorrectos.' });
+      await expect(error).toBeVisible();
+      const aviso = await medirTexto(error);
+      exigir(nombre, 'mensaje de error sobre su recuadro', aviso.color, aviso.fondo, MINIMO.texto);
 
-    await page.goto('/catalogo');
-    await page.getByRole('combobox', { name: 'Categoría' }).click();
-    const seleccionada = page.getByRole('option', { selected: true });
-    await expect(seleccionada).toBeVisible();
-    // Material solo pinta los colores de la opción seleccionada cuando no es la activa: se baja una con el teclado.
-    await page.keyboard.press('ArrowDown');
-    const opcion = await medirOpcionSeleccionada(seleccionada);
-    exigir('oscuro', 'opción seleccionada, texto', opcion.texto, opcion.fondo, MINIMO.texto);
-    const panel = await medirTexto(page.getByRole('option', { selected: false }).last());
-    exigir('oscuro', 'opción sin seleccionar, texto sobre el panel', panel.color, panel.fondo, MINIMO.texto);
-  });
+      await page.goto('/catalogo');
+      await page.getByRole('combobox', { name: 'Categoría' }).click();
+      const seleccionada = page.getByRole('option', { selected: true });
+      await expect(seleccionada).toBeVisible();
+      // Material solo pinta los colores de la opción seleccionada cuando no es la activa: se baja una con el teclado.
+      await page.keyboard.press('ArrowDown');
+      const opcion = await medirOpcionSeleccionada(seleccionada);
+      exigir(nombre, 'opción seleccionada, texto', opcion.texto, opcion.fondo, MINIMO.texto);
+      const panel = await medirTexto(page.getByRole('option', { selected: false }).last());
+      exigir(nombre, 'opción sin seleccionar, texto sobre el panel', panel.color, panel.fondo, MINIMO.texto);
+    });
+  }
 
   test('PBI-0062: con un principal muy claro sobre una base oscura, el texto del botón principal se lee', async ({
     page,

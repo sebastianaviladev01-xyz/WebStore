@@ -350,3 +350,28 @@ test('PBI-0150: tomarError() devuelve el motivo y lo quita del aviso del panel',
   assert.equal(facade.error(), null);
   assert.equal(facade.tomarError(), null);
 });
+
+// Lote 08 (ADR-0017), PBI-0085: al entrar a una página, si la consulta falla el panel conserva las cifras de la
+// consulta anterior; antes lo hacía sin decirlo, y el Resumen mostraba cifras viejas como si fueran de ahora.
+test('PBI-0085: entrar() con la consulta fallida conserva los datos y los marca como desactualizados', async () => {
+  const { facade } = montar([INICIAL, new Error('caída'), ACTUAL]);
+  assert.equal(facade.desactualizado(), false);
+  await facade.entrar(); // la primera vez carga con load()
+  assert.equal(facade.desactualizado(), false);
+  await facade.entrar(); // falla: se conserva INICIAL
+  assert.equal(facade.snapshot(), INICIAL);
+  assert.equal(facade.desactualizado(), true, 'avisa que son los datos de la consulta anterior');
+  assert.equal(facade.error(), null, 'sin el aviso general de error: la página sigue usable');
+  await facade.entrar(); // vuelve a responder
+  assert.equal(facade.snapshot(), ACTUAL);
+  assert.equal(facade.desactualizado(), false, 'al responder, el aviso se quita');
+});
+
+test('PBI-0085: «Actualizar» o «Buscar» con respuesta también quitan el aviso', async () => {
+  const { facade } = montar([INICIAL, new Error('caída'), ACTUAL]);
+  await facade.entrar();
+  await facade.entrar();
+  assert.equal(facade.desactualizado(), true);
+  assert.equal(await facade.refresh(), true);
+  assert.equal(facade.desactualizado(), false);
+});
