@@ -90,24 +90,95 @@ function migrarColoresDeContenido(next) {
   }
 }
 
-/** `appearance` con su forma completa: revisión entera, lista de temas propios y el id activo tal como llegó. */
-function normalizarApariencia(apariencia) {
+const descripcion = (tema) => {
+  try {
+    return JSON.stringify(tema);
+  } catch {
+    return String(tema);
+  }
+};
+
+/** Caracteres que no se ven en un nombre (de control y de formato): un nombre guardado antes de PBI-0069 los pierde. */
+const INVISIBLES = /[\p{Cc}\p{Cf}]/gu;
+
+/**
+ * Un tema propio guardado, tal como lo dejaría crearlo hoy. Pasa por las mismas reglas que al crearlo
+ * (`exigirTemaValido`) contra los ya aceptados. Se repara el nombre: pierde los caracteres invisibles y, si se repite,
+ * se renombra con «(2)», «(3)»… como en la migración de los colores de Contenido. Lo que no se puede reparar lanza
+ * un error con su código.
+ */
+function temaUtilizable(tema, aceptados) {
+  if (tema === null || typeof tema !== 'object' || Array.isArray(tema))
+    throw Object.assign(new Error('no es un objeto'), { code: 'INVALID_THEME' });
+  if (typeof tema.id !== 'string' || tema.id.length === 0)
+    throw Object.assign(new Error('no tiene un id de texto'), { code: 'INVALID_THEME_ID' });
+  if ([...TEMAS_PREDEFINIDOS, ...aceptados].some((otro) => otro.id === tema.id))
+    throw Object.assign(new Error('repite el id de otro tema'), { code: 'DUPLICATE_THEME_ID' });
+  for (let intento = 1; ; intento++) {
+    const visible = typeof tema.name === 'string' ? tema.name.replace(INVISIBLES, '') : tema.name;
+    const name = intento === 1 ? visible : `${String(visible ?? '').trim()} (${intento})`;
+    try {
+      const valido = exigirTemaValido({ name, colors: tema.colors }, aceptados);
+      return { ...tema, name: valido.name, colors: valido.colors };
+    } catch (error) {
+      if (error?.code !== 'THEME_NAME_TAKEN') throw error;
+    }
+  }
+}
+
+/**
+ * Temas propios que se pueden servir (PBI-0068). Un tema guardado a mano o por una versión anterior podía dejar al
+ * BFF respondiendo `500` en `/bff/appearance` y `theme.css`. Cada tema se repara (su nombre) o se descarta,
+ * en el orden guardado, y cada cambio se avisa con el tema completo para poder recuperarlo desde el log.
+ */
+function temasPropiosUtilizables(guardados, avisar) {
+  const aceptados = [];
+  for (const tema of guardados) {
+    try {
+      const utilizable = temaUtilizable(tema, aceptados);
+      if (utilizable.name !== String(tema.name).trim())
+        avisar(
+          `[temas] Tema propio «${tema.id}» renombrado al cargar los datos: «${tema.name}» pasa a «${utilizable.name}».`,
+        );
+      aceptados.push(utilizable);
+    } catch (error) {
+      avisar(
+        `[temas] Tema propio descartado al cargar los datos (${error?.code ?? 'INVALID_THEME'}: ${error?.message}): ${descripcion(tema)}`,
+      );
+    }
+  }
+  return aceptados;
+}
+
+/** `appearance` con su forma completa: revisión entera, temas propios utilizables y el id activo tal como llegó. */
+function normalizarApariencia(apariencia, avisar) {
   const actual = apariencia !== null && typeof apariencia === 'object' ? apariencia : {};
   return {
     revision: Number.isInteger(actual.revision) ? actual.revision : 0,
     activeThemeId: actual.activeThemeId,
-    customThemes: Array.isArray(actual.customThemes) ? actual.customThemes : [],
+    customThemes: temasPropiosUtilizables(
+      Array.isArray(actual.customThemes) ? actual.customThemes : [],
+      avisar,
+    ),
   };
 }
 
-/** Un tema activo que no existe (ni predefinido ni propio) pasa a B. */
-function temaActivoExistente({ activeThemeId, customThemes }) {
+/** Un tema activo que no existe (ni predefinido ni propio) pasa a B; si tenía un id, se avisa. */
+function temaActivoExistente({ activeThemeId, customThemes }, avisar) {
   const existe = [...TEMAS_PREDEFINIDOS, ...customThemes].some((tema) => tema.id === activeThemeId);
-  return existe ? activeThemeId : TEMA_POR_DEFECTO;
+  if (existe) return activeThemeId;
+  if (activeThemeId !== undefined)
+    avisar(
+      `[temas] El tema activo «${String(activeThemeId)}» no existe: queda activo «${TEMA_POR_DEFECTO}».`,
+    );
+  return TEMA_POR_DEFECTO;
 }
 
-/** Completa con la semilla lo que falte en data.json, descarta sesiones vencidas y aplica migraciones. */
-export function normalizeState(input, demoPasswords) {
+/**
+ * Completa con la semilla lo que falte en data.json, descarta sesiones vencidas y aplica migraciones. `avisar`
+ * recibe un texto por cada dato que se repara o se descarta al cargar (hoy, los temas propios: PBI-0068).
+ */
+export function normalizeState(input, demoPasswords, avisar = () => {}) {
   const next = { ...structuredClone(seed), ...input };
   next.config = { ...seed.config, ...(input.config ?? {}) };
   next.products = (input.products ?? seed.products).map((product) => {
@@ -141,13 +212,13 @@ export function normalizeState(input, demoPasswords) {
         userId: user.id,
         ...hashPassword(demoPasswordFor(demoPasswords, migrateRole(user.role))),
       }));
-  next.appearance = normalizarApariencia(input.appearance ?? structuredClone(seed.appearance));
+  next.appearance = normalizarApariencia(input.appearance ?? structuredClone(seed.appearance), avisar);
   // Cada migración se ejecuta una sola vez, al pasar de una versión anterior a la suya.
   const versionGuardada = input.schemaVersion ?? 1;
   if (versionGuardada < 2) migrateAdminRoles(next, demoPasswords);
   if (versionGuardada < 3) migrarColoresDeContenido(next);
   next.config = sinColoresDeContenido(next.config);
-  next.appearance.activeThemeId = temaActivoExistente(next.appearance);
+  next.appearance.activeThemeId = temaActivoExistente(next.appearance, avisar);
   next.schemaVersion = SCHEMA_VERSION;
   return next;
 }

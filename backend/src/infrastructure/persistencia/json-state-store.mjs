@@ -48,10 +48,12 @@ function writeAtomically(dataFile, contenido) {
 /**
  * Estado completo de la tienda en memoria, persistido como JSON en `dataFile`.
  * Al crearse normaliza y migra lo que haya en disco y lo vuelve a guardar.
- * Los casos de uso leen `store.state`, lo modifican y llaman a `save()` cuando corresponde.
+ * Los casos de uso leen `store.state`, lo modifican y llaman a `save()` cuando corresponde. Lo que la
+ * normalización repara o descarta al cargar (un tema propio inválido, PBI-0068) se escribe en `avisar`, el log del
+ * BFF por defecto.
  */
-export function createJsonStateStore({ dataFile, demoPasswords }) {
-  let state = normalizeState(load(dataFile), demoPasswords);
+export function createJsonStateStore({ dataFile, demoPasswords, avisar = (aviso) => console.warn(aviso) }) {
+  let state = normalizeState(load(dataFile), demoPasswords, avisar);
   const save = () => writeAtomically(dataFile, JSON.stringify(state, null, 2));
   save();
 
