@@ -1,6 +1,12 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { AVISO_SESION_VENCIDA, SesionGateway, SesionError } from '../domain/sesion.gateway';
+import {
+  AVISO_SESION_VENCIDA,
+  PerfilError,
+  SesionGateway,
+  SesionError,
+  SesionVencidaError,
+} from '../domain/sesion.gateway';
 import { Permiso, Rol, rolPuede, definicionDeRol } from '../domain/rol.rules';
 import { UsuarioAdmin } from '../domain/usuario-admin.model';
 import {
@@ -125,6 +131,42 @@ export class SesionFacade {
     const ruta = this.retorno;
     this.retorno = '/';
     return ruta;
+  }
+
+  /**
+   * Guarda el nombre y el correo de la persona (lote 07b, PBI-0034). Devuelve `null` si se guardó o el motivo, con el
+   * campo al que corresponde; un `401` cierra la sesión (PBI-0124).
+   */
+  async actualizarPerfil(datos: {
+    readonly name: string;
+    readonly email: string;
+  }): Promise<PerfilError | null> {
+    try {
+      this.userState.set(await this.auth.actualizarPerfil(datos, this.requireToken()));
+      return null;
+    } catch (error) {
+      return this.motivoDelPerfil(error);
+    }
+  }
+
+  /** Cambia la contraseña pidiendo la actual (PBI-0034); el BFF cierra las demás sesiones y conserva esta. */
+  async cambiarContrasena(actual: string, nueva: string): Promise<PerfilError | null> {
+    try {
+      await this.auth.cambiarContrasena(actual, nueva, this.requireToken());
+      return null;
+    } catch (error) {
+      return this.motivoDelPerfil(error);
+    }
+  }
+
+  private motivoDelPerfil(error: unknown): PerfilError {
+    if (error instanceof SesionVencidaError) {
+      this.expirar();
+      return new PerfilError(AVISO_SESION_VENCIDA);
+    }
+    return error instanceof PerfilError
+      ? error
+      : new PerfilError('No pudimos guardar el cambio. Inténtalo de nuevo.');
   }
 
   /** Token vigente para los adaptadores HTTP; sin sesión no se debe llegar a llamar al BFF. */
