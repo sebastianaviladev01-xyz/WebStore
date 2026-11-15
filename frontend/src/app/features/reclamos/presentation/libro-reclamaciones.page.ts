@@ -31,8 +31,12 @@ import { ConstanciaReclamo, TipoReclamo } from '../domain/reclamo.model';
               <dd class="font-semibold">{{ item.createdAt | date: 'medium' }}</dd>
             </div>
             <div>
+              <dt class="text-sm text-muted">Fecha límite de respuesta</dt>
+              <dd class="font-semibold">{{ item.dueAt | date: 'd MMM y' }}</dd>
+            </div>
+            <div>
               <dt class="text-sm text-muted">Tipo</dt>
-              <dd class="font-semibold">{{ item.type }}</dd>
+              <dd class="font-semibold">{{ tipos[item.type] }}</dd>
             </div>
             <div>
               <dt class="text-sm text-muted">Monto declarado</dt>
@@ -48,55 +52,59 @@ import { ConstanciaReclamo, TipoReclamo } from '../domain/reclamo.model';
           </button>
         </div>
       } @else {
-        <form [formGroup]="form" (ngSubmit)="submit()" class="ws-card mt-8 grid gap-4 p-7 sm:grid-cols-2">
-          <mat-form-field>
+        <form
+          [formGroup]="form"
+          (ngSubmit)="submit()"
+          class="ws-card ws-outline-fields mt-8 grid gap-4 p-7 sm:grid-cols-2"
+        >
+          <mat-form-field appearance="outline">
             <mat-label>Nombre completo</mat-label>
             <input matInput autocomplete="name" formControlName="name" />
             <mat-error>Ingresa tu nombre completo (al menos 3 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>DNI / documento</mat-label>
             <input matInput inputmode="numeric" formControlName="document" />
             <mat-error>Ingresa tu documento (al menos 8 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Correo</mat-label>
             <input matInput autocomplete="email" type="email" formControlName="email" />
             <mat-error>Ingresa un correo válido.</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Teléfono</mat-label>
             <input matInput autocomplete="tel" formControlName="phone" />
             <mat-error>Ingresa un teléfono válido.</mat-error>
           </mat-form-field>
-          <mat-form-field class="sm:col-span-2">
+          <mat-form-field appearance="outline" class="sm:col-span-2">
             <mat-label>Domicilio</mat-label>
             <input matInput autocomplete="street-address" formControlName="address" />
             <mat-error>Ingresa tu domicilio (al menos 5 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Producto o servicio</mat-label>
             <input matInput formControlName="subject" />
             <mat-error>Indica el producto o servicio.</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Monto del bien</mat-label>
             <input matInput min="0" type="number" formControlName="amount" />
             <mat-error>Ingresa un monto de 0 o más.</mat-error>
           </mat-form-field>
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Tipo de solicitud</mat-label>
             <mat-select formControlName="type">
               <mat-option value="reclamo">Reclamo sobre producto o servicio</mat-option>
               <mat-option value="queja">Queja sobre la atención</mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field class="sm:col-span-2">
+          <mat-form-field appearance="outline" class="sm:col-span-2">
             <mat-label>Detalle de lo ocurrido</mat-label>
             <textarea matInput rows="5" formControlName="detail"></textarea>
             <mat-error>Cuéntanos qué pasó (al menos 10 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field class="sm:col-span-2">
+          <mat-form-field appearance="outline" class="sm:col-span-2">
             <mat-label>Pedido del consumidor</mat-label>
             <textarea matInput rows="3" formControlName="request"></textarea>
             <mat-error>Indica qué solicitas (al menos 5 caracteres).</mat-error>
@@ -119,6 +127,8 @@ import { ConstanciaReclamo, TipoReclamo } from '../domain/reclamo.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LibroReclamacionesPage {
+  /** El tipo como se ve en la constancia (PBI-0112). */
+  protected readonly tipos: Record<TipoReclamo, string> = { reclamo: 'Reclamo', queja: 'Queja' };
   protected readonly service = inject(ReclamosFacade);
   protected readonly receipt = signal<ConstanciaReclamo | null>(null);
   protected readonly form = new FormGroup({
