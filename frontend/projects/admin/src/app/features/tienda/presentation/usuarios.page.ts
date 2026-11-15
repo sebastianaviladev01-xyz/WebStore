@@ -7,7 +7,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
-import { Rol } from '../../sesion/domain/rol.rules';
+import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
 import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
 import { usuarioConElMismoCorreo } from '../domain/registro-unico.rules';
 
@@ -30,7 +30,7 @@ const EMPTY_USER = {
     </p>
 
     <section class="mt-6 grid gap-3 md:grid-cols-3" aria-label="Roles disponibles">
-      @for (role of admin.roles(); track role.id) {
+      @for (role of rolesVisibles(); track role.id) {
         <article class="admin-card p-4">
           <h2 class="font-semibold text-ink">{{ role.label }}</h2>
           <p class="mt-1 text-sm text-muted">{{ role.description }}</p>
@@ -58,9 +58,23 @@ const EMPTY_USER = {
               {{ roleLabel(user.role) }}{{ user.active ? '' : ' · inactivo' }}
             </span>
             <div class="flex gap-3 text-sm font-medium">
-              <button class="text-link" type="button" (click)="edit(user.id)">Editar</button>
-              @if (user.id !== session.user()?.id) {
-                <button class="text-danger" type="button" (click)="remove(user.id)">Eliminar</button>
+              <button
+                class="text-link"
+                type="button"
+                [attr.aria-label]="'Editar usuario ' + user.name"
+                (click)="edit(user.id)"
+              >
+                Editar
+              </button>
+              @if (session.can('users.delete') && user.id !== session.user()?.id) {
+                <button
+                  class="text-danger"
+                  type="button"
+                  [attr.aria-label]="'Eliminar usuario ' + user.name"
+                  (click)="remove(user.id)"
+                >
+                  Eliminar
+                </button>
               }
             </div>
           </div>
@@ -85,7 +99,7 @@ const EMPTY_USER = {
           <mat-form-field>
             <mat-label>Rol</mat-label>
             <mat-select formControlName="role">
-              @for (role of admin.roles(); track role.id) {
+              @for (role of rolesVisibles(); track role.id) {
                 <mat-option [value]="role.id">{{ role.label }}</mat-option>
               }
             </mat-select>
@@ -137,6 +151,14 @@ export class UsuariosPage {
   private base: UsuarioAdmin | null = null;
   /** Id del usuario nuevo; cambia al empezar otro, para que un segundo envío no cree otro (PBI-0121). */
   private idNuevo = crypto.randomUUID();
+  /**
+   * Roles que el rol de la sesión gestiona (PBI-0013): el administrador solo ve y asigna «Vendedor». El BFF solo le
+   * envía esos usuarios y rechaza cualquier otro cambio.
+   */
+  protected readonly rolesVisibles = computed(() => {
+    const gestionables = rolesGestionables(this.session.role());
+    return this.admin.roles().filter((role) => gestionables.includes(role.id));
+  });
   protected readonly countByRole = computed(() => {
     const counts = new Map<Rol, number>();
     for (const user of this.admin.users()) counts.set(user.role, (counts.get(user.role) ?? 0) + 1);
@@ -197,7 +219,7 @@ export class UsuariosPage {
 
   /** Si se elimina el usuario en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string): Promise<void> {
-    if (!confirm('¿Eliminar usuario?')) return;
+    if (!this.session.can('users.delete') || !confirm('¿Eliminar usuario?')) return;
     if ((await this.admin.eliminarUsuario(id)) && this.editing() === id) this.reset();
   }
 

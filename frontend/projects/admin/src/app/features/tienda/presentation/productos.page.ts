@@ -146,7 +146,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
             >
               Editar
             </a>
-            @if (session.can('products.manage')) {
+            @if (session.can('products.delete')) {
               <button
                 class="min-h-10 font-semibold text-danger"
                 [attr.aria-label]="'Eliminar producto ' + p.name"
@@ -239,7 +239,7 @@ export class ProductosPage {
     return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
   protected async remove(id: string) {
-    if (this.session.can('products.manage') && confirm('¿Eliminar producto?'))
+    if (this.session.can('products.delete') && confirm('¿Eliminar producto?'))
       await this.admin.eliminarProducto(id);
   }
 }

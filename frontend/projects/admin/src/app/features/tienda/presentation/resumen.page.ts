@@ -78,7 +78,7 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
           titulo="Stock bajo"
           [valor]="(admin.lowStock().length | number) ?? '0'"
           nota="Productos con 5 unidades o menos"
-          enlace="/inventario"
+          [enlace]="enlaceStock()"
           [alerta]="true"
         />
       </div>
@@ -206,8 +206,8 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
                   <p class="text-sm text-muted">Sin alertas.</p>
                 }
               </div>
-              <a routerLink="/inventario" class="mt-5 inline-flex text-sm font-medium text-link">
-                Gestionar inventario →
+              <a [routerLink]="enlaceStock()" class="mt-5 inline-flex text-sm font-medium text-link">
+                {{ session.can('inventory.manage') ? 'Gestionar inventario →' : 'Gestionar productos →' }}
               </a>
             </div>
           </div>
@@ -354,6 +354,10 @@ export class ResumenPage {
 
   protected readonly verPedidos = computed(() => this.session.can('orders.manage'));
   protected readonly verClientes = computed(() => this.session.can('customers.manage'));
+  /** El vendedor no tiene Inventario (PBI-0013): el stock lo cambia en la ficha de cada producto. */
+  protected readonly enlaceStock = computed(() =>
+    this.session.can('inventory.manage') ? '/inventario' : '/productos',
+  );
 
   protected readonly indicadores = computed(() =>
     calcularIndicadores(this.admin.orders(), this.admin.customers(), this.ahora),

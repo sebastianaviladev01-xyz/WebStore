@@ -31,8 +31,8 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
  *   publica.
  * - TEST-14 (AC-07): «Editar» abre `/productos/:id` con los datos actuales y vuelve con el cambio; un producto que
  *   otra sesión eliminó muestra «Este producto ya no existe».
- * - TEST-17 (AC-11): el vendedor filtra, busca y edita la ficha con SKU, precio, categoría, marca y estado
- *   bloqueados (el BFF los conserva); no ve «Nuevo producto» ni «Eliminar»; `/productos/nuevo` lo lleva al Resumen.
+ * - TEST-17 (AC-11, cambiado en el lote 07 por PBI-0013): el vendedor filtra, busca, edita todos los campos y crea
+ *   un producto desde «Nuevo producto»; no ve «Eliminar».
  *
  * Categorías (⚠ TASK-09):
  *
@@ -284,14 +284,15 @@ test.describe('Filtros y registro de productos del Admin', () => {
     }
   });
 
-  test('TEST-17 · el vendedor filtra y edita la ficha, sin crear ni eliminar', async ({ page }) => {
+  test('TEST-17 · el vendedor filtra, crea y modifica todos los campos, sin eliminar (PBI-0013)', async ({
+    page,
+  }) => {
     const originales = await leerProductos();
     const antes = originales.find((p) => p.id === 'p-004');
     if (!antes) throw new Error('Falta «Soundbar Cinema 500» (p-004) en el seed');
     try {
       await ingresarAlAdmin(page, cuentasAdmin.vendedor);
       await abrirProductos(page);
-      await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Eliminar producto/ })).toHaveCount(0);
 
       await panel(page).getByRole('textbox', { name: 'Nombre' }).fill('soundbar');
@@ -301,37 +302,49 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await editar(filaDe(page, antes.name)).click();
       await expect(page).toHaveURL(/\/productos\/p-004\?nombre=soundbar$/);
       const formulario = page.getByRole('form', { name: 'Editar producto' });
-      // Solo lectura: Playwright cuenta `readonly` como no editable.
-      await expect(formulario.getByRole('textbox', { name: 'Nombre', exact: true })).toBeEditable();
-      await expect(formulario.getByRole('textbox', { name: 'SKU', exact: true })).not.toBeEditable();
-      await expect(formulario.getByRole('spinbutton', { name: 'Precio', exact: true })).not.toBeEditable();
-      await expect(formulario.getByRole('combobox', { name: 'Categoría' })).toBeDisabled();
-      await expect(formulario.getByRole('combobox', { name: 'Marca' })).toBeDisabled();
-      await expect(formulario.getByRole('checkbox', { name: 'Activo' })).toBeDisabled();
+      // Lote 07 (PBI-0013, provisional): el vendedor modifica todos los campos del producto.
+      await expect(formulario.getByRole('textbox', { name: 'SKU', exact: true })).toBeEditable();
+      await expect(formulario.getByRole('spinbutton', { name: 'Precio', exact: true })).toBeEditable();
+      await expect(formulario.getByRole('combobox', { name: 'Categoría' })).toBeEnabled();
+      await expect(formulario.getByRole('combobox', { name: 'Marca' })).toBeEnabled();
+      await expect(formulario.getByRole('checkbox', { name: 'Activo' })).toBeEnabled();
 
       await formulario
         .getByRole('textbox', { name: 'Nombre', exact: true })
         .fill('Soundbar Cinema 500 vendedor');
+      await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('321');
       await formulario.getByRole('button', { name: 'Guardar producto' }).click();
       await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
       await expect(nombresEnLista(page)).toHaveText(['Soundbar Cinema 500 vendedor']);
-
-      // El BFF guarda la ficha y conserva SKU, precio, categoría, marca y estado.
-      const despues = (await leerProductos()).find((p) => p.id === 'p-004');
-      expect(despues).toMatchObject({
+      expect((await leerProductos()).find((p) => p.id === 'p-004')).toMatchObject({
         name: 'Soundbar Cinema 500 vendedor',
+        price: 321,
         sku: antes.sku,
-        price: antes.price,
-        categoryId: antes.categoryId,
-        brandId: antes.brandId,
-        active: antes.active,
       });
 
-      // La dirección del registro de un producto nuevo lo lleva al Resumen.
-      await page.goto('/productos/nuevo');
-      await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
-      await expect(page).toHaveURL(/\/$/);
-      await expect(page.getByRole('form', { name: 'Nuevo producto' })).toHaveCount(0);
+      // Crea un producto desde «Nuevo producto».
+      await page.getByRole('link', { name: 'Nuevo producto', exact: true }).click();
+      const nuevo = page.getByRole('form', { name: 'Nuevo producto' });
+      await nuevo.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Parlante del vendedor');
+      await nuevo.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VEND-07');
+      await nuevo.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Portátil.');
+      await nuevo
+        .getByRole('textbox', { name: 'Imagen principal', exact: true })
+        .fill('assets/products/washer-studio.jpg');
+      await nuevo
+        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
+        .fill('Batería');
+      await nuevo.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('99');
+      await nuevo.getByRole('spinbutton', { name: 'Stock', exact: true }).fill('3');
+      await elegir(page, nuevo, 'Categoría', 'Electrohogar');
+      await elegir(page, nuevo, 'Marca', 'Zenith');
+      await nuevo.getByRole('button', { name: 'Guardar producto' }).click();
+      await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
+      expect((await leerProductos()).find((p) => p.sku === 'E2E-VEND-07')).toMatchObject({
+        name: 'Parlante del vendedor',
+        price: 99,
+        stock: 3,
+      });
     } finally {
       await restaurar(originales);
     }

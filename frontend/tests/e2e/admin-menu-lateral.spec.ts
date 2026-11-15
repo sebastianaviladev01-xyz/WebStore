@@ -105,14 +105,15 @@ test.describe('Menú lateral en escritorio', () => {
 
     await ingresarAlAdmin(page, cuentasAdmin.admin);
     await desplegarGrupo(page, 'Tienda');
-    await esperarGrupos(page, ['General', 'Tienda'], ['Catálogo', 'Ventas']);
+    // Desde el lote 07 (PBI-0013) el administrador también tiene «Accesos» (Usuarios).
+    await esperarGrupos(page, ['General', 'Tienda'], ['Catálogo', 'Ventas', 'Accesos']);
 
     const ultimos = page.getByRole('main').getByRole('region', { name: 'Últimos pedidos' });
     await ultimos.getByRole('link', { name: `Ver el pedido ${pedido}` }).click();
     await expect(page).toHaveURL(`/pedidos?pedido=${encodeURIComponent(pedido)}`);
     await expect(page.getByRole('heading', { level: 1, name: 'Pedidos' })).toBeVisible();
 
-    await esperarGrupos(page, ['General', 'Ventas', 'Tienda'], ['Catálogo']);
+    await esperarGrupos(page, ['General', 'Ventas', 'Tienda'], ['Catálogo', 'Accesos']);
     await expect(enlace(page, 'Pedidos')).toBeVisible();
     await expect(enlace(page, 'Pedidos')).toHaveClass(/bg-primary-soft/);
   });
@@ -152,16 +153,15 @@ test.describe('Menú lateral en escritorio', () => {
     await expect(enlace(page, 'Productos')).toBeHidden();
   });
 
-  test('el vendedor ve General, Catálogo y Ventas, todos plegables y sin grupos vacíos', async ({ page }) => {
+  test('el vendedor ve General y Catálogo, plegables y sin grupos vacíos (PBI-0013)', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
-    await titulosDeLosGrupos(page, ['General', 'Catálogo', 'Ventas']);
-    await esperarGrupos(page, ['General'], ['Catálogo', 'Ventas']);
+    await titulosDeLosGrupos(page, ['General', 'Catálogo']);
+    await esperarGrupos(page, ['General'], ['Catálogo']);
 
     await desplegarTodos(page);
     const esperado = {
       General: ['Resumen'],
-      Catálogo: ['Productos', 'Inventario'],
-      Ventas: ['Pedidos'],
+      Catálogo: ['Productos'],
     };
     for (const [grupo, enlaces] of Object.entries(esperado)) {
       await expect((await regionDe(page, grupo)).getByRole('link')).toHaveText(enlaces);

@@ -16,7 +16,8 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea), el precio, el
  *   stock y las acciones se ven, caben en la lista y no se solapan; la cabecera se oculta o cabe; la celda del
  *   stock dice «Stock N» y el 0 tiene el color de `--ws-danger`.
- * - TEST-04 (AC-01, AC-03): lo mismo con el vendedor y B a 375 px, sin «Eliminar» ni «Nuevo producto».
+ * - TEST-04 (AC-01, AC-03): lo mismo con el vendedor y B a 375 px, sin «Eliminar» (desde el lote 07, con «Nuevo
+ *   producto»: PBI-0013).
  * - TEST-05 (AC-05): con B, a 768 y 1440 px, el escritorio sigue igual (cabecera, una sola línea por fila, la
  *   celda solo con el número, la ayuda de la miniatura en una línea); a 767 px, la cabecera se oculta y la celda
  *   dice «Stock N».
@@ -298,8 +299,9 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
   }
 
   if (!conEliminar) {
+    // Lote 07 (PBI-0013): el vendedor crea productos («Nuevo producto»), pero no los elimina.
     await expect(page.getByRole('button', { name: /^Eliminar producto/ })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toBeVisible();
   }
 }
 

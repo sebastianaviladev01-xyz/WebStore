@@ -58,20 +58,40 @@ test('el superadministrador recorre todos los módulos del panel', async ({ page
   await cerrarSesionAdmin(page);
 });
 
-test('el vendedor no ve Usuarios ni los módulos comerciales', async ({ page }) => {
+test('el vendedor solo ve el Resumen y Productos (PBI-0013)', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
   // Las ausencias se comprueban con todo desplegado: con un grupo plegado pasarían siempre.
   await desplegarTodos(page);
 
-  await expect(menu(page).getByRole('link', { name: 'Resumen' })).toBeVisible();
-  await expect(menu(page).getByRole('link', { name: 'Inventario' })).toBeVisible();
-  await expect(menu(page).getByRole('link', { name: 'Pedidos' })).toBeVisible();
-  for (const oculto of ['Usuarios y roles', 'Tarifas de envío', 'Contenido', 'Banners']) {
+  await expect(menu(page).getByRole('link')).toHaveText(['Resumen', 'Productos']);
+
+  for (const ruta of ['/usuarios', '/inventario', '/pedidos', '/clientes', '/contenido']) {
+    await page.goto(ruta);
+    await expect(page).toHaveTitle('WebStore Admin | Resumen');
+    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+  }
+  await page.goto('/productos/nuevo');
+  await expect(page.getByRole('heading', { level: 1, name: 'Nuevo producto' })).toBeVisible();
+});
+
+test('el administrador gestiona Usuarios y no ve Contenido ni Temas (PBI-0013)', async ({ page }) => {
+  await ingresarAlAdmin(page, cuentasAdmin.admin);
+  await desplegarTodos(page);
+
+  await expect(menu(page).getByRole('link', { name: 'Usuarios y roles', exact: true })).toBeVisible();
+  for (const oculto of ['Contenido', 'Temas']) {
     await expect(menu(page).getByRole('link', { name: oculto, exact: true })).toHaveCount(0);
   }
-
-  await page.goto('/usuarios');
-  await expect(page).toHaveTitle('WebStore Admin | Resumen');
+  for (const visible of [
+    'Inventario',
+    'Pedidos',
+    'Clientes',
+    'Reclamaciones',
+    'Banners',
+    'Tarifas de envío',
+  ]) {
+    await expect(menu(page).getByRole('link', { name: visible, exact: true })).toBeVisible();
+  }
+  await page.goto('/contenido');
   await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: 'Usuarios y roles' })).toHaveCount(0);
 });

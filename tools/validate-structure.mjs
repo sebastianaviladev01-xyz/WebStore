@@ -88,8 +88,8 @@ for (const [label, ok] of [
       productNewRoute < productEditRoute,
   ],
   [
-    'Eliminación de producto protegida por products.manage',
-    products.includes("this.session.can('products.manage') && confirm"),
+    'Eliminación de producto protegida por products.delete (PBI-0013)',
+    products.includes("this.session.can('products.delete') && confirm"),
   ],
   [
     'Roles fijos superadmin/admin/vendedor',

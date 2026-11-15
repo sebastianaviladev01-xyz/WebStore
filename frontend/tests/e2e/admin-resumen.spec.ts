@@ -62,15 +62,21 @@ test('«Ver más» de una tarjeta lleva al módulo', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Clientes' })).toBeVisible();
 });
 
-test('el vendedor no ve las tarjetas ni la serie de clientes', async ({ page }) => {
+test('el vendedor solo ve el stock bajo y las alertas, que llevan a Productos (PBI-0013)', async ({
+  page,
+}) => {
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
   const main = page.getByRole('main');
 
-  await expect(main.getByRole('heading', { level: 2, name: 'Total de pedidos' })).toBeVisible();
-  await expect(main.getByRole('heading', { level: 2, name: 'Pedidos por día' })).toBeVisible();
-  await expect(main.getByRole('heading', { level: 2, name: 'Total de clientes' })).toHaveCount(0);
+  await expect(main.getByRole('heading', { level: 2, name: 'Stock bajo' })).toBeVisible();
+  for (const oculto of ['Total de pedidos', 'Total de ventas', 'Total de clientes', 'Pedidos por día']) {
+    await expect(main.getByRole('heading', { level: 2, name: oculto })).toHaveCount(0);
+  }
   await expect(main.getByText('Clientes nuevos')).toHaveCount(0);
-  await expect(main.getByRole('link', { name: 'Ver más (Total de clientes)' })).toHaveCount(0);
+  // Sin Inventario, el stock se cambia en la ficha de cada producto.
+  await expect(main.getByRole('link', { name: 'Gestionar productos →' })).toBeVisible();
+  await main.getByRole('link', { name: 'Ver más (Stock bajo)' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Productos' })).toBeVisible();
 });
 
 /**
@@ -208,15 +214,12 @@ test.describe('Bloques plegables del Resumen', () => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     const main = page.getByRole('main');
 
+    // Lote 07 (PBI-0013): sin pedidos, solo queda el bloque de las alertas de inventario.
     await expect(main.getByRole('heading', { level: 2 }).getByRole('button')).toHaveText([
-      'Pedidos por día',
-      'Pedidos por distrito',
       'Alertas de inventario',
-      'Últimos pedidos',
-      'Pedidos por estado',
     ]);
-    await botonDeBloque(page, 'Pedidos por día').click();
-    await esperarBloques(page, ['Pedidos por distrito'], ['Pedidos por día']);
+    await botonDeBloque(page, 'Alertas de inventario').click();
+    await esperarBloques(page, [], ['Alertas de inventario']);
   });
 
   test.describe('a 375 px', () => {

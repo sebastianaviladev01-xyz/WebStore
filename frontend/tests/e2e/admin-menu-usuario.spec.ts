@@ -21,7 +21,7 @@ const perfiles = [
     nombre: 'Superadministrador Demo',
     iniciales: 'SD',
     etiqueta: 'Superadministrador',
-    descripcion: 'Acceso total, incluida la gestión de usuarios y roles.',
+    descripcion: 'Acceso total: configuración de la tienda, temas, contenido y todos los usuarios.',
   },
   {
     rol: 'admin',
@@ -29,7 +29,7 @@ const perfiles = [
     nombre: 'Administración Demo',
     iniciales: 'AD',
     etiqueta: 'Administrador',
-    descripcion: 'Opera toda la tienda: catálogo, contenido, envíos, pedidos y reclamaciones.',
+    descripcion: 'Opera la tienda y gestiona a los vendedores, sin temas ni contenido.',
   },
   {
     rol: 'vendedor',
@@ -37,7 +37,7 @@ const perfiles = [
     nombre: 'Vendedor Demo',
     iniciales: 'VD',
     etiqueta: 'Vendedor',
-    descripcion: 'Mantiene fichas e inventario y actualiza el estado de los pedidos.',
+    descripcion: 'Crea productos y modifica sus fichas, precios y stock.',
   },
 ] as const;
 
