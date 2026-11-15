@@ -231,6 +231,46 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
     }
   });
 
+  test('se pone al día al volver a la pestaña y cada minuto, sin cambiar de página (PBI-0160)', async ({
+    page,
+  }) => {
+    await page.clock.install();
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const campana = page.getByRole('button', { name: /^Notificaciones/ });
+    await campana.click();
+    await page.keyboard.press('Escape');
+    await expect(campana).toHaveAccessibleName('Notificaciones: no hay pedidos nuevos');
+
+    // Al volver a la pestaña: el navegador avisa con `visibilitychange`.
+    await crearPedido('Vuelta Lote 08');
+    await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    await expect(campana).toHaveAccessibleName('Notificaciones: 1 pedido nuevo');
+
+    // Con la pestaña visible, cada minuto.
+    await crearPedido('Minuto Lote 08');
+    await page.clock.fastForward(61_000);
+    await expect(campana).toHaveAccessibleName('Notificaciones: 2 pedidos nuevos');
+
+    // Con la pestaña oculta no consulta: el pedido nuevo espera a que vuelva.
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+    });
+    await crearPedido('Oculta Lote 08');
+    const consultas: string[] = [];
+    page.on('request', (peticion) => {
+      if (peticion.url().includes('/bff/admin/notifications')) consultas.push(peticion.url());
+    });
+    await page.clock.fastForward(61_000);
+    await page.clock.fastForward(61_000);
+    expect(consultas).toEqual([]);
+    await expect(campana).toHaveAccessibleName('Notificaciones: 2 pedidos nuevos');
+    await page.evaluate(() => {
+      Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    await expect(campana).toHaveAccessibleName('Notificaciones: 3 pedidos nuevos');
+  });
+
   test('el vendedor no tiene campana', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     await expect(page.getByRole('button', { name: /^Notificaciones/ })).toHaveCount(0);

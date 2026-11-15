@@ -5,6 +5,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   effect,
   inject,
   linkedSignal,
@@ -458,6 +459,8 @@ export class AppLayout {
         takeUntilDestroyed(),
       )
       .subscribe(() => void this.notificaciones.consultar());
+    // PBI-0160: y también sin cambiar de página, al volver a la pestaña y cada minuto mientras está visible.
+    inject(DestroyRef).onDestroy(this.notificaciones.iniciarActualizacion());
     // Al pasar a escritorio con el panel abierto, el panel ya no existe.
     effect(() => {
       if (this.escritorio()) untracked(() => this.menuMovil.set(false));

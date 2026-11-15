@@ -5,6 +5,9 @@ import { PedidoNuevo } from './notificacion.model';
  * pedidos nuevos hay desde la última vez que la persona abrió el menú y hasta cuál se vieron.
  */
 
+/** Cada cuánto se pone al día la campana mientras la pestaña está visible (lote 08, PBI-0160). */
+export const INTERVALO_DE_ACTUALIZACION_MS = 60_000;
+
 /** Número que se ve sobre la campana: nada sin pedidos nuevos y «9+» desde 10, para que quepa en el círculo. */
 export function contadorDeLaCampana(total: number): string {
   if (total <= 0) return '';
