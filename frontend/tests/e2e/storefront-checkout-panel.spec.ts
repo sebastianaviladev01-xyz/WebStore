@@ -121,21 +121,32 @@ test.describe('panel y campos del checkout con cada tema', () => {
 
 test.describe('en móvil', () => {
   test.use({ viewport: { width: 375, height: 812 } });
-
-  test('el panel va encima del resumen, con 22 px de relleno y sin desborde', async ({ page }) => {
-    await abrirCheckout(page);
-    await revisarPanelYCampos(page);
-
-    const panel = page.locator('.ws-checkout-panel');
-    await expect(panel).toHaveCSS('padding-top', '22px');
-    await expect(panel).toHaveCSS('padding-left', '22px');
-    const cajaPanel = (await panel.boundingBox())!;
-    const cajaResumen = (await page.getByRole('main').getByRole('complementary').boundingBox())!;
-    expect(cajaPanel.y + cajaPanel.height).toBeLessThanOrEqual(cajaResumen.y);
-    expect(
-      await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth),
-    ).toBe(true);
+  // PBI-0077: el panel a 375 px solo se probaba con B.
+  test.afterAll(async () => {
+    await activarTema('b');
   });
+
+  for (const tema of ['a', 'b', 'c'] as const) {
+    test(`el panel va encima del resumen, con 22 px de relleno y sin desborde (${tema.toUpperCase()})`, async ({
+      page,
+    }) => {
+      await activarTema(tema);
+      await abrirCheckout(page);
+      await revisarPanelYCampos(page);
+
+      const panel = page.locator('.ws-checkout-panel');
+      await expect(panel).toHaveCSS('padding-top', '22px');
+      await expect(panel).toHaveCSS('padding-left', '22px');
+      const cajaPanel = (await panel.boundingBox())!;
+      const cajaResumen = (await page.getByRole('main').getByRole('complementary').boundingBox())!;
+      expect(cajaPanel.y + cajaPanel.height).toBeLessThanOrEqual(cajaResumen.y);
+      expect(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+        ),
+      ).toBe(true);
+    });
+  }
 });
 
 test('el Tab recorre los campos, el método de pago y los botones en el orden de siempre', async ({

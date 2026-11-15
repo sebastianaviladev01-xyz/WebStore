@@ -251,3 +251,106 @@ test.describe('Bloques plegables del Resumen', () => {
     });
   });
 });
+
+/**
+ * Lote 08 (ADR-0017), PBI-0077: la presentación del Resumen (formato de moneda, texto de la variación y estados vacíos)
+ * no tenía prueba. Las cifras de estas pruebas no dependen de los pedidos que hayan creado otras specs: el snapshot
+ * que recibe la página se sustituye por uno propio, y no se guarda nada.
+ */
+type SnapshotDelResumen = {
+  orders: Record<string, unknown>[];
+  customers: Record<string, unknown>[];
+  products: { stock: number }[];
+  activity: unknown[];
+};
+
+async function conSnapshot(page: Page, cambiar: (snapshot: SnapshotDelResumen) => void): Promise<void> {
+  await page.route('**/bff/admin/snapshot', async (ruta) => {
+    if (ruta.request().method() !== 'GET') return ruta.fallback();
+    const respuesta = await ruta.fetch();
+    const snapshot = (await respuesta.json()) as SnapshotDelResumen;
+    cambiar(snapshot);
+    await ruta.fulfill({ response: respuesta, json: snapshot });
+  });
+}
+
+const pedidoDe = (n: number, createdAt: string, total: number, status = 'confirmed') => ({
+  id: `WS-RES-${n}`,
+  customer: `Cliente ${n}`,
+  customerEmail: `cliente-${n}@example.com`,
+  district: 'Miraflores',
+  status,
+  total,
+  createdAt,
+  items: [],
+});
+const tarjeta = (page: Page, titulo: string) =>
+  page
+    .getByRole('main')
+    .getByRole('article')
+    .filter({ has: page.getByRole('heading', { level: 2, name: titulo, exact: true }) });
+
+test.describe('Presentación del Resumen con datos propios', () => {
+  test('sin pedidos ni alertas: cifras en cero, variación sin dato y los estados vacíos dicen qué falta', async ({
+    page,
+  }) => {
+    await conSnapshot(page, (snapshot) => {
+      snapshot.orders = [];
+      snapshot.customers = [];
+      snapshot.activity = [];
+      for (const producto of snapshot.products) producto.stock = 50;
+    });
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const main = page.getByRole('main');
+
+    await expect(tarjeta(page, 'Total de pedidos')).toContainText(/\b0\b/);
+    await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?0\.00/);
+    await expect(tarjeta(page, 'Total de clientes')).toContainText(/\b0\b/);
+    // Sin pedidos del mes anterior no hay porcentaje: «—» y, para un lector de pantalla, qué significa.
+    await expect(tarjeta(page, 'Total de pedidos')).toContainText('—');
+    await expect(tarjeta(page, 'Total de pedidos')).toContainText('Sin datos del mes anterior');
+    await expect(tarjeta(page, 'Stock bajo')).toContainText('Productos con 5 unidades o menos');
+
+    await expect(main.getByText('Todavía no hay pedidos.')).toHaveCount(2);
+    await expect(main.getByText('Sin alertas.')).toBeVisible();
+    await expect(main.getByText('Todavía no hay actividad.')).toBeVisible();
+    // Sin pedidos, las tres barras de estado quedan en 0 %.
+    await expect(main.getByText('0 %', { exact: true })).toHaveCount(3);
+  });
+
+  test('con pedidos del mes y del mes anterior: moneda con dos decimales y la variación con su signo', async ({
+    page,
+  }) => {
+    const hoy = new Date();
+    const primeroDelMesAnterior = new Date(Date.UTC(hoy.getUTCFullYear(), hoy.getUTCMonth() - 1, 1, 15));
+    await conSnapshot(page, (snapshot) => {
+      snapshot.activity = [];
+      snapshot.orders = [
+        // Este mes, hasta hoy: 2 pedidos y S/ 1,334.50.
+        pedidoDe(1, hoy.toISOString(), 1234.5, 'delivered'),
+        pedidoDe(2, hoy.toISOString(), 100),
+        // El día 1 del mes anterior, dentro del mismo tramo: 1 pedido y S/ 500.00.
+        pedidoDe(3, primeroDelMesAnterior.toISOString(), 500, 'cancelled'),
+      ];
+    });
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const main = page.getByRole('main');
+
+    const pedidos = tarjeta(page, 'Total de pedidos');
+    await expect(pedidos).toContainText(/\b3\b/);
+    await expect(pedidos).toContainText('+100 %');
+    await expect(pedidos).toContainText('Sube');
+    await expect(pedidos).toContainText('frente al mismo tramo del mes anterior');
+    // Las ventas no cuentan el pedido cancelado: 1,334.50 contra 0 del tramo anterior, sin porcentaje.
+    const ventas = tarjeta(page, 'Total de ventas');
+    await expect(ventas).toContainText(/S\/\s?1,334\.50/);
+    await expect(ventas).toContainText('—');
+
+    // La tabla de últimos pedidos muestra el total con moneda y la fecha en formato de día.
+    const tabla = main.getByRole('region', { name: 'Últimos pedidos' }).getByRole('table');
+    await expect(tabla.getByRole('row', { name: /WS-RES-1/ })).toContainText(/S\/\s?1,234\.50/);
+    // Estados: 1 de 3 completado, 1 en proceso y 1 cancelado; el resto del reparto va al primer grupo (34, 33 y 33).
+    await expect(main.getByText('34 %', { exact: true })).toHaveCount(1);
+    await expect(main.getByText('33 %', { exact: true })).toHaveCount(2);
+  });
+});
