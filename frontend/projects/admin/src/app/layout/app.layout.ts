@@ -19,6 +19,7 @@ import {
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
 import { Permiso } from '../features/sesion/domain/rol.rules';
+import { alternarPlegable, FlechaPlegableDirective } from '../shared/ui/plegable.directive';
 import { MenuUsuarioComponent } from './menu-usuario.component';
 
 interface NavigationItem {
@@ -90,7 +91,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
 
 @Component({
   selector: 'ws-admin-shell',
-  imports: [MenuUsuarioComponent, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [FlechaPlegableDirective, MenuUsuarioComponent, RouterLink, RouterLinkActive, RouterOutlet],
   template: `
     <div class="min-h-screen lg:grid lg:grid-cols-[248px_minmax(0,1fr)]">
       <aside class="border-b border-line bg-surface lg:min-h-screen lg:border-r lg:border-b-0">
@@ -116,18 +117,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
                   (click)="alternarGrupo(group.id)"
                 >
                   {{ group.label }}
-                  <svg
-                    class="ws-plegable-indicador h-3.5 w-3.5"
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.75"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="m4 6 4 4 4-4" />
-                  </svg>
+                  <svg wsAdminFlecha class="ws-plegable-indicador h-3.5 w-3.5"></svg>
                 </button>
                 <div
                   class="ws-plegable ws-plegable-lg"
@@ -244,10 +234,6 @@ export class AppLayout {
   }
 
   protected alternarGrupo(id: NavigationGroupId): void {
-    this.gruposAbiertos.update((abiertos) => {
-      const siguientes = new Set(abiertos);
-      if (!siguientes.delete(id)) siguientes.add(id);
-      return siguientes;
-    });
+    this.gruposAbiertos.update((abiertos) => alternarPlegable(abiertos, id));
   }
 }

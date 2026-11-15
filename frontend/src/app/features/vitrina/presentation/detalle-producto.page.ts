@@ -13,7 +13,7 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { CarritoFacade } from '../../carrito/application/carrito.facade';
-import { AgregarAlCarritoDialog } from './agregar-al-carrito.dialog';
+import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 
 @Component({
   selector: 'ws-product-detail-page',
@@ -221,10 +221,11 @@ export class DetalleProductoPage {
     if (product) {
       const solicitadas = this.quantity();
       const agregadas = this.cart.add(product, solicitadas);
-      this.dialog.open(AgregarAlCarritoDialog, {
-        width: '500px',
-        maxWidth: 'calc(100vw - 32px)',
-        data: { product, solicitadas, agregadas, enCarrito: this.cart.quantityOf(product.id) },
+      abrirAgregarAlCarrito(this.dialog, {
+        product,
+        solicitadas,
+        agregadas,
+        enCarrito: this.cart.quantityOf(product.id),
       });
     }
   }

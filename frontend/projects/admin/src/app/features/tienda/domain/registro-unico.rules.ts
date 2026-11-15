@@ -4,6 +4,8 @@
  * los vuelve a comprobar.
  */
 
+import { normalizarCorreo } from './correo.rules';
+
 /** Dirección de ficha del producto: la misma que calcula el BFF (`backend/src/domain/catalogo/slug.mjs`). */
 export const slugDe = (nombre: string): string =>
   nombre
@@ -55,6 +57,6 @@ export function usuarioConElMismoCorreo<T extends { readonly id: string; readonl
   usuarios: readonly T[],
   usuario: { readonly id: string; readonly email: string },
 ): T | null {
-  const correo = clave(usuario.email);
-  return usuarios.find((otro) => otro.id !== usuario.id && clave(otro.email) === correo) ?? null;
+  const correo = normalizarCorreo(usuario.email);
+  return usuarios.find((otro) => otro.id !== usuario.id && normalizarCorreo(otro.email) === correo) ?? null;
 }

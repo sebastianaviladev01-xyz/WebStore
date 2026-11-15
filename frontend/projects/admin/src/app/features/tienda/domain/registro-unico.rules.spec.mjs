@@ -5,7 +5,11 @@ import ts from 'typescript';
 
 // Lote 06 (ADR-0017): SKU, dirección de ficha (PBI-0129) y correo de usuario (PBI-0123) únicos, comprobados en
 // el Admin antes de enviar. La dirección se calcula como el slug del BFF (`backend/src/domain/catalogo/slug.mjs`).
-const source = await readFile(new URL('./registro-unico.rules.ts', import.meta.url), 'utf8');
+// La regla del correo se antepone porque el archivo se transpila sin sus import (PBI-0080).
+const source = [
+  await readFile(new URL('./correo.rules.ts', import.meta.url), 'utf8'),
+  await readFile(new URL('./registro-unico.rules.ts', import.meta.url), 'utf8'),
+].join('\n');
 const moduleSource = ts.transpileModule(source.replace(/^import [\s\S]*?;$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;

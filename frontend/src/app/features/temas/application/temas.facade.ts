@@ -4,23 +4,20 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { AparienciaGateway } from '../domain/apariencia.gateway';
 import { temaVisible as resolverTemaVisible, TemaVisible } from '../domain/tema-visible.rules';
 import { Apariencia, Tema } from '../domain/tema.model';
-
-/** Cookie con el id del tema en vista previa (modo demo). */
-export const COOKIE_VISTA_PREVIA = 'ws_tema_vista_previa';
-
-const VIGENCIA_VISTA_PREVIA_SEGUNDOS = 2592000;
+import { borrarVistaPrevia, escribirVistaPrevia, leerVistaPrevia } from './cookie-vista-previa';
 
 /**
  * Carga la apariencia del BFF y pinta el tema visible: escribe sus tokens en `:root` y el color de la
  * barra del navegador. En modo demo recuerda la vista previa elegida en la cookie `ws_tema_vista_previa`
- * (sin `Domain`, ver ADR-0012): la tienda y el Admin solo la comparten en el mismo host. Si la carga falla, no toca el DOM y queda lo que pinta `tokens.css`.
+ * (`cookie-vista-previa.ts`, sin `Domain`: la tienda y el Admin solo la comparten en el mismo host). Si la
+ * carga falla, no toca el DOM y queda lo que pinta `tokens.css`.
  */
 @Injectable({ providedIn: 'root' })
 export class TemasFacade {
   private readonly gateway = inject(AparienciaGateway);
   private readonly document = inject(DOCUMENT);
   private readonly aparienciaState = signal<Apariencia | null>(null);
-  private readonly vistaPreviaState = signal<string | null>(this.leerCookie());
+  private readonly vistaPreviaState = signal<string | null>(leerVistaPrevia(this.document));
   private loadPromise: Promise<void> | null = null;
 
   readonly modoDemo = computed(() => this.aparienciaState()?.demoMode ?? false);
@@ -41,13 +38,13 @@ export class TemasFacade {
 
   verTema(id: string): void {
     if (!this.modoDemo() || !this.temas().some((tema) => tema.id === id)) return;
-    this.escribirCookie(id);
+    escribirVistaPrevia(this.document, id);
     this.vistaPreviaState.set(id);
     this.aplicar();
   }
 
   volverAlActivo(): void {
-    this.borrarCookie();
+    borrarVistaPrevia(this.document);
     this.vistaPreviaState.set(null);
     this.aplicar();
   }
@@ -60,7 +57,7 @@ export class TemasFacade {
       return;
     }
     if (this.temaVisible()?.borrarVistaPrevia) {
-      this.borrarCookie();
+      borrarVistaPrevia(this.document);
       this.vistaPreviaState.set(null);
     }
     this.aplicar();
@@ -76,32 +73,5 @@ export class TemasFacade {
     }
     const meta = this.document.querySelector('meta[name="theme-color"]');
     if (meta) meta.setAttribute('content', tema.colors.primary);
-  }
-
-  private leerCookie(): string | null {
-    const prefijo = `${COOKIE_VISTA_PREVIA}=`;
-    const entrada = this.document.cookie
-      .split(';')
-      .map((parte) => parte.trim())
-      .find((parte) => parte.startsWith(prefijo));
-    if (entrada === undefined) return null;
-    try {
-      return decodeURIComponent(entrada.slice(prefijo.length));
-    } catch {
-      return null;
-    }
-  }
-
-  private escribirCookie(id: string): void {
-    this.document.cookie = this.atributosCookie(encodeURIComponent(id), VIGENCIA_VISTA_PREVIA_SEGUNDOS);
-  }
-
-  private borrarCookie(): void {
-    this.document.cookie = this.atributosCookie('', 0);
-  }
-
-  private atributosCookie(valor: string, maxAge: number): string {
-    const seguro = this.document.location.protocol === 'https:' ? '; Secure' : '';
-    return `${COOKIE_VISTA_PREVIA}=${valor}; Path=/; SameSite=Lax; Max-Age=${maxAge}${seguro}`;
   }
 }

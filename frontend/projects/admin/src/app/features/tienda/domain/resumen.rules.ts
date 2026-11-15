@@ -2,9 +2,13 @@
 // prettier-ignore
 import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
 import type { Cliente, EstadoPedido, Pedido } from './tienda.model';
+import { normalizarCorreo } from './correo.rules';
+
+/** Zona horaria de la tienda: las fechas del Resumen son las de Lima (PBI-0080: una sola vez en el Admin). */
+export const ZONA_IANA_LIMA = 'America/Lima';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
-  timeZone: 'America/Lima',
+  timeZone: ZONA_IANA_LIMA,
   year: 'numeric',
   month: '2-digit',
   day: '2-digit',
@@ -39,8 +43,6 @@ export function tramosDeComparacion(hoy: FechaLima): { actual: TramoMes; anterio
     },
   };
 }
-
-const normalizarCorreo = (correo: string) => correo.trim().toLowerCase();
 
 /**
  * Fecha de Lima del primer pedido (el de menor `createdAt`) de cada cliente, por correo normalizado como

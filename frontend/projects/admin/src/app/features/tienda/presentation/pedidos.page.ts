@@ -11,6 +11,7 @@ import {
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { clasesDeEstadoPedido } from './estado-pedido';
 import { fechaDeEntrega, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido, EstadoPedido } from '../domain/tienda.model';
 
@@ -202,11 +203,7 @@ export class PedidosPage {
     return PAYMENT_LABELS[method] ?? (method || '—');
   }
 
-  protected badge(status: EstadoPedido): string {
-    if (status === 'cancelled') return 'bg-danger-soft text-danger';
-    if (status === 'delivered') return 'bg-soft text-body';
-    return 'bg-primary-soft text-on-primary-soft';
-  }
+  protected readonly badge = clasesDeEstadoPedido;
 
   /**
    * Cambia el estado. Si la persona responde «Cancelar» a la confirmación o el guardado no se hace, el selector
