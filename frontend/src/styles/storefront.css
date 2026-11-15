@@ -122,6 +122,14 @@
   color: var(--ws-text);
 }
 
+/* Lote 07b (PBI-0052): imagen pequeña de la categoría junto a su nombre, solo si la categoría tiene una. */
+.ws-navigation-trigger .ws-navigation-category-image {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
 .ws-navigation-trigger .ws-navigation-icon {
   width: 18px;
   height: 18px;

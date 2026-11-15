@@ -18,6 +18,13 @@ export function medidasReducidas(
   return { ancho: Math.round(ancho * escala), alto: Math.round(alto * escala) };
 }
 
-/** La primera versión (de mayor a menor calidad) que cabe, o `null` si ninguna. */
-export const primeraQueCabe = (versiones: readonly string[]): string | null =>
-  versiones.find((dataUrl) => dataUrl.length <= BYTES_MAXIMOS_FOTO) ?? null;
+/** La primera versión (de mayor a menor calidad) que cabe en `maximo` caracteres, o `null` si ninguna. */
+export const primeraQueCabe = (versiones: readonly string[], maximo = BYTES_MAXIMOS_FOTO): string | null =>
+  versiones.find((dataUrl) => dataUrl.length <= maximo) ?? null;
+
+/**
+ * Imagen pequeña de una categoría (lote 07b, ADR-0017, PBI-0052): se reduce a 160 px de lado mayor y debe caber en el
+ * máximo que acepta el BFF (`MAX_IMAGEN_DE_CATEGORIA`, la prueba los compara).
+ */
+export const LADO_IMAGEN_CATEGORIA = 160;
+export const MAX_CARACTERES_IMAGEN_CATEGORIA = 100_000;

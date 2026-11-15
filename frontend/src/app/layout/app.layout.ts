@@ -265,7 +265,13 @@ import { PieTiendaComponent } from './pie-tienda.component';
                 <summary
                   class="flex min-h-14 cursor-pointer list-none items-center justify-between py-3 font-semibold"
                 >
-                  {{ category.name }}
+                  <!-- Lote 07b (PBI-0052): la imagen de la categoría, si tiene; sin ella, como antes. -->
+                  <span class="flex items-center gap-3">
+                    @if (category.imageUrl) {
+                      <img class="h-7 w-7 rounded-md object-contain" [src]="category.imageUrl" alt="" />
+                    }
+                    {{ category.name }}
+                  </span>
                   <span class="text-xl font-normal transition group-open:rotate-45" aria-hidden="true">
                     +
                   </span>
