@@ -1,4 +1,5 @@
 import { DomainError } from '../comun/domain-error.mjs';
+import { slugify } from './slug.mjs';
 
 /** Cada padre debe existir y subir por la jerarquía nunca puede volver a la misma categoría (sin ciclos). */
 export function requireValidCategoryTree(categories) {
@@ -55,6 +56,29 @@ export function requireRemovedWithoutChildren(categories, previous) {
         'CATEGORY_HAS_CHILDREN',
         `No se puede eliminar la categoría «${category.name}»: tiene ${count} ${count === 1 ? 'subcategoría' : 'subcategorías'}. ${count === 1 ? 'Muévela o elimínala' : 'Muévelas o elimínalas'} antes.`,
         { categoryId: category.id, children: count },
+      );
+  }
+}
+
+/**
+ * Dirección única de cada categoría (lote 07, PBI-0148): la tienda la abre por el slug de su nombre, así que dos
+ * categorías con el mismo slug comparten dirección. Como con los productos (PBI-0129), solo se revisan las nuevas o
+ * las renombradas: dos que ya lo compartían no bloquean el guardado de otra.
+ */
+export function requireUniqueCategorySlugs(categories, previous) {
+  const previousSlug = new Map(previous.map((category) => [category.id, slugify(category.name)]));
+  for (const category of categories) {
+    const slug = slugify(category.name);
+    if (previousSlug.get(category.id) === slug) continue;
+    const other = categories.find(
+      (candidate) => candidate.id !== category.id && slugify(candidate.name) === slug,
+    );
+    if (other)
+      throw new DomainError(
+        'validation',
+        'INVALID_COLLECTION',
+        `Revisa las categorías: la dirección ${slug} ya la usa «${other.name}». Cambia el nombre.`,
+        { collection: 'categories', field: 'slug', id: category.id },
       );
   }
 }

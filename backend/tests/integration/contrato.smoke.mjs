@@ -753,6 +753,18 @@ try {
     );
     if (!error.details?.collection) throw new Error(`${contexto}: INVALID_COLLECTION sin details.collection`);
   }
+  // PBI-0148 (lote 07): una categoría nueva con la dirección de otra se rechaza.
+  const categoriaRepetida = await esperarError(
+    await put(owner, {
+      revision: superSnapshot.revision,
+      categories: { upsert: [{ id: 'cat-smoke', name: superSnapshot.categories[0].name.toUpperCase() }] },
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Categoría con la dirección de otra',
+  );
+  if (categoriaRepetida.details?.field !== 'slug')
+    throw new Error('La categoría repetida no se rechazó por su dirección (details.field: slug)');
   await esperarError(
     await put(owner, { revision: superSnapshot.revision, complaints: [] }),
     409,

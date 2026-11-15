@@ -18,6 +18,7 @@ import { requireWritableCollections } from '../../domain/admin/snapshot.rules.mj
 import { requireUsersInScope, requireValidAdminUsers } from '../../domain/admin/usuario-admin.rules.mjs';
 import {
   requireRemovedWithoutChildren,
+  requireUniqueCategorySlugs,
   requireValidCategoryTree,
 } from '../../domain/catalogo/categoria.rules.mjs';
 import {
@@ -88,6 +89,7 @@ const REPLACEABLE = {
     requireValidCategories(categories);
     requireRemovedWithoutChildren(categories, previous);
     requireValidCategoryTree(categories);
+    requireUniqueCategorySlugs(categories, previous);
     return categories;
   },
   brands: requireValidBrands,
