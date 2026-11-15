@@ -5,11 +5,10 @@ import {
   TEMAS,
   activarTema,
   colorDelToken,
-  componer,
-  conOpacidad,
   exigir,
   medirBotonDeOpcion,
-  medirCapaDeEstado,
+  estaEntre,
+  medirBotonConPuntero,
   medirEtiquetaEnfocada,
   medirOpcionSeleccionada,
   medirTexto,
@@ -43,15 +42,17 @@ test.describe('Componentes de Material de la tienda con los temas', () => {
       const etiqueta = await medirTexto(verCarrito);
       exigir(tema, 'botón relleno «Ver carrito», etiqueta', etiqueta.color, etiqueta.fondo, MINIMO.texto);
 
-      const capa = await medirCapaDeEstado(verCarrito);
-      expect(capa.color, 'la capa de estado del botón relleno sigue en --ws-on-primary').toBe(
-        await colorDelToken(page, '--ws-on-primary'),
-      );
-      expect(capa.opacidad).toBeGreaterThan(0);
-      const conPuntero = componer(conOpacidad(capa.color, capa.opacidad), etiqueta.fondo);
+      // Con el puntero encima, la capa de estado (que Material pinta en --ws-on-primary) mezcla el relleno con él:
+      // se mide el color del botón en reposo y con el puntero, no la capa.
+      const { reposo, conPuntero } = await medirBotonConPuntero(verCarrito);
+      expect(conPuntero, 'con el puntero encima, el relleno del botón cambia').not.toBe(reposo);
+      expect(
+        estaEntre(conPuntero, reposo, await colorDelToken(page, '--ws-on-primary')),
+        'la capa de estado sigue en --ws-on-primary: el relleno se mezcla con él',
+      ).toBe(true);
       exigir(
         tema,
-        `botón relleno «Ver carrito» con el puntero (capa ${capa.color} al ${capa.opacidad}), etiqueta`,
+        `botón relleno «Ver carrito» con el puntero (${reposo} pasa a ${conPuntero}), etiqueta`,
         etiqueta.color,
         conPuntero,
         MINIMO.texto,

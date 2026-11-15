@@ -90,7 +90,11 @@ test.describe('Casillas del Admin con los temas', () => {
         MINIMO.marca,
       );
       expect(sinMarcar.borde).toBe(await colorDelToken(page, '--ws-muted'));
-      expect(sinMarcar.relleno).toBe('rgba(0, 0, 0, 0)');
+      // Sin relleno: lo que se pinta dentro del recuadro es la tarjeta (a lo sumo un nivel de diferencia del velo de estado).
+      expect(
+        relacionDeContraste(sinMarcar.relleno, sinMarcar.tarjeta),
+        'la casilla sin marcar no tiene relleno',
+      ).toBeLessThan(1.02);
     });
   }
 
