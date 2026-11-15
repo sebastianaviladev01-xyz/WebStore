@@ -97,6 +97,7 @@ test.describe('Menú lateral en escritorio', () => {
         items: [{ productId: 'p-004', quantity: 1 }],
         paymentMethod: 'yape-plin',
         deliveryDate: fechaDeEntrega(),
+        termsAccepted: true,
       },
     });
     expect(respuesta.ok()).toBeTruthy();

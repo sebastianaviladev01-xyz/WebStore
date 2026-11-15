@@ -12,8 +12,8 @@ import {
 } from '../../domain/pedidos/pedido.rules.mjs';
 import { accountForToken, requireAccount } from '../cuentas/cuentas.use-cases.mjs';
 
-/** Vista pública del pedido: nunca expone el hash del token de acceso ni la cuenta asociada. */
-export const orderToPublic = ({ accessTokenHash, accountId, ...order }) => order;
+/** Vista pública del pedido: nunca expone el hash del token de acceso, el de la clave de idempotencia ni la cuenta. */
+export const orderToPublic = ({ accessTokenHash, idempotencyKeyHash, accountId, ...order }) => order;
 
 /**
  * Consulta y modificación de pedidos por su dueño: la cuenta (token Bearer) o el invitado

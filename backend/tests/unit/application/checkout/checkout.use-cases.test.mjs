@@ -50,11 +50,14 @@ const pedido = (cambios = {}) => ({
   deliveryDate: fechaDeLima(1),
   paymentMethod: 'card',
   items: [{ productId: 'p-1', quantity: 1 }],
+  termsAccepted: true,
   ...cambios,
 });
 
 const comprar = (cambios) =>
   createCheckoutUseCases({ store: crearAlmacen(), security }).placeOrder(pedido(cambios), '');
+comprar.conClave = (clave) =>
+  createCheckoutUseCases({ store: crearAlmacen(), security }).placeOrder(pedido(), '', clave);
 
 test('una fecha de entrega pasada, mal formada o ausente responde INVALID_DELIVERY_DATE', () => {
   for (const deliveryDate of [fechaDeLima(-1), '2020-01-05', '05/01/2030', '2030-02-30', '', undefined])
@@ -157,4 +160,77 @@ test('cambiar la dirección del pedido también descarta los campos de más', ()
     'district',
     'province',
   ]);
+});
+
+// Lote 04 (ADR-0017): términos y condiciones (PBI-0040), total mostrado (PBI-0106) y doble envío (PBI-0086).
+
+test('sin aceptar los términos y condiciones responde TERMS_NOT_ACCEPTED y no crea el pedido', () => {
+  for (const termsAccepted of [undefined, false, 'true', 1]) {
+    const store = crearAlmacen();
+    assert.throws(
+      () => createCheckoutUseCases({ store, security }).placeOrder(pedido({ termsAccepted }), ''),
+      { code: 'TERMS_NOT_ACCEPTED' },
+      String(termsAccepted),
+    );
+    assert.equal(store.state.orders.length, 0);
+    assert.equal(store.state.products[0].stock, 5);
+  }
+});
+
+test('el pedido guarda la fecha y hora en que se aceptaron los términos', () => {
+  const antes = Date.now();
+  const creado = comprar();
+  const aceptado = Date.parse(creado.termsAcceptedAt);
+  assert.ok(aceptado >= antes && aceptado <= Date.now(), creado.termsAcceptedAt);
+  assert.equal(creado.termsAcceptedAt, creado.createdAt);
+});
+
+test('un total distinto del que calcula el BFF responde ORDER_TOTAL_CHANGED sin crear el pedido', () => {
+  const store = crearAlmacen();
+  const checkout = createCheckoutUseCases({ store, security });
+  // 100 del producto + 12 de envío a San Isidro = 112.
+  assert.throws(
+    () => checkout.placeOrder(pedido({ total: 105 }), ''),
+    (error) =>
+      error.code === 'ORDER_TOTAL_CHANGED' &&
+      error.kind === 'conflict' &&
+      error.details.total === 112 &&
+      error.details.subtotal === 100 &&
+      error.details.shippingCost === 12,
+  );
+  assert.equal(store.state.orders.length, 0);
+  assert.equal(store.state.products[0].stock, 5);
+  assert.equal(checkout.placeOrder(pedido({ total: 112 }), '').total, 112);
+  // Sin total (otro cliente del BFF), no se compara.
+  assert.equal(checkout.placeOrder(pedido(), '').total, 112);
+});
+
+test('la misma clave de idempotencia devuelve el mismo pedido y no descuenta stock dos veces', () => {
+  const store = crearAlmacen();
+  const checkout = createCheckoutUseCases({ store, security });
+  const pedidos = createPedidosUseCases({ store, security });
+  const clave = 'intento-0123456789abcdef';
+  assert.equal(checkout.replay(clave), null);
+  const primero = checkout.placeOrder(pedido({ items: [{ productId: 'p-1', quantity: 2 }] }), '', clave);
+  const repetido = checkout.replay(clave);
+  assert.equal(repetido.id, primero.id);
+  assert.equal(store.state.orders.length, 1);
+  assert.equal(store.state.products[0].stock, 3);
+  assert.equal('idempotencyKeyHash' in primero, false);
+  assert.equal('idempotencyKeyHash' in repetido, false);
+  // La respuesta repetida trae un token de acceso que sirve para consultar el pedido.
+  assert.equal(
+    pedidos.getOrder(primero.id, { bearerToken: '', orderToken: repetido.accessToken }).id,
+    primero.id,
+  );
+  // Otra clave, o ninguna, es otro intento de compra.
+  assert.equal(checkout.replay('intento-fedcba9876543210'), null);
+  assert.equal(checkout.replay(''), null);
+  assert.notEqual(checkout.placeOrder(pedido(), '', 'intento-fedcba9876543210').id, undefined);
+  assert.equal(store.state.orders.length, 2);
+});
+
+test('una clave de idempotencia mal formada responde INVALID_IDEMPOTENCY_KEY', () => {
+  for (const clave of ['corta', 'x'.repeat(129), 'con espacios 1234567890', 'ñandú-0123456789abcdef'])
+    assert.throws(() => comprar.conClave(clave), { code: 'INVALID_IDEMPOTENCY_KEY' }, clave);
 });

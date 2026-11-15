@@ -57,7 +57,7 @@ Los ajustes públicos incluyen la identidad visual (nombre, logo y tipografía),
 
 | Método | Ruta | Petición | Respuesta | Errores (`code`) |
 | --- | --- | --- | --- | --- |
-| `POST` | `/checkout/orders` | `{ customer, shipping, deliveryDate, paymentMethod, items }`; Bearer de cliente opcional | `201` el pedido más `accessToken` | `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `400 INVALID_DELIVERY_DATE` (`details.minimum`), `400 INVALID_PAYMENT_METHOD`, `400 EMPTY_ORDER`, `400 INVALID_ORDER_ITEMS`, `400 SHIPPING_UNAVAILABLE`, `409 INSUFFICIENT_STOCK` (`details.productId`), `409 PRODUCT_UNAVAILABLE` (`details.productId`) |
+| `POST` | `/checkout/orders` | `{ customer, shipping, deliveryDate, paymentMethod, items, termsAccepted, total? }`; Bearer de cliente opcional; cabecera `Idempotency-Key` opcional | `201` el pedido más `accessToken`; `200` el mismo pedido si la `Idempotency-Key` ya creó uno | `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `400 INVALID_DELIVERY_DATE` (`details.minimum`), `400 INVALID_PAYMENT_METHOD`, `400 EMPTY_ORDER`, `400 INVALID_ORDER_ITEMS`, `400 TERMS_NOT_ACCEPTED`, `400 INVALID_IDEMPOTENCY_KEY`, `400 SHIPPING_UNAVAILABLE`, `409 INSUFFICIENT_STOCK` (`details.productId`), `409 PRODUCT_UNAVAILABLE` (`details.productId`), `409 ORDER_TOTAL_CHANGED` (`details.subtotal`, `details.shippingCost`, `details.total`) |
 | `GET` | `/orders` | Bearer de cliente | `200` los pedidos de la cuenta y los hechos con su correo verificado | `401 AUTHENTICATION_REQUIRED` |
 | `GET` | `/orders/:id` | Bearer de la cuenta dueña o `x-order-token` | `200` el pedido | `404 ORDER_NOT_FOUND`, `400 INVALID_PATH` |
 | `PATCH` | `/orders/:id/shipping` | `{ shipping }` | `200` el pedido, con origen, envío y total recalculados | `404`, `409 ORDER_NOT_MODIFIABLE`, `409 ORDER_WINDOW_EXPIRED`, `400 VALIDATION_ERROR`, `400 SHIPPING_UNAVAILABLE` |
@@ -71,7 +71,13 @@ Reglas del checkout (lote 01, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-
 - `deliveryDate`: `AAAA-MM-DD` que exista, desde el día de hoy en Lima. Es provisional: la regla de la primera fecha la decide Daniel ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)). Al cambiarla con `PATCH`, reenviar la que el pedido ya tiene se acepta aunque haya pasado.
 - `paymentMethod`: `card`, `yape-plin` o `transfer`.
 - `customer` (`fullName`, `email`, `phone`, `document`) y `shipping` (`addressLine`, `district`, `province`, `department` y `reference` opcional) se guardan con lista blanca: cualquier otro campo se descarta, también en `PATCH /orders/:id/shipping`.
-- El BFF recalcula precios, IGV, origen, costo de envío y total; los montos del cliente no se usan. Vincula el pedido a la cuenta si llega `Authorization: Bearer` y crea o actualiza el cliente.
+- El BFF recalcula precios, IGV, origen, costo de envío y total; los montos del cliente no se usan para cobrar. Vincula el pedido a la cuenta si llega `Authorization: Bearer` y crea o actualiza el cliente.
+
+Reglas del checkout (lote 04, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md)):
+
+- `termsAccepted`: el booleano `true` (PBI-0040). Ausente, `false` o de otro tipo, `400 TERMS_NOT_ACCEPTED` («Acepta los términos y condiciones para finalizar la compra.»), que se comprueba después del resto de los campos. El pedido guarda `termsAcceptedAt`, la fecha y hora de la aceptación (igual a `createdAt`), y la vista pública lo incluye. Es provisional, por confirmar con Daniel ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)); los pedidos anteriores no lo tienen.
+- `total`: el total que vio el comprador (PBI-0106). Si llega como número y difiere en medio céntimo o más del que calcula el BFF con los precios y la tarifa vigentes, responde `409 ORDER_TOTAL_CHANGED` con `details: { subtotal, shippingCost, total }` vigentes, sin crear el pedido ni tocar el stock. Sin `total` no se compara. `INSUFFICIENT_STOCK` y `PRODUCT_UNAVAILABLE` se comprueban antes. La tienda siempre lo envía.
+- `Idempotency-Key` (PBI-0086): clave del intento de compra que genera la tienda (de 16 a 128 caracteres `A-Z`, `a-z`, `0-9`, `-` o `_`; si no, `400 INVALID_IDEMPOTENCY_KEY`). El pedido guarda su digest, que no sale en ninguna vista. Si la clave ya creó un pedido, responde `200` con ese pedido, sin validar el cuerpo, sin crear otro y sin descontar stock; como el BFF solo guarda el digest del `accessToken`, emite uno nuevo que sustituye al anterior. Sin cabecera, cada `POST` es un pedido nuevo. La búsqueda y la creación ocurren sin esperas entre medio: dos envíos con la misma clave no crean dos pedidos. La cabecera está en `access-control-allow-headers`.
 
 Acceso y cambios del pedido:
 
@@ -208,6 +214,6 @@ Formas y reglas:
 
 ## Producción
 
-El endpoint snapshot es deliberadamente compacto para la demo. Un BFF productivo debe dividir comandos/queries, usar un proveedor de identidad, aplicar rate limiting y auditoría, proteger concurrencia de stock, incorporar idempotencia de checkout y usar persistencia transaccional.
+El endpoint snapshot es deliberadamente compacto para la demo. Un BFF productivo debe dividir comandos/queries, usar un proveedor de identidad, aplicar rate limiting y auditoría, proteger concurrencia de stock, guardar las claves de idempotencia del checkout con vencimiento y comparar el cuerpo repetido, y usar persistencia transaccional.
 
 `/appearance/theme.css` bloquea el primer pintado de la tienda y del Admin ([ADR-0010](../../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)). Un BFF productivo debe servirla rápido y con caché: conservar el `ETag`, el `Cache-Control: no-cache` y, en modo demo, el `Vary: Cookie`, responder el `304` sin recalcular el mapa (por ejemplo, con la hoja y su `ETag` en memoria hasta el siguiente cambio de temas) y, si hay CDN o proxy delante, que respete `Vary: Cookie` o que no guarde la hoja en modo demo.

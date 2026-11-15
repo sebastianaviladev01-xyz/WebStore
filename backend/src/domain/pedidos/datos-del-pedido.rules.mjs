@@ -81,3 +81,34 @@ export function requireOrderLines(items) {
   }
   return [...lines].map(([productId, quantity]) => ({ productId, quantity }));
 }
+
+/**
+ * Aceptación de los términos y condiciones (PBI-0040, lote 04): solo el booleano `true` cuenta. Provisional, por
+ * confirmar con Daniel (PENDING-DECISIONS, «Aceptación de los términos y condiciones en el checkout»).
+ */
+export function requireTermsAccepted(value) {
+  if (value !== true)
+    throw new DomainError(
+      'validation',
+      'TERMS_NOT_ACCEPTED',
+      'Acepta los términos y condiciones para finalizar la compra.',
+    );
+  return value;
+}
+
+const CLAVE_DE_IDEMPOTENCIA = /^[A-Za-z0-9_-]{16,128}$/;
+
+/**
+ * Clave de idempotencia del intento de compra (PBI-0086, lote 04): opcional; si llega, de 16 a 128 caracteres
+ * `A-Z`, `a-z`, `0-9`, `-` o `_` (un UUID cabe). Sin clave, `''`.
+ */
+export function requireIdempotencyKey(value) {
+  if (value === undefined || value === '') return '';
+  if (typeof value !== 'string' || !CLAVE_DE_IDEMPOTENCIA.test(value))
+    throw new DomainError(
+      'validation',
+      'INVALID_IDEMPOTENCY_KEY',
+      'La clave del intento de compra no es válida.',
+    );
+  return value;
+}

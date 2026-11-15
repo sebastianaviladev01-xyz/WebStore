@@ -98,7 +98,7 @@ try {
     throw new Error('La galería editada en Admin no llegó al Storefront');
 
   const product = products[0];
-  // Mismo payload que envía el Storefront: CartItem sin productId y montos calculados en el cliente.
+  // CartItem sin productId, como lo envía el Storefront, con un precio manipulado en el cliente.
   const command = {
     customer: {
       fullName: 'Smoke Test',
@@ -110,14 +110,49 @@ try {
     deliveryDate: fechaDeLima(2),
     paymentMethod: 'card',
     items: [{ product: { ...product, price: 1 }, quantity: 2 }],
-    subtotal: 2,
-    igv: 0,
-    shippingCost: 0,
-    total: 2,
+    termsAccepted: true,
   };
-  const order = await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
+  // Lote 04 (ADR-0017): sin aceptar los términos (PBI-0040) o con un total que no es el del BFF (PBI-0106), no se
+  // crea nada ni se toca el stock.
+  const { termsAccepted: _sinTerminos, ...sinTerminos } = command;
+  await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(sinTerminos) }),
+    400,
+    'TERMS_NOT_ACCEPTED',
+    'Sin aceptar los términos',
+  );
+  const totalCambiado = await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify({ ...command, total: 2 }) }),
+    409,
+    'ORDER_TOTAL_CHANGED',
+    'Total que no es el del BFF',
+  );
+  if (totalCambiado.details?.total !== Math.round((product.price * 2 + 12) * 100) / 100)
+    throw new Error('ORDER_TOTAL_CHANGED no trae el total vigente');
+  if ((await request('/bff/catalog/products'))[0].stock !== 15)
+    throw new Error('Un checkout rechazado descontó stock');
+  // Doble envío (PBI-0086): la misma Idempotency-Key devuelve el mismo pedido con 200 y no descuenta otra vez.
+  const intento = { 'content-type': 'application/json', 'idempotency-key': 'smoke-intento-0123456789' };
+  const primerEnvio = await raw('/bff/checkout/orders', {
+    method: 'POST',
+    headers: intento,
+    body: JSON.stringify(command),
+  });
+  const segundoEnvio = await raw('/bff/checkout/orders', {
+    method: 'POST',
+    headers: intento,
+    body: JSON.stringify(command),
+  });
+  if (primerEnvio.status !== 201 || segundoEnvio.status !== 200)
+    throw new Error(`Idempotency-Key: ${primerEnvio.status} y ${segundoEnvio.status}, se esperaba 201 y 200`);
+  const order = await primerEnvio.json();
+  const repetido = await segundoEnvio.json();
+  if (repetido.id !== order.id || 'idempotencyKeyHash' in repetido)
+    throw new Error('La misma clave no devolvió el mismo pedido');
+  if (!order.termsAcceptedAt) throw new Error('El pedido no guarda la aceptación de los términos');
+  order.accessToken = repetido.accessToken;
   products = await request('/bff/catalog/products');
-  if (products[0].stock !== 13) throw new Error('Checkout no descontó stock');
+  if (products[0].stock !== 13) throw new Error('Checkout no descontó stock, o lo descontó dos veces');
   if (order.shippingOrigin !== 'Lima Centro' || order.shippingCost !== 12)
     throw new Error('El BFF no asignó origen/tarifa desde la tabla de envíos');
   if (order.total !== Math.round((product.price * 2 + 12) * 100) / 100)

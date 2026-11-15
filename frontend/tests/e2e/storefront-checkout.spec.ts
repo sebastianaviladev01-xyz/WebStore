@@ -117,6 +117,7 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
       items: [{ productId: 'p-004', quantity: 1 }],
       paymentMethod: 'yape-plin',
       deliveryDate: fechaDeEntrega(),
+      termsAccepted: true,
     },
   });
   expect(respuesta.ok()).toBeTruthy();
