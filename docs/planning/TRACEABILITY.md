@@ -16,22 +16,22 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Categorías sin exigir iconos | Home y catálogo usan texto/descripción |
 | Filtros nombre/categoría/precio | `CatalogoPage` |
 | Detalle de producto (fotos, descripción, características) | `DetalleProductoPage` con galería y miniaturas; fotos adicionales gestionadas en Admin (`gallery`, URL o carga ≤400 KB) y publicadas como `images` |
-| Inventario consistente entre Admin y Storefront | BFF con `revision`: guardado desactualizado del Admin → 409; el Admin envía solo lo modificado, recarga y reaplica conservando el stock vendido (smoke test) |
-| Stock visible y compra bloqueada sin stock | cards/PDP + stock transaccional BFF |
+| Inventario consistente entre Admin y Storefront | BFF con `revision`: guardado desactualizado del Admin → 409; el Admin envía solo lo modificado, recarga y reaplica conservando el stock vendido (smoke test). Lote 01: el guardado se valida colección a colección y se aplica todo o nada (`snapshot.use-cases.test.mjs`) |
+| Stock visible y compra bloqueada sin stock | cards/PDP + stock transaccional BFF: las líneas repetidas del mismo producto se suman y un producto inactivo no se vende (`PRODUCT_UNAVAILABLE`; lote 01, `inventario.rules.test.mjs` y smoke test) |
 | Confirmación al agregar al carrito | `AgregarAlCarritoDialog`: Seguir comprando / Ver carrito, con «Ver carrito» relleno como principal y sin «Finalizar compra» (feature 004, AC-01 y AC-02: ver las filas de la feature 004) |
 | Opciones con botón de tres puntos (sin hover) | `TarjetaProductoComponent` + `mat-menu`: Ver detalle, Más de la categoría, Copiar enlace |
 | Carrito agregar/ver/cambiar/eliminar | `CarritoFacade` + `CarritoPage`; persiste en `localStorage` (solo id y cantidad) y se concilia con precio/stock del catálogo |
 | Valor de venta e IGV explícitos | `CarritoFacade` + carrito/checkout |
 | Compra guest | `CheckoutPage` |
 | Cliente ≠ usuario | checkout crea cliente; cuenta es opcional |
-| Registro/login/recuperación | feature `cuenta` + endpoints BFF; contraseña con `scrypt`, códigos temporales y sesión opaca revocable |
-| Verificación por código | `VerificarPage` + código de 15 minutos validado en BFF |
+| Registro/login/recuperación | feature `cuenta` + endpoints BFF; contraseña con `scrypt`, códigos temporales y sesión opaca revocable. Lote 01: alta y recuperación con respuesta uniforme, ingreso que compara la contraseña aunque el correo no exista y códigos solo con `WEBSTORE_EXPOSE_TEST_CODES=true` o en modo demo (`cuentas.use-cases.test.mjs`, `admin-sesiones.use-cases.test.mjs`, `reinicio-y-codigos.test.mjs`) |
+| Verificación por código | `VerificarPage` + código de 15 minutos validado en BFF, anulado tras 5 intentos fallidos; `POST /account-verification-requests` reenvía el código y una cuenta sin verificar con el código vencido se puede registrar otra vez (lote 01; la tienda aún no usa el reenvío: lote 05) |
 | Editar/eliminar cuenta | `PerfilPage` + autorización Bearer en BFF |
-| Pedido creado y consultable | BFF `/checkout/orders` (montos recalculados en servidor) + `PedidosFacade` |
+| Pedido creado y consultable | BFF `/checkout/orders` (montos recalculados en servidor; fecha desde hoy en Lima, método de pago ofrecido, cantidad entera y `customer` y `shipping` con lista blanca, lote 01: `checkout.use-cases.test.mjs`) + `PedidosFacade` |
 | Historial/detalle | `PedidosPage` / `DetallePedidoPage`; pedidos de la cuenta por sesión y de invitado por token de pedido guardado en el dispositivo |
 | Pedidos protegidos | BFF exige sesión dueña o la cabecera `x-order-token` del invitado; responde 404 sin autorización (smoke test) |
-| Modificar dirección y fecha ≤24 h | `PedidosFacade` + validación BFF; cambiar de distrito recalcula el envío |
-| Cancelar pedido ≤24 h | `PedidosFacade.cancel` + BFF; libera el stock reservado (también al cancelar desde Admin) |
+| Modificar dirección y fecha ≤24 h | `PedidosFacade` + validación BFF; cambiar de distrito recalcula el envío; un pedido enviado, entregado o cancelado no se cambia (`ORDER_NOT_MODIFIABLE`, lote 01: `pedido.rules.test.mjs`) |
+| Cancelar pedido ≤24 h | `PedidosFacade.cancel` + BFF; libera el stock reservado (también al cancelar desde Admin); no si ya se envió o entregó (lote 01, smoke test) |
 | Clientes de guest visibles en Admin | checkout actualiza `customers`; smoke test |
 | Pedidos visibles en Admin | `/bff/admin/snapshot`; `PedidosPage` |
 | Tabla envío origen → destino | `TarifasEnvioPage` + `BffEnvioGateway`; el checkout solo pide el distrito y el BFF asigna la tienda de origen más próxima (tarifa más baja) |
@@ -44,7 +44,7 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Navegación lateral configurable | CMS `sideNavigation` → drawer lateral de categorías en Storefront |
 | Tipografía única por defecto | campo read-only en Admin |
 | Contacto/Envíos/Privacidad/Términos | rutas Storefront + toggles CMS + guards que bloquean URL cuando están desactivadas |
-| Libro de reclamaciones | formulario público persistente, constancia `REC-*`, plazo interno de 15 días hábiles configurables y bandeja Admin con estado/respuesta; canal de envío real pendiente |
+| Libro de reclamaciones | formulario público persistente, constancia `REC-*` única con el año de Lima, plazo interno de 15 días hábiles configurables y bandeja Admin con estado/respuesta; el Admin no cambia el monto ni el detalle ni borra reclamos (lote 01: `reclamos.use-cases.test.mjs`, `snapshot.use-cases.test.mjs`); canal de envío real pendiente |
 | Roles fijos (05/11) | `frontend/projects/admin/src/app/features/sesion/domain/rol.rules.ts` + `backend/src/domain/sesion/rol.rules.mjs`; se asignan en Usuarios y roles, no se editan |
 | Superadministrador | login, `sesionGuard`, todos los módulos, gestión de usuarios; el BFF impide quedarse sin superadministrador |
 | Administrador | toda la operación salvo usuarios; `permisoGuard` por ruta y `403 INSUFFICIENT_ROLE` en el BFF |

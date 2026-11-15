@@ -1,17 +1,46 @@
 # Contrato BFF — Demo y evolución
 
-Base URL: `/bff` (proxy local a `http://localhost:3000`).
+Base URL: `/bff` (proxy local a `http://localhost:3000`). Este documento describe lo que hace el código del BFF de prueba, con sus códigos de estado y de error; el smoke test ([`contrato.smoke.mjs`](../tests/integration/contrato.smoke.mjs)) lo recorre ([PBI-0101](../../docs/planning/backlog.md), lote 01).
+
+## Convenciones
+
+- Errores (Problem): `{ "message": "...", "error": { "code": "...", "message": "...", "details": { … } } }`. `details` solo viaja cuando la tabla lo indica. Los mensajes están en español y la interfaz los puede mostrar tal cual.
+- Cuerpo: JSON de hasta 2 MB. Sin cuerpo cuenta como `{}`.
+- Cabeceras de todas las respuestas JSON (también los errores y los `204`): `Cache-Control: no-store` y `X-Content-Type-Options: nosniff`, porque llevan tokens y datos personales.
+- CORS local restringido por defecto a los puertos 4200 y 4300 (`WEBSTORE_ALLOWED_ORIGINS`).
+- Tokens de sesión, códigos temporales y tokens de acceso a pedidos se guardan como digest, no en texto legible. Las contraseñas, con `scrypt` y sal individual.
+- Un cambio de rutas, campos o códigos de error se refleja aquí y en el smoke test.
+
+Errores comunes a todas las rutas:
+
+| Estado | `code` | Cuándo |
+| --- | --- | --- |
+| `400` | `INVALID_JSON` | El cuerpo no es JSON |
+| `400` | `INVALID_BODY` | El cuerpo es JSON pero no un objeto (`null`, una lista, un texto o un número) |
+| `400` | `INVALID_PATH` | La ruta trae una secuencia `%` mal formada |
+| `400` | `VALIDATION_ERROR` | Faltan campos obligatorios; `details.fields` los lista |
+| `404` | `ROUTE_NOT_FOUND` | Método y ruta sin handler |
+| `413` | `PAYLOAD_TOO_LARGE` | El cuerpo supera 2 MB |
+| `500` | `INTERNAL_ERROR` | Error no previsto; no expone detalles. El BFF sigue respondiendo |
+
+## Salud
+
+| Método | Ruta | Respuesta |
+| --- | --- | --- |
+| `GET` | `/health` (sin `/bff`) | `200 { ok: true, service }` |
 
 ## Catálogo
 
-- `GET /catalog/categories`
-- `GET /catalog/products`
-- `GET /catalog/products/:slug`
+| Método | Ruta | Respuesta | Errores (`code`) |
+| --- | --- | --- | --- |
+| `GET` | `/catalog/categories` | `200` lista de categorías, ordenadas por padre, `order` y nombre | — |
+| `GET` | `/catalog/products` | `200` lista de productos activos | — |
+| `GET` | `/catalog/products/:slug` | `200` el producto activo con ese slug | `404 PRODUCT_NOT_FOUND`, `400 INVALID_PATH` |
 
 ## Contenido
 
-- `GET /content/settings`
-- `GET /content/banners`
+- `GET /content/settings` → `200`.
+- `GET /content/banners` → `200`.
 
 Cada banner incluye `imageFit` (`cover` para fotos de ambiente, `contain` para producto completo) e `imageTone` (`light` u `dark`, por defecto `light`): con `dark` la tienda muestra los controles del carrusel oscuros, para que se lean sobre fotos oscuras. `imageFocusY` (0–100 o `null`) es la posición vertical de una foto de ambiente; sin valor, la tienda usa 31,5.
 
@@ -21,61 +50,110 @@ Los ajustes públicos incluyen la identidad visual (nombre, logo y tipografía),
 
 ## Envíos
 
-- `GET /shipping/rates`
-- `GET /shipping/quote?destination=...[&origin=...]` → `{ price, origin }`. Sin `origin`, elige la tarifa más baja para el destino: la tabla refleja la distancia, así que corresponde a la tienda más próxima.
+- `GET /shipping/rates` → `200` la tabla de tarifas.
+- `GET /shipping/quote?destination=...[&origin=...]` → `200 { price, origin }`. Sin `origin`, elige la tarifa más baja para el destino: la tabla refleja la distancia, así que corresponde a la tienda más próxima. Sin tarifa, `price` y `origin` son `null`.
 
 ## Checkout y pedidos
 
-- `POST /checkout/orders`
-  - acepta los ítems del carrito (`{ product, quantity }` o `{ productId, quantity }`);
-  - valida y descuenta stock;
-  - recalcula en servidor precios, IGV, origen, costo de envío y total (los montos del cliente no se usan);
-  - crea el pedido, lo vincula a la cuenta si llega `Authorization: Bearer`, y crea/actualiza el cliente;
-  - devuelve el pedido más un `accessToken` de un solo uso de entrega (solo se guarda su digest).
-- `GET /orders` — requiere sesión de cliente; devuelve los pedidos de la cuenta y los hechos con su correo verificado.
-- `GET /orders/:id`
-- `PATCH /orders/:id/shipping` — recalcula origen y costo de envío si cambia el distrito.
-- `PATCH /orders/:id/delivery-date`
-- `PATCH /orders/:id/cancel` — libera el stock reservado.
+| Método | Ruta | Petición | Respuesta | Errores (`code`) |
+| --- | --- | --- | --- | --- |
+| `POST` | `/checkout/orders` | `{ customer, shipping, deliveryDate, paymentMethod, items }`; Bearer de cliente opcional | `201` el pedido más `accessToken` | `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `400 INVALID_DELIVERY_DATE` (`details.minimum`), `400 INVALID_PAYMENT_METHOD`, `400 EMPTY_ORDER`, `400 INVALID_ORDER_ITEMS`, `400 SHIPPING_UNAVAILABLE`, `409 INSUFFICIENT_STOCK` (`details.productId`), `409 PRODUCT_UNAVAILABLE` (`details.productId`) |
+| `GET` | `/orders` | Bearer de cliente | `200` los pedidos de la cuenta y los hechos con su correo verificado | `401 AUTHENTICATION_REQUIRED` |
+| `GET` | `/orders/:id` | Bearer de la cuenta dueña o `x-order-token` | `200` el pedido | `404 ORDER_NOT_FOUND`, `400 INVALID_PATH` |
+| `PATCH` | `/orders/:id/shipping` | `{ shipping }` | `200` el pedido, con origen, envío y total recalculados | `404`, `409 ORDER_NOT_MODIFIABLE`, `409 ORDER_WINDOW_EXPIRED`, `400 VALIDATION_ERROR`, `400 SHIPPING_UNAVAILABLE` |
+| `PATCH` | `/orders/:id/delivery-date` | `{ deliveryDate }` | `200` el pedido | `404`, `409 ORDER_NOT_MODIFIABLE`, `409 ORDER_WINDOW_EXPIRED`, `400 INVALID_DELIVERY_DATE` |
+| `PATCH` | `/orders/:id/cancel` | — | `200` el pedido cancelado; libera el stock | `404`, `409 ORDER_NOT_MODIFIABLE`, `409 ORDER_WINDOW_EXPIRED` |
 
-`GET /orders/:id` y los `PATCH` exigen la sesión de la cuenta dueña del pedido o la cabecera `x-order-token` del invitado. Sin autorización responden `404`, igual que un pedido inexistente. Las mutaciones validan en servidor la ventana de 24 h. Un cambio de estado desde Admin a `cancelled` también libera stock, y reactivarlo lo vuelve a reservar.
+Reglas del checkout (lote 01, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md)):
+
+- `items`: `{ productId, quantity }` o `{ product: { id }, quantity }` (el CartItem de la tienda). `quantity` es un número entero positivo; un decimal, cero, un negativo o un texto responden `INVALID_ORDER_ITEMS`. Las líneas del mismo producto se unen en una y se validan juntas contra el stock.
+- Un producto inactivo no se vende (`PRODUCT_UNAVAILABLE`), aunque se pida por su `productId`.
+- `deliveryDate`: `AAAA-MM-DD` que exista, desde el día de hoy en Lima. Es provisional: la regla de la primera fecha la decide Daniel ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)). Al cambiarla con `PATCH`, reenviar la que el pedido ya tiene se acepta aunque haya pasado.
+- `paymentMethod`: `card`, `yape-plin` o `transfer`.
+- `customer` (`fullName`, `email`, `phone`, `document`) y `shipping` (`addressLine`, `district`, `province`, `department` y `reference` opcional) se guardan con lista blanca: cualquier otro campo se descarta, también en `PATCH /orders/:id/shipping`.
+- El BFF recalcula precios, IGV, origen, costo de envío y total; los montos del cliente no se usan. Vincula el pedido a la cuenta si llega `Authorization: Bearer` y crea o actualiza el cliente.
+
+Acceso y cambios del pedido:
+
+- `GET /orders/:id` y los `PATCH` exigen la sesión de la cuenta dueña del pedido o la cabecera `x-order-token` del invitado. Sin autorización responden `404`, igual que un pedido inexistente.
+- `accessToken` es el token de acceso del invitado a **ese** pedido: se entrega una sola vez, en la respuesta del checkout, y el BFF solo guarda su digest. No es de un solo uso: sirve para consultar y cambiar el pedido mientras exista. La tienda lo conserva para mostrar el pedido.
+- El cliente puede cambiar la dirección o la fecha, o cancelar, dentro de las 24 horas posteriores a la compra (`ORDER_WINDOW_EXPIRED`) y solo si el pedido no está enviado, entregado ni cancelado (`ORDER_NOT_MODIFIABLE`, que se comprueba primero).
+- Un cambio de estado desde Admin a `cancelled` también libera stock, y reactivarlo lo vuelve a reservar.
 
 ## Cuenta del cliente
 
-- `POST /accounts` — registra la cuenta y genera un código temporal.
-- `POST /account-verifications` — activa la cuenta.
-- `POST /account-sessions` — valida credenciales y entrega un token opaco.
-- `GET /account-sessions/current`
-- `DELETE /account-sessions/current`
-- `POST /password-reset-requests`
-- `POST /password-resets`
-- `PATCH /accounts/current`
-- `DELETE /accounts/current`
+| Método | Ruta | Petición | Respuesta | Errores (`code`) |
+| --- | --- | --- | --- | --- |
+| `POST` | `/accounts` | `{ fullName, email, phone, document, password }` | `201 { verificationRequired: true, message }` y `testCode` si se exponen los códigos | `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `400 WEAK_PASSWORD` |
+| `POST` | `/account-verification-requests` | `{ email }` | `202 { message }` y `testCode` si hay una cuenta sin verificar y se exponen los códigos | `400 INVALID_EMAIL` |
+| `POST` | `/account-verifications` | `{ email, code }` | `204` | `400 VALIDATION_ERROR`, `400 INVALID_VERIFICATION_CODE` |
+| `POST` | `/account-sessions` | `{ email, password }` | `201 { token, user }` | `400 VALIDATION_ERROR`, `401 INVALID_CREDENTIALS`, `403 ACCOUNT_NOT_VERIFIED` |
+| `GET` | `/account-sessions/current` | Bearer | `200 { user }` | `401 AUTHENTICATION_REQUIRED` |
+| `DELETE` | `/account-sessions/current` | Bearer | `204` | — |
+| `POST` | `/password-reset-requests` | `{ email }` | `202 { message }` y `testCode` si la cuenta existe y se exponen los códigos | `400 INVALID_EMAIL` |
+| `POST` | `/password-resets` | `{ email, code, password }` | `204`; revoca todas las sesiones de la cuenta | `400 VALIDATION_ERROR`, `400 WEAK_PASSWORD`, `400 INVALID_RESET_CODE` |
+| `PATCH` | `/accounts/current` | Bearer; `{ fullName, phone, document }` | `200 { user }` | `401 AUTHENTICATION_REQUIRED`, `400 VALIDATION_ERROR` |
+| `DELETE` | `/accounts/current` | Bearer | `204` | `401 AUTHENTICATION_REQUIRED` |
 
-Las contraseñas se derivan con `scrypt` y sal individual. Los códigos caducan a los 15 minutos; solo se devuelven en el entorno local de demostración. Las sesiones caducan y pueden revocarse.
+Reglas:
+
+- Respuestas uniformes: el alta, el reenvío y la recuperación responden lo mismo exista o no la cuenta. El alta no devuelve la cuenta ni responde un conflicto: con un correo ya verificado no cambia nada; con uno sin verificar, solo si su código ya venció rehace la cuenta con los datos nuevos (para que un registro ajeno no bloquee el correo); si el código sigue vigente, no cambia nada. Con los códigos expuestos, que llegue o no `testCode` sí lo deja ver: es solo para pruebas.
+- Los códigos son de seis dígitos y caducan a los 15 minutos. Pedir uno nuevo anula el anterior. Tras 5 intentos fallidos el código se anula y responde igual que uno incorrecto (`INVALID_VERIFICATION_CODE` o `INVALID_RESET_CODE`): hay que pedir otro.
+- `testCode` solo viaja con `WEBSTORE_EXPOSE_TEST_CODES=true` o en modo demo; por defecto no, aunque no sea `NODE_ENV=production`. No hay correo real: el canal transaccional sigue pendiente (PBI-0008).
+- El ingreso compara la contraseña aunque el correo no exista, para tardar lo mismo. `ACCOUNT_NOT_VERIFIED` solo responde con la contraseña correcta.
+- Las sesiones caducan a las 8 horas y pueden revocarse.
 
 ## Libro de reclamaciones
 
-- `POST /complaints` — valida el formulario, persiste el reclamo y devuelve un código `REC-YYYY-xxxxx` con fecha límite calculada a 15 días hábiles de Lima (lunes a viernes). Feriados y días no laborables adicionales se pasan en `WEBSTORE_NON_WORKING_DATES` como fechas ISO separadas por comas.
+| Método | Ruta | Petición | Respuesta | Errores (`code`) |
+| --- | --- | --- | --- | --- |
+| `POST` | `/complaints` | `{ name, document, email, phone, address, subject, type, detail, request, amount? }` | `201` el reclamo, con `id` `REC-AAAA-NNNNN` y `dueAt` | `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `400 INVALID_COMPLAINT_TYPE`, `400 INVALID_COMPLAINT_AMOUNT` |
+
+- `type`: `reclamo` o `queja`. `amount`: número no negativo; sin valor, `0`.
+- El código lleva el año de Lima y un correlativo que sigue al mayor emitido ese año, así que no se repite. Empieza en 1 cada año.
+- `dueAt`: fin del día de Lima a 15 días hábiles (lunes a viernes). Feriados y días no laborables adicionales se pasan en `WEBSTORE_NON_WORKING_DATES` como fechas ISO separadas por comas.
 
 La obligación de responder en 15 días hábiles está descrita por [Indecopi](https://consumidor.gob.pe/libro-de-reclamaciones/). El mock registra la respuesta en Admin, pero no envía correo ni conserva constancia de entrega; el canal transaccional sigue pendiente.
 
 ## Administración
 
-- `POST /admin/sessions`
-- `GET /admin/sessions/current`
-- `DELETE /admin/sessions/current`
-- `GET /admin/snapshot`
-- `PUT /admin/snapshot`
-- `POST /admin/reset` — solo `superadmin` (permiso `store.reset`), en el Mock BFF/testing.
+| Método | Ruta | Petición | Respuesta | Errores (`code`) |
+| --- | --- | --- | --- | --- |
+| `POST` | `/admin/sessions` | `{ email, password }` | `201 { token, user }` | `400 VALIDATION_ERROR`, `401 INVALID_ADMIN_CREDENTIALS` |
+| `GET` | `/admin/sessions/current` | Bearer | `200 { user }` | `401 ADMIN_AUTHENTICATION_REQUIRED` |
+| `DELETE` | `/admin/sessions/current` | Bearer | `204` | — |
+| `GET` | `/admin/snapshot` | Bearer | `200` snapshot | `401 ADMIN_AUTHENTICATION_REQUIRED` |
+| `PUT` | `/admin/snapshot` | Bearer; `{ revision, …colecciones modificadas }` | `200` snapshot actualizado | `401`, `403 INSUFFICIENT_ROLE` (`details.collection`), `403 CATALOG_SCOPE_VIOLATION`, `409 STALE_SNAPSHOT`, `400 INVALID_COLLECTION` (`details.collection`, `field`, `id`), `400 INVALID_PRODUCTS`, `400 INVALID_CATEGORY_TREE` (`details.categoryId`), `400 INVALID_ROLE`, `400 WEAK_PASSWORD`, `409 LAST_SUPERADMIN`, `409 SELF_LOCKOUT`, `409 COMPLAINTS_READ_ONLY`, `409 INSUFFICIENT_STOCK` |
+| `POST` | `/admin/reset` | Bearer | `200` snapshot de la demo | `401`, `403 INSUFFICIENT_ROLE`, `403 STORE_RESET_DISABLED` |
 
-El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Requiere `Authorization: Bearer <token>`. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía.
+El ingreso compara la contraseña aunque el correo no exista o el usuario esté inactivo, para tardar lo mismo.
+
+El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía.
 
 Los pedidos del snapshot traen el detalle para despachar: cliente, correo, teléfono, dirección, distrito, tienda de origen, fecha de entrega, medio de pago, líneas (`productId`, `name`, `quantity`, `unitPrice`), subtotal, envío y total. Nunca incluyen el token de acceso del cliente.
 
 `PUT /admin/snapshot` recibe `revision` y solo las colecciones modificadas, y devuelve el snapshot actualizado. Si `revision` no coincide con la del BFF (hubo una venta, un cambio de pedido, un reclamo u otro guardado), responde `409 STALE_SNAPSHOT` sin aplicar nada. El Admin recarga y reaplica el cambio; si no tocó el stock de un producto, conserva el del BFF.
 
+Validación del guardado (lote 01): los cambios se aplican sobre una copia del estado y se confirman solo si todo es válido, así que cualquier error deja el estado como estaba. Antes de aplicar, cada colección se valida en forma y contenido (`INVALID_COLLECTION`):
+
+| Colección | Reglas |
+| --- | --- |
+| Todas | Lista de objetos con `id` de texto, no vacío y único |
+| `products` (rol con `products.manage`) | `name`, `sku` (único sin distinguir mayúsculas), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen |
+| `products` (Vendedor) | `name` con texto y `stock` entero `>= 0`; el resto de la ficha, del tipo que corresponde |
+| `categories` | `name` con texto; `parentId` texto o vacío; `order` número o vacío; sin ciclos ni padres inexistentes (`INVALID_CATEGORY_TREE`) |
+| `brands` | `name` con texto y `active` booleano |
+| `customers` | `name` y `email` con texto; `orders` entero `>= 0` si viene |
+| `banners` | `title` texto; `placement` `hero`, `promotion` o `secondary`; `active` booleano; `imageFit`, `imageTone` e `imageFocusY` de sus valores si vienen |
+| `rates` | `origin` y `destination` con texto; `price` número `>= 0` |
+| `config` | Un objeto. Solo las claves conocidas, cada una del tipo de su valor vigente (texto o booleano), y `storeName` con texto. Las claves desconocidas se descartan; las ausentes conservan su valor |
+| `users` | `name` con texto, `email` válido y único, `active` booleano y un rol fijo (`INVALID_ROLE`) |
+| `orders` | `status`: `confirmed`, `processing`, `shipped`, `delivered` o `cancelled` |
+| `complaints` | Los mismos reclamos que tiene el BFF: no se crean ni se borran (`COMPLAINTS_READ_ONLY`). De cada uno solo se aplican `status` (`received`, `in-review` o `resolved`) y `providerResponse`; monto, detalle y datos de quien reclama se conservan |
+
 Los productos tienen `gallery` (fotos adicionales). El catálogo público expone `images`: la imagen principal primero y luego la galería. El rol `vendedor` puede editar la galería.
+
+`POST /admin/reset` vuelve a los datos de demostración y solo funciona en modo demo o con `WEBSTORE_ALLOW_STORE_RESET=true` (para pruebas); fuera, responde `403 STORE_RESET_DISABLED` y no borra nada. Exige el permiso `store.reset` (solo `superadmin`).
 
 ### Roles fijos (acordados el 05/11)
 
@@ -107,7 +185,7 @@ El BFF es la fuente de los temas ([ADR-0010](../../docs/adrs/0010-aplicar-el-tem
 | Método   | Ruta                           | Petición                                                                                       | Respuesta                                                                                                                                                | Errores (`code`)                                                                                                                                                                     | Roles                          |
 | -------- | ------------------------------ | ---------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------ |
 | `GET`    | `/appearance`                  | —                                                                                              | `200 Apariencia`: `{ demoMode, activeThemeId, themes }`. En modo demo, `themes` trae todos los temas; fuera de él, solo el activo                        | —                                                                                                                                                                                    | Público                        |
-| `GET`    | `/appearance/theme.css`        | Cookie `ws_tema_vista_previa`, que solo se lee en modo demo. Cabecera opcional `If-None-Match` | `200 text/css; charset=utf-8` con `Cache-Control: no-cache`, `ETag` y `Vary: Cookie`; `304` sin cuerpo si `If-None-Match` coincide con el `ETag` vigente | — (nunca falla por la cookie: si no es un tema, sirve el activo)                                                                                                                     | Público                        |
+| `GET`    | `/appearance/theme.css`        | Cookie `ws_tema_vista_previa`, que solo se lee en modo demo. Cabecera opcional `If-None-Match` | `200 text/css; charset=utf-8` con `Cache-Control: no-cache`, `ETag`, `X-Content-Type-Options: nosniff` y, solo en modo demo, `Vary: Cookie`; `304` sin cuerpo si `If-None-Match` coincide con el `ETag` vigente | — (nunca falla por la cookie: si no es un tema, sirve el activo)                                                                                                                     | Público                        |
 | `GET`    | `/admin/themes`                | Bearer                                                                                         | `200 TemasAdmin`: `{ revision, activeThemeId, themes }`, con todos los temas                                                                             | `401 ADMIN_AUTHENTICATION_REQUIRED`, `403 INSUFFICIENT_ROLE`                                                                                                                         | `superadmin` (`themes.manage`) |
 | `POST`   | `/admin/themes`                | `{ revision, name, colors }`                                                                   | `201 TemasAdmin`. El tema nuevo no queda activo                                                                                                          | `400 INVALID_THEME_NAME`, `400 INVALID_THEME_COLOR` (`details.field`), `400 INSUFFICIENT_THEME_CONTRAST` (`details.pairs`), `409 THEME_NAME_TAKEN`, `409 STALE_THEMES`, `401`, `403` | `superadmin`                   |
 | `PUT`    | `/admin/themes/:id`            | `{ revision, name, colors }`                                                                   | `200 TemasAdmin`                                                                                                                                         | Los de `POST`, `404 THEME_NOT_FOUND` y `409 PREDEFINED_THEME_READ_ONLY`                                                                                                              | `superadmin`                   |
@@ -125,19 +203,11 @@ Formas y reglas:
 - `ACTIVE_THEME_IN_USE`: «Activa otro tema antes de borrar este.»
 - Las rutas del Admin validan la sesión y el permiso antes de leer el cuerpo.
 - `theme.css` es un único bloque `:root:root { --ws-…: …; }`, solo con declaraciones de variables (32, una por clave de `Tema.tokens` y en su orden, con `--ws-on-link` justo después de `--ws-link` y `--ws-store-bg` justo antes de `--ws-bg`), con el mapa del tema activo o, en modo demo, el de la vista previa de la cookie si es un tema existente. El selector repetido gana a `:root` de `tokens.css`, que se carga después. No lleva cabeceras CORS: se carga con `<link>` desde el mismo origen.
-- Caché de `theme.css`: el `ETag` es el SHA-256 recortado, entre comillas, del cuerpo que se sirve. Cambia al activar otro tema, al editar el activo, al cambiar la vista previa y si una versión nueva cambia los valores de un predefinido. `no-cache` obliga a revalidar en cada carga, y `Vary: Cookie` evita que un intermediario sirva la vista previa de una persona a otra.
+- Caché de `theme.css`: el `ETag` es el SHA-256 recortado, entre comillas, del cuerpo que se sirve. Cambia al activar otro tema, al editar el activo, al cambiar la vista previa y si una versión nueva cambia los valores de un predefinido. `no-cache` obliga a revalidar en cada carga. En modo demo, `Vary: Cookie` evita que un intermediario sirva la vista previa de una persona a otra; fuera de él la cookie no cambia la hoja, así que no se envía y una cookie cualquiera no parte la caché compartida (PBI-0073).
 - Modo demo: lo enciende `WEBSTORE_DEMO_MODE=true` (solo `true`, sin distinguir mayúsculas ni espacios en los extremos). Sin él, `demoMode` es `false` y la cookie se ignora. La cookie no se guarda en el BFF ni afecta a nadie más.
-
-## Convenciones y protección local
-
-- Errores: `{ "message": "...", "error": { "code": "...", "message": "..." } }`.
-- Límite de cuerpo: 2 MB.
-- CORS local restringido por defecto a los puertos 4200 y 4300.
-- Validación de DTOs antes de persistir.
-- Tokens almacenados como digest, no en texto legible.
 
 ## Producción
 
 El endpoint snapshot es deliberadamente compacto para la demo. Un BFF productivo debe dividir comandos/queries, usar un proveedor de identidad, aplicar rate limiting y auditoría, proteger concurrencia de stock, incorporar idempotencia de checkout y usar persistencia transaccional.
 
-`/appearance/theme.css` bloquea el primer pintado de la tienda y del Admin ([ADR-0010](../../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)). Un BFF productivo debe servirla rápido y con caché: conservar el `ETag`, el `Cache-Control: no-cache` y el `Vary: Cookie`, responder el `304` sin recalcular el mapa (por ejemplo, con la hoja y su `ETag` en memoria hasta el siguiente cambio de temas) y, si hay CDN o proxy delante, que respete `Vary: Cookie` o que no guarde la hoja en modo demo.
+`/appearance/theme.css` bloquea el primer pintado de la tienda y del Admin ([ADR-0010](../../docs/adrs/0010-aplicar-el-tema-activo-con-una-hoja-de-estilos-del-bff.md)). Un BFF productivo debe servirla rápido y con caché: conservar el `ETag`, el `Cache-Control: no-cache` y, en modo demo, el `Vary: Cookie`, responder el `304` sin recalcular el mapa (por ejemplo, con la hoja y su `ETag` en memoria hasta el siguiente cambio de temas) y, si hay CDN o proxy delante, que respete `Vary: Cookie` o que no guarde la hoja en modo demo.
