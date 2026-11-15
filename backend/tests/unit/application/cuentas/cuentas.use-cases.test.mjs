@@ -149,3 +149,224 @@ test('PBI-0100: el ingreso compara la contraseña aunque el correo no exista', (
   });
   assert.equal(security.comparaciones, 1);
 });
+
+// Lote 02 (PBI-0102): el ciclo completo de la cuenta, con el correo escrito de cualquier forma.
+
+/** Cuenta ya verificada, con una sesión abierta. */
+function cuentaVerificada(opciones) {
+  const entorno = crear(opciones);
+  const { testCode } = entorno.cuentas.register(alta());
+  entorno.cuentas.verify({ email: 'ana@example.com', code: testCode });
+  return entorno;
+}
+
+test('el correo se reconoce sin importar mayúsculas ni espacios en cada operación', () => {
+  const { store, cuentas } = crear();
+  const registro = cuentas.register(alta({ email: '  ANA@Example.COM ' }));
+  assert.equal(store.state.accounts[0].email, 'ana@example.com');
+  // Registrarse otra vez con otra escritura del mismo correo no crea otra cuenta.
+  cuentas.register(alta({ email: 'ana@EXAMPLE.com' }));
+  assert.equal(store.state.accounts.length, 1);
+  const reenvio = cuentas.resendVerification({ email: ' Ana@example.com' });
+  assert.notEqual(reenvio.testCode, registro.testCode);
+  cuentas.verify({ email: 'ANA@example.com  ', code: reenvio.testCode });
+  assert.ok(cuentas.signIn({ email: ' ANA@example.com', password: 'Prueba2026x' }).token);
+  const { testCode } = cuentas.requestPasswordReset({ email: 'Ana@Example.com' });
+  cuentas.resetPassword({ email: ' ANA@example.com ', code: testCode, password: 'NuevaClave2026' });
+  assert.ok(cuentas.signIn({ email: 'ana@example.com', password: 'NuevaClave2026' }).token);
+});
+
+test('un alta incompleta, con un correo inválido o con una contraseña débil se rechaza sin crear la cuenta', () => {
+  const { store, cuentas } = crear();
+  assert.throws(() => cuentas.register(alta({ phone: '  ' })), {
+    code: 'VALIDATION_ERROR',
+    details: { fields: ['phone'] },
+  });
+  assert.throws(() => cuentas.register(alta({ email: 'ana@' })), { code: 'INVALID_EMAIL' });
+  assert.throws(() => cuentas.register(alta({ password: 'corta1' })), { code: 'WEAK_PASSWORD' });
+  assert.equal(store.state.accounts.length, 0);
+});
+
+test('el alta deja su actividad sin el nombre ni el correo de la persona', () => {
+  const { store, cuentas } = crear();
+  cuentas.register(alta());
+  assert.equal(store.state.activity.length, 1);
+  assert.doesNotMatch(JSON.stringify(store.state.activity), /Ana|ana@example/);
+});
+
+test('verificar con el código correcto activa la cuenta y el código no se puede usar dos veces', () => {
+  const { store, cuentas } = crear();
+  const { testCode } = cuentas.register(alta());
+  assert.equal(store.state.accounts[0].verified, false);
+  cuentas.verify({ email: 'ana@example.com', code: testCode });
+  assert.equal(store.state.accounts[0].verified, true);
+  assert.equal('verificationCodeHash' in store.state.accounts[0], false);
+  assert.throws(() => cuentas.verify({ email: 'ana@example.com', code: testCode }), {
+    code: 'INVALID_VERIFICATION_CODE',
+  });
+});
+
+test('un código vencido, de otro correo o de un correo sin cuenta responde lo mismo', () => {
+  const { store, cuentas } = crear();
+  const { testCode } = cuentas.register(alta());
+  cuentas.register(alta({ email: 'luis@example.com' }));
+  store.state.accounts[0].verificationExpiresAt = new Date(Date.now() - 1000).toISOString();
+  const mensajes = new Set();
+  for (const comando of [
+    { email: 'ana@example.com', code: testCode },
+    { email: 'luis@example.com', code: testCode },
+    { email: 'nadie@example.com', code: testCode },
+  ])
+    assert.throws(
+      () => cuentas.verify(comando),
+      (error) => {
+        mensajes.add(error.message);
+        return error.code === 'INVALID_VERIFICATION_CODE';
+      },
+    );
+  assert.equal(mensajes.size, 1);
+});
+
+test('el ingreso exige la contraseña antes de decir que falta verificar la cuenta', () => {
+  const { cuentas } = crear();
+  cuentas.register(alta());
+  assert.throws(() => cuentas.signIn({ email: 'ana@example.com', password: 'Incorrecta2026' }), {
+    code: 'INVALID_CREDENTIALS',
+    kind: 'unauthenticated',
+  });
+  assert.throws(() => cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' }), {
+    code: 'ACCOUNT_NOT_VERIFIED',
+    kind: 'forbidden',
+  });
+});
+
+test('una contraseña incorrecta y un correo sin cuenta responden con el mismo mensaje', () => {
+  const { cuentas } = cuentaVerificada();
+  const mensajes = [
+    { email: 'ana@example.com', password: 'Incorrecta2026' },
+    { email: 'nadie@example.com', password: 'Prueba2026x' },
+  ].map((comando) => {
+    try {
+      cuentas.signIn(comando);
+    } catch (error) {
+      return `${error.code}|${error.message}`;
+    }
+    return 'sin error';
+  });
+  assert.equal(mensajes[0], mensajes[1]);
+  assert.match(mensajes[0], /^INVALID_CREDENTIALS\|/);
+});
+
+test('el ingreso abre una sesión que identifica a la cuenta y no expone su contraseña ni sus códigos', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const { token, user } = cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' });
+  assert.deepEqual(Object.keys(user).sort(), ['document', 'email', 'fullName', 'id', 'phone', 'verified']);
+  assert.equal(cuentas.currentUser(token).user.id, user.id);
+  assert.equal(store.state.accountSessions.length, 1);
+  assert.notEqual(store.state.accountSessions[0].tokenHash, token);
+  assert.throws(() => cuentas.currentUser('otro-token'), { code: 'AUTHENTICATION_REQUIRED' });
+  assert.throws(() => cuentas.currentUser(''), { code: 'AUTHENTICATION_REQUIRED' });
+});
+
+test('una sesión vencida ya no identifica a la cuenta', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const { token } = cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' });
+  store.state.accountSessions[0].expiresAt = new Date(Date.now() - 1000).toISOString();
+  assert.throws(() => cuentas.currentUser(token), { code: 'AUTHENTICATION_REQUIRED' });
+});
+
+test('cerrar sesión quita solo esa sesión', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const primera = cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' }).token;
+  const segunda = cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' }).token;
+  cuentas.signOut(primera);
+  assert.equal(store.state.accountSessions.length, 1);
+  assert.throws(() => cuentas.currentUser(primera), { code: 'AUTHENTICATION_REQUIRED' });
+  assert.ok(cuentas.currentUser(segunda).user);
+});
+
+test('recuperar la contraseña pide un código, cambia la clave, lo anula y cierra las sesiones de esa cuenta', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const { testCode: codigoLuis } = cuentas.register(alta({ email: 'luis@example.com' }));
+  cuentas.verify({ email: 'luis@example.com', code: codigoLuis });
+  const deAna = cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' }).token;
+  const deLuis = cuentas.signIn({ email: 'luis@example.com', password: 'Prueba2026x' }).token;
+  const { testCode } = cuentas.requestPasswordReset({ email: 'ana@example.com' });
+  cuentas.resetPassword({ email: 'ana@example.com', code: testCode, password: 'NuevaClave2026' });
+  assert.throws(() => cuentas.currentUser(deAna), { code: 'AUTHENTICATION_REQUIRED' });
+  assert.ok(cuentas.currentUser(deLuis).user);
+  assert.throws(() => cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' }), {
+    code: 'INVALID_CREDENTIALS',
+  });
+  assert.ok(cuentas.signIn({ email: 'ana@example.com', password: 'NuevaClave2026' }).token);
+  assert.throws(
+    () => cuentas.resetPassword({ email: 'ana@example.com', code: testCode, password: 'OtraClave2026' }),
+    { code: 'INVALID_RESET_CODE' },
+  );
+  assert.equal('resetCodeHash' in store.state.accounts[0], false);
+});
+
+test('una contraseña débil se rechaza antes de mirar el código y no gasta intentos', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const { testCode } = cuentas.requestPasswordReset({ email: 'ana@example.com' });
+  for (let i = 0; i < MAX_CODE_ATTEMPTS + 1; i++)
+    assert.throws(
+      () => cuentas.resetPassword({ email: 'ana@example.com', code: testCode, password: 'corta' }),
+      {
+        code: 'WEAK_PASSWORD',
+      },
+    );
+  assert.equal(store.state.accounts[0].resetAttempts, 0);
+  cuentas.resetPassword({ email: 'ana@example.com', code: testCode, password: 'NuevaClave2026' });
+});
+
+test('pedir la recuperación responde igual con una cuenta que sin ella, y un correo inválido se rechaza', () => {
+  const { cuentas } = cuentaVerificada();
+  const existente = cuentas.requestPasswordReset({ email: 'ana@example.com' });
+  const inexistente = cuentas.requestPasswordReset({ email: 'nadie@example.com' });
+  assert.equal(existente.message, inexistente.message);
+  assert.equal(inexistente.testCode, undefined);
+  assert.throws(() => cuentas.requestPasswordReset({ email: 'no-es-correo' }), { code: 'INVALID_EMAIL' });
+  assert.throws(
+    () => cuentas.resetPassword({ email: 'nadie@example.com', code: '123456', password: 'NuevaClave2026' }),
+    { code: 'INVALID_RESET_CODE' },
+  );
+});
+
+test('el perfil se actualiza recortando los datos y exige nombre, teléfono y documento; el correo no cambia', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const cuenta = store.state.accounts[0];
+  const { user } = cuentas.updateProfile(cuenta, {
+    fullName: '  Ana María  ',
+    phone: ' 988 ',
+    document: ' 999 ',
+    email: 'otro@example.com',
+  });
+  assert.deepEqual(
+    [user.fullName, user.phone, user.document, user.email],
+    ['Ana María', '988', '999', 'ana@example.com'],
+  );
+  assert.throws(() => cuentas.updateProfile(cuenta, { fullName: 'Ana', phone: ' ', document: '1' }), {
+    code: 'VALIDATION_ERROR',
+    details: { fields: ['phone'] },
+  });
+  assert.equal(cuenta.phone, '988');
+});
+
+test('eliminar la cuenta quita sus sesiones y no toca las de otras cuentas', () => {
+  const { store, cuentas } = cuentaVerificada();
+  const { testCode } = cuentas.register(alta({ email: 'luis@example.com' }));
+  cuentas.verify({ email: 'luis@example.com', code: testCode });
+  cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' });
+  const deLuis = cuentas.signIn({ email: 'luis@example.com', password: 'Prueba2026x' }).token;
+  cuentas.deleteAccount(store.state.accounts[0]);
+  assert.deepEqual(
+    store.state.accounts.map((cuenta) => cuenta.email),
+    ['luis@example.com'],
+  );
+  assert.equal(store.state.accountSessions.length, 1);
+  assert.ok(cuentas.currentUser(deLuis).user);
+  assert.throws(() => cuentas.signIn({ email: 'ana@example.com', password: 'Prueba2026x' }), {
+    code: 'INVALID_CREDENTIALS',
+  });
+});

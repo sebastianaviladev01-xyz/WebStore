@@ -2,14 +2,14 @@ import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
 import { conEvento, eventoEstadoDePedido } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
-import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
+import { requireShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
 import { pickShipping, requireDeliveryDate } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
 import {
   canModify,
   changeOrderStatus,
   isOrderOpen,
+  orderAmounts,
   orderBelongsTo,
-  roundMoney,
 } from '../../domain/pedidos/pedido.rules.mjs';
 import { accountForToken, requireAccount } from '../cuentas/cuentas.use-cases.mjs';
 
@@ -53,17 +53,11 @@ export function createPedidosUseCases({ store, security }) {
 
   function changeShipping(order, data) {
     const shipping = pickShipping(data);
-    const rate = bestShippingRate(store.state.rates, shipping.district);
-    if (!rate)
-      throw new DomainError(
-        'validation',
-        'SHIPPING_UNAVAILABLE',
-        'Todavía no contamos con una tarifa para ese destino.',
-      );
+    const rate = requireShippingRate(store.state.rates, shipping.district);
     order.shipping = shipping;
     order.shippingOrigin = rate.origin;
     order.shippingCost = rate.price;
-    order.total = roundMoney(order.subtotal + rate.price);
+    order.total = orderAmounts(order.subtotal, rate.price).total;
     order.updatedAt = nowIso();
   }
 

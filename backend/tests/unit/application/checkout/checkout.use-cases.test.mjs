@@ -3,7 +3,7 @@
  * almacén en memoria: fecha de entrega desde hoy en Lima, método de pago de los que ofrece la tienda, cantidad
  * entera y positiva, y solo los campos conocidos de `customer` y `shipping`.
  */
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createCheckoutUseCases } from '../../../../src/application/checkout/checkout.use-cases.mjs';
@@ -233,4 +233,226 @@ test('la misma clave de idempotencia devuelve el mismo pedido y no descuenta sto
 test('una clave de idempotencia mal formada responde INVALID_IDEMPOTENCY_KEY', () => {
   for (const clave of ['corta', 'x'.repeat(129), 'con espacios 1234567890', 'ñandú-0123456789abcdef'])
     assert.throws(() => comprar.conClave(clave), { code: 'INVALID_IDEMPOTENCY_KEY' }, clave);
+});
+
+// Lote 02 (PBI-0102): los montos con IGV y envío, y lo que el checkout rechaza o registra.
+
+test('los montos: el subtotal incluye el IGV (18 %), el envío se suma aparte y el total es de los dos', () => {
+  const resultado = comprar();
+  assert.deepEqual(
+    [resultado.subtotal, resultado.igv, resultado.shippingCost, resultado.total],
+    [100, 15.25, 12, 112],
+  );
+});
+
+test('los montos de varias líneas se redondean a céntimos una sola vez, sobre el subtotal', () => {
+  const resultado = comprar({
+    items: [
+      { productId: 'p-1', quantity: 3 },
+      { productId: 'p-2', quantity: 1 },
+    ],
+  });
+  // 350 de productos: el IGV incluido es 350 − 350 / 1,18 = 53,39.
+  assert.deepEqual(
+    [resultado.subtotal, resultado.igv, resultado.shippingCost, resultado.total],
+    [350, 53.39, 12, 362],
+  );
+  const decimales = crearAlmacen();
+  decimales.state.products[0].price = 19.99;
+  const conCentavos = createCheckoutUseCases({ store: decimales, security }).placeOrder(
+    pedido({ items: [{ productId: 'p-1', quantity: 3 }] }),
+    '',
+  );
+  assert.deepEqual([conCentavos.subtotal, conCentavos.igv, conCentavos.total], [59.97, 9.15, 71.97]);
+});
+
+test('el precio de las líneas sale del estado del BFF, no de lo que envía la tienda', () => {
+  const resultado = comprar({
+    items: [{ product: { id: 'p-1', price: 1, name: 'Otro' }, quantity: 2, price: 1 }],
+    shippingCost: 0,
+    subtotal: 1,
+    igv: 0,
+  });
+  assert.deepEqual([resultado.subtotal, resultado.shippingCost, resultado.total], [200, 12, 212]);
+  assert.equal(resultado.items[0].product.price, 100);
+  assert.equal(resultado.items[0].product.name, 'Uno');
+});
+
+test('el envío es la tarifa más baja del distrito y guarda su origen', () => {
+  const store = crearAlmacen();
+  store.state.rates.push(
+    { id: 'r2', origin: 'Callao', destination: 'San Isidro', price: 8 },
+    { id: 'r3', origin: 'Surco', destination: 'San Isidro', price: 20 },
+    { id: 'r4', origin: 'Callao', destination: 'Miraflores', price: 5 },
+  );
+  const resultado = createCheckoutUseCases({ store, security }).placeOrder(pedido(), '');
+  assert.deepEqual([resultado.shippingCost, resultado.shippingOrigin, resultado.total], [8, 'Callao', 108]);
+});
+
+test('un distrito sin tarifa responde SHIPPING_UNAVAILABLE y no reserva stock ni crea el pedido', () => {
+  const store = crearAlmacen();
+  assert.throws(
+    () =>
+      createCheckoutUseCases({ store, security }).placeOrder(
+        pedido({ shipping: { ...pedido().shipping, district: 'Barranco' } }),
+        '',
+      ),
+    { code: 'SHIPPING_UNAVAILABLE', kind: 'validation' },
+  );
+  assert.equal(store.state.orders.length, 0);
+  assert.equal(store.state.products[0].stock, 5);
+});
+
+test('un producto inactivo, sin stock o inexistente se rechaza completo, sin descontar lo demás', () => {
+  const casos = [
+    ['PRODUCT_UNAVAILABLE', (state) => (state.products[1].active = false)],
+    ['INSUFFICIENT_STOCK', (state) => (state.products[1].stock = 0)],
+  ];
+  for (const [codigo, preparar] of casos) {
+    const store = crearAlmacen();
+    preparar(store.state);
+    assert.throws(
+      () =>
+        createCheckoutUseCases({ store, security }).placeOrder(
+          pedido({
+            items: [
+              { productId: 'p-1', quantity: 1 },
+              { productId: 'p-2', quantity: 1 },
+            ],
+          }),
+          '',
+        ),
+      { code: codigo, kind: 'conflict' },
+      codigo,
+    );
+    assert.equal(store.state.products[0].stock, 5, codigo);
+    assert.equal(store.state.orders.length, 0, codigo);
+  }
+  assert.throws(() => comprar({ items: [{ productId: 'p-9', quantity: 1 }] }), {
+    code: 'INSUFFICIENT_STOCK',
+  });
+});
+
+test('un pedido sin productos, con un correo inválido o con datos del comprador vacíos se rechaza', () => {
+  for (const items of [[], undefined, 'p-1'])
+    assert.throws(() => comprar({ items }), { code: 'EMPTY_ORDER' }, String(items));
+  assert.throws(() => comprar({ customer: { ...pedido().customer, email: 'no-es-correo' } }), {
+    code: 'INVALID_EMAIL',
+  });
+  assert.throws(() => comprar({ customer: { ...pedido().customer, fullName: '   ' } }), {
+    code: 'VALIDATION_ERROR',
+    details: { fields: ['fullName'] },
+  });
+  assert.throws(() => comprar({ shipping: { ...pedido().shipping, addressLine: '' } }), {
+    code: 'VALIDATION_ERROR',
+    details: { fields: ['addressLine'] },
+  });
+});
+
+test('el pedido descuenta el stock, sube la revisión, deja su actividad y se guarda una vez', () => {
+  const store = crearAlmacen();
+  let guardados = 0;
+  store.save = () => (guardados += 1);
+  const resultado = createCheckoutUseCases({ store, security }).placeOrder(
+    pedido({ items: [{ productId: 'p-1', quantity: 2 }] }),
+    '',
+  );
+  assert.equal(store.state.products[0].stock, 3);
+  assert.equal(store.state.revision, 1);
+  assert.equal(guardados, 1);
+  assert.equal(resultado.status, 'confirmed');
+  assert.equal(store.state.orders[0].id, resultado.id);
+  assert.equal(store.state.activity.length, 1);
+  assert.equal(store.state.activity[0].type, 'order-created');
+  assert.match(store.state.activity[0].description, new RegExp(resultado.id));
+});
+
+test('la respuesta trae el token de acceso, pero no guarda su valor ni expone hashes ni la cuenta', () => {
+  const store = crearAlmacen();
+  const resultado = createCheckoutUseCases({ store, security }).placeOrder(pedido(), '');
+  assert.equal(typeof resultado.accessToken, 'string');
+  assert.equal(store.state.orders[0].accessTokenHash, security.digest(resultado.accessToken));
+  assert.notEqual(store.state.orders[0].accessTokenHash, resultado.accessToken);
+  for (const campo of ['accessTokenHash', 'idempotencyKeyHash', 'accountId'])
+    assert.equal(campo in resultado, false, campo);
+});
+
+test('con la sesión de una cuenta, el pedido queda a su nombre; sin sesión o con una vencida, es de invitado', () => {
+  const vigente = new Date(Date.now() + 60_000).toISOString();
+  const vencida = new Date(Date.now() - 60_000).toISOString();
+  const preparar = (expiresAt) => {
+    const store = crearAlmacen();
+    store.state.accounts.push({ id: 'a-1', email: 'ana@example.com', verified: true });
+    store.state.accountSessions.push({ tokenHash: 'h:token-de-ana', accountId: 'a-1', expiresAt });
+    return store;
+  };
+  const conCuenta = preparar(vigente);
+  createCheckoutUseCases({ store: conCuenta, security }).placeOrder(pedido(), 'token-de-ana');
+  assert.equal(conCuenta.state.orders[0].accountId, 'a-1');
+  for (const [store, token] of [
+    [preparar(vencida), 'token-de-ana'],
+    [preparar(vigente), 'token-ajeno'],
+    [preparar(vigente), ''],
+  ]) {
+    createCheckoutUseCases({ store, security }).placeOrder(pedido(), token);
+    assert.equal('accountId' in store.state.orders[0], false);
+  }
+});
+
+test('cada compra crea la ficha del cliente o actualiza la que tiene su correo, sin distinguir mayúsculas', () => {
+  const store = crearAlmacen();
+  const checkout = createCheckoutUseCases({ store, security });
+  checkout.placeOrder(pedido(), '');
+  assert.deepEqual(
+    store.state.customers.map(({ name, email, document, orders }) => ({ name, email, document, orders })),
+    [{ name: 'Ana Pérez', email: 'ana@example.com', document: '12345678', orders: 1 }],
+  );
+  checkout.placeOrder(
+    pedido({
+      customer: {
+        ...pedido().customer,
+        email: ' ANA@Example.com ',
+        fullName: 'Ana P. de López',
+        document: '87654321',
+      },
+    }),
+    '',
+  );
+  assert.equal(store.state.customers.length, 1);
+  assert.deepEqual(
+    [store.state.customers[0].name, store.state.customers[0].document, store.state.customers[0].orders],
+    ['Ana P. de López', '87654321', 2],
+  );
+  checkout.placeOrder(pedido({ customer: { ...pedido().customer, email: 'luis@example.com' } }), '');
+  assert.equal(store.state.customers.length, 2);
+});
+
+// Lote 02 (PBI-0103): el código del pedido no se repite.
+
+test('40 pedidos en el mismo milisegundo reciben códigos distintos, con la forma WS-NNNNNNNN', () => {
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-11-15T15:00:00.000Z') });
+  try {
+    const store = crearAlmacen();
+    store.state.products[0].stock = 100;
+    const checkout = createCheckoutUseCases({ store, security });
+    const ids = Array.from({ length: 40 }, () => checkout.placeOrder(pedido(), '').id);
+    assert.equal(new Set(ids).size, 40);
+    for (const id of ids) assert.match(id, /^WS-\d{8}$/);
+    assert.equal(new Set(store.state.activity.map((evento) => evento.id)).size, 40);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('un código ya emitido por otro pedido guardado, aunque sea del mismo instante, no se reutiliza', () => {
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-11-15T15:00:00.000Z') });
+  try {
+    const store = crearAlmacen();
+    const checkout = createCheckoutUseCases({ store, security });
+    const primero = checkout.placeOrder(pedido(), '').id;
+    store.state.orders = store.state.orders.map((orden) => ({ ...orden }));
+    assert.notEqual(checkout.placeOrder(pedido(), '').id, primero);
+  } finally {
+    mock.timers.reset();
+  }
 });

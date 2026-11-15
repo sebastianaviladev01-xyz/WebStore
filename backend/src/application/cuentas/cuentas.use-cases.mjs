@@ -110,7 +110,7 @@ export function createCuentasUseCases({ store, security, exposeTestCodes }) {
     const password = requirePassword(command.password);
     // El hash se calcula siempre, para que el alta tarde lo mismo exista o no la cuenta.
     const credential = security.hashPassword(password);
-    const existing = store.state.accounts.find((account) => account.email === email);
+    const existing = findByEmail(email);
     if (existing && (existing.verified || !codeExpired(existing.verificationExpiresAt)))
       return withCode({ verificationRequired: true, message: REGISTRATION_MESSAGE });
     const account = existing ?? { id: security.newId(), email, verified: false, createdAt: nowIso() };
@@ -135,9 +135,9 @@ export function createCuentasUseCases({ store, security, exposeTestCodes }) {
   /** Reenvía el código de una cuenta sin verificar (PBI-0098); responde igual en cualquier otro caso. */
   function resendVerification(command) {
     const email = requireEmail(command.email);
-    const account = store.state.accounts.find((item) => item.email === email && !item.verified);
+    const account = findByEmail(email);
     let code;
-    if (account) {
+    if (account && !account.verified) {
       code = issueCode(account, 'verification');
       store.save();
     }
@@ -178,7 +178,7 @@ export function createCuentasUseCases({ store, security, exposeTestCodes }) {
 
   function requestPasswordReset(command) {
     const email = requireEmail(command.email);
-    const account = store.state.accounts.find((item) => item.email === email);
+    const account = findByEmail(email);
     let code;
     if (account) {
       code = issueCode(account, 'reset');

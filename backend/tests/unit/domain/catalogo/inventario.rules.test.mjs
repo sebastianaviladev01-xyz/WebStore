@@ -59,3 +59,60 @@ test('liberar devuelve todas las unidades de las líneas repetidas', () => {
   ]);
   assert.equal(stockDe(despues, 'p-1'), 16);
 });
+
+// Lote 02 (PBI-0102): los límites del stock y lo que no se toca.
+
+test('se puede reservar justo todo el stock, pero no una unidad más', () => {
+  assert.equal(stockDe(reserveStock(productos(), [{ productId: 'p-3', quantity: 2 }]), 'p-3'), 0);
+  assert.throws(() => reserveStock(productos(), [{ productId: 'p-3', quantity: 3 }]), {
+    code: 'INSUFFICIENT_STOCK',
+    kind: 'conflict',
+    details: { productId: 'p-3' },
+  });
+});
+
+test('un producto que no existe se rechaza como sin stock, con su identificador', () => {
+  assert.throws(() => reserveStock(productos(), [{ productId: 'p-9', quantity: 1 }]), {
+    code: 'INSUFFICIENT_STOCK',
+    details: { productId: 'p-9' },
+  });
+  assert.throws(
+    () => reserveStock(productos(), [{ productId: 'p-9', quantity: 1 }], { requireActive: true }),
+    { code: 'INSUFFICIENT_STOCK' },
+  );
+});
+
+test('reservar acepta las líneas con el producto embebido, como las envía la tienda', () => {
+  const despues = reserveStock(productos(), [{ product: { id: 'p-1' }, quantity: 4 }]);
+  assert.equal(stockDe(despues, 'p-1'), 5);
+});
+
+test('un producto activo y sin stock responde INSUFFICIENT_STOCK, no PRODUCT_UNAVAILABLE', () => {
+  const sinStock = [{ id: 'p-1', stock: 0, active: true }];
+  assert.throws(() => reserveStock(sinStock, [{ productId: 'p-1', quantity: 1 }], { requireActive: true }), {
+    code: 'INSUFFICIENT_STOCK',
+  });
+});
+
+test('reservar y liberar devuelven una lista nueva: la recibida y los demás productos no cambian', () => {
+  const antes = productos();
+  const copia = structuredClone(antes);
+  const reservada = reserveStock(antes, [{ productId: 'p-1', quantity: 2 }]);
+  const liberada = releaseStock(antes, [{ productId: 'p-1', quantity: 2 }]);
+  assert.deepEqual(antes, copia);
+  assert.notEqual(reservada, antes);
+  assert.equal(reservada[2], antes[2]);
+  assert.equal(stockDe(liberada, 'p-1'), 11);
+});
+
+test('liberar una línea de un producto que ya no existe no falla ni inventa productos', () => {
+  assert.deepEqual(releaseStock(productos(), [{ productId: 'p-9', quantity: 3 }]), productos());
+});
+
+test('reservar y liberar las mismas líneas deja el stock como estaba', () => {
+  const lineas = [
+    { productId: 'p-1', quantity: 3 },
+    { productId: 'p-3', quantity: 2 },
+  ];
+  assert.deepEqual(releaseStock(reserveStock(productos(), lineas), lineas), productos());
+});

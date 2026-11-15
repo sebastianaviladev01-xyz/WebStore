@@ -456,3 +456,41 @@ test('en un tema propio, el texto sobre el principal es el más legible entre el
       assert.equal(relacionDeContraste(elegido, primary), mejor, `${primary} sobre ${base.surface}`);
     }
 });
+
+// Lote 02 (PBI-0152, nota de ADR-0019): el texto sobre el acento, como el texto sobre el principal.
+test('sobre una base oscura, el texto sobre un acento claro es la superficie: el blanco y el contraste no se leen', () => {
+  const tokens = tokensDelTema(
+    { primary: '#3B82F6', secondary: '#F97316', ...BASE_OSCURA },
+    casos.predefinidos,
+  );
+  assert.equal(tokens['--ws-on-accent'], '#1B1E25');
+  assert.ok(medirPares(tokens)['onAccent/accent'] >= 4.5);
+});
+
+test('en un tema propio, el texto sobre el acento es el más legible entre el blanco, el contraste y la superficie', () => {
+  const acentos = ['#C2410C', '#F2B705', '#F97316', '#10B981', '#777777', '#E5E7EB', '#FFFFBB', '#1D4ED8'];
+  const bases = [
+    { background: '#F3F5F8', surface: '#FFFFFF', contrast: '#0F172A' },
+    BASE_OSCURA,
+    { background: '#FFFFFF', surface: '#F0F0F0', contrast: '#595959' },
+  ];
+  for (const secondary of acentos)
+    for (const base of bases) {
+      const tokens = tokensDelTema({ primary: '#1D4ED8', secondary, ...base }, casos.predefinidos);
+      const mejor = Math.max(
+        ...['#FFFFFF', base.contrast, base.surface].map((candidato) =>
+          relacionDeContraste(secondary, candidato),
+        ),
+      );
+      const elegido = coloresCalculados(tokens)['--ws-on-accent'];
+      assert.equal(relacionDeContraste(elegido, secondary), mejor, `${secondary} sobre ${base.surface}`);
+    }
+});
+
+test('con una base clara el texto sobre el acento no cambia: el blanco o el contraste, como antes', () => {
+  const base = { background: '#F3F5F8', surface: '#FFFFFF', contrast: '#0F172A' };
+  const sobre = (secondary) =>
+    tokensDelTema({ primary: '#1D4ED8', secondary, ...base }, casos.predefinidos)['--ws-on-accent'];
+  assert.equal(sobre('#C2410C'), '#FFFFFF');
+  assert.equal(sobre('#F2B705'), '#0F172A');
+});

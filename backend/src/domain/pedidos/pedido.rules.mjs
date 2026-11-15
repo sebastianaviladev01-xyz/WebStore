@@ -7,6 +7,35 @@ export const ORDER_MODIFICATION_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 export const roundMoney = (value) => Math.round(value * 100) / 100;
 
+/** IGV de Perú: los precios del catálogo ya lo incluyen. */
+export const IGV_RATE = 0.18;
+
+/** IGV contenido en un monto que ya lo incluye. */
+export const igvIncluded = (subtotal) => roundMoney(subtotal - subtotal / (1 + IGV_RATE));
+
+/** Montos de un pedido: el subtotal incluye el IGV, el envío se suma aparte. */
+export function orderAmounts(subtotal, shippingCost) {
+  return { subtotal, igv: igvIncluded(subtotal), shippingCost, total: roundMoney(subtotal + shippingCost) };
+}
+
+const DIGITOS_DEL_CODIGO = 8;
+const CODIGOS_POSIBLES = 10 ** DIGITOS_DEL_CODIGO;
+
+/**
+ * Código visible del pedido, `WS-` y ocho dígitos: los últimos del reloj, y si ya están tomados, el siguiente libre
+ * (PBI-0103). Así dos pedidos del mismo milisegundo no comparten código.
+ */
+export function nextOrderId(existingIds, nowMs) {
+  const taken = new Set(existingIds);
+  let number = nowMs % CODIGOS_POSIBLES;
+  for (let tried = 0; tried < CODIGOS_POSIBLES; tried += 1) {
+    const id = `WS-${String(number).padStart(DIGITOS_DEL_CODIGO, '0')}`;
+    if (!taken.has(id)) return id;
+    number = (number + 1) % CODIGOS_POSIBLES;
+  }
+  throw new Error('No quedan códigos de pedido libres.');
+}
+
 /** Estados de un pedido; el Admin solo puede asignar estos (PBI-0095). */
 export const ORDER_STATUSES = ['confirmed', 'processing', 'shipped', 'delivered', 'cancelled'];
 

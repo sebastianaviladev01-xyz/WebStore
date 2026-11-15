@@ -4,7 +4,7 @@ import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
 import { conEvento, eventoPedidoCreado } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
-import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
+import { requireShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
 import {
   pickCustomer,
   pickShipping,
@@ -14,7 +14,7 @@ import {
   requirePaymentMethod,
   requireTermsAccepted,
 } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
-import { roundMoney } from '../../domain/pedidos/pedido.rules.mjs';
+import { nextOrderId, orderAmounts, roundMoney } from '../../domain/pedidos/pedido.rules.mjs';
 import { toPublicProduct } from '../catalogo/catalogo.queries.mjs';
 import { accountForToken } from '../cuentas/cuentas.use-cases.mjs';
 import { orderToPublic } from '../pedidos/pedidos.use-cases.mjs';
@@ -89,13 +89,7 @@ export function createCheckoutUseCases({ store, security }) {
   function placeOrder(command, bearerToken, idempotencyKey = '') {
     const key = requireIdempotencyKey(idempotencyKey);
     const { customer, shipping, deliveryDate, paymentMethod, requested } = requireOrderCommand(command);
-    const rate = bestShippingRate(store.state.rates, shipping.district);
-    if (!rate)
-      throw new DomainError(
-        'validation',
-        'SHIPPING_UNAVAILABLE',
-        'Todavía no contamos con una tarifa para ese destino.',
-      );
+    const rate = requireShippingRate(store.state.rates, shipping.district);
     const products = reserveStock(store.state.products, requested, { requireActive: true });
     const { state } = store;
     const items = requested.map((item) => ({
@@ -107,17 +101,21 @@ export function createCheckoutUseCases({ store, security }) {
       ),
     }));
     const subtotal = roundMoney(items.reduce((total, item) => total + item.product.price * item.quantity, 0));
+    const amounts = orderAmounts(subtotal, rate.price);
     requireShownTotal(command.total, {
-      subtotal,
-      shippingCost: rate.price,
-      total: roundMoney(subtotal + rate.price),
+      subtotal: amounts.subtotal,
+      shippingCost: amounts.shippingCost,
+      total: amounts.total,
     });
     state.products = products;
     const account = accountForToken(state, bearerToken, security);
     const accessToken = security.createToken();
     const createdAt = nowIso();
     const order = {
-      id: `WS-${Date.now().toString().slice(-8)}`,
+      id: nextOrderId(
+        state.orders.map((item) => item.id),
+        Date.now(),
+      ),
       createdAt,
       updatedAt: createdAt,
       status: 'confirmed',
@@ -127,10 +125,7 @@ export function createCheckoutUseCases({ store, security }) {
       deliveryDate,
       paymentMethod,
       items,
-      subtotal,
-      igv: roundMoney(subtotal - subtotal / 1.18),
-      shippingCost: rate.price,
-      total: roundMoney(subtotal + rate.price),
+      ...amounts,
       termsAcceptedAt: createdAt,
       accessTokenHash: security.digest(accessToken),
       ...(key ? { idempotencyKeyHash: security.digest(key) } : {}),

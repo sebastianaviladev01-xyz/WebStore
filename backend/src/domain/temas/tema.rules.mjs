@@ -160,7 +160,8 @@ function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, c
     '--ws-accent': S,
     '--ws-accent-strong': mezcla(S, 78, C),
     '--ws-accent-soft': mezcla(S, 9, Sf),
-    '--ws-on-accent': textoMasLegible(S, [BLANCO, C]),
+    // Como el texto sobre el principal (ADR-0019): sobre un acento claro en una base oscura, solo la superficie se lee.
+    '--ws-on-accent': textoMasLegible(S, [BLANCO, C, Sf]),
     '--ws-link': enlace,
     // A diferencia de `--ws-on-primary`, la superficie también es candidata: en un tema oscuro el contraste es
     // claro y solo la superficie se lee sobre un enlace claro (ADR-0014).
