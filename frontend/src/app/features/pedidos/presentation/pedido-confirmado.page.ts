@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { PedidosFacade } from '../application/pedidos.facade';
 @Component({
@@ -37,8 +37,23 @@ import { PedidosFacade } from '../application/pedidos.facade';
             <a [routerLink]="['/pedidos', o.id]" class="ws-btn-primary">Ver pedido</a>
             <a routerLink="/catalogo" class="ws-btn-secondary">Seguir comprando</a>
           </div>
+        } @else if (loading()) {
+          <p class="text-muted" role="status">Cargando pedido…</p>
+        } @else if (orders.error()) {
+          <div
+            class="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger"
+            role="alert"
+          >
+            <p>{{ orders.error() }}</p>
+            <button type="button" class="mt-2 font-semibold underline underline-offset-4" (click)="load()">
+              Reintentar
+            </button>
+          </div>
         } @else {
-          <h1 class="text-3xl font-semibold">Pedido registrado</h1>
+          <h1 class="text-3xl font-semibold">Pedido no encontrado</h1>
+          <p class="mt-3 text-sm text-muted">
+            Inicia sesión con la cuenta del pedido o ábrelo desde el dispositivo donde compraste.
+          </p>
           <a routerLink="/pedidos" class="ws-btn-primary mt-6">Ver pedidos</a>
         }
       </div>
@@ -48,9 +63,15 @@ import { PedidosFacade } from '../application/pedidos.facade';
 })
 export class PedidoConfirmadoPage implements OnInit {
   readonly orderId = input.required<string>();
-  private readonly orders = inject(PedidosFacade);
+  protected readonly orders = inject(PedidosFacade);
   protected readonly order = computed(() => this.orders.get(this.orderId()));
+  protected readonly loading = signal(false);
   ngOnInit() {
-    if (!this.order()) void this.orders.load(this.orderId());
+    if (!this.order()) void this.load();
+  }
+  protected async load(): Promise<void> {
+    this.loading.set(true);
+    await this.orders.load(this.orderId());
+    this.loading.set(false);
   }
 }

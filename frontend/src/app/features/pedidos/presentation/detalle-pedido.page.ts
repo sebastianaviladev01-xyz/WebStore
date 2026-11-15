@@ -59,7 +59,7 @@ import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
                 @if (orders.canModify(o)) {
                   · Puedes cambiar la entrega o cancelarlo hasta el
                   {{ orders.editableUntil(o) | date: 'd MMM y, h:mm a' }}
-                } @else if (o.status !== 'cancelled') {
+                } @else if (orders.isOpen(o)) {
                   · Ya pasaron las 24 horas para cambiar la entrega o cancelarlo.
                 }
               </p>
@@ -174,6 +174,16 @@ import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
             </p>
           </aside>
         </div>
+      } @else if (orders.error()) {
+        <div
+          class="mt-8 rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger"
+          role="alert"
+        >
+          <p>{{ orders.error() }}</p>
+          <button type="button" class="mt-2 font-semibold underline underline-offset-4" (click)="ngOnInit()">
+            Reintentar
+          </button>
+        </div>
       } @else {
         <div class="ws-card mt-8 p-8 text-center">
           <h1 class="text-3xl font-semibold">Pedido no encontrado</h1>
@@ -208,6 +218,9 @@ export class DetallePedidoPage implements OnInit {
     deliveryDate: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
   });
   async ngOnInit() {
+    this.loading.set(true);
+    // Sin respuesta del BFF (sin conexión) se muestra lo que hay en memoria; si el BFF ya no lo autoriza (404), la
+    // facade lo olvida y no se muestra (PBI-0104).
     const o = (await this.orders.load(this.orderId())) ?? this.orders.get(this.orderId());
     if (o) this.fill(o);
     this.loading.set(false);
@@ -230,16 +243,25 @@ export class DetallePedidoPage implements OnInit {
     this.saving.set(true);
     this.notice.set(null);
     const v = this.form.getRawValue();
-    const ok =
-      (await this.orders.updateShipping(this.orderId(), {
-        addressLine: v.addressLine,
-        district: v.district,
-        province: v.province,
-        department: v.department,
-        reference: v.reference || undefined,
-      })) && (await this.orders.updateDeliveryDate(this.orderId(), v.deliveryDate));
+    const currentDate = this.order()?.deliveryDate;
+    // Son dos peticiones: se informa el resultado real de cada una (PBI-0096). Si la dirección falla, no se toca
+    // la fecha; la fecha solo se envía si cambió.
+    const address = await this.orders.updateShipping(this.orderId(), {
+      addressLine: v.addressLine,
+      district: v.district,
+      province: v.province,
+      department: v.department,
+      reference: v.reference || undefined,
+    });
+    const date =
+      address &&
+      (v.deliveryDate === currentDate ||
+        (await this.orders.updateDeliveryDate(this.orderId(), v.deliveryDate)));
     this.saving.set(false);
-    if (ok) this.notice.set('Datos de entrega actualizados.');
+    if (address)
+      this.notice.set(
+        date ? 'Datos de entrega actualizados.' : 'Actualizamos la dirección, pero no la fecha de entrega.',
+      );
   }
   protected async cancel() {
     if (confirm('¿Cancelar este pedido?') && (await this.orders.cancel(this.orderId())))

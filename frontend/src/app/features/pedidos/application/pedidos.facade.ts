@@ -1,15 +1,20 @@
-import { computed, inject, Injectable, signal } from '@angular/core';
+import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 
 import { Pedido, PedidoRegistrado, DireccionEnvio } from '../domain/pedido.model';
 import { BffRequestError, messageOf } from '../../../core/bff-request.error';
 import { CambioPedido, CredencialesPedido, PedidoGateway } from '../domain/pedido.gateway';
+import { estaAbierto, modificableHasta, sePuedeModificar } from '../domain/pedido.rules';
 import { CuentaFacade } from '../../cuenta/application/cuenta.facade';
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 
-/** Tokens de acceso de pedidos hechos como invitado en este dispositivo (id → token). Nunca se guardan datos del pedido. */
+/**
+ * Tokens de acceso de pedidos hechos como invitado en este dispositivo (id → token). Nunca se guardan datos del
+ * pedido ni los tokens de los pedidos hechos con la sesión iniciada: esos se ven con la cuenta (PBI-0104).
+ */
 const ACCESS_KEY = 'webstore-order-access-v1';
-const MODIFIABLE_FOR_MS = 24 * 60 * 60 * 1000;
 const FALLBACK = 'No pudimos completar la solicitud. Inténtalo nuevamente.';
+/** El BFF ya no deja cambiar el pedido: se vuelve a pedir para mostrar su estado real (PBI-0143). */
+const YA_NO_MODIFICABLE = new Set(['ORDER_NOT_MODIFIABLE', 'ORDER_WINDOW_EXPIRED']);
 
 @Injectable({ providedIn: 'root' })
 export class PedidosFacade {
@@ -26,10 +31,28 @@ export class PedidosFacade {
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
 
-  /** Registra el pedido recién creado y conserva su token para que el invitado pueda volver a consultarlo. */
+  constructor() {
+    // Al cerrar sesión, al eliminar la cuenta o al iniciar sesión otra persona, no queda a la vista ningún pedido de
+    // la sesión anterior (PBI-0104): «Mis pedidos» los vuelve a pedir con la sesión vigente.
+    let previous = untracked(this.auth.sessionToken);
+    effect(() => {
+      const current = this.auth.sessionToken();
+      if (current === previous) return;
+      previous = current;
+      untracked(() => {
+        this.ordersState.set([]);
+        this.errorState.set(null);
+      });
+    });
+  }
+
+  /**
+   * Registra el pedido recién creado. Si se hizo como invitado, conserva su token para que pueda volver a
+   * consultarlo desde este dispositivo; con la sesión iniciada no, porque lo ve la cuenta (PBI-0104).
+   */
   remember(placed: PedidoRegistrado): void {
     const { accessToken, ...order } = placed;
-    this.writeAccess({ ...this.readAccess(), [order.id]: accessToken });
+    if (!this.auth.sessionToken()) this.writeAccess({ ...this.readAccess(), [order.id]: accessToken });
     this.replace(order);
   }
 
@@ -55,8 +78,10 @@ export class PedidosFacade {
     }
   }
 
+  /** Pide el pedido al BFF. Si falla por otra causa que no sea un 404, deja el error para mostrarlo. */
   async load(id: string): Promise<Pedido | null> {
-    const order = await this.fetch(id);
+    this.errorState.set(null);
+    const order = await this.fetch(id, true);
     if (order) this.replace(order);
     return order;
   }
@@ -67,13 +92,17 @@ export class PedidosFacade {
 
   /** Hasta cuándo se puede cambiar la entrega o cancelar el pedido (24 horas desde la compra). */
   editableUntil(order: Pedido): Date {
-    return new Date(new Date(order.createdAt).getTime() + MODIFIABLE_FOR_MS);
+    return modificableHasta(order);
   }
 
+  /** La misma regla que el BFF: abierto (ni enviado, ni entregado, ni cancelado) y dentro de las 24 horas. */
   canModify(order: Pedido): boolean {
-    return (
-      Date.now() - new Date(order.createdAt).getTime() <= MODIFIABLE_FOR_MS && order.status !== 'cancelled'
-    );
+    return sePuedeModificar(order, new Date());
+  }
+
+  /** El pedido no se envió, no se entregó ni se canceló. */
+  isOpen(order: Pedido): boolean {
+    return estaAbierto(order);
   }
 
   updateShipping(id: string, shipping: DireccionEnvio): Promise<boolean> {
@@ -99,17 +128,26 @@ export class PedidosFacade {
       this.replace(await this.gateway.change(id, change, this.credentials(id)));
       return true;
     } catch (error) {
-      this.errorState.set(messageOf(error, FALLBACK));
+      const message = messageOf(error, FALLBACK);
+      if (error instanceof BffRequestError && YA_NO_MODIFICABLE.has(error.code ?? '')) {
+        const order = await this.fetch(id);
+        if (order) this.replace(order);
+      }
+      this.errorState.set(message);
       return false;
     }
   }
 
-  private async fetch(id: string): Promise<Pedido | null> {
+  private async fetch(id: string, reportError = false): Promise<Pedido | null> {
     try {
       return await this.gateway.get(id, this.credentials(id));
     } catch (error) {
-      // El BFF ya no reconoce ese pedido (p. ej. datos de demo reiniciados): se olvida su token para no reintentarlo.
-      if (error instanceof BffRequestError && error.status === 404) this.forgetAccess(id);
+      // El BFF ya no reconoce ese pedido o ya no lo autoriza (p. ej. datos de demo reiniciados, o se cerró la
+      // sesión): se olvidan su token y la copia en memoria, para no mostrarlo ni reintentarlo (PBI-0104).
+      if (error instanceof BffRequestError && error.status === 404) {
+        this.forgetAccess(id);
+        this.ordersState.update((items) => items.filter((item) => item.id !== id));
+      } else if (reportError) this.errorState.set(messageOf(error, FALLBACK));
       return null;
     }
   }
