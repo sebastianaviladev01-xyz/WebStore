@@ -15,6 +15,9 @@ type Predefinidos = readonly Pick<Tema, 'colors' | 'tokens'>[];
 type CampoDeColor = keyof ColoresTema;
 type ValoresDeToken = Readonly<Record<string, string>>;
 
+/** Texto de `ACTIVE_THEME_IN_USE` del BFF: el tema activo no se borra (AC-09; la prueba lo compara con el BFF). */
+export const MENSAJE_TEMA_ACTIVO_EN_USO = 'Activa otro tema antes de borrar este.';
+
 const FORMATO_HEX = /^#[0-9A-Fa-f]{6}$/;
 
 /** Convierte `#RRGGBB` en sus tres canales (0 a 255). */

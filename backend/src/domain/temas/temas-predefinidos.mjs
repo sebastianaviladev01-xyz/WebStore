@@ -35,6 +35,9 @@ const coloresC = {
   contrast: '#1F2328',
 };
 
+/** Tema que se pinta cuando el activo ya no existe y el que trae el seed (lote 08, PBI-0079: una sola definición). */
+export const TEMA_POR_DEFECTO = 'b';
+
 export const TEMAS_PREDEFINIDOS = Object.freeze([
   predefinido('a', 'Violeta tienda', coloresA, {
     ...tokensDelTema(coloresA),

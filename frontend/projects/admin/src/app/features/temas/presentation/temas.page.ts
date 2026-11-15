@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatDialog } from '@angular/material/dialog';
 
 import { TemasFacade } from '../application/temas.facade';
+import { MENSAJE_TEMA_ACTIVO_EN_USO } from '../domain/tema.rules';
 import { ColoresTema, Tema } from '../domain/tema.model';
 import { DatosTemaDialog, ResultadoTemaDialog, TemaDialog } from './tema.dialog';
 
@@ -14,9 +15,6 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
   { campo: 'surface', nombre: 'fondo secundario' },
   { campo: 'contrast', nombre: 'contraste' },
 ];
-
-/** Mismo texto que `ACTIVE_THEME_IN_USE` del BFF (AC-09). */
-const ACTIVO_NO_SE_BORRA = 'Activa otro tema antes de borrar este.';
 
 /**
  * Temas de la tienda (AC-03 a AC-11, AC-19), solo para el `superadmin` (`themes.manage`). Lista los
@@ -207,7 +205,7 @@ export class TemasPage {
   protected async borrar(tema: Tema, activo: string): Promise<void> {
     this.limpiarMensajes();
     if (tema.id === activo) {
-      this.errorDeAccion.set(ACTIVO_NO_SE_BORRA);
+      this.errorDeAccion.set(MENSAJE_TEMA_ACTIVO_EN_USO);
       return;
     }
     if (!confirm(`¿Borrar el tema «${tema.name}»? No se puede deshacer.`)) return;

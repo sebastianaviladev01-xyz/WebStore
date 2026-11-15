@@ -10,7 +10,7 @@ import {
   TemasGateway,
 } from '../domain/temas.gateway';
 import { bearer } from '../../../core/bff-http';
-import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
+import { ServicioNoDisponibleError, SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 
 const APARIENCIA_URL = '/bff/appearance';
 const TEMAS_URL = '/bff/admin/themes';
@@ -25,8 +25,13 @@ const TEMA_ACTIVO_URL = '/bff/admin/active-theme';
 export class BffTemasGateway implements TemasGateway {
   private readonly http = inject(HttpClient);
 
-  apariencia(): Promise<Apariencia> {
-    return firstValueFrom(this.http.get<Apariencia>(APARIENCIA_URL));
+  async apariencia(): Promise<Apariencia> {
+    try {
+      return await firstValueFrom(this.http.get<Apariencia>(APARIENCIA_URL));
+    } catch (error) {
+      // De `data/` no sale un `HttpErrorResponse` (lote 08, PBI-0134).
+      throw error instanceof HttpErrorResponse ? new ServicioNoDisponibleError(error.status) : error;
+    }
   }
 
   temasAdmin(token: string): Promise<TemasAdmin> {
@@ -75,7 +80,8 @@ export class BffTemasGateway implements TemasGateway {
       if (error.status === 401) throw new SesionVencidaError();
       if (error.status >= 400 && error.status < 500 && problema?.code && problema?.message)
         throw new ReglaTemaError(problema.message, problema.code, problema.details);
-      throw error;
+      // De `data/` no sale un `HttpErrorResponse` (lote 08, PBI-0134).
+      throw new ServicioNoDisponibleError(error.status);
     }
   }
 }

@@ -204,3 +204,11 @@ test('exigirTemaBorrable devuelve un tema que no es el activo y rechaza predefin
   assert.throws(() => exigirTemaBorrable('b', apariencia), falla('conflict', 'PREDEFINED_THEME_READ_ONLY'));
   assert.throws(() => exigirTemaBorrable('nope', apariencia), falla('not-found', 'THEME_NOT_FOUND'));
 });
+
+// Lote 08 (ADR-0017), PBI-0079: el texto de ACTIVE_THEME_IN_USE se exporta para que el Admin no lo copie a mano.
+test('MENSAJE_TEMA_ACTIVO_EN_USO es el texto de ACTIVE_THEME_IN_USE', async () => {
+  const { MENSAJE_TEMA_ACTIVO_EN_USO } = await import('../../../../src/domain/temas/tema-propio.rules.mjs');
+  assert.equal(MENSAJE_TEMA_ACTIVO_EN_USO, 'Activa otro tema antes de borrar este.');
+  const apariencia = { revision: 1, activeThemeId: 't1', customThemes: [temaPropio('t1', 'Mi tema')] };
+  assert.throws(() => exigirTemaBorrable('t1', apariencia), { message: MENSAJE_TEMA_ACTIVO_EN_USO });
+});

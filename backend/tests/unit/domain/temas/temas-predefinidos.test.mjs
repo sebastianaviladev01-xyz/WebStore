@@ -228,3 +228,13 @@ test('en C, el texto sobre el principal, los enlaces y el foco se calculan en gr
   for (const nombre of ['--ws-on-primary', '--ws-link', '--ws-focus-ring'])
     assert.equal(colores[nombre], '#1F2328', nombre);
 });
+
+// Lote 08 (ADR-0017), PBI-0079: el tema por defecto está definido una sola vez; la consulta de temas, la normalización
+// del estado y el seed lo usan, y las dos copias del frontend lo comparan con este (tema-visible.rules.spec.mjs).
+test('el tema por defecto es uno de los predefinidos y es el activo del seed', async () => {
+  const { TEMA_POR_DEFECTO } = await import('../../../../src/domain/temas/temas-predefinidos.mjs');
+  const { seed } = await import('../../../../src/infrastructure/persistencia/seed.mjs');
+  assert.equal(TEMA_POR_DEFECTO, 'b');
+  assert.ok(TEMAS_PREDEFINIDOS.some((predefinido) => predefinido.id === TEMA_POR_DEFECTO));
+  assert.equal(seed.appearance.activeThemeId, TEMA_POR_DEFECTO);
+});

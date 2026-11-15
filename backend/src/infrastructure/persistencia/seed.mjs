@@ -1,3 +1,5 @@
+import { TEMA_POR_DEFECTO } from '../../domain/temas/temas-predefinidos.mjs';
+
 /** Datos de demostración: estado inicial de la tienda y base para normalizar y migrar data.json. */
 export const seed = {
   products: [
@@ -220,7 +222,7 @@ export const seed = {
   activity: [],
   adminNotificationsSeen: [],
   // Temas (ADR-0011): B activo, sin temas propios. Los predefinidos son constantes del dominio y no se guardan.
-  appearance: { revision: 0, activeThemeId: 'b', customThemes: [] },
+  appearance: { revision: 0, activeThemeId: TEMA_POR_DEFECTO, customThemes: [] },
   config: {
     storeName: 'WebStore',
     logoText: 'W',

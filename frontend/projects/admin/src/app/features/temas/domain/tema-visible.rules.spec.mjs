@@ -90,3 +90,17 @@ test('no muta la apariencia y el .ts solo tiene import type', () => {
   assert.ok(imports.length > 0);
   for (const linea of imports) assert.match(linea, /^import type \{.*\} from '\.\/tema\.model';$/);
 });
+
+// Lote 08 (ADR-0017), PBI-0079: el tema por defecto (el que se pinta si el activo ya no existe) está definido una vez
+// por aplicación y es el mismo que el del BFF. Solo se importa esa constante del BFF, para ver cuándo divergen.
+test('PBI-0079: el tema por defecto es el del BFF y se usa si el activo ya no existe', async () => {
+  const { TEMA_POR_DEFECTO } = await import(
+    `data:text/javascript;base64,${Buffer.from(modulo).toString('base64')}`
+  );
+  const bff = await import('../../../../../../../../backend/src/domain/temas/temas-predefinidos.mjs');
+  assert.equal(TEMA_POR_DEFECTO, bff.TEMA_POR_DEFECTO);
+  assert.equal(
+    temaVisible(apariencia('ya-no-existe', ['a', TEMA_POR_DEFECTO, 'c']), null).tema.id,
+    TEMA_POR_DEFECTO,
+  );
+});

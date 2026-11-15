@@ -1,13 +1,11 @@
 import { TOKENS_DEL_TEMA, tokensDelTema } from '../../domain/temas/tema.rules.mjs';
-import { TEMAS_PREDEFINIDOS } from '../../domain/temas/temas-predefinidos.mjs';
+import { TEMA_POR_DEFECTO, TEMAS_PREDEFINIDOS } from '../../domain/temas/temas-predefinidos.mjs';
 
 /**
  * Consultas de temas: la apariencia pública (tema activo o, en modo demo, todos), la vista del Admin y la hoja
  * de estilos `theme.css`. Solo lee `store.state.appearance`, cuya revisión es propia de los temas (ADR-0011).
  * Los `tokens` de un tema propio se calculan al leer y nunca se guardan.
  */
-
-const TEMA_POR_DEFECTO = 'b';
 
 const temaPredefinido = ({ id, name, colors, tokens }) => ({
   id,
