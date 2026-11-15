@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, Component, computed, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { Categoria } from '../features/catalogo/domain/categoria.model';
 import { hijosDeCategoria, descendientesDeCategoria } from '../features/catalogo/domain/categoria.rules';
-
-export interface EnlaceMenu {
-  readonly label: string;
-  readonly route: string;
-  /** Ícono opcional delante del texto (por ahora, el camión de Envíos). */
-  readonly icon?: 'truck';
-}
+import { EnlaceNavegacion } from '../features/contenido/domain/navegacion.rules';
 
 @Component({
   selector: 'ws-category-mega-menu',
@@ -20,7 +22,7 @@ export interface EnlaceMenu {
       class="ws-desktop-navigation"
       aria-label="Categorías principales"
       (mouseleave)="activeCategory.set(null)"
-      (keydown.escape)="activeCategory.set(null)"
+      (keydown.escape)="cerrarConEscape()"
       (focusout)="closeWhenLeaving($event)"
     >
       <div class="ws-container ws-navigation-row">
@@ -119,9 +121,10 @@ export interface EnlaceMenu {
 })
 export class MenuCategoriasComponent {
   readonly categories = input.required<readonly Categoria[]>();
-  readonly supplementalLinks = input<readonly EnlaceMenu[]>([]);
+  readonly supplementalLinks = input<readonly EnlaceNavegacion[]>([]);
   readonly allLabel = input('Todas las categorías');
   protected readonly activeCategory = signal<string | null>(null);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly topCategories = computed(() => hijosDeCategoria(this.categories()));
 
   protected childrenFor(parentId: string) {
@@ -134,6 +137,20 @@ export class MenuCategoriasComponent {
 
   protected toggle(id: string): void {
     this.activeCategory.update((active) => (active === id ? null : id));
+  }
+
+  /**
+   * Escape cierra el panel y devuelve el foco al botón de su categoría: si el foco estaba dentro del panel, que
+   * desaparece, caería en el `body` (PBI-0116).
+   */
+  protected cerrarConEscape(): void {
+    const abierta = this.activeCategory();
+    if (abierta === null) return;
+    const panel = this.host.nativeElement.querySelector(`#mega-${abierta}`);
+    const focoDentro = panel?.contains(this.host.nativeElement.ownerDocument.activeElement) ?? false;
+    this.activeCategory.set(null);
+    if (focoDentro)
+      this.host.nativeElement.querySelector<HTMLElement>(`[aria-controls="mega-${abierta}"]`)?.focus();
   }
 
   protected closeWhenLeaving(event: FocusEvent): void {

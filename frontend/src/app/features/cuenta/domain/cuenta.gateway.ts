@@ -12,9 +12,14 @@ export interface EntregaCodigo {
 
 export type CambioPerfil = Pick<CuentaCliente, 'fullName' | 'phone' | 'document'>;
 
-/** Puerto de cuentas de cliente. Los fallos llegan como BffRequestError. */
+/**
+ * Puerto de cuentas de cliente. Los fallos llegan como BffRequestError; una sesión vencida o revocada, con
+ * `status` 401 (PBI-0114).
+ */
 export abstract class CuentaGateway {
   abstract register(command: RegistrarCuentaCommand): Promise<EntregaCodigo>;
+  /** Pide un código nuevo para una cuenta sin verificar; la respuesta es la misma exista o no (PBI-0098). */
+  abstract resendVerification(email: string): Promise<EntregaCodigo>;
   abstract verify(email: string, code: string): Promise<void>;
   abstract login(email: string, password: string): Promise<SesionCuenta>;
   abstract logout(token: string): Promise<void>;

@@ -67,6 +67,9 @@ export class PedidosFacade {
         try {
           mine = await this.gateway.listMine(session);
         } catch (error) {
+          // La sesión venció en el BFF: se cierra también en la tienda, que deja de mostrar «Mi cuenta» (PBI-0114).
+          if (error instanceof BffRequestError && error.code === 'AUTHENTICATION_REQUIRED')
+            this.auth.expire();
           this.errorState.set(messageOf(error, FALLBACK));
         }
       }

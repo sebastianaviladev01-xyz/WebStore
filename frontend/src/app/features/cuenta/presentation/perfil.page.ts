@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, OnInit, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -13,23 +13,37 @@ import { CuentaFacade } from '../application/cuenta.facade';
     <section class="ws-container py-12">
       @if (!auth.ready()) {
         <div class="ws-card p-8 text-center" role="status">Cargando tu cuenta…</div>
+      } @else if (auth.errorAlRecuperar(); as problema) {
+        <div class="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger" role="alert">
+          <p>{{ problema }}</p>
+          <button
+            type="button"
+            class="mt-2 font-semibold underline underline-offset-4"
+            (click)="auth.comprobarSesion()"
+          >
+            Reintentar
+          </button>
+        </div>
       } @else if (auth.currentUser(); as user) {
         <div class="grid gap-6 lg:grid-cols-[1fr_300px]">
-          <form [formGroup]="form" (ngSubmit)="save()" class="ws-card p-7">
+          <form [formGroup]="form" (ngSubmit)="save()" class="ws-card ws-outline-fields p-7">
             <h1 class="text-4xl font-semibold">Datos personales</h1>
             <p class="mt-2 text-sm text-muted">{{ user.email }} · cuenta verificada</p>
             <div class="mt-7 grid gap-3 sm:grid-cols-2">
-              <mat-form-field>
+              <mat-form-field appearance="outline">
                 <mat-label>Nombre</mat-label>
                 <input matInput autocomplete="name" formControlName="fullName" />
+                <mat-error>Ingresa tu nombre.</mat-error>
               </mat-form-field>
-              <mat-form-field>
+              <mat-form-field appearance="outline">
                 <mat-label>Teléfono</mat-label>
                 <input matInput autocomplete="tel" formControlName="phone" />
+                <mat-error>Ingresa tu teléfono.</mat-error>
               </mat-form-field>
-              <mat-form-field>
+              <mat-form-field appearance="outline">
                 <mat-label>DNI</mat-label>
                 <input matInput formControlName="document" />
+                <mat-error>Ingresa tu DNI (al menos 8 caracteres).</mat-error>
               </mat-form-field>
             </div>
             @if (message()) {
@@ -64,7 +78,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PerfilPage {
+export class PerfilPage implements OnInit {
   protected readonly auth = inject(CuentaFacade);
   private readonly router = inject(Router);
   protected readonly message = signal<string | null>(null);
@@ -79,6 +93,11 @@ export class PerfilPage {
   });
 
   constructor() {
+    // La sesión venció en el BFF: a ingresar, con el aviso, para volver aquí (PBI-0114).
+    effect(() => {
+      if (this.auth.sesionVencida())
+        void this.router.navigate(['/cuenta/login'], { queryParams: { volver: '/cuenta/perfil' } });
+    });
     effect(() => {
       const user = this.auth.currentUser();
       if (user)
@@ -87,6 +106,11 @@ export class PerfilPage {
           { emitEvent: false },
         );
     });
+  }
+
+  /** No muestra el perfil en memoria de una sesión que ya venció en el BFF (PBI-0114). */
+  ngOnInit(): void {
+    if (this.auth.ready()) void this.auth.comprobarSesion();
   }
 
   protected async save() {

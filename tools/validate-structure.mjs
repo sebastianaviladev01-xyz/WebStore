@@ -40,9 +40,15 @@ const products = read('frontend/projects/admin/src/app/features/tienda/presentat
 const productForm = readIfExists(
   'frontend/projects/admin/src/app/features/tienda/presentation/registro-producto.page.ts',
 );
-const shell = read('frontend/src/app/layout/app.layout.ts');
+// El pie salió de AppLayout a su propio componente (lote 05, PBI-0118): la cabecera y el pie se revisan juntos.
+const shell = [
+  read('frontend/src/app/layout/app.layout.ts'),
+  read('frontend/src/app/layout/pie-tienda.component.ts'),
+].join('\n');
 const routes = read('frontend/src/app/app.routes.ts');
 const contentService = read('frontend/src/app/features/contenido/application/contenido.facade.ts');
+// La vigencia y el máximo de banners pasaron a domain/ (lote 05, PBI-0117).
+const bannerRules = read('frontend/src/app/features/contenido/domain/banner.rules.ts');
 const contentPage = read('frontend/projects/admin/src/app/features/tienda/presentation/contenido.page.ts');
 const adminModels = read('frontend/projects/admin/src/app/features/tienda/domain/tienda.model.ts');
 const publicModels = read('frontend/src/app/features/contenido/domain/contenido.model.ts');
@@ -148,7 +154,9 @@ for (const [label, ok] of [
   ],
   [
     'Hero limita banners principales',
-    contentService.includes("banner.placement === 'hero'") && contentService.includes('.slice(0, 3)'),
+    contentService.includes("bannersDeZona(this.activeBanners(), ['hero'])") &&
+      bannerRules.includes('MAXIMO_BANNERS_POR_ZONA = 3;') &&
+      bannerRules.includes('.slice(0, MAXIMO_BANNERS_POR_ZONA)'),
   ],
   [
     'CMS se refresca al volver al Storefront',

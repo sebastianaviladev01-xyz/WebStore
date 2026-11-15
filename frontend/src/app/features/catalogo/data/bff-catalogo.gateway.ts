@@ -20,10 +20,4 @@ export class BffCatalogoGateway implements CatalogoGateway {
   getProducts(): Promise<readonly Producto[]> {
     return firstValueFrom(this.http.get<readonly Producto[]>(`${this.baseUrl}/catalog/products`));
   }
-
-  getProductBySlug(slug: string): Promise<Producto | null> {
-    return firstValueFrom(
-      this.http.get<Producto | null>(`${this.baseUrl}/catalog/products/${encodeURIComponent(slug)}`),
-    );
-  }
 }

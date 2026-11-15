@@ -33,6 +33,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el cliente lo ingresa
 - **Entonces** el sistema lo rechaza.
 
+### Escenario 04 – Pedir un código nuevo
+
+- **Dado** que el código venció o el cliente no lo tiene
+- **Cuando** escribe su correo en «Verifica tu cuenta» y pide un código nuevo, o intenta ingresar sin haber verificado
+- **Entonces** el sistema genera un código nuevo y anula el anterior, con la misma respuesta exista o no la cuenta; el ingreso le ofrece ir a verificarla. El código nunca viaja en la dirección de la página.
+
+> Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0098, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-cuenta-formularios.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - La demo entrega el código en la respuesta; el correo transaccional real está pendiente (PBI-0008 del [backlog](../../../backlog.md)).

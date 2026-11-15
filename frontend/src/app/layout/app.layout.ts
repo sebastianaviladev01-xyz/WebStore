@@ -1,4 +1,5 @@
 import { A11yModule } from '@angular/cdk/a11y';
+import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
@@ -8,17 +9,24 @@ import { CuentaFacade } from '../features/cuenta/application/cuenta.facade';
 import { CarritoFacade } from '../features/carrito/application/carrito.facade';
 import { CatalogoFacade } from '../features/catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../features/contenido/application/contenido.facade';
-import { Categoria } from '../features/catalogo/domain/categoria.model';
 import { descendientesDeCategoria } from '../features/catalogo/domain/categoria.rules';
 import { VarianteInicio } from '../features/contenido/domain/contenido.model';
-import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component';
+import {
+  EnlaceNavegacion,
+  enlaceDeNavegacion,
+  normalizarEtiqueta,
+  ordenarPorNavegacion,
+} from '../features/contenido/domain/navegacion.rules';
+import { MenuCategoriasComponent } from './menu-categorias.component';
+import { PieTiendaComponent } from './pie-tienda.component';
 
 @Component({
   selector: 'ws-store-shell',
-  imports: [A11yModule, MenuCategoriasComponent, RouterLink, RouterOutlet],
+  imports: [A11yModule, MenuCategoriasComponent, PieTiendaComponent, RouterLink, RouterOutlet],
   template: `
     <div class="min-h-screen bg-store-canvas" [class.ws-shell-previous]="isPrevious()">
-      <a href="#main-content" class="ws-skip-link">Saltar al contenido</a>
+      <!-- Con <base href="/">, «#main-content» solo apuntaría a la portada: se mueve el foco (PBI-0109). -->
+      <a href="#main-content" class="ws-skip-link" (click)="saltarAlContenido($event)">Saltar al contenido</a>
 
       <div class="ws-utility-bar">
         <div
@@ -314,97 +322,9 @@ import { MenuCategoriasComponent, EnlaceMenu } from './menu-categorias.component
         </aside>
       }
 
-      <main id="main-content"><router-outlet /></main>
+      <main id="main-content" tabindex="-1" class="focus:outline-none"><router-outlet /></main>
 
-      <footer class="ws-site-footer">
-        <div class="ws-container ws-footer-inner">
-          <div class="ws-footer-grid grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr_1fr]">
-            <div class="ws-footer-brand">
-              <div class="flex items-center gap-3 text-footer-heading">
-                @if (content.settings().logoUrl) {
-                  <span class="grid h-11 w-11 place-items-center overflow-hidden rounded-2xl bg-surface">
-                    <img
-                      [src]="content.settings().logoUrl"
-                      [alt]="content.settings().storeName + ' logo'"
-                      class="h-full w-full object-contain p-1"
-                    />
-                  </span>
-                } @else {
-                  <span class="ws-brand-mark h-11 w-11" aria-hidden="true">
-                    {{ content.settings().logoText }}
-                  </span>
-                }
-                <span class="text-xl font-semibold tracking-[-0.035em]">
-                  {{ content.settings().storeName }}
-                </span>
-              </div>
-              <p class="max-w-xs text-sm leading-6 text-footer-text">
-                {{ content.settings().footerText }}
-              </p>
-              <p class="ws-footer-contact text-sm leading-6">
-                <a class="hover:text-footer-heading" [href]="'mailto:' + content.settings().contactEmail">
-                  {{ content.settings().contactEmail }}
-                </a>
-                <br />
-                {{ content.settings().contactPhone }}
-              </p>
-            </div>
-
-            <div>
-              <h2 class="ws-footer-title">Productos</h2>
-              <div class="ws-footer-links">
-                @for (category of topCategories().slice(0, 4); track category.id) {
-                  <a routerLink="/catalogo" [queryParams]="{ categoria: category.id }">{{ category.name }}</a>
-                }
-                <a routerLink="/catalogo">Ver todo</a>
-              </div>
-            </div>
-
-            <div>
-              <h2 class="ws-footer-title">Mi cuenta</h2>
-              <div class="ws-footer-links">
-                <a routerLink="/cuenta/login">Ingresar</a>
-                <a routerLink="/cuenta/perfil">Mi perfil</a>
-                <a routerLink="/pedidos">Mis pedidos</a>
-                <a routerLink="/cuenta/recuperar">Recuperar acceso</a>
-              </div>
-            </div>
-
-            <div>
-              <h2 class="ws-footer-title">Información</h2>
-              <div class="ws-footer-links">
-                @if (content.settings().shippingPageEnabled) {
-                  <a routerLink="/info/envios">Envíos</a>
-                }
-                @if (content.settings().privacyPageEnabled) {
-                  <a routerLink="/info/privacidad">Privacidad</a>
-                }
-                @if (content.settings().termsPageEnabled) {
-                  <a routerLink="/info/terminos">Términos</a>
-                }
-              </div>
-            </div>
-
-            <div>
-              <h2 class="ws-footer-title">Ayuda</h2>
-              <div class="ws-footer-links">
-                @if (content.settings().contactPageEnabled) {
-                  <a routerLink="/info/contacto">Contacto</a>
-                }
-                <a routerLink="/libro-reclamaciones">Libro de reclamaciones</a>
-                <a routerLink="/carrito">Carrito</a>
-              </div>
-            </div>
-          </div>
-
-          <div
-            class="ws-footer-legal flex flex-col gap-3 border-t border-footer-rule pt-6 text-footer-text sm:flex-row sm:items-center sm:justify-between"
-          >
-            <p>© {{ currentYear }} {{ content.settings().storeName }}. Todos los derechos reservados.</p>
-            <p>Tecnología y hogar, a tu alcance.</p>
-          </div>
-        </div>
-      </footer>
+      <ws-store-footer [categorias]="topCategories()" />
     </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -415,6 +335,7 @@ export class AppLayout {
   protected readonly content = inject(ContenidoFacade);
   protected readonly catalog = inject(CatalogoFacade);
   private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
   protected readonly sideOpen = signal(false);
   /** /inicio-anterior conserva la cabecera previa para comparar; el resto de la tienda usa la actual. */
   private readonly variant = toSignal(
@@ -426,41 +347,40 @@ export class AppLayout {
   );
   protected readonly isPrevious = computed(() => this.variant() === 'anterior');
   protected readonly searchTerm = signal('');
-  protected readonly currentYear = new Date().getFullYear();
 
   protected readonly topCategories = computed(() =>
-    this.sortCategories(this.catalog.categories().filter((category) => !category.parentId)),
+    ordenarPorNavegacion(
+      this.catalog.categories().filter((category) => !category.parentId),
+      this.content.sideNavigation(),
+    ),
   );
   /**
    * Enlaces de "Navegación superior" del CMS. Se omiten los que la cabecera ya ofrece (Inicio = logo,
    * Productos = Todas las categorías, Pedidos = acción de la cabecera), los de páginas desactivadas
-   * y los que no tienen una página a la cual llevar.
+   * y los que no tienen una página a la cual llevar (`navegacion.rules.ts`).
    */
-  private readonly navigationLinks = computed<readonly EnlaceMenu[]>(() =>
+  private readonly navigationLinks = computed<readonly EnlaceNavegacion[]>(() =>
     this.content
       .topNavigation()
-      .map((label): EnlaceMenu | null => {
-        const route = this.routeFor(label);
-        if (route === null) return null;
-        return this.normalize(label).includes('envio') ? { label, route, icon: 'truck' } : { label, route };
-      })
-      .filter((link): link is EnlaceMenu => link !== null),
+      .map((label) => enlaceDeNavegacion(label, this.content.settings()))
+      .filter((link): link is EnlaceNavegacion => link !== null),
   );
   /** A la derecha de las categorías; la versión anterior conserva su lista original. */
-  protected readonly supplementalLinks = computed<readonly EnlaceMenu[]>(() =>
+  protected readonly supplementalLinks = computed<readonly EnlaceNavegacion[]>(() =>
     this.isPrevious() ? this.previousSupplementalLinks() : this.navigationLinks(),
   );
 
   /** Enlaces tal como los mostraba la cabecera anterior (incluido que lo desconocido lleve al inicio). */
-  private previousSupplementalLinks(): readonly EnlaceMenu[] {
+  private previousSupplementalLinks(): readonly EnlaceNavegacion[] {
     return this.content
       .topNavigation()
-      .filter((label) => !this.normalize(label).includes('producto'))
+      .filter((label) => !normalizarEtiqueta(label).includes('producto'))
       .filter(
-        (label) => !this.normalize(label).includes('envio') || this.content.settings().shippingPageEnabled,
+        (label) =>
+          !normalizarEtiqueta(label).includes('envio') || this.content.settings().shippingPageEnabled,
       )
       .map((label) => {
-        const key = this.normalize(label);
+        const key = normalizarEtiqueta(label);
         if (key.includes('pedido')) return { label, route: '/pedidos' };
         if (key.includes('envio')) return { label, route: '/info/envios' };
         return { label, route: '/' };
@@ -488,39 +408,9 @@ export class AppLayout {
     this.sideOpen.set(false);
   }
 
-  private routeFor(label: string): string | null {
-    const key = this.normalize(label);
-    const settings = this.content.settings();
-    if (key.includes('envio')) return settings.shippingPageEnabled ? '/info/envios' : null;
-    if (key.includes('contacto') || key.includes('ayuda'))
-      return settings.contactPageEnabled ? '/info/contacto' : null;
-    if (key.includes('privacidad')) return settings.privacyPageEnabled ? '/info/privacidad' : null;
-    if (key.includes('termino')) return settings.termsPageEnabled ? '/info/terminos' : null;
-    if (key.includes('reclamacion')) return '/libro-reclamaciones';
-    if (key.includes('cuenta')) return '/cuenta/login';
-    return null;
-  }
-
-  private sortCategories(items: readonly Categoria[]): readonly Categoria[] {
-    const preferred = this.content.sideNavigation().map((label) => this.normalize(label));
-    return [...items].sort((a, b) => {
-      const ai = preferred.indexOf(this.normalize(a.name));
-      const bi = preferred.indexOf(this.normalize(b.name));
-      if (ai >= 0 && bi >= 0) return ai - bi;
-      if (ai >= 0) return -1;
-      if (bi >= 0) return 1;
-      return (
-        (a.order ?? Number.MAX_SAFE_INTEGER) - (b.order ?? Number.MAX_SAFE_INTEGER) ||
-        a.name.localeCompare(b.name, 'es')
-      );
-    });
-  }
-
-  private normalize(value: string): string {
-    return value
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim()
-      .toLocaleLowerCase('es-PE');
+  /** Lleva el foco al contenido de la página en la que se está, sin navegar (PBI-0109). */
+  protected saltarAlContenido(event: Event): void {
+    event.preventDefault();
+    this.document.getElementById('main-content')?.focus();
   }
 }

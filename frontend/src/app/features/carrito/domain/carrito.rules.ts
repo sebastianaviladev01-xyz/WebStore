@@ -57,3 +57,17 @@ export function conciliarCarrito(
   }
   return { items: conciliados, cambios };
 }
+
+/** Tasa del IGV, incluida en los precios de la tienda. */
+export const TASA_IGV = 0.18;
+
+const aCentimos = (monto: number): number => Math.round(monto * 100) / 100;
+
+/**
+ * El IGV incluido en un subtotal y el valor de venta, redondeados al céntimo con la misma fórmula que el checkout
+ * del BFF (`checkout.use-cases.mjs`), para que el carrito y el pedido muestren los mismos montos (PBI-0117).
+ */
+export function desglosarIgv(subtotal: number): { readonly valorDeVenta: number; readonly igv: number } {
+  const igv = aCentimos(subtotal - subtotal / (1 + TASA_IGV));
+  return { valorDeVenta: aCentimos(subtotal - igv), igv };
+}

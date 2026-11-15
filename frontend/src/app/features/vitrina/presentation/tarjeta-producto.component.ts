@@ -1,6 +1,6 @@
 import { Clipboard } from '@angular/cdk/clipboard';
 import { CurrencyPipe, DOCUMENT, NgOptimizedImage } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, untracked } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
@@ -30,7 +30,7 @@ import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
           [alt]="product().name"
           width="640"
           height="480"
-          [priority]="priority()"
+          [priority]="prioridadInicial()"
           class="h-auto max-h-full w-full object-contain"
         />
       </a>
@@ -102,6 +102,11 @@ import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 export class TarjetaProductoComponent {
   readonly product = input.required<Producto>();
   readonly priority = input(false);
+  /**
+   * `NgOptimizedImage` no admite cambiar `priority` después de crearse (NG02953, PBI-0026): al volver a pintar el
+   * catálogo, la primera tarjeta puede dejar de serlo. Se conserva el valor con el que se creó la tarjeta.
+   */
+  protected readonly prioridadInicial = computed(() => untracked(this.priority));
   private readonly cart = inject(CarritoFacade);
   private readonly dialog = inject(MatDialog);
   private readonly router = inject(Router);

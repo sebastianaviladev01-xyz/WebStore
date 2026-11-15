@@ -33,6 +33,20 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** abre su botón de tres puntos
 - **Entonces** puede ver el detalle, ver más productos de la categoría o copiar el enlace, sin depender del hover.
 
+### Escenario 04 – Filtros en la dirección
+
+- **Dado** que el comprador filtró el catálogo
+- **Cuando** busca desde la cabecera, elige una categoría del menú o del pie, vuelve atrás o comparte la dirección
+- **Entonces** el catálogo muestra lo que dice la dirección (`buscar`, `categoria` y `precio`); «Limpiar filtros» la deja sin filtros.
+
+### Escenario 05 – Sin tope de precio y sin tildes
+
+- **Dado** que el comprador no eligió un precio máximo
+- **Cuando** abre el catálogo o busca un nombre con o sin tildes
+- **Entonces** ve todos los productos, también los de más de S/ 5,000, y la búsqueda no distingue tildes ni mayúsculas.
+
+> Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0108 y PBI-0115, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-catalogo-accesibilidad.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - El comparador de productos está pendiente de evaluar (PBI-0001 del [backlog](../../../backlog.md)).

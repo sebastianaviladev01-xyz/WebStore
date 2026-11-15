@@ -37,11 +37,13 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
             @for (item of cart.items(); track item.product.id) {
               <article class="ws-cart-item sm:grid-cols-[150px_1fr_auto] sm:items-center">
                 <a [routerLink]="['/catalogo', item.product.slug]" class="ws-cart-media">
+                  <!-- Pocas fotos, y la primera puede ser el LCP a 375 px (NG02955, PBI-0054): todas llevan prioridad. -->
                   <img
                     [ngSrc]="item.product.thumbnailUrl"
                     [alt]="item.product.name"
                     width="300"
                     height="225"
+                    priority
                     class="h-auto max-h-full w-full object-contain"
                   />
                 </a>
@@ -68,7 +70,8 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                   </p>
                   <div
                     class="inline-flex h-11 items-center rounded-full border border-line bg-surface p-1"
-                    aria-label="Cantidad"
+                    role="group"
+                    [attr.aria-label]="'Cantidad de ' + item.product.name"
                   >
                     <button
                       type="button"

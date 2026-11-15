@@ -11,7 +11,7 @@ const source = await readFile(new URL('./fecha-entrega.rules.ts', import.meta.ur
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { fechaDeLima, fechaDeEntregaPropuesta, esFechaDeEntregaValida } = await import(
+const { fechaDeLima, fechaDeEntregaPropuesta, esFechaDeEntregaValida, esCambioDeFechaValido } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -42,4 +42,15 @@ test('esFechaDeEntregaValida: desde hoy en Lima en adelante, y solo fechas que e
   assert.equal(esFechaDeEntregaValida('2026-02-30', '2026-01-01'), false);
   assert.equal(esFechaDeEntregaValida('', hoy), false);
   assert.equal(esFechaDeEntregaValida('14/11/2026', hoy), false);
+});
+
+test('PBI-0146 (lote 05): en el detalle del pedido vale desde hoy en Lima, o la fecha que el pedido ya tiene', () => {
+  const hoy = '2026-11-14';
+  assert.equal(esCambioDeFechaValido('2026-11-14', hoy, '2026-11-16'), true);
+  assert.equal(esCambioDeFechaValido('2026-11-20', hoy, '2026-11-16'), true);
+  assert.equal(esCambioDeFechaValido('2026-11-13', hoy, '2026-11-16'), false);
+  assert.equal(esCambioDeFechaValido('2020-01-01', hoy, '2026-11-16'), false);
+  // El BFF acepta reenviar la fecha que el pedido ya tiene aunque haya pasado (BFF-CONTRACT, «Reglas del checkout»).
+  assert.equal(esCambioDeFechaValido('2026-11-10', hoy, '2026-11-10'), true);
+  assert.equal(esCambioDeFechaValido('', hoy, '2026-11-16'), false);
 });

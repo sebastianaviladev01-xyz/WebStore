@@ -18,6 +18,10 @@ export class BffCuentaGateway implements CuentaGateway {
     return this.call(this.http.post<EntregaCodigo>(`${this.base}/accounts`, command));
   }
 
+  resendVerification(email: string): Promise<EntregaCodigo> {
+    return this.call(this.http.post<EntregaCodigo>(`${this.base}/account-verification-requests`, { email }));
+  }
+
   verify(email: string, code: string): Promise<void> {
     return this.call(this.http.post<void>(`${this.base}/account-verifications`, { email, code }));
   }

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Favicon provisional (PBI-0046, lote 05): la «W» de la marca sobre el azul de B, hasta decidir nombre y logo. -->
+  <path d="M9 0h14a9 9 0 0 1 9 9v14a9 9 0 0 1-9 9H3a3 3 0 0 1-3-3V9a9 9 0 0 1 9-9Z" fill="#1D4ED8" />
+  <path d="m7 10 3.4 12h1.6L16 13.4 20 22h1.6L25 10h-2.6l-2.2 8.3L16.6 10h-1.2l-3.6 8.3L9.6 10Z" fill="#FFFFFF" />
+</svg>

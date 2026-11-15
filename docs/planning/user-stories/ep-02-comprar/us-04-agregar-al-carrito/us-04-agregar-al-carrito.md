@@ -30,3 +30,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** la confirmación no dice «Producto agregado» si no se agregó nada: dice «No se agregaron unidades» y cuántas tiene ya; si se agregó una parte, dice cuántas de las pedidas entraron.
 
 > Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0065, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.
+
+### Escenario 03 – Productos sugeridos
+
+- **Dado** que el comprador agregó un producto
+- **Cuando** ve la confirmación
+- **Entonces** la tienda le sugiere, bajo «También te puede interesar», hasta tres productos de la misma categoría con stock, que llevan a su ficha.
+
+> Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0039, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-catalogo-accesibilidad.spec.ts`.

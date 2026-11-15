@@ -55,7 +55,7 @@ test('la tienda y el Admin fechan en la misma zona horaria que el BFF', () => {
   const zona = /timeZone: '([^']+)'/;
   const delBff = zona.exec(readFileSync(root + '../backend/src/domain/comun/reloj.mjs', 'utf8'))?.[1];
   assert.equal(delBff, 'America/Lima');
-  assert.equal(zona.exec(leer('src/app/features/checkout/domain/fecha-entrega.rules.ts'))?.[1], delBff);
+  assert.equal(zona.exec(leer('src/app/features/pedidos/domain/fecha-entrega.rules.ts'))?.[1], delBff);
   assert.match(
     leer('projects/admin/src/app/features/tienda/domain/resumen.rules.ts'),
     new RegExp(`export const ZONA_IANA_LIMA = '${delBff}';`),

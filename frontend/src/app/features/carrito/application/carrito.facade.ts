@@ -1,6 +1,11 @@
 import { computed, effect, inject, Injectable, signal, untracked } from '@angular/core';
 import { CambioCarrito, LineaCarrito, LineaGuardada } from '../domain/carrito.model';
-import { agregarAlCarrito, conciliarCarrito, unirLineasGuardadas } from '../domain/carrito.rules';
+import {
+  agregarAlCarrito,
+  conciliarCarrito,
+  desglosarIgv,
+  unirLineasGuardadas,
+} from '../domain/carrito.rules';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 
@@ -17,8 +22,10 @@ export class CarritoFacade {
   readonly items = this.itemsState.asReadonly();
   readonly itemCount = computed(() => this.items().reduce((t, i) => t + i.quantity, 0));
   readonly subtotal = computed(() => this.items().reduce((t, i) => t + i.product.price * i.quantity, 0));
-  readonly taxableBase = computed(() => this.subtotal() / 1.18);
-  readonly igv = computed(() => this.subtotal() - this.taxableBase());
+  /** IGV incluido y valor de venta, redondeados como en el BFF (PBI-0117). */
+  private readonly desglose = computed(() => desglosarIgv(this.subtotal()));
+  readonly taxableBase = computed(() => this.desglose().valorDeVenta);
+  readonly igv = computed(() => this.desglose().igv);
   readonly isEmpty = computed(() => this.items().length === 0);
   /** Lo que cambió en el carrito al recargar el catálogo (PBI-0106), hasta que se descarta. */
   readonly cambios = this.changesState.asReadonly();

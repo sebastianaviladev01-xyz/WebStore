@@ -5,19 +5,20 @@ import { MatInputModule } from '@angular/material/input';
 import { Router, RouterLink } from '@angular/router';
 
 import { CuentaFacade } from '../application/cuenta.facade';
+import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
 
 @Component({
   selector: 'ws-recover-page',
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, RouterLink],
   template: `
     <section class="ws-container grid min-h-[60vh] place-items-center py-12">
-      <form [formGroup]="form" (ngSubmit)="submit()" class="ws-card w-full max-w-lg p-8">
+      <form [formGroup]="form" (ngSubmit)="submit()" class="ws-card ws-outline-fields w-full max-w-lg p-8">
         <h1 class="text-4xl font-semibold">Recuperar contraseña</h1>
         <p class="mt-3 text-sm leading-6 text-muted">
           Primero enviaremos un código temporal. Después podrás definir una contraseña nueva.
         </p>
         <div class="mt-6 grid gap-3">
-          <mat-form-field>
+          <mat-form-field appearance="outline">
             <mat-label>Correo</mat-label>
             <input
               matInput
@@ -26,6 +27,11 @@ import { CuentaFacade } from '../application/cuenta.facade';
               formControlName="email"
               [readonly]="codeRequested()"
             />
+            @if (form.controls.email.hasError('required')) {
+              <mat-error>Ingresa tu correo.</mat-error>
+            } @else if (form.controls.email.invalid) {
+              <mat-error>Ingresa un correo válido.</mat-error>
+            }
           </mat-form-field>
           @if (codeRequested()) {
             @if (demoCode()) {
@@ -34,7 +40,7 @@ import { CuentaFacade } from '../application/cuenta.facade';
                 {{ demoCode() }}
               </p>
             }
-            <mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>Código de recuperación</mat-label>
               <input
                 matInput
@@ -43,11 +49,17 @@ import { CuentaFacade } from '../application/cuenta.facade';
                 maxlength="6"
                 formControlName="code"
               />
+              <mat-error>Ingresa el código de seis dígitos.</mat-error>
             </mat-form-field>
-            <mat-form-field>
+            <mat-form-field appearance="outline">
               <mat-label>Nueva contraseña</mat-label>
               <input matInput autocomplete="new-password" type="password" formControlName="password" />
               <mat-hint>10 caracteres como mínimo, con letras y números.</mat-hint>
+              @if (form.controls.password.hasError('required')) {
+                <mat-error>Ingresa una contraseña.</mat-error>
+              } @else {
+                <mat-error>{{ mensajeContrasena }}</mat-error>
+              }
             </mat-form-field>
           }
         </div>
@@ -86,20 +98,14 @@ export class RecuperarPage {
   protected readonly demoCode = signal('');
   protected readonly message = signal<string | null>(null);
   protected readonly error = signal<string | null>(null);
+  protected readonly mensajeContrasena = MENSAJE_CONTRASENA;
   protected readonly form = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
     code: new FormControl('', {
       nonNullable: true,
       validators: [Validators.required, Validators.pattern(/^\d{6}$/)],
     }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [
-        Validators.required,
-        Validators.minLength(10),
-        Validators.pattern(/^(?=.*[A-Za-zÁÉÍÓÚÑáéíóúñ])(?=.*\d).+$/),
-      ],
-    }),
+    password: new FormControl('', { nonNullable: true, validators: [Validators.required, contrasenaSegura] }),
   });
 
   protected async submit() {

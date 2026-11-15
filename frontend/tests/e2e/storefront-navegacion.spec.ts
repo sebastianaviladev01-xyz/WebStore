@@ -40,10 +40,10 @@ test('el inicio anterior sigue publicado y no aparece en el menú', async ({ pag
   await expect(page.locator('a[href="/inicio-anterior"]')).toHaveCount(0);
 });
 
-test('una ruta desconocida muestra la página 404 con enlace al inicio', async ({ page }) => {
+test('una ruta desconocida muestra la página 404 con enlace al inicio (PBI-0020)', async ({ page }) => {
   await page.goto('/no-existe');
   await expect(page).toHaveTitle('WebStore | Página no encontrada');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Esta página no existe.');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Página no encontrada');
   await page.getByRole('link', { name: 'Ir al inicio' }).click();
   await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { level: 1, name: 'El cine, en tu sala.' })).toBeVisible();

@@ -1,6 +1,7 @@
 /**
- * Fecha de entrega del checkout con la fecha de Lima, no la de UTC (PBI-0096). La primera fecha permitida es hoy en
+ * Fecha de entrega del pedido con la fecha de Lima, no la de UTC (PBI-0096). La primera fecha permitida es hoy en
  * Lima, como en el BFF; la regla definitiva está en decisiones pendientes («Fecha mínima de entrega del pedido»).
+ * La usan el checkout y el detalle del pedido (PBI-0146): vive en `pedidos`, del que depende `checkout` (lote 05).
  */
 const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',
@@ -38,4 +39,12 @@ export function esFechaDeEntregaValida(valor: string, hoy: string): boolean {
   const existe =
     fecha.getUTCFullYear() === anio && fecha.getUTCMonth() === mes - 1 && fecha.getUTCDate() === dia;
   return existe && valor >= hoy;
+}
+
+/**
+ * Fecha de entrega al cambiarla en el detalle del pedido (PBI-0146): desde hoy en Lima, o la que el pedido ya tiene,
+ * que el BFF acepta aunque haya pasado.
+ */
+export function esCambioDeFechaValido(valor: string, hoy: string, vigente: string): boolean {
+  return (valor !== '' && valor === vigente) || esFechaDeEntregaValida(valor, hoy);
 }

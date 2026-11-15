@@ -33,6 +33,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** cierra la sesión
 - **Entonces** la sesión queda revocada.
 
+### Escenario 04 – Sesión vencida
+
+- **Dado** que la sesión del cliente venció o se revocó
+- **Cuando** abre su cuenta o guarda un cambio
+- **Entonces** la tienda lo lleva a iniciar sesión con el aviso «Tu sesión venció. Ingresa de nuevo para continuar.» y, al ingresar, lo devuelve a la página en la que estaba. Si la tienda no puede comunicarse con el servidor, conserva la sesión y ofrece reintentar.
+
+> Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0114), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-cuenta-formularios.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - El correo transaccional real está pendiente (PBI-0008 del [backlog](../../../backlog.md)).
