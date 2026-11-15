@@ -10,11 +10,12 @@ La fuente de verdad del diseño es [`architecture.md`](architecture.md): feature
 - Sigue las [convenciones de nombres](architecture.md#4-componentes-y-convenciones): sufijo de rol en el archivo, negocio en español y técnico en inglés.
 - Conserva los selectores `ws-*`, las clases CSS y los tokens: los estilos y el diseño visual dependen de ellos.
 - Ningún secreto en el bundle, en `localStorage` ni en `sessionStorage` más allá del token opaco de sesión. Los guards son UX: la autorización la repite el BFF.
-- Las reglas puras de `domain/` llevan su prueba `*.spec.mjs` junto al código.
+- Las reglas puras de `domain/` llevan su prueba `*.spec.mjs` junto al código. Las facades y los adaptadores de `data/` se prueban también sin DOM, con dobles ([`architecture.md` §6](architecture.md#6-pruebas)); de `data/` no sale un `HttpErrorResponse`.
+- Las e2e siguen la regla de localizadores de [`architecture.md` §6](architecture.md#6-pruebas): roles y textos, sin clases de Material ni pausas fijas.
 
 ## Comandos
 
-Desde `frontend/`: `npm run lint`, `npm test`, `npm run test:architecture`, `npm run build:all` o, todo junto, `npm run verify`. Los recorridos e2e, con `npm run test:e2e` (Playwright, unos minutos): nunca usan `backend/data.json` ni los puertos de desarrollo, y los nuevos van en `tests/e2e/{storefront,admin}-*.spec.ts`. Para QA visual con Chrome headless, los scripts de [`tools/qa/`](tools/qa/).
+Desde `frontend/`: `npm run lint` (incluye `tests/` y `playwright.config.ts`), `npm run typecheck` (tipos de `domain/` y de las e2e), `npm test`, `npm run test:architecture`, `npm run build:all` o, todo junto, `npm run verify`. Los recorridos e2e, con `npm run test:e2e` (Playwright, unos minutos): nunca usan `backend/data.json` ni los puertos de desarrollo, y los nuevos van en `tests/e2e/{storefront,admin}-*.spec.ts`. Para QA visual con Chrome headless, los scripts de [`tools/qa/`](tools/qa/): las capturas por tema y ancho con comparación píxel a píxel (`capturas.mjs` y `comparar.mjs`, [Comparar capturas](../docs/development/agent-execution.md#comparar-capturas)) y los guiones CDP.
 
 ## Prohibido
 
