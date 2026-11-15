@@ -6,6 +6,7 @@ import {
   ADMIN_PERMISSIONS,
   ADMIN_ROLES,
   can,
+  managedUserRoles,
   migrateRole,
 } from '../../../../src/domain/sesion/rol.rules.mjs';
 
@@ -15,35 +16,32 @@ test('los roles anteriores se traducen a los roles fijos', () => {
   assert.equal(migrateRole('admin'), 'admin');
 });
 
-test('solo el superadministrador gestiona usuarios; el vendedor no toca precios ni tarifas', () => {
-  assert.ok(can('superadmin', 'users.manage'));
-  assert.ok(!can('admin', 'users.manage'));
-  assert.ok(can('admin', 'shipping.manage'));
-  assert.ok(can('vendedor', 'orders.manage'));
-  assert.ok(!can('vendedor', 'products.manage'));
-  assert.ok(!can('vendedor', 'shipping.manage'));
-});
-
-/** Tabla de roles fijos del 05/11. La feature 002 solo añade `themes.manage` al superadministrador. */
+/**
+ * Tabla de roles fijos (05/11), con los permisos de la reunión del 11/11 (lote 07, PBI-0013, provisional por
+ * confirmar con Daniel): el superadministrador tiene la configuración de la tienda (temas, contenido y reinicio) y
+ * todo lo demás; el administrador opera la tienda, elimina productos y gestiona a los vendedores; el vendedor crea
+ * productos y los modifica, sin eliminarlos. La feature 002 añadió `themes.manage` al superadministrador.
+ */
 const OPERACION = [
   'dashboard.view',
   'products.edit',
   'products.manage',
+  'products.delete',
   'inventory.manage',
   'categories.manage',
   'brands.manage',
   'customers.manage',
+  'users.manage',
   'orders.manage',
   'banners.manage',
-  'content.manage',
   'shipping.manage',
   'complaints.manage',
 ];
 
 const TABLA = {
-  superadmin: [...OPERACION, 'users.manage', 'store.reset', 'themes.manage'],
+  superadmin: [...OPERACION, 'users.delete', 'content.manage', 'store.reset', 'themes.manage'],
   admin: OPERACION,
-  vendedor: ['dashboard.view', 'products.edit', 'inventory.manage', 'orders.manage'],
+  vendedor: ['dashboard.view', 'products.edit', 'products.manage'],
 };
 
 const permisosDe = (rol) => [...ADMIN_ROLES.find((definicion) => definicion.id === rol).permissions].sort();
@@ -56,6 +54,31 @@ test('los tres roles fijos tienen exactamente los permisos de la tabla', () => {
   for (const [rol, permisos] of Object.entries(TABLA)) {
     assert.deepEqual(permisosDe(rol), [...permisos].sort(), rol);
   }
+  assert.deepEqual([...ADMIN_PERMISSIONS].sort(), [...TABLA.superadmin].sort());
+});
+
+test('PBI-0013: el vendedor crea y modifica productos, pero no los elimina ni tiene inventario ni pedidos', () => {
+  assert.ok(can('vendedor', 'products.manage'));
+  assert.ok(!can('vendedor', 'products.delete'));
+  assert.ok(!can('vendedor', 'inventory.manage'));
+  assert.ok(!can('vendedor', 'orders.manage'));
+  assert.ok(can('admin', 'products.delete'));
+});
+
+test('PBI-0013: Contenido es solo del superadministrador; banners y tarifas siguen con el administrador', () => {
+  assert.ok(can('superadmin', 'content.manage'));
+  assert.ok(!can('admin', 'content.manage'));
+  assert.ok(can('admin', 'banners.manage'));
+  assert.ok(can('admin', 'shipping.manage'));
+});
+
+test('PBI-0013: el superadministrador gestiona a todos; el administrador, solo a los vendedores y sin eliminarlos', () => {
+  assert.deepEqual(managedUserRoles('superadmin'), ['superadmin', 'admin', 'vendedor']);
+  assert.deepEqual(managedUserRoles('admin'), ['vendedor']);
+  assert.deepEqual(managedUserRoles('vendedor'), []);
+  assert.deepEqual(managedUserRoles('desconocido'), []);
+  assert.ok(can('superadmin', 'users.delete'));
+  assert.ok(!can('admin', 'users.delete'));
 });
 
 test('solo el superadministrador gestiona los temas (TEST-09)', () => {
@@ -63,5 +86,4 @@ test('solo el superadministrador gestiona los temas (TEST-09)', () => {
   assert.ok(can('superadmin', 'themes.manage'));
   assert.ok(!can('admin', 'themes.manage'));
   assert.ok(!can('vendedor', 'themes.manage'));
-  assert.ok(can('admin', 'content.manage'), 'el administrador sigue gestionando Contenido');
 });

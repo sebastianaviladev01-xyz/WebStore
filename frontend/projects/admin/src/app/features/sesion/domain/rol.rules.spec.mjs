@@ -7,33 +7,35 @@ const source = await readFile(new URL('./rol.rules.ts', import.meta.url), 'utf8'
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { ROLES, definicionDeRol, rolPuede } = await import(
+const { ROLES, definicionDeRol, rolPuede, rolesGestionables } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
 /**
- * Tabla de roles fijos del 05/11, igual que la del BFF (backend/src/domain/sesion/rol.rules.mjs).
- * La feature 002 solo añade `themes.manage` al superadministrador.
+ * Tabla de roles fijos del 05/11, igual que la del BFF (backend/src/domain/sesion/rol.rules.mjs), con los permisos
+ * de la reunión del 11/11 (lote 07, PBI-0013; provisional, por confirmar con Daniel). La feature 002 añadió
+ * `themes.manage` al superadministrador.
  */
 const OPERACION = [
   'dashboard.view',
   'products.edit',
   'products.manage',
+  'products.delete',
   'inventory.manage',
   'categories.manage',
   'brands.manage',
   'customers.manage',
+  'users.manage',
   'orders.manage',
   'banners.manage',
-  'content.manage',
   'shipping.manage',
   'complaints.manage',
 ];
 
 const TABLA = {
-  superadmin: [...OPERACION, 'users.manage', 'store.reset', 'themes.manage'],
+  superadmin: [...OPERACION, 'users.delete', 'content.manage', 'store.reset', 'themes.manage'],
   admin: OPERACION,
-  vendedor: ['dashboard.view', 'products.edit', 'inventory.manage', 'orders.manage'],
+  vendedor: ['dashboard.view', 'products.edit', 'products.manage'],
 };
 
 const permisosDe = (rol) => [...definicionDeRol(rol).permissions].sort();
@@ -53,11 +55,12 @@ for (const [rol, permisos] of Object.entries(TABLA)) {
 
 test('rolPuede responde según la tabla y niega sin rol o con un rol desconocido', () => {
   assert.ok(rolPuede('superadmin', 'users.manage'));
-  assert.ok(!rolPuede('admin', 'users.manage'));
+  assert.ok(rolPuede('admin', 'users.manage'));
   assert.ok(!rolPuede('admin', 'store.reset'));
-  assert.ok(rolPuede('admin', 'content.manage'));
-  assert.ok(rolPuede('vendedor', 'orders.manage'));
-  assert.ok(!rolPuede('vendedor', 'products.manage'));
+  assert.ok(!rolPuede('admin', 'content.manage'));
+  assert.ok(!rolPuede('vendedor', 'orders.manage'));
+  assert.ok(rolPuede('vendedor', 'products.manage'));
+  assert.ok(!rolPuede('vendedor', 'products.delete'));
   assert.ok(!rolPuede(null, 'dashboard.view'));
   assert.ok(!rolPuede(undefined, 'dashboard.view'));
   assert.ok(!rolPuede('owner', 'dashboard.view'));
@@ -67,4 +70,13 @@ test('solo el superadministrador gestiona los temas (TEST-09, réplica del Admin
   assert.ok(rolPuede('superadmin', 'themes.manage'));
   assert.ok(!rolPuede('admin', 'themes.manage'));
   assert.ok(!rolPuede('vendedor', 'themes.manage'));
+});
+
+test('PBI-0013: el superadministrador gestiona a todos; el administrador, solo a los vendedores y sin eliminarlos', () => {
+  assert.deepEqual(rolesGestionables('superadmin'), ['superadmin', 'admin', 'vendedor']);
+  assert.deepEqual(rolesGestionables('admin'), ['vendedor']);
+  assert.deepEqual(rolesGestionables('vendedor'), []);
+  assert.deepEqual(rolesGestionables(null), []);
+  assert.ok(rolPuede('superadmin', 'users.delete'));
+  assert.ok(!rolPuede('admin', 'users.delete'));
 });

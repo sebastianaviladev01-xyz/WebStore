@@ -162,7 +162,8 @@ test('PBI-0095: los datos válidos se aplican y la revisión sube', () => {
 });
 
 test('PBI-0095: config descarta las claves que no conoce', () => {
-  const { store, resultado } = guardar(admin, {
+  // Desde el lote 07 (PBI-0013), Contenido es solo del superadministrador.
+  const { store, resultado } = guardar(superadmin, {
     config: { ...seed.config, storeName: 'Nueva', primaryColor: '#123456', script: '<x>' },
   });
   resultado();

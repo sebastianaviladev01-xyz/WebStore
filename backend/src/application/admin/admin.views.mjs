@@ -1,4 +1,4 @@
-import { ADMIN_ROLES, can } from '../../domain/sesion/rol.rules.mjs';
+import { ADMIN_ROLES, can, managedUserRoles } from '../../domain/sesion/rol.rules.mjs';
 
 export const adminUserToPublic = (user) => ({
   id: user.id,
@@ -37,6 +37,8 @@ const orderToAdmin = (order) => ({
 /** Cada colección solo viaja al rol que puede gestionarla; catálogo y configuración son lectura común. */
 export function buildAdminSnapshot(state, role) {
   const visible = (permission, value) => (can(role, permission) ? value : []);
+  // PBI-0013: cada rol ve solo los usuarios que gestiona (el administrador, los vendedores).
+  const gestionables = new Set(managedUserRoles(role));
   return {
     revision: state.revision,
     roles: ADMIN_ROLES,
@@ -44,7 +46,7 @@ export function buildAdminSnapshot(state, role) {
     categories: state.categories,
     brands: state.brands,
     customers: visible('customers.manage', state.customers),
-    users: visible('users.manage', state.users.map(adminUserToPublic)),
+    users: state.users.filter((user) => gestionables.has(user.role)).map(adminUserToPublic),
     banners: visible('banners.manage', state.banners),
     rates: visible('shipping.manage', state.rates),
     complaints: visible('complaints.manage', state.complaints),

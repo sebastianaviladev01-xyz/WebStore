@@ -127,15 +127,13 @@ test('PBI-0120: los cambios con una forma desconocida se rechazan', () => {
   }
 });
 
-test('PBI-0120: el vendedor cambia el stock con un cambio parcial, pero no crea ni elimina productos', () => {
+test('PBI-0120: el vendedor cambia el stock con un cambio parcial, pero no elimina productos (PBI-0013)', () => {
   const stock = guardar(vendedor, { products: { upsert: [{ id: 'p-003', stock: 1 }] } }).resultado();
   assert.equal(stock.products.find((item) => item.id === 'p-003').stock, 1);
-  for (const products of [
-    { remove: ['p-003'] },
-    { upsert: [{ ...producto('p-003'), id: 'p-nuevo', sku: 'OTRO' }] },
-  ]) {
-    assert.throws(guardar(vendedor, { products }).resultado, rechazo('CATALOG_SCOPE_VIOLATION'));
-  }
+  assert.throws(
+    guardar(vendedor, { products: { remove: ['p-003'] } }).resultado,
+    rechazo('CATALOG_SCOPE_VIOLATION'),
+  );
 });
 
 test('PBI-0120: el estado de un pedido y la respuesta de un reclamo también llegan como cambios', () => {

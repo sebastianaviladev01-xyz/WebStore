@@ -129,7 +129,7 @@ La obligación de responder en 15 días hábiles está descrita por [Indecopi](h
 | `GET` | `/admin/sessions/current` | Bearer | `200 { user }` | `401 ADMIN_AUTHENTICATION_REQUIRED` |
 | `DELETE` | `/admin/sessions/current` | Bearer | `204` | — |
 | `GET` | `/admin/snapshot` | Bearer | `200` snapshot | `401 ADMIN_AUTHENTICATION_REQUIRED` |
-| `PUT` | `/admin/snapshot` | Bearer; `{ revision, …colecciones modificadas }` | `200` snapshot actualizado | `401`, `403 INSUFFICIENT_ROLE` (`details.collection`), `403 CATALOG_SCOPE_VIOLATION`, `409 STALE_SNAPSHOT`, `400 INVALID_COLLECTION` (`details.collection`, `field`, `id`), `400 INVALID_PRODUCTS`, `400 INVALID_CATEGORY_TREE` (`details.categoryId`), `400 INVALID_ROLE`, `400 WEAK_PASSWORD`, `409 LAST_SUPERADMIN`, `409 SELF_LOCKOUT`, `409 COMPLAINTS_READ_ONLY`, `409 INSUFFICIENT_STOCK`, `409 BRAND_IN_USE` (`details.brandId`, `products`), `409 CATEGORY_IN_USE` (`details.categoryId`, `products`), `409 CATEGORY_HAS_CHILDREN` (`details.categoryId`, `children`), `413 PAYLOAD_TOO_LARGE` |
+| `PUT` | `/admin/snapshot` | Bearer; `{ revision, …colecciones modificadas }` | `200` snapshot actualizado | `401`, `403 INSUFFICIENT_ROLE` (`details.collection`), `403 CATALOG_SCOPE_VIOLATION`, `403 USER_SCOPE_VIOLATION`, `409 STALE_SNAPSHOT`, `400 INVALID_COLLECTION` (`details.collection`, `field`, `id`), `400 INVALID_PRODUCTS`, `400 INVALID_CATEGORY_TREE` (`details.categoryId`), `400 INVALID_ROLE`, `400 WEAK_PASSWORD`, `409 LAST_SUPERADMIN`, `409 SELF_LOCKOUT`, `409 COMPLAINTS_READ_ONLY`, `409 INSUFFICIENT_STOCK`, `409 BRAND_IN_USE` (`details.brandId`, `products`), `409 CATEGORY_IN_USE` (`details.categoryId`, `products`), `409 CATEGORY_HAS_CHILDREN` (`details.categoryId`, `children`), `413 PAYLOAD_TOO_LARGE` |
 | `POST` | `/admin/reset` | Bearer | `200` snapshot de la demo | `401`, `403 INSUFFICIENT_ROLE`, `403 STORE_RESET_DISABLED` |
 
 El ingreso compara la contraseña aunque el correo no exista o el usuario esté inactivo, para tardar lo mismo.
@@ -145,7 +145,7 @@ Cambios por registro (lote 06, PBI-0119 y PBI-0120): cada colección puede llega
 - `upsert`: registros con `id`. Si el registro existe, solo se aplican los campos que trae y el resto se conserva del servidor (fotos, stock vendido, lo que cambió otra persona); un campo con `null` se quita. Si no existe, se agrega al final y debe venir completo.
 - `remove`: los `id` que se eliminan. Un `id` no puede estar en los dos.
 - La lista resultante se valida entera, igual que si hubiera llegado completa. Otra forma responde `400 INVALID_COLLECTION`.
-- `orders` acepta solo `{ upsert: [{ id, status }] }`: los pedidos no se crean ni se eliminan desde el panel. En `complaints`, un `upsert` cambia `status` y `providerResponse` del reclamo; un `remove` responde `409 COMPLAINTS_READ_ONLY`. El vendedor no puede usar `remove` ni agregar productos (`403 CATALOG_SCOPE_VIOLATION`).
+- `orders` acepta solo `{ upsert: [{ id, status }] }`: los pedidos no se crean ni se eliminan desde el panel. En `complaints`, un `upsert` cambia `status` y `providerResponse` del reclamo; un `remove` responde `409 COMPLAINTS_READ_ONLY`. El vendedor no puede eliminar productos (`403 CATALOG_SCOPE_VIOLATION`), y el administrador no puede usar `remove` en `users` (`403 USER_SCOPE_VIOLATION`).
 
 El Admin envía siempre cambios: solo los registros y los campos que tocó la persona. Así un guardado no lleva las fotos de otros productos y no choca con el límite del cuerpo (`413 PAYLOAD_TOO_LARGE`, 2 MB). Ante `409 STALE_SNAPSHOT` recarga y vuelve a enviar el mismo cambio si ninguno de esos campos cambió en el servidor mientras tanto; si alguno cambió, o si el registro ya no existe, no guarda y avisa.
 
@@ -154,19 +154,19 @@ Validación del guardado (lote 01): los cambios se aplican sobre una copia del e
 | Colección | Reglas |
 | --- | --- |
 | Todas | Lista de objetos con `id` de texto, no vacío y único |
-| `products` (rol con `products.manage`) | `name`, `sku` (único sin distinguir mayúsculas; el mensaje dice qué producto lo usa), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen. Dirección de ficha única (PBI-0129): un producto nuevo o renombrado cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otro se rechaza con `field: 'slug'` y el nombre del otro; dos que ya lo compartían no bloquean otros guardados |
-| `products` (Vendedor) | `name` con texto y `stock` entero `>= 0`; el resto de la ficha, del tipo que corresponde. También la dirección de ficha única |
+| `products` (rol con `products.manage`: los tres roles fijos desde el lote 07) | `name`, `sku` (único sin distinguir mayúsculas; el mensaje dice qué producto lo usa), `categoryId` y `brandId` con texto; `price` número `>= 0`; `stock` entero `>= 0`; `active` booleano; `description`, `imageUrl`, `thumbnailUrl`, `highlights` y `gallery` del tipo que corresponde si vienen. Dirección de ficha única (PBI-0129): un producto nuevo o renombrado cuyo slug (el del nombre, sin mayúsculas ni tildes) ya usa otro se rechaza con `field: 'slug'` y el nombre del otro; dos que ya lo compartían no bloquean otros guardados |
+| `products` (rol con `products.edit` sin `products.manage`; ninguno de los roles fijos desde el lote 07) | `name` con texto y `stock` entero `>= 0`; el resto de la ficha, del tipo que corresponde; precio, SKU, categoría, marca y estado se conservan del servidor. También la dirección de ficha única |
 | `categories` | `name` con texto; `parentId` texto o vacío; `order` número o vacío; sin ciclos ni padres inexistentes (`INVALID_CATEGORY_TREE`). Una categoría eliminada no puede tener subcategorías (`409 CATEGORY_HAS_CHILDREN`) ni productos (`409 CATEGORY_IN_USE`) |
 | `brands` | `name` con texto y `active` booleano. Una marca eliminada no puede tener productos (`409 BRAND_IN_USE`, con cuántos en `details.products`). El uso se mide después de aplicar los productos del mismo guardado (PBI-0131) |
 | `customers` | `name` y `email` con texto; `orders` entero `>= 0` si viene |
 | `banners` | `title` texto; `placement` `hero`, `promotion` o `secondary`; `active` booleano; `imageFit`, `imageTone` e `imageFocusY` de sus valores si vienen; `endAt` igual o posterior a `startAt` (PBI-0128) |
 | `rates` | `origin` y `destination` con texto; `price` número `>= 0` |
 | `config` | Un objeto. Solo las claves conocidas, cada una del tipo de su valor vigente (texto o booleano), y `storeName` con texto. Las claves desconocidas se descartan; las ausentes conservan su valor |
-| `users` | `name` con texto, `email` válido y único, `active` booleano y un rol fijo (`INVALID_ROLE`) |
+| `users` | `name` con texto, `email` válido y único, `active` booleano y un rol fijo (`INVALID_ROLE`). El administrador solo crea, cambia o deja en su rol a los vendedores, y no elimina usuarios (`USER_SCOPE_VIOLATION`) |
 | `orders` | `status`: `confirmed`, `processing`, `shipped`, `delivered` o `cancelled` |
 | `complaints` | Los mismos reclamos que tiene el BFF: no se crean ni se borran (`COMPLAINTS_READ_ONLY`). De cada uno solo se aplican `status` (`received`, `in-review` o `resolved`) y `providerResponse`; monto, detalle y datos de quien reclama se conservan |
 
-Los productos tienen `gallery` (fotos adicionales). El catálogo público expone `images`: la imagen principal primero y luego la galería. El rol `vendedor` puede editar la galería.
+Los productos tienen `gallery` (fotos adicionales). El catálogo público expone `images`: la imagen principal primero y luego la galería.
 
 `POST /admin/reset` vuelve a los datos de demostración y solo funciona en modo demo o con `WEBSTORE_ALLOW_STORE_RESET=true` (para pruebas); fuera, responde `403 STORE_RESET_DISABLED` y no borra nada. Exige el permiso `store.reset` (solo `superadmin`).
 
@@ -174,16 +174,19 @@ Los productos tienen `gallery` (fotos adicionales). El catálogo público expone
 
 Los roles no se crean ni se editan; solo se asignan. La tabla vive en `backend/src/domain/sesion/rol.rules.mjs` y el Admin la replica en `frontend/projects/admin/src/app/features/sesion/domain/rol.rules.ts` solo para mostrar u ocultar opciones.
 
-| Rol          | Puede                                                                                                                                                         |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `superadmin` | Todo, incluida la gestión de usuarios, el reinicio de la demo y los temas (`themes.manage`)                                                                   |
-| `admin`      | Toda la operación (catálogo, inventario, categorías, marcas, clientes, pedidos, banners, contenido, tarifas y reclamaciones), sin gestionar usuarios ni temas |
-| `vendedor`   | Resumen, ficha de productos existentes (nombre, descripción, imágenes, características, stock), inventario y estado de pedidos                                |
+Permisos de la reunión del 11/11 (lote 07, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0013). Son **provisionales, por confirmar con Daniel** ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md), «Permisos de los roles»):
+
+| Rol | Permisos | Puede |
+| --- | --- | --- |
+| `superadmin` | Todos | La configuración de la tienda (`content.manage`, `themes.manage` y `store.reset`), eliminar usuarios (`users.delete`) y todo lo de los otros roles. Ve y gestiona a los usuarios de cualquier rol |
+| `admin` | `dashboard.view`, `products.edit`, `products.manage`, `products.delete`, `inventory.manage`, `categories.manage`, `brands.manage`, `customers.manage`, `users.manage`, `orders.manage`, `banners.manage`, `shipping.manage` y `complaints.manage` | Toda la operación: catálogo (también eliminar productos), inventario, categorías, marcas, clientes, pedidos, banners, tarifas y reclamaciones. Ve y gestiona solo a los vendedores (crear, editar, activar y desactivar), sin eliminarlos ni asignar otro rol. Sin Contenido ni temas |
+| `vendedor` | `dashboard.view`, `products.edit` y `products.manage` | Resumen y Productos: crea productos y modifica todos sus campos (también SKU, precio, categoría, marca, estado y stock), de cualquier producto de la tienda; no los elimina. Sin inventario, pedidos, clientes ni usuarios |
 
 Reglas del servidor:
 
-- Si el `PUT` incluye una colección que el rol no puede modificar, responde `403 INSUFFICIENT_ROLE` con `details.collection`.
-- El vendedor no puede crear ni eliminar productos (`403 CATALOG_SCOPE_VIOLATION`); precio, SKU, categoría, marca y estado se conservan del servidor.
+- Si el `PUT` incluye una colección que el rol no puede modificar, responde `403 INSUFFICIENT_ROLE` con `details.collection` (por ejemplo, `config` del administrador u `orders` del vendedor).
+- Un rol con `products.manage` sin `products.delete` (el vendedor) no puede eliminar productos, ni con `remove` ni enviando la lista sin uno: `403 CATALOG_SCOPE_VIOLATION` («Tu rol no puede eliminar productos.»). Un rol con `products.edit` sin `products.manage` (ninguno de los fijos) solo cambia la ficha: no crea ni elimina, y precio, SKU, categoría, marca y estado se conservan del servidor.
+- Usuarios: el snapshot solo trae los usuarios de los roles que gestiona quien pide (el administrador, los vendedores). Crear, cambiar o dejar en otro rol a un usuario fuera de esos roles, o eliminar usuarios sin `users.delete`, responde `403 USER_SCOPE_VIOLATION` sin cambiar nada («Tu rol solo puede gestionar usuarios con rol Vendedor.» o «Tu rol no puede eliminar usuarios. Desactívalo para quitarle el acceso.»). Se comprueba antes que `INVALID_ROLE`, `LAST_SUPERADMIN` y `SELF_LOCKOUT`; un rol fuera de los fijos responde `INVALID_ROLE`.
 - Un usuario con un rol fuera de los tres fijos se rechaza con `400 INVALID_ROLE`.
 - Debe quedar al menos un superadministrador activo (`409 LAST_SUPERADMIN`) y nadie puede eliminarse, desactivarse ni cambiarse el rol a sí mismo (`409 SELF_LOCKOUT`).
 - Un usuario eliminado o desactivado pierde sus sesiones abiertas.

@@ -9,7 +9,18 @@ export function galleryOf(product) {
 }
 
 /**
- * Campos de la ficha que el rol Vendedor puede mantener; precio, categoría y marca quedan fuera.
+ * Un rol que crea y modifica productos sin `products.delete` (el vendedor, lote 07, PBI-0013) no puede dejar fuera
+ * ningún producto vigente, ni con `remove` ni enviando la lista sin él.
+ */
+export function requireNoRemovedProducts(currentProducts, products) {
+  const nextIds = new Set(products.map((product) => product.id));
+  if (currentProducts.some((product) => !nextIds.has(product.id)))
+    throw new DomainError('forbidden', 'CATALOG_SCOPE_VIOLATION', 'Tu rol no puede eliminar productos.');
+}
+
+/**
+ * Campos de la ficha que mantiene un rol con `products.edit` sin `products.manage`; precio, categoría y marca
+ * quedan fuera. Desde el lote 07 ningún rol fijo está en ese caso: el vendedor tiene `products.manage`.
  * Devuelve la nueva lista de productos.
  */
 export function applyProductContentEdits(currentProducts, products) {
