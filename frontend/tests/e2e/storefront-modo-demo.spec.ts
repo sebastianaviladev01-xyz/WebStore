@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-import { urls } from './apoyo/entorno';
+import { cantidadEnCarrito, enlaceDelCarrito, urls } from './apoyo/entorno';
 import {
   ANCHOS,
   elegirCConTeclado,
@@ -87,9 +87,9 @@ for (const { ancho, alto } of ANCHOS) {
       productos.find((producto) => producto.stock > 0)!.id,
     );
     await page.goto('/');
-    await expect(page.locator('.ws-cart-count')).toHaveText('1');
+    await expect(enlaceDelCarrito(page)).toHaveText(cantidadEnCarrito(1));
 
-    const carrito = page.locator('a[aria-label="Carrito"]');
+    const carrito = enlaceDelCarrito(page);
     await sinCruceConLaTuerca(page, carrito, 'Carrito de la cabecera');
 
     await page.goto('/carrito');

@@ -92,3 +92,13 @@ export function fechaDeEntrega(dias = 2): string {
 export function correoUnico(prefijo: string): string {
   return `${prefijo}-${Date.now()}@example.com`;
 }
+
+/**
+ * Enlace «Carrito» de la cabecera de la tienda: su texto lleva el número de productos (PBI-0050, sin la clase del
+ * contador). Se comprueba con `toHaveText(cantidadEnCarrito(1))`.
+ */
+export const enlaceDelCarrito = (page: Page) =>
+  page.getByRole('banner').getByRole('link', { name: 'Carrito', exact: true });
+
+/** Texto del enlace del carrito con `n` productos: termina en el número, sea o no visible la palabra «Carrito». */
+export const cantidadEnCarrito = (n: number) => new RegExp(`(^|\\s)${n}\\s*$`);

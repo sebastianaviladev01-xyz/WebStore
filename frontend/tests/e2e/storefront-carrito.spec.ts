@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { urls } from './apoyo/entorno';
+import { cantidadEnCarrito, enlaceDelCarrito, urls } from './apoyo/entorno';
 import { COOKIE_VISTA_PREVIA, PRIMARIO, primario } from './apoyo/modo-demo';
 
 /**
@@ -89,7 +89,7 @@ test('TEST-09: en la ficha, «Seguir comprando» y Escape cierran el diálogo y 
 }) => {
   const ficha = '/catalogo/soundbar-cinema-500';
   const agregar = page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' });
-  const contador = page.locator('.ws-cart-count');
+  const contador = enlaceDelCarrito(page);
   await page.goto(ficha);
 
   // «Seguir comprando»: se cierra, la página no cambia y el contador muestra el producto.
@@ -98,7 +98,7 @@ test('TEST-09: en la ficha, «Seguir comprando» y Escape cierran el diálogo y 
   await dialogo.getByRole('button', { name: 'Seguir comprando' }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page).toHaveURL(ficha);
-  await expect(contador).toHaveText('1');
+  await expect(contador).toHaveText(cantidadEnCarrito(1));
 
   // Escape equivale a «Seguir comprando».
   await agregar.click();
@@ -106,7 +106,7 @@ test('TEST-09: en la ficha, «Seguir comprando» y Escape cierran el diálogo y 
   await page.keyboard.press('Escape');
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page).toHaveURL(ficha);
-  await expect(contador).toHaveText('2');
+  await expect(contador).toHaveText(cantidadEnCarrito(2));
 
   // «Ver carrito»: llega a /carrito con el producto y su cantidad.
   await agregar.click();

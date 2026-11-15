@@ -1,7 +1,9 @@
-import { expect, test, type APIRequestContext, type Locator, type Page } from '@playwright/test';
+import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
 
 import { leerProductos } from './apoyo/catalogo';
+import { interiorFrenteAlFondo } from './apoyo/campos';
 import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
+import { esperarFotos } from './apoyo/fotos';
 
 /**
  * Lote 05 (ADR-0017), tienda: cuenta y formularios. Verificar la cuenta con el reenvío del código, sin el código en
@@ -10,7 +12,6 @@ import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
  * límite (PBI-0112) y fecha de entrega del detalle del pedido (PBI-0146).
  */
 const CONTRASENA = 'Prueba2026x';
-const SIN_RELLENO = 'rgba(0, 0, 0, 0)';
 
 async function registrar(page: Page, correo: string): Promise<void> {
   await page.goto('/cuenta/registro');
@@ -53,13 +54,6 @@ async function ingresar(page: Page, correo: string): Promise<void> {
   await page.getByRole('textbox', { name: 'Contraseña' }).fill(CONTRASENA);
   await page.getByRole('button', { name: 'Ingresar', exact: true }).click();
 }
-
-/** Fondo del campo de Material que contiene al control: sin relleno, es un campo con contorno. */
-const rellenoDe = (control: Locator) =>
-  control.evaluate((el) => {
-    const campo = el.closest('.mdc-text-field');
-    return campo ? getComputedStyle(campo).backgroundColor : null;
-  });
 
 test.describe('PBI-0098: verificar la cuenta', () => {
   test('el código no viaja en la URL y se puede pedir uno nuevo desde la página', async ({ page }) => {
@@ -138,7 +132,10 @@ test.describe('PBI-0047: campos con contorno', () => {
       await page.goto(ruta);
       const controles = page.getByRole('main').getByRole('textbox');
       await expect(page.getByRole('textbox', { name: campo })).toBeVisible();
-      for (const control of await controles.all()) expect(await rellenoDe(control)).toBe(SIN_RELLENO);
+      for (const control of await controles.all()) {
+        const { interior, fondo } = await interiorFrenteAlFondo(control);
+        expect(interior).toBe(fondo);
+      }
     });
   }
 });
@@ -321,13 +318,14 @@ test.describe('PBI-0146 y PBI-0113: detalle del pedido', () => {
     await page.goto(`/pedidos/${pedido.id}`);
     await expect(page.getByRole('heading', { level: 1, name: pedido.id })).toBeVisible();
     await expect(page.getByRole('img', { name: soundbar.name })).toBeVisible();
-    await page.waitForTimeout(500);
+    await esperarFotos(page);
     expect(avisos).toEqual([]);
 
     const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
     const fecha = page.getByLabel('Fecha de entrega');
     await expect(fecha).toHaveAttribute('min', hoy);
-    expect(await rellenoDe(fecha)).toBe(SIN_RELLENO);
+    const { interior, fondo } = await interiorFrenteAlFondo(fecha);
+    expect(interior).toBe(fondo);
 
     let cambios = 0;
     page.on('request', (r) => {
