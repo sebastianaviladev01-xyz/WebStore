@@ -26,3 +26,17 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Dado** que hubo una venta u otro cambio después de que el Admin cargó los datos
 - **Cuando** el usuario guarda
 - **Entonces** el BFF rechaza el guardado por desactualizado; el Admin recarga, reaplica el cambio y conserva el stock vendido.
+
+### Escenario 03 – Stock que no se puede guardar
+
+- **Dado** que un usuario deja vacío el stock de un producto en Inventario o escribe un número con decimales
+- **Cuando** sale del campo
+- **Entonces** el stock no se guarda (antes, vacío era 0) y el campo dice qué escribir.
+
+### Escenario 04 – Cambio de stock que choca con una venta
+
+- **Dado** que hubo una venta después de que el Admin cargó los datos y el usuario cambió el stock de ese mismo producto
+- **Cuando** guarda
+- **Entonces** el Admin no pisa el stock vendido: no guarda y pide revisar los datos actuales. Si el usuario cambió otro campo, el Admin lo reaplica y conserva el stock vendido (Escenario 02).
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0120 y PBI-0127), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.

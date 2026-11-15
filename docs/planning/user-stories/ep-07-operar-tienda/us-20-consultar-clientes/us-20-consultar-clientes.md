@@ -20,3 +20,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Dado** que un comprador terminó una compra, con o sin cuenta
 - **Cuando** el administrador abre Clientes
 - **Entonces** ve al cliente creado o actualizado por el checkout.
+
+### Escenario 02 – Modo de edición
+
+- **Dado** que el administrador pulsa «Editar» en un cliente
+- **Cuando** mira el formulario
+- **Entonces** el título dice «Editar cliente» y puede volver a «Nuevo cliente» con «Cancelar»; si elimina el cliente que edita, el formulario sale de la edición y «Guardar» no lo vuelve a crear.
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0122 y PBI-0130), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.

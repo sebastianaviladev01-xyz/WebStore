@@ -26,3 +26,17 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Dado** que un usuario abre la URL de un módulo que su rol no permite
 - **Cuando** la ruta se carga
 - **Entonces** el Admin lo devuelve al inicio, y el BFF rechaza la operación con permiso insuficiente.
+
+### Escenario 03 – Credenciales de prueba
+
+- **Dado** que alguien abre el acceso del Admin
+- **Cuando** el BFF no está en modo demo
+- **Entonces** el acceso no muestra credenciales de prueba; en modo demo, sí.
+
+### Escenario 04 – Sesión vencida
+
+- **Dado** que la sesión del Admin venció o se cerró mientras el usuario editaba
+- **Cuando** el usuario guarda o consulta
+- **Entonces** el Admin lo lleva al acceso, que dice «Tu sesión venció. Vuelve a iniciar sesión para continuar.».
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0071 y PBI-0124), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
