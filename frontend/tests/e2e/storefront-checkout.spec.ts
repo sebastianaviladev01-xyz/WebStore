@@ -1,6 +1,13 @@
 import { expect, test } from '@playwright/test';
 
-import { correoUnico, cuentasAdmin, desplegarGrupo, ingresarAlAdmin, urls } from './apoyo/entorno';
+import {
+  correoUnico,
+  cuentasAdmin,
+  desplegarGrupo,
+  fechaDeEntrega,
+  ingresarAlAdmin,
+  urls,
+} from './apoyo/entorno';
 
 /**
  * Compra como invitado: el checkout cotiza el envío por distrito, crea el pedido en el BFF, lo muestra en
@@ -109,7 +116,7 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
       },
       items: [{ productId: 'p-004', quantity: 1 }],
       paymentMethod: 'yape-plin',
-      deliveryDate: '2026-12-01',
+      deliveryDate: fechaDeEntrega(),
     },
   });
   expect(respuesta.ok()).toBeTruthy();

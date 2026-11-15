@@ -6,6 +6,7 @@ import {
   cuentasAdmin,
   desplegarGrupo,
   desplegarTodos,
+  fechaDeEntrega,
   ingresarAlAdmin,
   menuAdmin,
   urls,
@@ -95,7 +96,7 @@ test.describe('Menú lateral en escritorio', () => {
         },
         items: [{ productId: 'p-004', quantity: 1 }],
         paymentMethod: 'yape-plin',
-        deliveryDate: '2026-12-01',
+        deliveryDate: fechaDeEntrega(),
       },
     });
     expect(respuesta.ok()).toBeTruthy();

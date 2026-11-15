@@ -8,6 +8,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { fechaDeLima } from './apoyo/servidor.mjs';
+
 const port = 3107;
 const base = `http://localhost:${port}`;
 const dataFile = join(tmpdir(), `webstore-smoke-${process.pid}.json`);
@@ -95,7 +97,7 @@ try {
       document: '12345678',
     },
     shipping: { addressLine: 'Av Demo 123', district: 'San Isidro', province: 'Lima', department: 'Lima' },
-    deliveryDate: '2026-11-10',
+    deliveryDate: fechaDeLima(2),
     paymentMethod: 'card',
     items: [{ product: { ...product, price: 1 }, quantity: 2 }],
     subtotal: 2,
@@ -741,6 +743,44 @@ try {
     'INVALID_JSON',
     'Cuerpo que no es JSON',
   );
+
+  // Checkout (PBI-0096): fecha desde hoy en Lima, método de pago ofrecido, cantidad entera y lista blanca.
+  const checkoutCon = (cambios) =>
+    raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify({ ...command, ...cambios }) });
+  await esperarError(
+    await checkoutCon({ deliveryDate: fechaDeLima(-1) }),
+    400,
+    'INVALID_DELIVERY_DATE',
+    'Fecha pasada',
+  );
+  await esperarError(
+    await checkoutCon({ paymentMethod: 'bitcoin' }),
+    400,
+    'INVALID_PAYMENT_METHOD',
+    'Método de pago',
+  );
+  await esperarError(
+    await checkoutCon({ items: [{ productId: products[0].id, quantity: 1.5 }] }),
+    400,
+    'INVALID_ORDER_ITEMS',
+    'Cantidad decimal',
+  );
+  const conCamposDeMas = await checkoutCon({
+    deliveryDate: fechaDeLima(0),
+    customer: { ...command.customer, role: 'admin' },
+    shipping: { ...command.shipping, price: 0 },
+    items: [{ productId: products[0].id, quantity: 1 }],
+  });
+  if (conCamposDeMas.status !== 201)
+    throw new Error(`Un pedido para hoy debe aceptarse: ${conCamposDeMas.status}`);
+  const pedidoFiltrado = await conCamposDeMas.json();
+  if ('role' in pedidoFiltrado.customer || 'price' in pedidoFiltrado.shipping)
+    throw new Error('El checkout guardó campos de más en customer o shipping');
+  await request(`/bff/orders/${pedidoFiltrado.id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': pedidoFiltrado.accessToken },
+    body: '{}',
+  });
 
   // Stock (lote 01): las líneas repetidas se suman y un producto inactivo no se vende.
   const conStock = (await request('/bff/catalog/products')).find((item) => item.stock >= 2);
