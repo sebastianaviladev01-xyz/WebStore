@@ -11,7 +11,7 @@ Sebastián Avila pidió cerrar todo lo pendiente lo antes posible. El backlog ab
 - **Admin, funciones nuevas (lote 07b, PR #56):** personas en línea, actividad reciente, campana de pedidos nuevos, perfil propio, menú reducible e imagen de categoría.
 - **BFF, pruebas y limpieza (lote 02, PR #57):** 145 pruebas unitarias más, código de pedido sin repetidos y aviso de feriados.
 - **Frontend, pruebas y deuda (lote 08, PR #58):** tipos de `domain/` y de las e2e en `verify`, e2e sin detalles internos, guiones de QA visual versionados y reglas llevadas a `domain/`.
-- **Accesibilidad pendiente (lote 10):** medidas de contraste de las e2e por lo que se pinta y velo de las fotos con 4.5:1.
+- **Accesibilidad pendiente (lote 10):** medidas de contraste de las e2e por lo que se pinta y contador del carrusel a 4.5:1 sobre una foto clara; el velo `--ws-scrim` resultó no estar bajo ningún texto (PBI-0166, descartada).
 - **Cierre documental (lote 09):** decisiones provisionales reunidas para la revisión con Daniel, lista de accesibilidad con lector de pantalla, fricciones del trabajo con agentes en la guía y cierre de la excepción.
 
 ## Verificación
