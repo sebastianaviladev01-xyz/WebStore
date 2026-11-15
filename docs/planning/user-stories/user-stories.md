@@ -29,7 +29,7 @@ Los roles del Admin son fijos ([glosario](../../architecture/glosario.md#rol-rol
 | Cliente | Storefront | Comprador que ya compró. Puede tener una cuenta opcional, con la que consulta sus pedidos |
 | Superadministrador | Admin | Configura la tienda (temas y contenido) y gestiona a todos los usuarios. Puede hacerlo todo |
 | Administrador | Admin | Opera la tienda día a día y gestiona a los vendedores, sin eliminarlos; no configura temas ni contenido |
-| Vendedor | Admin | Crea productos y modifica sus fichas, precios y stock, sin eliminarlos; no gestiona inventario ni pedidos |
+| Vendedor | Admin | Crea productos y modifica todos sus campos (también precio, stock, categoría y marca), sin eliminarlos; no entra a Inventario ni a Pedidos |
 
 Los permisos de los tres roles son provisionales, por confirmar con Daniel ([decisiones pendientes](../PENDING-DECISIONS.md), «Permisos de los roles»; feature 006, entregada con el lote 07).
 
