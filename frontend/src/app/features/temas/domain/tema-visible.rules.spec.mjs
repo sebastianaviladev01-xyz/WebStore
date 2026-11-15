@@ -5,6 +5,7 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
@@ -92,13 +93,22 @@ test('no muta la apariencia y el .ts solo tiene import type', () => {
 });
 
 // Lote 08 (ADR-0017), PBI-0079: el tema por defecto (el que se pinta si el activo ya no existe) está definido una vez
-// por aplicación y es el mismo que el del BFF. Solo se importa esa constante del BFF, para ver cuándo divergen.
+// por aplicación y es el mismo que el del BFF. Solo se importa esa constante del BFF, para ver cuándo divergen. La
+// ruta se busca hacia arriba porque la tienda y el Admin están a distinta profundidad (los dos archivos son iguales).
+async function constanteDelBff() {
+  let carpeta = new URL('./', import.meta.url);
+  for (let nivel = 0; nivel < 15; nivel++, carpeta = new URL('../', carpeta)) {
+    const candidato = new URL('backend/src/domain/temas/temas-predefinidos.mjs', carpeta);
+    if (existsSync(candidato)) return (await import(candidato.href)).TEMA_POR_DEFECTO;
+  }
+  throw new Error('No se encontró backend/ por encima de la prueba.');
+}
+
 test('PBI-0079: el tema por defecto es el del BFF y se usa si el activo ya no existe', async () => {
   const { TEMA_POR_DEFECTO } = await import(
     `data:text/javascript;base64,${Buffer.from(modulo).toString('base64')}`
   );
-  const bff = await import('../../../../../../backend/src/domain/temas/temas-predefinidos.mjs');
-  assert.equal(TEMA_POR_DEFECTO, bff.TEMA_POR_DEFECTO);
+  assert.equal(TEMA_POR_DEFECTO, await constanteDelBff());
   assert.equal(
     temaVisible(apariencia('ya-no-existe', ['a', TEMA_POR_DEFECTO, 'c']), null).tema.id,
     TEMA_POR_DEFECTO,
