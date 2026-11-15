@@ -106,7 +106,7 @@ interface BorradorCliente {
           (cambiar)="filtros.irAPagina($event)"
         />
       </section>
-      <form [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
+      <form #registro="ngForm" [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
         <h2 class="text-xl font-semibold">{{ editing() ? 'Editar cliente' : 'Nuevo cliente' }}</h2>
         <div class="mt-5 grid gap-3">
           <mat-form-field>
@@ -161,7 +161,8 @@ export class ClientesPage {
   );
   protected readonly error = mensajeDeError;
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
-  private readonly formDirective = viewChild.required(FormGroupDirective);
+  // Por referencia: el panel de filtros (PBI-0139) también es un FormGroupDirective y va antes en la plantilla.
+  private readonly formDirective = viewChild.required<FormGroupDirective>('registro');
   protected readonly editing = signal<string | null>(null);
   /** El cliente tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
   private base: Cliente | null = null;

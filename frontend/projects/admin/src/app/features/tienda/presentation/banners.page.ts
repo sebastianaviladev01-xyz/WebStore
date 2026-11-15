@@ -130,7 +130,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         />
       </section>
 
-      <form [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
+      <form #registro="ngForm" [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
         <h2 class="text-xl font-semibold">{{ editing() ? 'Editar banner' : 'Nuevo banner' }}</h2>
         <div class="mt-5 grid gap-3">
           <mat-form-field>
@@ -255,7 +255,8 @@ export class BannersPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly placementLabels = ETIQUETAS_UBICACION_BANNER;
   protected readonly placements = Object.keys(ETIQUETAS_UBICACION_BANNER) as UbicacionBanner[];
-  private readonly formDirective = viewChild.required(FormGroupDirective);
+  // Por referencia: el panel de filtros (PBI-0139) también es un FormGroupDirective y va antes en la plantilla.
+  private readonly formDirective = viewChild.required<FormGroupDirective>('registro');
   protected readonly editing = signal<string | null>(null);
   /** El banner tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
   private base: Banner | null = null;
