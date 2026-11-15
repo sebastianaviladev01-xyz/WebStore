@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** superadministrador
+- **Como** superadministrador (o administrador, solo con los vendedores)
 - **Quiero** crear usuarios administrativos y asignarles uno de los tres roles fijos
 - **Para** controlar quién opera la tienda
 
@@ -47,6 +47,15 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0123), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
 
+### Escenario 06 – El administrador gestiona a los vendedores
+
+- **Dado** que un administrador está en Usuarios y roles
+- **Cuando** abre la lista, crea un usuario o edita, activa o desactiva uno
+- **Entonces** solo ve a los vendedores, solo puede asignar el rol vendedor y no ve «Eliminar»; si envía al BFF un cambio sobre un superadministrador o un administrador, otro rol o una eliminación, el BFF responde `403 USER_SCOPE_VIOLATION` sin cambiar nada. El superadministrador sigue gestionando a todos y es el único que elimina usuarios.
+
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con lo que dijo Daniel el 11/11 («gestiona a los usuarios a nivel vendedor»). Que el administrador no elimine vendedores (solo los desactiva) es la opción más conservadora. Provisional, por confirmar con Daniel ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-permisos.spec.ts` y `permisos-roles.use-cases.test.mjs`. La lista de usuarios tiene el panel de filtros (PBI-0139).
+
 ## Fuera de alcance y pendientes
 
-- Los permisos exactos del vendedor están pendientes de confirmar (PBI-0013 del [backlog](../../../backlog.md)).
+- Los permisos de los roles son provisionales hasta que Daniel responda (PBI-0013 del [backlog](../../../backlog.md), lote 07).
+- La edición de los datos propios (perfil) va en el lote 07b (PBI-0034).

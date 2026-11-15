@@ -66,17 +66,17 @@ Los roles del Admin son fijos ([glosario](../../architecture/glosario.md#rol-rol
 | EP05 – Información y reclamos | US13 | [Consultar las páginas informativas](ep-05-informacion-y-reclamos/us-13-consultar-paginas-informativas/us-13-consultar-paginas-informativas.md) | Comprador |
 | EP05 – Información y reclamos | US14 | [Registrar un reclamo en el Libro de Reclamaciones](ep-05-informacion-y-reclamos/us-14-registrar-reclamo/us-14-registrar-reclamo.md) | Comprador |
 | EP06 – Administrar el catálogo | US15 | [Gestionar productos](ep-06-administrar-catalogo/us-15-gestionar-productos/us-15-gestionar-productos.md) | Administrador o vendedor |
-| EP06 – Administrar el catálogo | US16 | [Gestionar el inventario](ep-06-administrar-catalogo/us-16-gestionar-inventario/us-16-gestionar-inventario.md) | Administrador o vendedor |
+| EP06 – Administrar el catálogo | US16 | [Gestionar el inventario](ep-06-administrar-catalogo/us-16-gestionar-inventario/us-16-gestionar-inventario.md) | Administrador |
 | EP06 – Administrar el catálogo | US17 | [Gestionar categorías jerárquicas](ep-06-administrar-catalogo/us-17-gestionar-categorias/us-17-gestionar-categorias.md) | Administrador |
 | EP06 – Administrar el catálogo | US18 | [Gestionar marcas](ep-06-administrar-catalogo/us-18-gestionar-marcas/us-18-gestionar-marcas.md) | Administrador |
-| EP07 – Operar la tienda | US19 | [Gestionar pedidos](ep-07-operar-tienda/us-19-gestionar-pedidos/us-19-gestionar-pedidos.md) | Administrador o vendedor |
+| EP07 – Operar la tienda | US19 | [Gestionar pedidos](ep-07-operar-tienda/us-19-gestionar-pedidos/us-19-gestionar-pedidos.md) | Administrador |
 | EP07 – Operar la tienda | US20 | [Consultar clientes](ep-07-operar-tienda/us-20-consultar-clientes/us-20-consultar-clientes.md) | Administrador |
 | EP07 – Operar la tienda | US21 | [Atender reclamos](ep-07-operar-tienda/us-21-atender-reclamos/us-21-atender-reclamos.md) | Administrador |
 | EP07 – Operar la tienda | US22 | [Gestionar las tarifas de envío](ep-07-operar-tienda/us-22-gestionar-tarifas-envio/us-22-gestionar-tarifas-envio.md) | Administrador |
-| EP08 – Configurar el contenido | US23 | [Configurar el contenido de la tienda](ep-08-configurar-contenido/us-23-configurar-cms/us-23-configurar-cms.md) | Administrador |
+| EP08 – Configurar el contenido | US23 | [Configurar el contenido de la tienda](ep-08-configurar-contenido/us-23-configurar-cms/us-23-configurar-cms.md) | Superadministrador |
 | EP08 – Configurar el contenido | US24 | [Gestionar banners](ep-08-configurar-contenido/us-24-gestionar-banners/us-24-gestionar-banners.md) | Administrador |
 | EP09 – Acceso administrativo | US25 | [Iniciar sesión en el Admin](ep-09-acceso-administrativo/us-25-iniciar-sesion-admin/us-25-iniciar-sesion-admin.md) | Usuario administrativo |
-| EP09 – Acceso administrativo | US26 | [Gestionar usuarios y roles](ep-09-acceso-administrativo/us-26-gestionar-usuarios-y-roles/us-26-gestionar-usuarios-y-roles.md) | Superadministrador |
+| EP09 – Acceso administrativo | US26 | [Gestionar usuarios y roles](ep-09-acceso-administrativo/us-26-gestionar-usuarios-y-roles/us-26-gestionar-usuarios-y-roles.md) | Superadministrador o administrador (vendedores) |
 
 «Administrador» en la columna Actor incluye al superadministrador, que puede hacerlo todo.
 

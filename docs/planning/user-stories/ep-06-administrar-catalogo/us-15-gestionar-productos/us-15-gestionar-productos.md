@@ -29,9 +29,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ### Escenario 03 – Alcance del vendedor
 
-- **Dado** que un vendedor edita la ficha de un producto existente
-- **Cuando** intenta crear o eliminar productos, o cambiar SKU, precio, categoría, marca o estado activo
-- **Entonces** el Admin no lo permite; el BFF rechaza crear o eliminar y conserva del servidor los demás campos.
+- **Dado** que un vendedor está en Productos
+- **Cuando** crea un producto o modifica cualquiera de sus campos (también SKU, precio, categoría, marca, estado y stock), de cualquier producto de la tienda
+- **Entonces** el cambio se guarda; si intenta eliminar un producto, el Admin no se lo ofrece y el BFF lo rechaza (`403 CATALOG_SCOPE_VIOLATION`).
+
+> Cambiado el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con los permisos de la reunión del 11/11: antes el vendedor no creaba productos ni cambiaba SKU, precio, categoría, marca ni estado. Provisional, por confirmar con Daniel ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-catalogo-filtros.spec.ts` (TEST-17) y `admin-permisos.spec.ts`.
 
 ### Escenario 04 – Fotos que no bloquean el guardado
 
@@ -49,4 +51,5 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ## Fuera de alcance y pendientes
 
-- Los permisos exactos del vendedor están pendientes de confirmar (PBI-0013 del [backlog](../../../backlog.md)).
+- Los permisos del vendedor son provisionales hasta que Daniel responda (PBI-0013 del [backlog](../../../backlog.md), lote 07).
+- Productos propios de cada vendedor (que solo vea los que creó): no, el vendedor trabaja sobre todos los productos de la tienda (provisional). Depende del modelo de datos (PBI-0043).

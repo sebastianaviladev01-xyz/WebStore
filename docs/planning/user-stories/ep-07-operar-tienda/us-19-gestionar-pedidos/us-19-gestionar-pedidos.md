@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** administrador o vendedor
+- **Como** administrador (desde el lote 07, el vendedor no tiene Pedidos: PBI-0013, provisional por confirmar con Daniel en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
 - **Quiero** ver los pedidos con su detalle y cambiar su estado
 - **Para** despacharlos
 
