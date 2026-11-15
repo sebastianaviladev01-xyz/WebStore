@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-type Tendencia = 'sube' | 'baja' | 'igual' | 'sin-dato';
+import {
+  lecturaDeTendencia,
+  Tendencia,
+  tendenciaDeVariacion,
+  textoDeVariacion,
+} from '../domain/resumen.rules';
 
 /**
  * Tarjeta de un indicador del Resumen: título, cifra, variación del mes (opcional) y enlace «Ver más».
@@ -26,7 +31,7 @@ type Tendencia = 'sube' | 'baja' | 'igual' | 'sin-dato';
           <p class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
             <span class="rounded-full px-2 py-0.5 font-semibold tabular-nums" [class]="insignia[tendencia]">
               <span aria-hidden="true">{{ flecha[tendencia] }}</span>
-              <span class="sr-only">{{ lectura[tendencia] }}</span>
+              <span class="sr-only">{{ lectura(tendencia) }}</span>
               {{ textoVariacion() }}
             </span>
             <span>frente al mismo tramo del mes anterior</span>
@@ -73,25 +78,7 @@ export class TarjetaIndicadorComponent {
     igual: '',
     'sin-dato': '',
   };
-  protected readonly lectura: Readonly<Record<Tendencia, string>> = {
-    sube: 'Sube',
-    baja: 'Baja',
-    igual: 'Sin cambio',
-    'sin-dato': 'Sin datos del mes anterior',
-  };
-
-  protected readonly tendencia = computed<Tendencia | null>(() => {
-    const variacion = this.variacion();
-    if (variacion === undefined) return null;
-    if (variacion === null) return 'sin-dato';
-    if (variacion > 0) return 'sube';
-    return variacion < 0 ? 'baja' : 'igual';
-  });
-
-  protected readonly textoVariacion = computed(() => {
-    const variacion = this.variacion();
-    if (variacion === undefined || variacion === null) return '—';
-    if (variacion > 0) return `+${variacion} %`;
-    return variacion < 0 ? `−${Math.abs(variacion)} %` : '0 %';
-  });
+  protected readonly lectura = lecturaDeTendencia;
+  protected readonly tendencia = computed<Tendencia | null>(() => tendenciaDeVariacion(this.variacion()));
+  protected readonly textoVariacion = computed(() => textoDeVariacion(this.variacion()));
 }

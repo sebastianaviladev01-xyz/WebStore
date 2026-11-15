@@ -2,6 +2,7 @@
 // prettier-ignore
 import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
 import type { Cliente, EstadoPedido, EventoActividad, Pedido } from './tienda.model';
+import { ETIQUETAS_ESTADO_PEDIDO } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
 
 /** Zona horaria de la tienda: las fechas del Resumen son las de Lima (PBI-0080: una sola vez en el Admin). */
@@ -166,9 +167,32 @@ export function ultimosPedidos(pedidos: readonly Pedido[], limite = 5): Pedido[]
     .slice(0, limite);
 }
 
-/** Posición del grupo de un estado en `DistribucionEstados`: completados, en proceso y otros (D8). */
-const grupoDelEstado = (estado: EstadoPedido): 0 | 1 | 2 =>
-  estado === 'delivered' ? 0 : estado === 'cancelled' ? 2 : 1;
+/** Grupos de estado del Resumen (D8), en el orden de las barras. */
+export type GrupoDeEstado = keyof DistribucionEstados;
+
+const GRUPOS_DE_ESTADO: readonly {
+  clave: GrupoDeEstado;
+  nombre: string;
+  estados: readonly EstadoPedido[];
+}[] = [
+  { clave: 'completados', nombre: 'Completados', estados: ['delivered'] },
+  { clave: 'enProceso', nombre: 'En proceso', estados: ['confirmed', 'processing', 'shipped'] },
+  { clave: 'otros', nombre: 'Otros', estados: ['cancelled'] },
+];
+
+/** Posición del grupo de un estado en `GRUPOS_DE_ESTADO` y en `DistribucionEstados` (D8). */
+const grupoDelEstado = (estado: EstadoPedido): number =>
+  GRUPOS_DE_ESTADO.findIndex((grupo) => grupo.estados.includes(estado));
+
+/** Etiquetas de los estados de un grupo: «Confirmado, en preparación y enviado» (la primera con mayúscula). */
+function detalleDelGrupo(estados: readonly EstadoPedido[]): string {
+  const etiquetas = estados.map((estado, indice) =>
+    indice === 0 ? ETIQUETAS_ESTADO_PEDIDO[estado] : ETIQUETAS_ESTADO_PEDIDO[estado].toLowerCase(),
+  );
+  return etiquetas.length < 2
+    ? etiquetas.join('')
+    : `${etiquetas.slice(0, -1).join(', ')} y ${etiquetas.at(-1)}`;
+}
 
 /**
  * Porcentaje entero de pedidos por grupo de estado (D8): completados = Entregado; en proceso = Confirmado,
@@ -195,4 +219,48 @@ export function distribucionPorEstado(pedidos: readonly Pedido[]): DistribucionE
  */
 export function actividadReciente(eventos: readonly EventoActividad[], limite = 10): EventoActividad[] {
   return [...eventos].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)).slice(0, limite);
+}
+
+/** Una barra de «Pedidos por estado»: su grupo, su nombre, los estados que reúne y su porcentaje (PBI-0079). */
+export interface BarraDeEstado {
+  readonly clave: GrupoDeEstado;
+  readonly nombre: string;
+  readonly detalle: string;
+  readonly porcentaje: number;
+}
+
+/** Las tres barras de «Pedidos por estado», con la agrupación de D8 definida solo aquí. */
+export function gruposDeEstado(pedidos: readonly Pedido[]): BarraDeEstado[] {
+  const distribucion = distribucionPorEstado(pedidos);
+  return GRUPOS_DE_ESTADO.map(({ clave, nombre, estados }) => ({
+    clave,
+    nombre,
+    detalle: detalleDelGrupo(estados),
+    porcentaje: distribucion[clave],
+  }));
+}
+
+/** Cómo cambió una cifra frente al mismo tramo del mes anterior; sin dato si el tramo anterior valía 0. */
+export type Tendencia = 'sube' | 'baja' | 'igual' | 'sin-dato';
+
+/** `variacion` sin valor (`undefined`) es una tarjeta sin variación; `null`, un tramo anterior sin datos. */
+export function tendenciaDeVariacion(variacion: number | null | undefined): Tendencia | null {
+  if (variacion === undefined) return null;
+  if (variacion === null) return 'sin-dato';
+  if (variacion > 0) return 'sube';
+  return variacion < 0 ? 'baja' : 'igual';
+}
+
+/** Texto de la variación con su signo (menos tipográfico U+2212); «—» sin dato. */
+export function textoDeVariacion(variacion: number | null | undefined): string {
+  if (variacion === undefined || variacion === null) return '—';
+  if (variacion > 0) return `+${variacion} %`;
+  return variacion < 0 ? `−${Math.abs(variacion)} %` : '0 %';
+}
+
+/** Lo que lee un lector de pantalla en lugar de la flecha de la tendencia. */
+export function lecturaDeTendencia(tendencia: Tendencia): string {
+  return { sube: 'Sube', baja: 'Baja', igual: 'Sin cambio', 'sin-dato': 'Sin datos del mes anterior' }[
+    tendencia
+  ];
 }

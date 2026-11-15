@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-// La regla del correo se antepone porque el archivo se transpila sin sus import (PBI-0080).
+// La regla del correo y las etiquetas del modelo se anteponen porque el archivo se transpila sin sus import (PBI-0080).
 const source = [
+  await readFile(new URL('./tienda.model.ts', import.meta.url), 'utf8'),
   await readFile(new URL('./correo.rules.ts', import.meta.url), 'utf8'),
   await readFile(new URL('./resumen.rules.ts', import.meta.url), 'utf8'),
 ].join('\n');
@@ -327,4 +328,129 @@ test('los porcentajes suman siempre 100 con el método del mayor resto', () => {
 
 test('sin pedidos la distribución es 0, 0 y 0', () => {
   assert.deepEqual(distribucionPorEstado([]), { completados: 0, enProceso: 0, otros: 0 });
+});
+
+// Lote 08, PBI-0077: el mismo mes de otro año no es el mes en curso ni el mes anterior. Quitar la comparación del año
+// de `estaEnTramo` o de `serieDelMes` hacía pasar todas las pruebas anteriores, que no tienen pedidos de otro año.
+test('un pedido del mismo mes del año anterior no cuenta en el tramo actual ni en el anterior', () => {
+  const { pedidos, ventas, clientes } = calcularIndicadores(
+    [
+      venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe'),
+      // Mismo mes y día que un pedido del tramo actual, pero un año antes.
+      venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe'),
+      // Mismo mes del tramo anterior (octubre), un año antes.
+      venta('2025-10-05T15:00:00Z', 700, 'bea@correo.pe'),
+    ],
+    clientesDe(3),
+    ahora,
+  );
+  assert.equal(pedidos.total, 3, 'el total es histórico: cuenta los tres');
+  assert.equal(
+    pedidos.variacion,
+    null,
+    'octubre de 2026 no tiene pedidos: sin tramo anterior, no hay porcentaje',
+  );
+  assert.equal(ventas.variacion, null);
+  assert.equal(clientes.variacion, null, 'luis y bea son nuevos de 2025, no de este noviembre ni de octubre');
+  const solo2025 = calcularIndicadores(
+    [venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe')],
+    clientesDe(1),
+    ahora,
+  );
+  assert.equal(
+    solo2025.pedidos.variacion,
+    null,
+    'sin pedidos este noviembre, el de 2025 no aparece como actual',
+  );
+  assert.equal(solo2025.ventas.variacion, null);
+  const noviembreContraOctubre = calcularIndicadores(
+    [
+      venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe'),
+      venta('2026-10-02T15:00:00Z', 50, 'ana@correo.pe'),
+      venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe'),
+    ],
+    clientesDe(2),
+    ahora,
+  );
+  assert.equal(noviembreContraOctubre.pedidos.variacion, 0, '1 contra 1: el de 2025 no suma al actual');
+  assert.equal(noviembreContraOctubre.ventas.variacion, 100, '100 contra 50');
+});
+
+test('la serie del mes no cuenta pedidos ni clientes nuevos del mismo mes de otro año', () => {
+  const serie = serieDelMes(
+    [
+      venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe'),
+      venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe'),
+      venta('2025-11-09T15:00:00Z', 900, 'bea@correo.pe'),
+    ],
+    ahora,
+  );
+  assert.equal(serie.length, 30);
+  assert.deepEqual(
+    serie.filter((punto) => punto.pedidos || punto.clientesNuevos),
+    [{ dia: 2, pedidos: 1, clientesNuevos: 1 }],
+  );
+});
+
+test('en enero el mes anterior es diciembre del año anterior, no diciembre del año en curso', () => {
+  const enero = new Date('2027-01-10T17:00:00Z');
+  const { pedidos } = calcularIndicadores(
+    [
+      venta('2027-01-05T15:00:00Z', 10, 'ana@correo.pe'),
+      venta('2026-12-05T15:00:00Z', 10, 'ana@correo.pe'),
+      venta('2026-12-06T15:00:00Z', 10, 'ana@correo.pe'),
+      venta('2027-12-05T15:00:00Z', 10, 'ana@correo.pe'),
+    ],
+    clientesDe(1),
+    enero,
+  );
+  assert.equal(pedidos.variacion, -50, '1 de enero contra 2 de diciembre de 2026');
+});
+
+// Lote 08 (ADR-0017), PBI-0077 y PBI-0079: lo que dicen las tarjetas y las barras de estado del Resumen, que antes
+// vivía en la página y en la tarjeta sin prueba, y la agrupación de estados (D8) en un solo lugar.
+const { tendenciaDeVariacion, textoDeVariacion, lecturaDeTendencia, gruposDeEstado } = await import(
+  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+);
+
+test('PBI-0077: la variación se escribe con signo y la tendencia dice si sube, baja, no cambia o no hay dato', () => {
+  assert.deepEqual(
+    [50, -75, 0, null, undefined].map((v) => [tendenciaDeVariacion(v), textoDeVariacion(v)]),
+    [
+      ['sube', '+50 %'],
+      ['baja', '\u221275 %'],
+      ['igual', '0 %'],
+      ['sin-dato', '—'],
+      [null, '—'],
+    ],
+  );
+  assert.equal(lecturaDeTendencia('sube'), 'Sube');
+  assert.equal(lecturaDeTendencia('baja'), 'Baja');
+  assert.equal(lecturaDeTendencia('igual'), 'Sin cambio');
+  assert.equal(lecturaDeTendencia('sin-dato'), 'Sin datos del mes anterior');
+});
+
+test('PBI-0079: los estados se agrupan en completados, en proceso y otros con su nombre y su detalle (D8)', () => {
+  const grupos = gruposDeEstado([
+    venta('2026-11-02T15:00:00Z', 10, 'a@correo.pe', 'delivered'),
+    venta('2026-11-02T15:00:00Z', 10, 'b@correo.pe', 'confirmed'),
+    venta('2026-11-02T15:00:00Z', 10, 'c@correo.pe', 'processing'),
+    venta('2026-11-02T15:00:00Z', 10, 'd@correo.pe', 'shipped'),
+    venta('2026-11-02T15:00:00Z', 10, 'e@correo.pe', 'cancelled'),
+  ]);
+  assert.deepEqual(grupos, [
+    { clave: 'completados', nombre: 'Completados', detalle: 'Entregado', porcentaje: 20 },
+    {
+      clave: 'enProceso',
+      nombre: 'En proceso',
+      detalle: 'Confirmado, en preparación y enviado',
+      porcentaje: 60,
+    },
+    { clave: 'otros', nombre: 'Otros', detalle: 'Cancelado', porcentaje: 20 },
+  ]);
+  assert.deepEqual(
+    gruposDeEstado([]).map((g) => g.porcentaje),
+    [0, 0, 0],
+    'sin pedidos, cada barra queda en 0',
+  );
 });

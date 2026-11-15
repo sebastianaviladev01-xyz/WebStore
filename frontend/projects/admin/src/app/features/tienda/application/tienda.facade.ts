@@ -14,6 +14,7 @@ import {
 } from '../domain/cambio-registro.rules';
 import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { ROLES } from '../../sesion/domain/rol.rules';
+import { conPocoStock } from '../domain/inventario.rules';
 import { ajustarPreciosTarifas, asignarPrecioTarifa } from '../domain/tarifa-envio.rules';
 import {
   Banner,
@@ -61,7 +62,7 @@ export class TiendaFacade {
   readonly orders = computed(() => this.state()?.orders ?? []);
   readonly complaints = computed(() => this.state()?.complaints ?? []);
   readonly config = computed(() => this.state()?.config ?? null);
-  readonly lowStock = computed(() => this.products().filter((p) => p.stock <= 5));
+  readonly lowStock = computed(() => this.products().filter((p) => conPocoStock(p.stock)));
   readonly loading = signal(false);
   /** Hay un guardado en curso (PBI-0121): los formularios desactivan «Guardar» y no envían otro. */
   readonly saving = signal(false);

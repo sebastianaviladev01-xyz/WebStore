@@ -31,6 +31,7 @@ const fuente = [
   dobles,
   await leer('../../sesion/domain/sesion.gateway.ts'),
   await leer('../domain/cambio-registro.rules.ts'),
+  await leer('../domain/inventario.rules.ts'),
   await leer('../domain/tienda.gateway.ts'),
   await leer('./tienda.facade.ts'),
 ].join('\n');
