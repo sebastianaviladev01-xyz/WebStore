@@ -12,12 +12,16 @@ export class BffCheckoutGateway implements CheckoutGateway {
   private readonly http = inject(HttpClient);
   private readonly base = inject(BFF_BASE_URL);
 
-  placeOrder(command: CheckoutCommand, sessionToken: string | null): Promise<PedidoRegistrado> {
+  placeOrder(
+    command: CheckoutCommand,
+    sessionToken: string | null,
+    claveDelIntento: string,
+  ): Promise<PedidoRegistrado> {
     return callBff(
       () =>
         firstValueFrom(
           this.http.post<PedidoRegistrado>(`${this.base}/checkout/orders`, command, {
-            headers: bffHeaders(sessionToken),
+            headers: bffHeaders(sessionToken).set('idempotency-key', claveDelIntento),
           }),
         ),
       'No pudimos procesar el pedido. Revisa tus datos e inténtalo nuevamente.',

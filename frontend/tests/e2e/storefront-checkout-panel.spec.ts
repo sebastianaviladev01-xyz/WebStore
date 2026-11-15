@@ -178,6 +178,7 @@ test('el Tab recorre los campos, el método de pago y los botones en el orden de
       return (
         el.getAttribute('formcontrolname') ??
         el.closest('mat-select')?.getAttribute('formcontrolname') ??
+        el.closest('mat-checkbox')?.getAttribute('formcontrolname') ??
         (el.closest('mat-radio-button')
           ? `pago:${el.closest('mat-radio-button')!.getAttribute('value')}`
           : null) ??
@@ -188,7 +189,8 @@ test('el Tab recorre los campos, el método de pago y los botones en el orden de
     if (recorrido.at(-1) !== actual) recorrido.push(actual);
     await page.keyboard.press('Tab');
   }
-  // «Finalizar compra» está deshabilitado sin envío cotizado, así que el Tab lo salta.
+  // «Finalizar compra» está deshabilitado sin envío cotizado, así que el Tab lo salta. Lote 04 (PBI-0040): la
+  // casilla de los términos y su enlace van justo antes, en el resumen.
   expect(recorrido).toEqual([
     'fullName',
     'email',
@@ -201,6 +203,8 @@ test('el Tab recorre los campos, el método de pago y los botones en el orden de
     'deliveryDate',
     'reference',
     'pago:card',
+    'termsAccepted',
+    'Leer los términos y condiciones',
     'Volver al carrito',
   ]);
 });

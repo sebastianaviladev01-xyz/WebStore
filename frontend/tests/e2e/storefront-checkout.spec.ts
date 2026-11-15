@@ -41,6 +41,8 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await page.getByRole('option', { name: 'Miraflores', exact: true }).click();
   await page.getByRole('textbox', { name: 'Dirección' }).fill('Av. Larco 123');
   await page.getByRole('radio', { name: 'Yape / Plin' }).check();
+  // Lote 04 (PBI-0040): la casilla de los términos es obligatoria.
+  await page.getByRole('checkbox', { name: 'Acepto los términos y condiciones' }).check();
 
   await expect(page.getByText(/Envío cotizado:\s*S\/\s*12\.00/)).toBeVisible();
   // 699 del producto + 12 de envío a Miraflores.
