@@ -5,7 +5,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { bestShippingRate } from '../../../../src/domain/envios/tarifa-envio.rules.mjs';
+import { bestShippingRate, requireShippingRate } from '../../../../src/domain/envios/tarifa-envio.rules.mjs';
 
 const tarifas = [
   { id: 'r-1', origin: 'Lima Centro', destination: 'San Isidro', price: 12 },
@@ -47,4 +47,20 @@ test('no modifica la tabla recibida', () => {
   const copia = structuredClone(tarifas);
   bestShippingRate(tarifas, 'San Isidro');
   assert.deepEqual(tarifas, copia);
+});
+
+// Lote 02 (PBI-0103): la tarifa que exige el pedido, en un solo sitio para el checkout y el cambio de dirección.
+
+test('requireShippingRate devuelve la tarifa más baja del distrito', () => {
+  assert.equal(requireShippingRate(tarifas, 'San Isidro').id, 'r-2');
+});
+
+test('sin tarifa para el distrito responde SHIPPING_UNAVAILABLE', () => {
+  for (const distrito of ['Barranco', '', undefined])
+    assert.throws(
+      () => requireShippingRate(tarifas, distrito),
+      { code: 'SHIPPING_UNAVAILABLE', kind: 'validation', message: /tarifa para ese destino/ },
+      String(distrito),
+    );
+  assert.throws(() => requireShippingRate([], 'San Isidro'), { code: 'SHIPPING_UNAVAILABLE' });
 });

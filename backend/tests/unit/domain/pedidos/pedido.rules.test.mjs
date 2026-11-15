@@ -9,7 +9,11 @@ import assert from 'node:assert/strict';
 import {
   canModify,
   changeOrderStatus,
+  igvIncluded,
+  IGV_RATE,
   isOrderOpen,
+  nextOrderId,
+  orderAmounts,
   ORDER_MODIFICATION_WINDOW_MS,
   orderBelongsTo,
   roundMoney,
@@ -140,4 +144,44 @@ test('roundMoney redondea a céntimos', () => {
   assert.equal(roundMoney(0.1 + 0.2), 0.3);
   assert.equal(roundMoney(112), 112);
   assert.equal(roundMoney(0), 0);
+});
+
+// Lote 02 (PBI-0103): el código del pedido, el IGV y los montos.
+
+test('el código del pedido es WS- y ocho dígitos tomados del reloj', () => {
+  assert.equal(nextOrderId([], 1_794_000_123_456), 'WS-00123456');
+  assert.equal(nextOrderId([], 1_794_067_890_123), 'WS-67890123');
+});
+
+test('el código no repite uno ya emitido: si el del reloj está tomado, toma el siguiente libre', () => {
+  const ocupados = ['WS-00123456', 'WS-00123457', 'WS-00123458', 'WS-99999999'];
+  assert.equal(nextOrderId(ocupados, 1_794_000_123_456), 'WS-00123459');
+  // Al llegar al final de los ocho dígitos, vuelve al principio.
+  assert.equal(nextOrderId(['WS-99999999'], 1_794_099_999_999), 'WS-00000000');
+});
+
+test('dos pedidos en el mismo milisegundo reciben códigos distintos', () => {
+  const emitidos = [];
+  for (let i = 0; i < 40; i++) emitidos.push(nextOrderId(emitidos, 1_794_000_123_456));
+  assert.equal(new Set(emitidos).size, 40);
+  for (const id of emitidos) assert.match(id, /^WS-\d{8}$/);
+});
+
+test('el código ignora los identificadores de pedidos que no tienen su forma', () => {
+  assert.equal(nextOrderId(['WS-1', 'otro', null, undefined], 1_794_000_000_001), 'WS-00000001');
+});
+
+test('el IGV es del 18 % y los precios lo incluyen', () => {
+  assert.equal(IGV_RATE, 0.18);
+  assert.equal(igvIncluded(118), 18);
+  assert.equal(igvIncluded(100), 15.25);
+  assert.equal(igvIncluded(350), 53.39);
+  assert.equal(igvIncluded(59.97), 9.15);
+  assert.equal(igvIncluded(0), 0);
+});
+
+test('los montos del pedido: el IGV sale del subtotal y el envío se suma aparte', () => {
+  assert.deepEqual(orderAmounts(100, 12), { subtotal: 100, igv: 15.25, shippingCost: 12, total: 112 });
+  assert.deepEqual(orderAmounts(350, 0), { subtotal: 350, igv: 53.39, shippingCost: 0, total: 350 });
+  assert.deepEqual(orderAmounts(59.97, 9.5), { subtotal: 59.97, igv: 9.15, shippingCost: 9.5, total: 69.47 });
 });

@@ -3,7 +3,7 @@
  * almacén en memoria: fecha de entrega desde hoy en Lima, método de pago de los que ofrece la tienda, cantidad
  * entera y positiva, y solo los campos conocidos de `customer` y `shipping`.
  */
-import { test } from 'node:test';
+import { mock, test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { createCheckoutUseCases } from '../../../../src/application/checkout/checkout.use-cases.mjs';
@@ -425,4 +425,34 @@ test('cada compra crea la ficha del cliente o actualiza la que tiene su correo, 
   );
   checkout.placeOrder(pedido({ customer: { ...pedido().customer, email: 'luis@example.com' } }), '');
   assert.equal(store.state.customers.length, 2);
+});
+
+// Lote 02 (PBI-0103): el código del pedido no se repite.
+
+test('40 pedidos en el mismo milisegundo reciben códigos distintos, con la forma WS-NNNNNNNN', () => {
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-11-15T15:00:00.000Z') });
+  try {
+    const store = crearAlmacen();
+    store.state.products[0].stock = 100;
+    const checkout = createCheckoutUseCases({ store, security });
+    const ids = Array.from({ length: 40 }, () => checkout.placeOrder(pedido(), '').id);
+    assert.equal(new Set(ids).size, 40);
+    for (const id of ids) assert.match(id, /^WS-\d{8}$/);
+    assert.equal(new Set(store.state.activity.map((evento) => evento.id)).size, 40);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
+test('un código ya emitido por otro pedido guardado, aunque sea del mismo instante, no se reutiliza', () => {
+  mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-11-15T15:00:00.000Z') });
+  try {
+    const store = crearAlmacen();
+    const checkout = createCheckoutUseCases({ store, security });
+    const primero = checkout.placeOrder(pedido(), '').id;
+    store.state.orders = store.state.orders.map((orden) => ({ ...orden }));
+    assert.notEqual(checkout.placeOrder(pedido(), '').id, primero);
+  } finally {
+    mock.timers.reset();
+  }
 });
