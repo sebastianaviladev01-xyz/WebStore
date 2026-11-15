@@ -186,6 +186,21 @@ En Bash: `PORT=3400 WEBSTORE_DATA_FILE="$PWD/backend/data-capturas-trabajo.json"
 - `WEBSTORE_DATA_FILE` lleva una ruta absoluta a una copia de trabajo, nunca `backend/data.json` ([trabajar sobre una copia](#trabajar-sobre-una-copia)). El BFF migra y reescribe el archivo con el que arranca, así que la copia de referencia no se abre directamente.
 - Nunca a la vez que `npm run test:e2e`, que levanta sus propios servidores en esos puertos: detenlos antes de la suite.
 
+## Accesibilidad con lector de pantalla
+
+Las e2e comprueban el rol, el nombre accesible, la descripción y el orden de foco, pero no cómo los anuncia un lector de pantalla real ([PBI-0165](../planning/backlog.md)). Esta lista la ejecuta una persona antes de una entrega a clientes o cuando un cambio toca estos recorridos, con NVDA en Windows (Chrome) y VoiceOver en iPhone (Safari), sobre una copia de datos y en modo demo:
+
+| Recorrido | Qué debe anunciar |
+|---|---|
+| Tienda: agregar al carrito desde la ficha | El diálogo «Producto agregado» con su título, el foco en «Ver carrito» y, si las hay, las sugerencias como lista de enlaces |
+| Tienda: checkout con un campo vacío y sin aceptar los términos | Cada mensaje de error junto a su campo y el de la casilla de términos al intentar finalizar |
+| Tienda: «Recuperar contraseña» y «Verificar cuenta» | El resultado de pedir el código, sin prometer un correo |
+| Admin: menú de usuario | Botón con el nombre y las iniciales, menú abierto con sus opciones y el bloque de la cuenta como descripción |
+| Admin: campana | El número de pedidos nuevos en el nombre del botón y cada pedido del menú como enlace |
+| Admin: guardado fallido de un formulario | El motivo una sola vez, junto al botón |
+
+El resultado se anota en el PR de la entrega con la fecha, el lector y el navegador. Un fallo se registra como PBI.
+
 ## Problemas frecuentes
 
 | Síntoma | Causa | Solución |

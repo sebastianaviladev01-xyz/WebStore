@@ -42,8 +42,9 @@ Todos los comandos se ejecutan desde el checkout principal:
 4. Si `git worktree list --porcelain` lo muestra bloqueado por la sesión de una herramienta (`locked … (pid N)`), comprueba ese proceso con `Get-Process -Id N`. Si ya no existe, desbloquéalo con `git worktree unlock .worktrees/NNN-slug`. Si existe, la sesión que lo usa sigue abierta: ciérrala antes de seguir.
 5. `git worktree remove .worktrees/NNN-slug`. Las carpetas ignoradas (`node_modules`, `dist`, `.angular`, `frontend/output`) y las copias `backend/data*.json` se borran con él. Si git no puede borrar la carpeta, ya no la tiene registrada: bórrala cuando se libere.
 6. `git branch -D feature/NNN-slug`. Hace falta `-D` porque `-d` compara con la rama actual, no con `origin/dev`, y el paso 1 ya lo comprobó.
-7. Si la feature guardó copias de datos o capturas fuera del worktree (por ejemplo, en el directorio temporal de la sesión), bórralas. No toques `backend/data.json` del checkout principal.
-8. [Actualiza `dev` local](#actualizar-dev-local).
+7. Antes del paso 5, copia las capturas que citan `verification.md` o el PR a `frontend/output/visual-qa/<nombre>/` del checkout principal: `frontend/output` está ignorado y se borra con el worktree.
+8. Si la feature guardó copias de datos o capturas fuera del worktree (por ejemplo, en el directorio temporal de la sesión), bórralas. No toques `backend/data.json` del checkout principal.
+9. [Actualiza `dev` local](#actualizar-dev-local).
 
 La rama remota no se borra desde aquí: la borra una persona en GitHub, según el [modelo de ramas](../git/conventional-pull-requests.md).
 
@@ -219,6 +220,7 @@ Herramientas:
   - `node tools/qa/comparar.mjs <carpeta> [umbral]`: compara cada par, deja en `comparacion/` la imagen con las diferencias en rojo y un `resumen.md` con el tamaño de cada toma, los píxeles distintos y su zona. El umbral por píxel (30 por omisión, suma de los tres canales) deja fuera el ruido de las fotos y de los bordes suavizados sin ocultar un cambio de color. Termina con código 1 si alguna captura difiere. El `resumen.md` es lo que se cita en `verification.md` o en el PR.
   - El ruido que no es del cambio se explica, no se esconde: un carrusel que rota (la portada), una cifra que cambia con los datos (las «Personas en línea» del Resumen suben con cada captura de la tienda) o la hora. Para repetirlo sin ese ruido, toma la misma página dos veces sobre el mismo código y compara: lo que ya difiere ahí no es del cambio.
   - Ayudas para escenarios y medidas en [`tools/qa/lib/qa.mjs`](../../frontend/tools/qa/lib/qa.mjs): `tokensDeAdmin`, `conSesion`, `cookieDeTema`, `activarTema` (activa un tema por la API del Admin; devuelve el anterior, para restaurarlo), `crearPedidoDeInvitado`, `asentar` y `medirColores` (`getComputedStyle` de un elemento, para medir contraste sin mirar la imagen).
+- **Base en `sdd-verify`.** Si las capturas «antes» de la implementación se conservan y la copia de datos no cambió, no se vuelven a tomar: se comparan con las de la punta. Activar un tema por la API del Admin cambia la copia (tema activo y revisión de la apariencia): restaura el tema anterior al terminar o usa la cookie de la vista previa del modo demo, que no escribe en la copia.
 - Como mínimo, un ancho de escritorio y uno móvil por ruta afectada.
 - Algunas herramientas tienen su propio navegador para capturar; su adaptador dice cómo usarlo. Las dos tomas de un par se hacen con el mismo método.
 - `frontend/output/` está ignorado por git: las capturas no se versionan. La evidencia en `verification.md` dice qué rutas y anchos se compararon, el resultado y dónde están las capturas; si hacen falta en el PR, se adjuntan allí.
@@ -227,7 +229,7 @@ Herramientas:
 ## Evidencia en el commit de la tarea
 
 - El commit de cada tarea incluye su fila en `verification.md`, con una línea por control (comando y resultado), y marca la tarea como `hecha` en `tasks.md`.
-- La primera línea de la tarea dice con qué se ejecutó: herramienta, modelo real, esfuerzo y si fue delegada, y el respaldo si se usó uno. Así la evidencia no depende de qué resolvía el catálogo ese día.
+- La primera línea de la tarea dice con qué se ejecutó: herramienta, modelo real, esfuerzo y si fue delegada, y el respaldo si se usó uno. Así la evidencia no depende de qué resolvía el catálogo ese día. Si la sesión no puede leer su esfuerzo, escribe «esfuerzo no visible en la sesión» y el que le asignó el encargo; la sesión principal que orquesta anota también su propio modelo.
 - Si la tarea comparó capturas, una línea dice las rutas, los anchos y el resultado.
 - Como el SHA no se conoce antes del commit, la fila lo deja vacío. Los SHA se rellenan en un único commit `docs` al cerrar la fase.
 - `verification.md` completo (matriz de controles, cobertura de los AC y Definition of Done) solo se redacta en `sdd-verify`.

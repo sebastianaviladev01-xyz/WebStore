@@ -15,6 +15,9 @@ Lo propio de Claude Code en WebStore ([ADR-0008](../../docs/adrs/0008-trabajar-c
 - `ExitWorktree` con `action: "keep"` vuelve al checkout principal sin borrar el worktree.
 - La app de escritorio puede abrir una rama de sesión `claude/<nombre>`. Se lleva a `feature/*` según [Ramas creadas por la herramienta](../../docs/development/agent-execution.md#ramas-creadas-por-la-herramienta).
 - Una sesión abierta bloquea su worktree: `git worktree list --porcelain` lo muestra como `locked claude session … (pid N)`. Para desbloquearlo, sigue el paso 4 de [Cerrar el worktree](../../docs/development/agent-execution.md#cerrar-el-worktree).
+- El directorio del shell no se conserva entre comandos fuera de las carpetas de la sesión: en un worktree, usa rutas absolutas en Bash y PowerShell.
+- Cambiar el modelo de la sesión con `/model` o con el selector detiene los comandos en segundo plano de esa sesión (por ejemplo, unas e2e a medias, que dejan servidores ocupando los puertos). Cámbialo cuando no haya ninguno en marcha.
+- Un subagente que espera su propio trabajo en segundo plano sigue vivo aunque su informe no haya llegado. La sesión principal no detiene procesos ni ejecuta pruebas en su worktree hasta recibir el informe; si duda, se lo pregunta con `SendMessage`.
 - Si una edición responde «Edits are blocked… the worktree … was set aside», aplica [Bloqueo de escritura de la sesión](../../docs/development/agent-execution.md#bloqueo-de-escritura-de-la-sesión). La causa más probable es que la sesión se archivó con un worktree del pool de la herramienta y después se desarchivó.
 
 ## Servidores de desarrollo y capturas
