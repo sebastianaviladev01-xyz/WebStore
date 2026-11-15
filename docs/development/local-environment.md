@@ -80,6 +80,26 @@ En Bash: `WEBSTORE_DEMO_MODE=true npm run start:bff`.
 - **Limitación con túneles:** si la demo se publica con túneles de `trycloudflare.com`, la tienda y el Admin reciben subdominios distintos de un dominio que está en la [Public Suffix List](https://publicsuffix.org/list/public_suffix_list.dat). El navegador no permite una cookie compartida para ese dominio, así que cada aplicación recuerda su propia vista previa. Compartirla entre la tienda y el Admin solo funciona en `localhost` y en un despliegue con dominio propio y subdominios.
 - La suite e2e arranca su BFF en modo demo ([`frontend/playwright.config.ts`](../../frontend/playwright.config.ts)).
 
+### Códigos de verificación y reinicio
+
+Sin correo real, el registro y la recuperación de contraseña solo se prueban si el BFF devuelve el código de seis dígitos en la respuesta (`testCode`). Desde el lote 01 ([ADR-0017](../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md)) no lo hace por defecto, ni siquiera fuera de `NODE_ENV=production`:
+
+| Variable | Qué habilita | Por defecto |
+|---|---|---|
+| `WEBSTORE_EXPOSE_TEST_CODES=true` | Los códigos de verificación y de recuperación viajan en la respuesta | Apagada; el modo demo la enciende salvo que valga `false` |
+| `WEBSTORE_ALLOW_STORE_RESET=true` | `POST /bff/admin/reset` vuelve a los datos del seed; sin ella responde `403 STORE_RESET_DISABLED` | Apagada; el modo demo la enciende |
+
+Como las de modo demo, solo `true` las enciende. En PowerShell:
+
+```powershell
+$env:WEBSTORE_EXPOSE_TEST_CODES = "true"
+npm run start:bff
+```
+
+- La configuración `bff` de [`.claude/launch.json`](../../.claude/launch.json) ya define `WEBSTORE_EXPOSE_TEST_CODES=true`.
+- La suite e2e la define de forma explícita, además del modo demo, y el smoke test del contrato define las dos ([`contrato.smoke.mjs`](../../backend/tests/integration/contrato.smoke.mjs)).
+- Una instalación para un cliente no define ninguna ([puesta en marcha](puesta-en-marcha.md)).
+
 ### Apagar
 
 - Ctrl+C en cada una de las tres terminales.
@@ -96,6 +116,7 @@ Solo un BFF puede escuchar en el puerto 3000 y un servidor de cada frontend en 4
 - El BFF guarda todo su estado en un archivo JSON: catálogo, inventario, clientes, cuentas, pedidos, reclamos, contenido, tarifas, usuarios administrativos y sesiones.
 - Por defecto es `backend/data.json`. No se versiona (`.gitignore`): contiene hashes de contraseñas, sesiones y datos de clientes de prueba.
 - Si no existe, el BFF lo crea desde el seed ([`seed.mjs`](../../backend/src/infrastructure/persistencia/seed.mjs)). Al cargarlo, lo valida y lo migra (`schemaVersion`).
+- Si existe pero está dañado (JSON cortado o que no es un objeto), el BFF no arranca, dice por qué y no lo toca: revísalo o restáuralo desde una copia. Cada guardado se escribe en un temporal junto al archivo y se renombra sobre él.
 - Las variables de entorno del BFF están en [`backend/architecture.md` §3](../../backend/architecture.md#3-configuración).
 
 ### Trabajar sobre una copia
@@ -116,7 +137,7 @@ En Bash: `cp backend/data.json /tmp/webstore-data.json && WEBSTORE_DATA_FILE=/tm
 
 ### Volver a los datos del seed
 
-Renombra `backend/data.json` (por ejemplo, a `data.anterior.json`, que también queda fuera de git) y arranca el BFF: crea uno nuevo. No lo borres sin revisarlo antes. En la demo, el superadministrador también puede reiniciar el estado con `POST /bff/admin/reset` ([contrato](../../backend/docs/BFF-CONTRACT.md#administración)).
+Renombra `backend/data.json` (por ejemplo, a `data.anterior.json`, que también queda fuera de git) y arranca el BFF: crea uno nuevo. No lo borres sin revisarlo antes. En modo demo, o con `WEBSTORE_ALLOW_STORE_RESET=true`, el superadministrador también puede reiniciar el estado con `POST /bff/admin/reset` ([contrato](../../backend/docs/BFF-CONTRACT.md#administración)).
 
 ## QA visual con Chrome
 

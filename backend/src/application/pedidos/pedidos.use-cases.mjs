@@ -1,11 +1,12 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
-import { nowIso } from '../../domain/comun/reloj.mjs';
+import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
-import { requireFields } from '../../domain/comun/validacion.rules.mjs';
 import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
+import { pickShipping, requireDeliveryDate } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
 import {
   canModify,
   changeOrderStatus,
+  isOrderOpen,
   orderBelongsTo,
   roundMoney,
 } from '../../domain/pedidos/pedido.rules.mjs';
@@ -38,13 +39,19 @@ export function createPedidosUseCases({ store, security }) {
 
   function requireModifiableOrder(id, credentials) {
     const order = requireOrderAccess(id, credentials);
+    if (!isOrderOpen(order))
+      throw new DomainError(
+        'conflict',
+        'ORDER_NOT_MODIFIABLE',
+        'El pedido ya se envió, se entregó o se canceló: no se puede cambiar.',
+      );
     if (!canModify(order))
       throw new DomainError('conflict', 'ORDER_WINDOW_EXPIRED', 'La ventana de modificación ya venció.');
     return order;
   }
 
-  function changeShipping(order, shipping) {
-    requireFields(shipping, ['addressLine', 'district', 'province', 'department']);
+  function changeShipping(order, data) {
+    const shipping = pickShipping(data);
     const rate = bestShippingRate(store.state.rates, shipping.district);
     if (!rate)
       throw new DomainError(
@@ -59,9 +66,9 @@ export function createPedidosUseCases({ store, security }) {
     order.updatedAt = nowIso();
   }
 
+  /** Desde hoy en Lima; la fecha vigente del pedido se acepta sin cambios (la tienda la reenvía con la dirección). */
   function changeDeliveryDate(order, data) {
-    requireFields(data, ['deliveryDate']);
-    order.deliveryDate = data.deliveryDate;
+    order.deliveryDate = requireDeliveryDate(data.deliveryDate, limaDate(), order.deliveryDate);
     order.updatedAt = nowIso();
   }
 

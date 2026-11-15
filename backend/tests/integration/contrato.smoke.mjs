@@ -8,6 +8,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { fechaDeLima } from './apoyo/servidor.mjs';
+
 const port = 3107;
 const base = `http://localhost:${port}`;
 const dataFile = join(tmpdir(), `webstore-smoke-${process.pid}.json`);
@@ -18,7 +20,9 @@ const child = spawn(process.execPath, [serverEntry], {
     ...process.env,
     PORT: String(port),
     WEBSTORE_DATA_FILE: dataFile,
+    // Fuera del modo demo, los códigos y el reinicio se piden de forma explícita (PBI-0090 y PBI-0091).
     WEBSTORE_EXPOSE_TEST_CODES: 'true',
+    WEBSTORE_ALLOW_STORE_RESET: 'true',
     WEBSTORE_NON_WORKING_DATES: '',
   },
 });
@@ -37,6 +41,14 @@ async function request(path, options = {}) {
   return response.status === 204 ? null : response.json();
 }
 const authorization = (token) => ({ authorization: `Bearer ${token}` });
+const errorDe = async (response) => (await response.json()).error ?? {};
+/** Exige el estado y el código de error; devuelve el `error` del Problem. */
+async function esperarError(response, status, code, contexto) {
+  const error = response.status === status ? await errorDe(response) : {};
+  if (response.status !== status || error.code !== code)
+    throw new Error(`${contexto}: se esperaba ${status} ${code} y llegó ${response.status} ${error.code}`);
+  return error;
+}
 async function adminLogin(email = 'owner@webstore.demo', password = 'WebStore#2026') {
   return request('/bff/admin/sessions', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
@@ -95,7 +107,7 @@ try {
       document: '12345678',
     },
     shipping: { addressLine: 'Av Demo 123', district: 'San Isidro', province: 'Lima', department: 'Lima' },
-    deliveryDate: '2026-11-10',
+    deliveryDate: fechaDeLima(2),
     paymentMethod: 'card',
     items: [{ product: { ...product, price: 1 }, quantity: 2 }],
     subtotal: 2,
@@ -155,6 +167,44 @@ try {
   products = await request('/bff/catalog/products');
   if (products[0].stock !== 15) throw new Error('Cancelar desde Admin no liberó el stock reservado');
 
+  // Un pedido entregado no lo cancela el cliente, aunque siga dentro de las 24 horas (PBI-0094).
+  const entregado = await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      orders: snapshot.orders.map((item) =>
+        item.id === entregado.id ? { ...item, status: 'delivered' } : item,
+      ),
+    }),
+  });
+  const cancelarEntregado = await raw(`/bff/orders/${entregado.id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': entregado.accessToken },
+    body: '{}',
+  });
+  if (
+    cancelarEntregado.status !== 409 ||
+    (await cancelarEntregado.json()).error?.code !== 'ORDER_NOT_MODIFIABLE'
+  )
+    throw new Error('El cliente pudo cancelar un pedido entregado');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      orders: snapshot.orders.map((item) =>
+        item.id === entregado.id ? { ...item, status: 'cancelled' } : item,
+      ),
+    }),
+  });
+  products = await request('/bff/catalog/products');
+  if (products[0].stock !== 15)
+    throw new Error('Cancelar el pedido entregado desde Admin no liberó el stock');
+
   // Un Admin con datos viejos no debe pisar el stock vendido mientras tanto.
   const staleSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   await request('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(command) });
@@ -212,10 +262,44 @@ try {
     }),
   });
   if (!registration.testCode) throw new Error('El canal de prueba no entregó el código temporal');
+  if ('account' in registration) throw new Error('El alta no debe devolver los datos de la cuenta');
+  // Reenviar el código (PBI-0098): 202 con un código nuevo; el anterior deja de valer.
+  const reenvio = await raw('/bff/account-verification-requests', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'account@example.com' }),
+  });
+  const codigoNuevo = reenvio.status === 202 ? (await reenvio.json()).testCode : undefined;
+  if (!/^\d{6}$/.test(codigoNuevo ?? ''))
+    throw new Error('Reenviar el código debe responder 202 con un código');
+  const sinCuenta = await raw('/bff/account-verification-requests', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'nadie@example.com' }),
+  });
+  if (sinCuenta.status !== 202 || 'testCode' in (await sinCuenta.json()))
+    throw new Error('Reenviar a un correo sin cuenta debe responder 202 sin código');
   await request('/bff/account-verifications', {
     method: 'POST',
-    body: JSON.stringify({ email: 'account@example.com', code: registration.testCode }),
+    body: JSON.stringify({ email: 'account@example.com', code: codigoNuevo }),
   });
+  // Alta uniforme (PBI-0100): un correo ya verificado responde 201 como uno nuevo, sin código ni cambios.
+  const repetida = await raw('/bff/accounts', {
+    method: 'POST',
+    body: JSON.stringify({
+      fullName: 'Otra persona',
+      email: 'account@example.com',
+      phone: '999999999',
+      document: '87654321',
+      password: 'OtraClave2026',
+    }),
+  });
+  const cuerpoRepetida = repetida.status === 201 ? await repetida.json() : {};
+  if (repetida.status !== 201 || cuerpoRepetida.testCode || cuerpoRepetida.message !== registration.message)
+    throw new Error('El alta de un correo ya verificado debe responder igual que una nueva, sin código');
+  const cabeceras = (await raw('/bff/catalog/products')).headers;
+  if (cabeceras.get('cache-control') !== 'no-store' || cabeceras.get('x-content-type-options') !== 'nosniff')
+    throw new Error(
+      'Las respuestas JSON deben llevar Cache-Control: no-store y X-Content-Type-Options: nosniff',
+    );
   const accountSession = await request('/bff/account-sessions', {
     method: 'POST',
     body: JSON.stringify({ email: 'account@example.com', password: 'CuentaSmoke2026' }),
@@ -263,7 +347,24 @@ try {
       request: 'Solicito revisión del caso.',
     }),
   });
-  if (!complaint.id.startsWith('REC-')) throw new Error('No se generó código de reclamación');
+  if (!/^REC-\d{4}-\d{5}$/.test(complaint.id)) throw new Error('No se generó código de reclamación');
+  const montoInvalido = await raw('/bff/complaints', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'Cliente Smoke',
+      document: '12345678',
+      email: 'smoke@example.com',
+      phone: '999999999',
+      address: 'Av Demo 123',
+      subject: 'Producto de prueba',
+      amount: 'abc',
+      type: 'reclamo',
+      detail: 'Detalle.',
+      request: 'Revisión.',
+    }),
+  });
+  if (montoInvalido.status !== 400 || (await montoInvalido.json()).error?.code !== 'INVALID_COMPLAINT_AMOUNT')
+    throw new Error('Un monto no numérico debe responder 400 INVALID_COMPLAINT_AMOUNT');
   const toLimaDate = (date) =>
     new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Lima',
@@ -423,14 +524,56 @@ try {
   });
   if (lockout.status !== 409) throw new Error('El BFF permitió quedarse sin superadministrador');
 
+  // Guardado del Admin (PBI-0089 y PBI-0095): todo o nada, y cada colección validada antes de aplicar.
+  const precioAntes = (await request('/bff/catalog/products'))[0].price;
+  const rechazado = await put(owner, {
+    revision: superSnapshot.revision,
+    products: superSnapshot.products.map((item, index) => (index === 0 ? { ...item, price: 1 } : item)),
+    users: [],
+  });
+  if (rechazado.status !== 409) throw new Error('Un guardado sin superadministrador debe responder 409');
+  if ((await request('/bff/catalog/products'))[0].price !== precioAntes)
+    throw new Error('Un guardado rechazado dejó aplicado el precio');
+  for (const [cambio, contexto] of [
+    [{ rates: 'x' }, 'Tarifas que no son una lista'],
+    [{ config: null }, 'Configuración nula'],
+    [
+      { products: superSnapshot.products.map((item, i) => (i ? item : { ...item, stock: -1 })) },
+      'Stock negativo',
+    ],
+    [{ orders: [{ id: 'WS-1', status: 'lo-que-sea' }] }, 'Estado de pedido desconocido'],
+  ]) {
+    const error = await esperarError(
+      await put(owner, { revision: superSnapshot.revision, ...cambio }),
+      400,
+      'INVALID_COLLECTION',
+      contexto,
+    );
+    if (!error.details?.collection) throw new Error(`${contexto}: INVALID_COLLECTION sin details.collection`);
+  }
+  await esperarError(
+    await put(owner, { revision: superSnapshot.revision, complaints: [] }),
+    409,
+    'COMPLAINTS_READ_ONLY',
+    'Borrar las reclamaciones',
+  );
+  const respondido = await put(owner, {
+    revision: superSnapshot.revision,
+    complaints: superSnapshot.complaints.map((item) =>
+      item.id === complaint.id
+        ? { ...item, status: 'resolved', providerResponse: 'Atendido', amount: 1 }
+        : item,
+    ),
+  });
+  const reclamoRespondido = (await respondido.json()).complaints.find((item) => item.id === complaint.id);
+  if (
+    reclamoRespondido?.status !== 'resolved' ||
+    reclamoRespondido.providerResponse !== 'Atendido' ||
+    reclamoRespondido.amount !== 100
+  )
+    throw new Error('El Admin debe responder la reclamación sin cambiar su monto');
+
   // Apariencia y temas (TEST-13): rutas públicas, rutas del Admin con `themes.manage`, revisión propia y caché.
-  const errorDe = async (response) => (await response.json()).error ?? {};
-  const esperarError = async (response, status, code, contexto) => {
-    const error = response.status === status ? await errorDe(response) : {};
-    if (response.status !== status || error.code !== code)
-      throw new Error(`${contexto}: se esperaba ${status} ${code} y llegó ${response.status} ${error.code}`);
-    return error;
-  };
   const temas = (session, path = '', options = {}) =>
     raw(`/bff/admin/${path || 'themes'}`, {
       ...options,
@@ -461,10 +604,13 @@ try {
     primeraHoja.status !== 200 ||
     primeraHoja.headers.get('content-type') !== 'text/css; charset=utf-8' ||
     primeraHoja.headers.get('cache-control') !== 'no-cache' ||
-    !/(^|,\s*)Cookie(\s*,|$)/i.test(primeraHoja.headers.get('vary') ?? '') ||
+    primeraHoja.headers.get('x-content-type-options') !== 'nosniff' ||
+    /(^|,\s*)Cookie(\s*,|$)/i.test(primeraHoja.headers.get('vary') ?? '') ||
     !/^"[^"]+"$/.test(etagB ?? '')
   )
-    throw new Error('theme.css debe responder text/css con no-cache, Vary: Cookie y un ETag entre comillas');
+    throw new Error(
+      'theme.css debe responder text/css con no-cache, nosniff, un ETag entre comillas y, fuera del modo demo, sin Vary: Cookie',
+    );
   const declaraciones =
     cuerpoB
       .match(/^:root:root \{\n([\s\S]*)\}\n$/)?.[1]
@@ -680,6 +826,113 @@ try {
 
   const rates = await request('/bff/shipping/rates');
   if (!rates.length) throw new Error('Tarifas compartidas vacías');
+
+  // Entrada HTTP (lote 01): slug inexistente, URI mal codificada y cuerpo que no es un objeto.
+  await esperarError(
+    await raw('/bff/catalog/products/no-existe'),
+    404,
+    'PRODUCT_NOT_FOUND',
+    'Slug inexistente',
+  );
+  const fichaPublica = await request(`/bff/catalog/products/${products[0].slug}`);
+  if (fichaPublica.id !== products[0].id) throw new Error('La ficha por slug no devuelve el producto');
+  await esperarError(await raw('/bff/orders/%E0%A4%A'), 400, 'INVALID_PATH', 'URI mal codificada');
+  await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: 'null' }),
+    400,
+    'INVALID_BODY',
+    'Cuerpo null',
+  );
+  await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: '{' }),
+    400,
+    'INVALID_JSON',
+    'Cuerpo que no es JSON',
+  );
+
+  // Checkout (PBI-0096): fecha desde hoy en Lima, método de pago ofrecido, cantidad entera y lista blanca.
+  const checkoutCon = (cambios) =>
+    raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify({ ...command, ...cambios }) });
+  await esperarError(
+    await checkoutCon({ deliveryDate: fechaDeLima(-1) }),
+    400,
+    'INVALID_DELIVERY_DATE',
+    'Fecha pasada',
+  );
+  await esperarError(
+    await checkoutCon({ paymentMethod: 'bitcoin' }),
+    400,
+    'INVALID_PAYMENT_METHOD',
+    'Método de pago',
+  );
+  await esperarError(
+    await checkoutCon({ items: [{ productId: products[0].id, quantity: 1.5 }] }),
+    400,
+    'INVALID_ORDER_ITEMS',
+    'Cantidad decimal',
+  );
+  const conCamposDeMas = await checkoutCon({
+    deliveryDate: fechaDeLima(0),
+    customer: { ...command.customer, role: 'admin' },
+    shipping: { ...command.shipping, price: 0 },
+    items: [{ productId: products[0].id, quantity: 1 }],
+  });
+  if (conCamposDeMas.status !== 201)
+    throw new Error(`Un pedido para hoy debe aceptarse: ${conCamposDeMas.status}`);
+  const pedidoFiltrado = await conCamposDeMas.json();
+  if ('role' in pedidoFiltrado.customer || 'price' in pedidoFiltrado.shipping)
+    throw new Error('El checkout guardó campos de más en customer o shipping');
+  await request(`/bff/orders/${pedidoFiltrado.id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': pedidoFiltrado.accessToken },
+    body: '{}',
+  });
+
+  // Stock (lote 01): las líneas repetidas se suman y un producto inactivo no se vende.
+  const conStock = (await request('/bff/catalog/products')).find((item) => item.stock >= 2);
+  const repetidas = await raw('/bff/checkout/orders', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...command,
+      items: [
+        { productId: conStock.id, quantity: conStock.stock },
+        { productId: conStock.id, quantity: 1 },
+      ],
+    }),
+  });
+  const errorRepetidas = await esperarError(repetidas, 409, 'INSUFFICIENT_STOCK', 'Líneas repetidas');
+  if (errorRepetidas.details?.productId !== conStock.id)
+    throw new Error('INSUFFICIENT_STOCK no indica el producto');
+  let catalogoAdmin = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  catalogoAdmin = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: catalogoAdmin.revision,
+      products: catalogoAdmin.products.map((item) =>
+        item.id === conStock.id ? { ...item, active: false } : item,
+      ),
+    }),
+  });
+  await esperarError(
+    await raw('/bff/checkout/orders', {
+      method: 'POST',
+      body: JSON.stringify({ ...command, items: [{ productId: conStock.id, quantity: 1 }] }),
+    }),
+    409,
+    'PRODUCT_UNAVAILABLE',
+    'Producto inactivo',
+  );
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: catalogoAdmin.revision,
+      products: catalogoAdmin.products.map((item) =>
+        item.id === conStock.id ? { ...item, active: true } : item,
+      ),
+    }),
+  });
 
   console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
   console.log('✓ Storefront → Admin: pedido/cliente/inventario');

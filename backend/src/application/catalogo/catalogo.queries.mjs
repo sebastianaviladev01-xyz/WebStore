@@ -1,6 +1,7 @@
 import { sortCategories } from '../../domain/catalogo/categoria.rules.mjs';
 import { galleryOf } from '../../domain/catalogo/producto.rules.mjs';
 import { slugify } from '../../domain/catalogo/slug.mjs';
+import { DomainError } from '../../domain/comun/domain-error.mjs';
 
 const categoryToPublic = (category) => ({
   id: category.id,
@@ -49,6 +50,11 @@ export function createCatalogoQueries({ store }) {
   return {
     listCategories: () => sortCategories(store.state.categories).map(categoryToPublic),
     listProducts: activeProducts,
-    findProductBySlug: (slug) => activeProducts().find((product) => product.slug === slug) ?? null,
+    /** Ficha pública por slug; si no hay un producto activo con ese slug, `404 PRODUCT_NOT_FOUND` (PBI-0099). */
+    getProductBySlug(slug) {
+      const product = activeProducts().find((candidate) => candidate.slug === slug);
+      if (!product) throw new DomainError('not-found', 'PRODUCT_NOT_FOUND', 'Producto no encontrado.');
+      return product;
+    },
   };
 }

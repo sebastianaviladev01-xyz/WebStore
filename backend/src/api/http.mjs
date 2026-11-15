@@ -39,16 +39,18 @@ function coincideEtag(ifNoneMatch, etag) {
 
 /**
  * Hoja de estilos con caché revalidable (ADR-0010): `ETag` con el SHA-256 recortado del cuerpo, `no-cache` para
- * revalidar en cada carga y `Vary: Cookie` porque, en modo demo, la cookie de la vista previa cambia el cuerpo.
+ * revalidar en cada carga y, solo en modo demo (`varyByCookie`), `Vary: Cookie`, porque entonces la cookie de la
+ * vista previa cambia el cuerpo; fuera de él, una cookie cualquiera no parte la caché compartida (PBI-0073).
  * Si `If-None-Match` coincide, responde `304` sin cuerpo. No lleva cabeceras CORS: se carga con `<link>`.
  */
-export function css(texto, req) {
+export function css(texto, req, { varyByCookie = false } = {}) {
   const etag = `"${createHash('sha256').update(texto).digest('base64url').slice(0, 22)}"`;
   const headers = {
     'content-type': 'text/css; charset=utf-8',
     'cache-control': 'no-cache',
+    'x-content-type-options': 'nosniff',
     etag,
-    vary: 'Cookie',
+    ...(varyByCookie ? { vary: 'Cookie' } : {}),
   };
   return coincideEtag(req.headers['if-none-match'], etag)
     ? { status: 304, headers, text: '' }
@@ -76,6 +78,9 @@ function corsHeaders(req, allowedOrigins) {
     'content-type': 'application/json; charset=utf-8',
     'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     'access-control-allow-headers': 'content-type,authorization,x-order-token',
+    // Las respuestas llevan tokens y datos personales: ningún navegador ni intermediario las guarda (PBI-0100).
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
     vary: 'Origin',
   };
   if (origin && allowedOrigins.has(origin)) headers['access-control-allow-origin'] = origin;
@@ -103,18 +108,38 @@ export function createResponder(allowedOrigins) {
   return { json, empty, problem, text };
 }
 
+/**
+ * Cuerpo JSON de la petición. Los fragmentos se juntan como bytes y se decodifican una sola vez, para no partir
+ * un carácter de varios bytes (PBI-0099). Sin cuerpo, `{}`; un cuerpo que no es un objeto JSON, `400`.
+ */
 export async function readJsonBody(req) {
-  let raw = '';
+  const chunks = [];
+  let size = 0;
   for await (const chunk of req) {
-    raw += chunk;
-    if (Buffer.byteLength(raw) > MAX_BODY_BYTES)
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES)
       throw new HttpError(413, 'PAYLOAD_TOO_LARGE', 'El contenido supera el límite permitido.');
+    chunks.push(chunk);
   }
+  const raw = Buffer.concat(chunks).toString('utf8');
   if (!raw) return {};
+  let body;
   try {
-    return JSON.parse(raw);
+    body = JSON.parse(raw);
   } catch {
     throw new HttpError(400, 'INVALID_JSON', 'El cuerpo de la solicitud no contiene JSON válido.');
+  }
+  if (body === null || typeof body !== 'object' || Array.isArray(body))
+    throw new HttpError(400, 'INVALID_BODY', 'El cuerpo de la solicitud debe ser un objeto JSON.');
+  return body;
+}
+
+/** Segmento de la ruta decodificado; una secuencia `%` mal formada responde `400 INVALID_PATH` (PBI-0099). */
+export function pathSegment(value) {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    throw new HttpError(400, 'INVALID_PATH', 'La dirección de la solicitud no es válida.');
   }
 }
 

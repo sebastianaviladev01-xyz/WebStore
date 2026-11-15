@@ -9,6 +9,11 @@ export const cuentasRoutes = (cuentas) => [
   },
   {
     method: 'POST',
+    path: '/bff/account-verification-requests',
+    handle: async ({ req }) => accepted(cuentas.resendVerification(await readJsonBody(req))),
+  },
+  {
+    method: 'POST',
     path: '/bff/account-verifications',
     handle: async ({ req }) => {
       cuentas.verify(await readJsonBody(req));

@@ -1,15 +1,20 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
-import { nowIso } from '../../domain/comun/reloj.mjs';
+import { limaDate } from '../../domain/comun/reloj.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { requireEmail, requireFields } from '../../domain/comun/validacion.rules.mjs';
 import {
   addPeruBusinessDays,
   COMPLAINT_DUE_BUSINESS_DAYS,
   COMPLAINT_TYPES,
+  nextComplaintCode,
+  requireComplaintAmount,
 } from '../../domain/reclamos/reclamo.rules.mjs';
 
-/** Libro de reclamaciones: registro con código correlativo y plazo de respuesta en días hábiles. */
-export function createReclamosUseCases({ store, nonWorkingDates }) {
+/**
+ * Libro de reclamaciones: registro con código correlativo por año de Lima y plazo de respuesta en días hábiles.
+ * `now` permite fijar el instante en las pruebas.
+ */
+export function createReclamosUseCases({ store, nonWorkingDates, now = () => new Date() }) {
   function register(command) {
     requireFields(command, [
       'name',
@@ -25,17 +30,23 @@ export function createReclamosUseCases({ store, nonWorkingDates }) {
     const email = requireEmail(command.email);
     if (!COMPLAINT_TYPES.includes(command.type))
       throw new DomainError('validation', 'INVALID_COMPLAINT_TYPE', 'Selecciona reclamo o queja.');
+    const amount = requireComplaintAmount(command.amount);
     const { state } = store;
-    const createdAt = nowIso();
+    const instant = now();
+    const createdAt = instant.toISOString();
+    const year = limaDate(instant).slice(0, 4);
     const complaint = {
-      id: `REC-${new Date().getFullYear()}-${String(state.complaints.length + 1).padStart(5, '0')}`,
+      id: nextComplaintCode(
+        state.complaints.map((item) => item.id),
+        year,
+      ),
       name: String(command.name).trim(),
       document: String(command.document).trim(),
       email,
       phone: String(command.phone).trim(),
       address: String(command.address).trim(),
       subject: String(command.subject).trim(),
-      amount: Number(command.amount ?? 0),
+      amount,
       type: command.type,
       detail: String(command.detail).trim(),
       request: String(command.request).trim(),

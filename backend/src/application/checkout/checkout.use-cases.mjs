@@ -1,28 +1,33 @@
 import { reserveStock } from '../../domain/catalogo/inventario.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
-import { nowIso } from '../../domain/comun/reloj.mjs';
+import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
-import { normalizeEmail, requireEmail, requireFields } from '../../domain/comun/validacion.rules.mjs';
+import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
+import {
+  pickCustomer,
+  pickShipping,
+  requireDeliveryDate,
+  requireOrderLines,
+  requirePaymentMethod,
+} from '../../domain/pedidos/datos-del-pedido.rules.mjs';
 import { roundMoney } from '../../domain/pedidos/pedido.rules.mjs';
 import { toPublicProduct } from '../catalogo/catalogo.queries.mjs';
 import { accountForToken } from '../cuentas/cuentas.use-cases.mjs';
 import { orderToPublic } from '../pedidos/pedidos.use-cases.mjs';
 
+/**
+ * Valida el pedido y se queda solo con lo conocido (PBI-0096). El Storefront envía CartItem ({product, quantity})
+ * y sus montos; precios, stock y envío salen siempre del estado del BFF.
+ */
 function requireOrderCommand(command) {
-  requireFields(command.customer, ['fullName', 'email', 'phone', 'document']);
-  requireEmail(command.customer.email);
-  requireFields(command.shipping, ['addressLine', 'district', 'province', 'department']);
-  if (!Array.isArray(command.items) || command.items.length === 0)
-    throw new DomainError('validation', 'EMPTY_ORDER', 'Agrega al menos un producto.');
-  // El Storefront envía CartItem ({product, quantity}); precios y stock salen siempre del estado del BFF.
-  const requested = command.items.map((item) => ({
-    productId: String(item.productId ?? item.product?.id ?? ''),
-    quantity: Math.floor(Number(item.quantity)),
-  }));
-  if (requested.some((item) => !item.productId || !(item.quantity > 0)))
-    throw new DomainError('validation', 'INVALID_ORDER_ITEMS', 'Revisa los productos del pedido.');
-  return requested;
+  return {
+    customer: pickCustomer(command.customer),
+    shipping: pickShipping(command.shipping),
+    deliveryDate: requireDeliveryDate(command.deliveryDate, limaDate()),
+    paymentMethod: requirePaymentMethod(command.paymentMethod),
+    requested: requireOrderLines(command.items),
+  };
 }
 
 /** Cada compra actualiza (o crea) la ficha del cliente que ve el Admin. */
@@ -46,15 +51,15 @@ function registerCustomer(state, customer, security) {
 /** Checkout: reserva stock, toma el envío de la tabla de tarifas y emite el token de acceso del pedido. */
 export function createCheckoutUseCases({ store, security }) {
   function placeOrder(command, bearerToken) {
-    const requested = requireOrderCommand(command);
-    const rate = bestShippingRate(store.state.rates, command.shipping.district);
+    const { customer, shipping, deliveryDate, paymentMethod, requested } = requireOrderCommand(command);
+    const rate = bestShippingRate(store.state.rates, shipping.district);
     if (!rate)
       throw new DomainError(
         'validation',
         'SHIPPING_UNAVAILABLE',
         'Todavía no contamos con una tarifa para ese destino.',
       );
-    store.state.products = reserveStock(store.state.products, requested);
+    store.state.products = reserveStock(store.state.products, requested, { requireActive: true });
     const { state } = store;
     const items = requested.map((item) => ({
       productId: item.productId,
@@ -73,11 +78,11 @@ export function createCheckoutUseCases({ store, security }) {
       createdAt,
       updatedAt: createdAt,
       status: 'confirmed',
-      customer: command.customer,
-      shipping: command.shipping,
+      customer,
+      shipping,
       shippingOrigin: rate.origin,
-      deliveryDate: command.deliveryDate,
-      paymentMethod: command.paymentMethod,
+      deliveryDate,
+      paymentMethod,
       items,
       subtotal,
       igv: roundMoney(subtotal - subtotal / 1.18),
@@ -87,7 +92,7 @@ export function createCheckoutUseCases({ store, security }) {
       ...(account ? { accountId: account.id } : {}),
     };
     state.orders.unshift(order);
-    registerCustomer(state, command.customer, security);
+    registerCustomer(state, customer, security);
     bumpRevision(state);
     store.save();
     return { ...orderToPublic(order), accessToken };

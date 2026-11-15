@@ -23,7 +23,7 @@ Aplicaremos el tema con una hoja de estilos que sirve el BFF:
 
 - Los `index.html` de la tienda y del Admin cargan `/bff/appearance/theme.css` antes de que arranque Angular. Si el build procesa ese `<link>` al optimizar el CSS crítico, se excluye de esa optimización: la hoja tiene que seguir bloqueando el pintado.
 - La hoja tiene un único bloque `:root:root { … }` con solo las declaraciones `--ws-*` del tema activo o, en modo demo, de la vista previa ([ADR-0012](0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). El selector repetido gana a `:root` de `tokens.css`.
-- Se sirve con `Cache-Control: no-cache`, `Vary: Cookie` y un `ETag` calculado del cuerpo: el navegador revalida en cada carga, nunca usa una hoja vieja y recibe un `304` sin cuerpo si no cambió.
+- Se sirve con `Cache-Control: no-cache`, `Vary: Cookie` y un `ETag` calculado del cuerpo: el navegador revalida en cada carga, nunca usa una hoja vieja y recibe un `304` sin cuerpo si no cambió. Desde el lote 01 de [ADR-0017](0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md) (PBI-0073), `Vary: Cookie` solo se envía en modo demo, que es cuando la cookie de la vista previa cambia el cuerpo.
 - [`tokens.css`](../../frontend/src/styles/tokens.css) sigue siendo la paleta B y el respaldo si la hoja no llega. Los nombres de los tokens del tema son un contrato entre el BFF y los dos frontends ([tabla de tokens](../specs/features/002-temas-configurables/planning.md#tokens-del-tema)); quién los calcula lo decide el [ADR-0011](0011-guardar-los-temas-como-recurso-propio-del-bff.md).
 - Durante la sesión, los cambios de tema se aplican en vivo con `style.setProperty` sobre `<html>`.
 

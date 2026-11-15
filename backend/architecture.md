@@ -54,13 +54,14 @@ Variables de entorno, leídas una vez en [`src/infrastructure/config.mjs`](src/i
 |---|---|---|
 | `PORT` | Puerto HTTP | `3000` |
 | `WEBSTORE_DATA_FILE` | Archivo de estado | `backend/data.json` |
-| `WEBSTORE_EXPOSE_TEST_CODES` | Devuelve los códigos de verificación en la respuesta, para probar sin correo | `true` fuera de `NODE_ENV=production` |
+| `WEBSTORE_EXPOSE_TEST_CODES` | Con `true`, devuelve los códigos de verificación y de recuperación en la respuesta (`testCode`), para probar sin correo. `NODE_ENV` ya no lo decide (lote 01, PBI-0091) | apagado; el modo demo lo enciende salvo que valga `false` |
+| `WEBSTORE_ALLOW_STORE_RESET` | Con `true`, habilita `POST /bff/admin/reset` fuera del modo demo, para pruebas (lote 01, PBI-0090) | apagado; el modo demo lo enciende |
 | `WEBSTORE_NON_WORKING_DATES` | Feriados adicionales para el plazo de reclamos (`AAAA-MM-DD`, separados por coma) | vacío |
 | `WEBSTORE_ALLOWED_ORIGINS` | Orígenes CORS | `http://localhost:4200,http://localhost:4300` |
 | `WEBSTORE_OWNER_PASSWORD`, `WEBSTORE_ADMIN_PASSWORD`, `WEBSTORE_CATALOG_PASSWORD` | Contraseñas de los usuarios de demostración sembrados | las del [README](../README.md#accesos-de-demostración) |
 | `WEBSTORE_DEMO_MODE` | Modo demo ([ADR-0012](../docs/adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)): `/bff/appearance` trae todos los temas y `theme.css` sirve la vista previa de la cookie `ws_tema_vista_previa`. Solo `true` lo enciende, sin distinguir mayúsculas ni espacios en los extremos; cualquier otro valor (`false`, `1`, `sí`) lo deja apagado. Se expone como `demoMode` | apagado, también en producción |
 
-`backend/data.json` no se versiona: contiene hashes, sesiones y datos de clientes de prueba. Si no existe, el BFF lo crea desde el seed.
+`backend/data.json` no se versiona: contiene hashes, sesiones y datos de clientes de prueba. Si no existe, el BFF lo crea desde el seed. Si existe pero no es un objeto JSON válido, el BFF no arranca y no lo toca (`EstadoIlegibleError`). Cada guardado escribe un temporal junto al archivo y lo renombra sobre él (lote 01, PBI-0088).
 
 ## 4. Pruebas
 
@@ -74,7 +75,7 @@ Las pruebas se dividen como en IdShield entre unitarias e integración. Las carp
 | Comando (desde `backend/`) | Qué comprueba |
 |---|---|
 | `npm run check:syntax` | `node --check` sobre todos los `.mjs` de `src/`, `tests/` y `tools/` |
-| `npm test` | `node:test` sobre `tests/unit/**/*.test.mjs` y `tests/integration/**/*.test.mjs`: reglas y casos de uso (unitarias) y, por HTTP, la migración de un `data.json` con roles anteriores (`migracion-roles.test.mjs`), la migración v3 de los colores de Contenido a temas (`migracion-temas.test.mjs`) y el modo demo, la hoja `theme.css`, su `ETag` y la cookie de la vista previa (`modo-demo.test.mjs`) |
+| `npm test` | `node:test` sobre `tests/unit/**/*.test.mjs` y `tests/integration/**/*.test.mjs`: reglas y casos de uso (unitarias) y, por HTTP, la migración de un `data.json` con roles anteriores (`migracion-roles.test.mjs`), la migración v3 de los colores de Contenido a temas (`migracion-temas.test.mjs`), el modo demo, la hoja `theme.css`, su `ETag` y la cookie de la vista previa (`modo-demo.test.mjs`) y, del lote 01, la entrada HTTP mal formada (`entrada-http.test.mjs`), el archivo de datos dañado y el guardado atómico (`persistencia.test.mjs`), el reinicio y los códigos fuera del modo demo (`reinicio-y-codigos.test.mjs`) y las cabeceras (`cabeceras.test.mjs`). `tests/integration/apoyo/servidor.mjs` levanta el BFF para estas últimas |
 | `npm run test:contract` | Smoke test del contrato completo ([`tests/integration/contrato.smoke.mjs`](tests/integration/contrato.smoke.mjs)) contra un servidor con un archivo de estado temporal |
 
 - Herramienta: `node:test` y `node:assert`, sin dependencias externas ([ADR-0009](../docs/adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md)).

@@ -53,7 +53,7 @@ Usuarios del Admin sembrados por el BFF de prueba, solo para uso local:
 | Administrador | `admin@webstore.demo` | `Admin#2026` |
 | Vendedor | `catalogo@webstore.demo` | `Catalogo#2026` |
 
-Se pueden cambiar con `WEBSTORE_OWNER_PASSWORD`, `WEBSTORE_ADMIN_PASSWORD` y `WEBSTORE_CATALOG_PASSWORD` antes de crear `data.json`. En desarrollo, el registro de clientes devuelve el código de verificación en la respuesta para probar sin correo (`WEBSTORE_EXPOSE_TEST_CODES`).
+Se pueden cambiar con `WEBSTORE_OWNER_PASSWORD`, `WEBSTORE_ADMIN_PASSWORD` y `WEBSTORE_CATALOG_PASSWORD` antes de crear `data.json`. Para probar sin correo, el BFF devuelve en la respuesta los códigos de verificación y de recuperación solo si se arranca con `WEBSTORE_EXPOSE_TEST_CODES=true` o en modo demo ([entorno local](docs/development/local-environment.md#códigos-de-verificación-y-reinicio)).
 
 ## Verificar
 

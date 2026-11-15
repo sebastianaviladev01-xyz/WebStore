@@ -77,6 +77,17 @@ export async function cerrarSesionAdmin(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { level: 1, name: 'Acceso administrativo' })).toBeVisible();
 }
 
+/**
+ * Fecha de entrega `AAAA-MM-DD` de Lima, `dias` después de hoy, para los pedidos que las pruebas crean por la API:
+ * el BFF rechaza una fecha anterior a hoy en Lima (lote 01, PBI-0096).
+ */
+export function fechaDeEntrega(dias = 2): string {
+  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+  const fecha = new Date(`${hoy}T12:00:00Z`);
+  fecha.setUTCDate(fecha.getUTCDate() + dias);
+  return fecha.toISOString().slice(0, 10);
+}
+
 /** Correo único por ejecución para no chocar con registros de otra prueba. */
 export function correoUnico(prefijo: string): string {
   return `${prefijo}-${Date.now()}@example.com`;

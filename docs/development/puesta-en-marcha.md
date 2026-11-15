@@ -80,7 +80,7 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 
 ## Revisa también
 
-- **Códigos de verificación:** fuera de `NODE_ENV=production`, el BFF devuelve en la respuesta los códigos de verificación del registro de clientes, para probar sin correo. En una instalación cliente, arranca con `NODE_ENV=production`, o con `WEBSTORE_EXPOSE_TEST_CODES=false`.
+- **Códigos de verificación y reinicio:** por defecto, el BFF no devuelve en la respuesta los códigos de verificación ni de recuperación, y `POST /bff/admin/reset` responde `403 STORE_RESET_DISABLED`. Solo cambian con `WEBSTORE_EXPOSE_TEST_CODES=true`, `WEBSTORE_ALLOW_STORE_RESET=true` o el modo demo: una instalación cliente no define ninguna de las tres.
 - **Orígenes:** `WEBSTORE_ALLOWED_ORIGINS` lleva los orígenes de la tienda y del Admin de esa instalación, separados por coma.
 
 ## Lista de comprobación
@@ -90,4 +90,4 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 - [ ] Las tres cuentas sembradas tienen contraseñas propias, o están desactivadas.
 - [ ] El logo de la tienda está cargado en Contenido.
 - [ ] El tema activo es el de la tienda: C para Ecom.
-- [ ] `NODE_ENV=production`, o `WEBSTORE_EXPOSE_TEST_CODES=false`, y `WEBSTORE_ALLOWED_ORIGINS` con los orígenes de la instalación.
+- [ ] `WEBSTORE_EXPOSE_TEST_CODES` y `WEBSTORE_ALLOW_STORE_RESET` no están definidas, y `WEBSTORE_ALLOWED_ORIGINS` lleva los orígenes de la instalación.
