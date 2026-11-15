@@ -124,6 +124,11 @@
         "--ws-focus-ring": "#4C2A92",
         "--ws-topbar": "#2E1A5C",
         "--ws-on-topbar": "#FFFFFF",
+        "--ws-danger": "#B42318",
+        "--ws-danger-soft": "#FEF3F2",
+        "--ws-danger-line": "#FECDCA",
+        "--ws-warning": "#8A4B08",
+        "--ws-warning-soft": "#FFF6E5",
         "--ws-store-bg": "#FAFAFB",
         "--ws-bg": "#F4F4F6",
         "--ws-surface": "#FFFFFF",
@@ -169,6 +174,11 @@
         "--ws-focus-ring": "var(--ws-primary)",
         "--ws-topbar": "var(--ws-primary-strong)",
         "--ws-on-topbar": "#ffffff",
+        "--ws-danger": "#b42318",
+        "--ws-danger-soft": "#fef3f2",
+        "--ws-danger-line": "#fecdca",
+        "--ws-warning": "#8a4b08",
+        "--ws-warning-soft": "#fff6e5",
         "--ws-store-bg": "#f9fafc",
         "--ws-bg": "#f3f5f8",
         "--ws-surface": "#ffffff",
@@ -214,6 +224,11 @@
         "--ws-focus-ring": "#1F2328",
         "--ws-topbar": "#1F2328",
         "--ws-on-topbar": "#FFFFFF",
+        "--ws-danger": "#B42318",
+        "--ws-danger-soft": "#FEF3F2",
+        "--ws-danger-line": "#FECDCA",
+        "--ws-warning": "#8A4B08",
+        "--ws-warning-soft": "#FFF6E5",
         "--ws-store-bg": "#F9F9FA",
         "--ws-bg": "#F2F3F5",
         "--ws-surface": "#FFFFFF",
@@ -257,7 +272,13 @@
       "link/storeBackground": 9.8,
       "focusRing/storeBackground": 9.8,
       "borderStrong/surface": 3.43,
-      "onLink/link": 10.23
+      "onLink/link": 10.23,
+      "danger/background": 5.98,
+      "danger/surface": 6.57,
+      "danger/dangerSoft": 6.05,
+      "warning/background": 6.19,
+      "warning/surface": 6.79,
+      "warning/warningSoft": 6.33
     },
     "b": {
       "contrast/background": 16.35,
@@ -280,7 +301,13 @@
       "link/storeBackground": 6.42,
       "focusRing/storeBackground": 6.42,
       "borderStrong/surface": 3.07,
-      "onLink/link": 6.7
+      "onLink/link": 6.7,
+      "danger/background": 6.02,
+      "danger/surface": 6.57,
+      "danger/dangerSoft": 6.05,
+      "warning/background": 6.22,
+      "warning/surface": 6.79,
+      "warning/warningSoft": 6.33
     },
     "c": {
       "contrast/background": 14.23,
@@ -303,7 +330,13 @@
       "link/storeBackground": 15.01,
       "focusRing/storeBackground": 15.01,
       "borderStrong/surface": 3.16,
-      "onLink/link": 15.8
+      "onLink/link": 15.8,
+      "danger/background": 5.92,
+      "danger/surface": 6.57,
+      "danger/dangerSoft": 6.05,
+      "warning/background": 6.12,
+      "warning/surface": 6.79,
+      "warning/warningSoft": 6.33
     }
   },
   "tokensDelTema": [
@@ -332,6 +365,11 @@
         "--ws-focus-ring": "#0F172A",
         "--ws-topbar": "color-mix(in srgb, #FFD400 88%, #0F172A)",
         "--ws-on-topbar": "#0F172A",
+        "--ws-danger": "#B42318",
+        "--ws-danger-soft": "#FEF3F2",
+        "--ws-danger-line": "#FECDCA",
+        "--ws-warning": "#8A4B08",
+        "--ws-warning-soft": "#FFF6E5",
         "--ws-store-bg": "#F3F5F8",
         "--ws-bg": "#f3f5f8",
         "--ws-surface": "#ffffff",
@@ -372,7 +410,13 @@
         "link/storeBackground": 16.35,
         "focusRing/storeBackground": 16.35,
         "borderStrong/surface": 3.07,
-        "onLink/link": 17.85
+        "onLink/link": 17.85,
+        "danger/background": 6.02,
+        "danger/surface": 6.57,
+        "danger/dangerSoft": 6.05,
+        "warning/background": 6.22,
+        "warning/surface": 6.79,
+        "warning/warningSoft": 6.33
       }
     },
     {
@@ -400,6 +444,11 @@
         "--ws-focus-ring": "#123456",
         "--ws-topbar": "color-mix(in srgb, #123456 62%, #0F172A)",
         "--ws-on-topbar": "#FFFFFF",
+        "--ws-danger": "#B42318",
+        "--ws-danger-soft": "#FEF3F2",
+        "--ws-danger-line": "#FECDCA",
+        "--ws-warning": "#8A4B08",
+        "--ws-warning-soft": "#FFF6E5",
         "--ws-store-bg": "#F3F5F8",
         "--ws-bg": "#f3f5f8",
         "--ws-surface": "#ffffff",
@@ -440,11 +489,17 @@
         "link/storeBackground": 11.64,
         "focusRing/storeBackground": 11.64,
         "borderStrong/surface": 3.07,
-        "onLink/link": 12.72
+        "onLink/link": 12.72,
+        "danger/background": 6.02,
+        "danger/surface": 6.57,
+        "danger/dangerSoft": 6.05,
+        "warning/background": 6.22,
+        "warning/surface": 6.79,
+        "warning/warningSoft": 6.33
       }
     },
     {
-      "nombre": "base oscura sin predefinido: escala derivada; el texto sobre el principal queda bajo 4.5",
+      "nombre": "base oscura sin predefinido: escala derivada; el texto sobre el principal pasa a la superficie y el error y la alerta, a su variante clara",
       "colores": {
         "primary": "#3B82F6",
         "secondary": "#F97316",
@@ -455,10 +510,10 @@
       "heredaDe": null,
       "tokens": {
         "--ws-primary": "#3B82F6",
-        "--ws-primary-strong": "#3B82F6",
+        "--ws-primary-strong": "color-mix(in srgb, #3B82F6 88%, #F5F7FA)",
         "--ws-primary-soft": "color-mix(in srgb, #3B82F6 10%, #1B1E25)",
-        "--ws-on-primary": "#FFFFFF",
-        "--ws-on-primary-soft": "#F5F7FA",
+        "--ws-on-primary": "#1B1E25",
+        "--ws-on-primary-soft": "color-mix(in srgb, #3B82F6 88%, #F5F7FA)",
         "--ws-accent": "#F97316",
         "--ws-accent-strong": "color-mix(in srgb, #F97316 78%, #F5F7FA)",
         "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
@@ -466,8 +521,13 @@
         "--ws-link": "#3B82F6",
         "--ws-on-link": "#1B1E25",
         "--ws-focus-ring": "#3B82F6",
-        "--ws-topbar": "#3B82F6",
-        "--ws-on-topbar": "#FFFFFF",
+        "--ws-topbar": "color-mix(in srgb, #3B82F6 88%, #F5F7FA)",
+        "--ws-on-topbar": "#1B1E25",
+        "--ws-danger": "#FDA29B",
+        "--ws-danger-soft": "color-mix(in srgb, #FDA29B 12%, #1B1E25)",
+        "--ws-danger-line": "color-mix(in srgb, #FDA29B 40%, #1B1E25)",
+        "--ws-warning": "#FEC84B",
+        "--ws-warning-soft": "color-mix(in srgb, #FEC84B 12%, #1B1E25)",
         "--ws-store-bg": "#111318",
         "--ws-bg": "#111318",
         "--ws-surface": "#1B1E25",
@@ -492,23 +552,107 @@
         "contrast/surface": 15.54,
         "muted/background": 8.73,
         "muted/surface": 7.84,
-        "onPrimary/primary": 3.68,
-        "onPrimary/primaryStrong": 3.68,
-        "onPrimarySoft/primarySoft": 13.78,
+        "onPrimary/primary": 4.54,
+        "onPrimary/primaryStrong": 5.3,
+        "onPrimarySoft/primarySoft": 4.7,
         "onAccent/accent": 2.8,
         "link/background": 5.05,
         "link/surface": 4.54,
         "focusRing/background": 5.05,
         "focusRing/surface": 4.54,
         "footerText/footer": 7.77,
-        "onTopbar/topbar": 3.68,
+        "onTopbar/topbar": 5.3,
         "disabledText/disabled": 5.86,
         "contrast/storeBackground": 17.31,
         "muted/storeBackground": 8.73,
         "link/storeBackground": 5.05,
         "focusRing/storeBackground": 5.05,
         "borderStrong/surface": 4.88,
-        "onLink/link": 4.54
+        "onLink/link": 4.54,
+        "danger/background": 9.57,
+        "danger/surface": 8.59,
+        "danger/dangerSoft": 6.78,
+        "warning/background": 12.01,
+        "warning/surface": 10.78,
+        "warning/warningSoft": 8.25
+      }
+    },
+    {
+      "nombre": "principal muy claro sobre la base oscura: el texto sobre el principal y la franja es la superficie (PBI-0062)",
+      "colores": {
+        "primary": "#FFFFBB",
+        "secondary": "#F97316",
+        "background": "#111318",
+        "surface": "#1B1E25",
+        "contrast": "#F5F7FA"
+      },
+      "tokens": {
+        "--ws-primary": "#FFFFBB",
+        "--ws-primary-strong": "color-mix(in srgb, #FFFFBB 88%, #F5F7FA)",
+        "--ws-primary-soft": "color-mix(in srgb, #FFFFBB 10%, #1B1E25)",
+        "--ws-on-primary": "#1B1E25",
+        "--ws-on-primary-soft": "color-mix(in srgb, #FFFFBB 88%, #F5F7FA)",
+        "--ws-accent": "#F97316",
+        "--ws-accent-strong": "color-mix(in srgb, #F97316 78%, #F5F7FA)",
+        "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
+        "--ws-on-accent": "#FFFFFF",
+        "--ws-link": "#FFFFBB",
+        "--ws-on-link": "#1B1E25",
+        "--ws-focus-ring": "#FFFFBB",
+        "--ws-topbar": "color-mix(in srgb, #FFFFBB 88%, #F5F7FA)",
+        "--ws-on-topbar": "#1B1E25",
+        "--ws-danger": "#FDA29B",
+        "--ws-danger-soft": "color-mix(in srgb, #FDA29B 12%, #1B1E25)",
+        "--ws-danger-line": "color-mix(in srgb, #FDA29B 40%, #1B1E25)",
+        "--ws-warning": "#FEC84B",
+        "--ws-warning-soft": "color-mix(in srgb, #FEC84B 12%, #1B1E25)",
+        "--ws-store-bg": "#111318",
+        "--ws-bg": "#111318",
+        "--ws-surface": "#1B1E25",
+        "--ws-surface-subtle": "color-mix(in srgb, #F5F7FA 3%, #1B1E25)",
+        "--ws-surface-soft": "color-mix(in srgb, #F5F7FA 9%, #1B1E25)",
+        "--ws-ink": "#F5F7FA",
+        "--ws-text": "#F5F7FA",
+        "--ws-muted-strong": "color-mix(in srgb, #F5F7FA 82%, #1B1E25)",
+        "--ws-muted": "color-mix(in srgb, #F5F7FA 68%, #1B1E25)",
+        "--ws-border": "color-mix(in srgb, #F5F7FA 14%, #1B1E25)",
+        "--ws-border-strong": "color-mix(in srgb, #F5F7FA 50%, #1B1E25)",
+        "--ws-disabled": "color-mix(in srgb, #F5F7FA 10%, #1B1E25)",
+        "--ws-disabled-text": "color-mix(in srgb, #F5F7FA 68%, #1B1E25)",
+        "--ws-dot": "color-mix(in srgb, #FFFFBB 30%, #1B1E25)",
+        "--ws-footer": "#F5F7FA",
+        "--ws-footer-text": "color-mix(in srgb, #1B1E25 78%, #F5F7FA)",
+        "--ws-footer-rule": "color-mix(in srgb, #1B1E25 15%, #F5F7FA)",
+        "--ws-footer-heading": "#1B1E25"
+      },
+      "pares": {
+        "contrast/background": 17.31,
+        "contrast/surface": 15.54,
+        "muted/background": 8.73,
+        "muted/surface": 7.84,
+        "onPrimary/primary": 16.1,
+        "onPrimary/primaryStrong": 16.03,
+        "onPrimarySoft/primarySoft": 11.91,
+        "onAccent/accent": 2.8,
+        "link/background": 17.94,
+        "link/surface": 16.1,
+        "focusRing/background": 17.94,
+        "focusRing/surface": 16.1,
+        "footerText/footer": 7.77,
+        "onTopbar/topbar": 16.03,
+        "disabledText/disabled": 5.86,
+        "contrast/storeBackground": 17.31,
+        "muted/storeBackground": 8.73,
+        "link/storeBackground": 17.94,
+        "focusRing/storeBackground": 17.94,
+        "borderStrong/surface": 4.88,
+        "onLink/link": 16.1,
+        "danger/background": 9.57,
+        "danger/surface": 8.59,
+        "danger/dangerSoft": 6.78,
+        "warning/background": 12.01,
+        "warning/surface": 10.78,
+        "warning/warningSoft": 8.25
       }
     }
   ],
@@ -523,20 +667,70 @@
         "contrast": "#9CA3AF"
       },
       "bajoMinimo": [
-        { "par": "contrast/background", "relacion": 2.3, "minimo": 4.5, "bloquea": true },
-        { "par": "contrast/surface", "relacion": 2.5, "minimo": 4.5, "bloquea": true },
-        { "par": "muted/background", "relacion": 1.6, "minimo": 4.5, "bloquea": false },
-        { "par": "muted/surface", "relacion": 1.8, "minimo": 4.5, "bloquea": false },
-        { "par": "onPrimarySoft/primarySoft", "relacion": 2.1, "minimo": 4.5, "bloquea": false },
-        { "par": "footerText/footer", "relacion": 2.1, "minimo": 4.5, "bloquea": false },
-        { "par": "disabledText/disabled", "relacion": 1.6, "minimo": 4.5, "bloquea": false },
-        { "par": "contrast/storeBackground", "relacion": 2.3, "minimo": 4.5, "bloquea": false },
-        { "par": "muted/storeBackground", "relacion": 1.6, "minimo": 4.5, "bloquea": false },
-        { "par": "borderStrong/surface", "relacion": 1.5, "minimo": 3, "bloquea": false }
+        {
+          "par": "contrast/background",
+          "relacion": 2.3,
+          "minimo": 4.5,
+          "bloquea": true
+        },
+        {
+          "par": "contrast/surface",
+          "relacion": 2.5,
+          "minimo": 4.5,
+          "bloquea": true
+        },
+        {
+          "par": "muted/background",
+          "relacion": 1.6,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "muted/surface",
+          "relacion": 1.8,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "onPrimarySoft/primarySoft",
+          "relacion": 2.1,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "footerText/footer",
+          "relacion": 2.1,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "disabledText/disabled",
+          "relacion": 1.6,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "contrast/storeBackground",
+          "relacion": 2.3,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "muted/storeBackground",
+          "relacion": 1.6,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "borderStrong/surface",
+          "relacion": 1.5,
+          "minimo": 3,
+          "bloquea": false
+        }
       ]
     },
     {
-      "nombre": "la base oscura de TEST-04 solo avisa del texto sobre el principal, el acento y la barra superior: no bloquea",
+      "nombre": "la base oscura de TEST-04 solo avisa del acento: el texto sobre el principal y la franja pasan a la superficie (PBI-0062)",
       "colores": {
         "primary": "#3B82F6",
         "secondary": "#F97316",
@@ -545,10 +739,12 @@
         "contrast": "#F5F7FA"
       },
       "bajoMinimo": [
-        { "par": "onPrimary/primary", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
-        { "par": "onPrimary/primaryStrong", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
-        { "par": "onAccent/accent", "relacion": 2.8, "minimo": 4.5, "bloquea": false },
-        { "par": "onTopbar/topbar", "relacion": 3.6, "minimo": 4.5, "bloquea": false }
+        {
+          "par": "onAccent/accent",
+          "relacion": 2.8,
+          "minimo": 4.5,
+          "bloquea": false
+        }
       ]
     },
     {
@@ -572,14 +768,54 @@
         "contrast": "#717171"
       },
       "bajoMinimo": [
-        { "par": "contrast/background", "relacion": 4.4, "minimo": 4.5, "bloquea": true },
-        { "par": "muted/background", "relacion": 2.4, "minimo": 4.5, "bloquea": false },
-        { "par": "muted/surface", "relacion": 2.6, "minimo": 4.5, "bloquea": false },
-        { "par": "footerText/footer", "relacion": 3.6, "minimo": 4.5, "bloquea": false },
-        { "par": "disabledText/disabled", "relacion": 2.3, "minimo": 4.5, "bloquea": false },
-        { "par": "contrast/storeBackground", "relacion": 4.4, "minimo": 4.5, "bloquea": false },
-        { "par": "muted/storeBackground", "relacion": 2.4, "minimo": 4.5, "bloquea": false },
-        { "par": "borderStrong/surface", "relacion": 1.9, "minimo": 3, "bloquea": false }
+        {
+          "par": "contrast/background",
+          "relacion": 4.4,
+          "minimo": 4.5,
+          "bloquea": true
+        },
+        {
+          "par": "muted/background",
+          "relacion": 2.4,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "muted/surface",
+          "relacion": 2.6,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "footerText/footer",
+          "relacion": 3.6,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "disabledText/disabled",
+          "relacion": 2.3,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "contrast/storeBackground",
+          "relacion": 4.4,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "muted/storeBackground",
+          "relacion": 2.4,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "borderStrong/surface",
+          "relacion": 1.9,
+          "minimo": 3,
+          "bloquea": false
+        }
       ]
     }
   ],
@@ -589,8 +825,16 @@
       "existentes": ["Mi tema"],
       "resultado": "Tienda de verano"
     },
-    { "nombre": "", "existentes": [], "error": "INVALID_THEME_NAME" },
-    { "nombre": "     ", "existentes": [], "error": "INVALID_THEME_NAME" },
+    {
+      "nombre": "",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
+    {
+      "nombre": "     ",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
     {
       "nombre": "Un nombre de tema que tiene cuarenta y 12",
       "existentes": [],
@@ -601,8 +845,80 @@
       "existentes": [],
       "resultado": "Un nombre de tema que tiene cuarenta y 1"
     },
-    { "nombre": " azul COBALTO ", "existentes": [], "error": "THEME_NAME_TAKEN" },
-    { "nombre": "mi TEMA", "existentes": ["Mi tema"], "error": "THEME_NAME_TAKEN" },
-    { "nombre": "Grafito y Ámbar", "existentes": [], "error": "THEME_NAME_TAKEN" }
+    {
+      "nombre": " azul COBALTO ",
+      "existentes": [],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "nombre": "mi TEMA",
+      "existentes": ["Mi tema"],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "nombre": "Grafito y Ámbar",
+      "existentes": [],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "$comment": "PBI-0069: un solo carácter de ancho cero (U+200B) no es un nombre",
+      "nombre": "​",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
+    {
+      "$comment": "PBI-0069: un carácter de ancho cero dentro del nombre (U+200B)",
+      "nombre": "Mi​tema",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
+    {
+      "$comment": "PBI-0069: un carácter de control (U+0007)",
+      "nombre": "Tema\u0007",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
+    {
+      "$comment": "PBI-0069: una marca de dirección invisible (U+200E)",
+      "nombre": "‎Tema oculto",
+      "existentes": [],
+      "error": "INVALID_THEME_NAME"
+    },
+    {
+      "$comment": "PBI-0069: un espacio duro (U+00A0) se ve igual que el espacio del predefinido",
+      "nombre": "Azul cobalto",
+      "existentes": [],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "$comment": "PBI-0069: dos espacios seguidos se ven como uno",
+      "nombre": "Mi  tema",
+      "existentes": ["Mi tema"],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "$comment": "PBI-0069: la Á escrita como A más tilde combinada (U+0301) es la misma letra",
+      "nombre": "Grafito y Ámbar",
+      "existentes": [],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "$comment": "PBI-0069: letras de ancho completo (U+FF2D…) se ven como las normales",
+      "nombre": "Ｍｉ tema",
+      "existentes": ["Mi tema"],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "$comment": "PBI-0069: el nombre guardado se compara normalizado aunque tenga un espacio duro",
+      "nombre": "Mi tema",
+      "existentes": ["Mi tema"],
+      "error": "THEME_NAME_TAKEN"
+    },
+    {
+      "$comment": "PBI-0069: un nombre con tildes y un emoji sigue siendo válido y se guarda como se escribió",
+      "nombre": "Campaña de verano ☀",
+      "existentes": ["Campana de verano"],
+      "resultado": "Campaña de verano ☀"
+    }
   ]
 }

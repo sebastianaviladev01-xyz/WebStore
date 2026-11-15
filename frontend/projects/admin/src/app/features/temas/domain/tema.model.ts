@@ -23,6 +23,11 @@ export type NombreToken =
   | '--ws-focus-ring'
   | '--ws-topbar'
   | '--ws-on-topbar'
+  | '--ws-danger'
+  | '--ws-danger-soft'
+  | '--ws-danger-line'
+  | '--ws-warning'
+  | '--ws-warning-soft'
   | '--ws-store-bg'
   | '--ws-bg'
   | '--ws-surface'
@@ -77,7 +82,13 @@ export interface ParContraste {
     | 'link/storeBackground'
     | 'focusRing/storeBackground'
     | 'borderStrong/surface'
-    | 'onLink/link';
+    | 'onLink/link'
+    | 'danger/background'
+    | 'danger/surface'
+    | 'danger/dangerSoft'
+    | 'warning/background'
+    | 'warning/surface'
+    | 'warning/warningSoft';
   /** Relación de contraste redondeada a un decimal hacia abajo. */
   readonly relacion: number;
   readonly minimo: 4.5 | 3;

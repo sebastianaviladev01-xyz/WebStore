@@ -65,6 +65,12 @@ const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
   'focusRing/storeBackground': 'Contorno de foco sobre el fondo de la tienda',
   'borderStrong/surface': 'Contorno de los campos sobre el fondo secundario',
   'onLink/link': 'Texto y marcas sobre el color de los enlaces',
+  'danger/background': 'Error sobre el fondo principal',
+  'danger/surface': 'Error sobre el fondo secundario',
+  'danger/dangerSoft': 'Error sobre su recuadro',
+  'warning/background': 'Alerta sobre el fondo principal',
+  'warning/surface': 'Alerta sobre el fondo secundario',
+  'warning/warningSoft': 'Alerta sobre su recuadro',
 };
 
 /** «Texto sobre el fondo principal: 2.1:1, mínimo 4.5:1», el formato de AC-14. */

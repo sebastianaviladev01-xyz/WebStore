@@ -202,6 +202,27 @@ test('onLink/link alcanza su mínimo en A, B y C, medido sobre el mapa literal d
   assert.equal(colores['--ws-on-link'], '#FFFFFF');
 });
 
+// Lote 03 (PBI-0061 y PBI-0062, ADR-0019): A, B y C se ven igual que antes de calcular el error, la alerta y el
+// texto sobre el principal con el tema.
+test('A, B y C conservan los colores de error y de alerta que antes eran fijos en tokens.css', () => {
+  const deHoy = {
+    '--ws-danger': '#b42318',
+    '--ws-danger-soft': '#fef3f2',
+    '--ws-danger-line': '#fecdca',
+    '--ws-warning': '#8a4b08',
+    '--ws-warning-soft': '#fff6e5',
+  };
+  for (const id of ['a', 'b', 'c'])
+    for (const [nombre, valor] of Object.entries(deHoy))
+      assert.equal(tema(id).tokens[nombre].toLowerCase(), valor, `${id} ${nombre}`);
+  assert.equal(tema('b').tokens['--ws-danger'], '#b42318', 'B en minúsculas, como tokens.css');
+});
+
+test('A, B y C conservan el texto sobre el principal: blanco, blanco y grafito', () => {
+  const colores = (id) => coloresCalculados(tema(id).tokens)['--ws-on-primary'];
+  assert.deepEqual(['a', 'b', 'c'].map(colores), ['#FFFFFF', '#FFFFFF', '#1F2328']);
+});
+
 test('en C, el texto sobre el principal, los enlaces y el foco se calculan en grafito', () => {
   const colores = coloresCalculados(tema('c').tokens);
   for (const nombre of ['--ws-on-primary', '--ws-link', '--ws-focus-ring'])

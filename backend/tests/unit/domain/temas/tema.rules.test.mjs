@@ -17,6 +17,7 @@ import {
   tokensDelTema,
 } from '../../../../src/domain/temas/tema.rules.mjs';
 import { exigirTemaValido } from '../../../../src/domain/temas/tema-propio.rules.mjs';
+import { relacionDeContraste } from '../../../../src/domain/temas/contraste.rules.mjs';
 
 const casos = JSON.parse(readFileSync(new URL('./casos-tema.json', import.meta.url), 'utf8'));
 const centesimas = (pares) =>
@@ -63,7 +64,9 @@ test('sin base predefinida, la escala neutra se deriva del contraste y la superf
   assert.equal(tokens['--ws-footer'], '#F5F7FA');
   assert.equal(tokens['--ws-footer-heading'], '#1B1E25');
   const pares = medirPares(tokens);
-  assert.ok(pares['onPrimary/primary'] < 4.5, 'el texto sobre el principal queda bajo el mínimo');
+  // PBI-0062: la superficie también es candidata para el texto sobre el principal y lo deja en su mínimo.
+  assert.equal(tokens['--ws-on-primary'], '#1B1E25');
+  assert.ok(pares['onPrimary/primary'] >= 4.5, 'el texto sobre el principal llega al mínimo');
   assert.ok(pares['contrast/background'] >= 4.5 && pares['contrast/surface'] >= 4.5);
 });
 
@@ -88,7 +91,7 @@ test('coloresCalculados rechaza un valor que no sabe calcular', () => {
   assert.throws(() => coloresCalculados({ '--ws-link': 'var(--ws-link)' }));
 });
 
-test('la barra superior de un tema propio es su principal fuerte, con el texto más legible entre blanco y el contraste', () => {
+test('la barra superior de un tema propio es su principal fuerte, con el texto más legible entre blanco, el contraste y la superficie', () => {
   const claro = tokensDelTema(caso('principal claro').colores, casos.predefinidos);
   assert.equal(claro['--ws-topbar'], claro['--ws-primary-strong']);
   assert.equal(claro['--ws-on-topbar'], '#0F172A');
@@ -105,8 +108,8 @@ test('la barra superior de un tema propio es su principal fuerte, con el texto m
   });
 });
 
-test('se miden 21 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
-  assert.equal(PARES_DE_CONTRASTE.length, 21);
+test('se miden 27 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
+  assert.equal(PARES_DE_CONTRASTE.length, 27);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
@@ -150,8 +153,8 @@ test('los cinco pares de la feature 004 van después de disabledText/disabled, c
   ]);
 });
 
-test('el mapa tiene 32 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 32);
+test('el mapa tiene 37 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 37);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.equal(ESCALA_NEUTRA.includes('--ws-store-bg'), false);
 });
@@ -184,11 +187,11 @@ test('con la base de un predefinido, el texto sobre el enlace se calcula y no se
   assert.equal(tokens['--ws-bg'], tokensB['--ws-bg'], 'la escala neutra sí se hereda');
 });
 
-test('en un tema oscuro, el texto sobre el enlace es la superficie: #1B1E25 en la base oscura (4.54:1), distinto del texto sobre el principal', () => {
+test('en un tema oscuro, el texto sobre el enlace es la superficie: #1B1E25 en la base oscura (4.54:1), como el texto sobre el principal (PBI-0062)', () => {
   const tokens = tokensDelTema(caso('base oscura').colores, casos.predefinidos);
   assert.equal(tokens['--ws-link'], '#3B82F6');
   assert.equal(tokens['--ws-on-link'], '#1B1E25');
-  assert.equal(tokens['--ws-on-primary'], '#FFFFFF');
+  assert.equal(tokens['--ws-on-primary'], '#1B1E25');
   const relacion = medirPares(tokens)['onLink/link'];
   assert.equal(Math.round(relacion * 100) / 100, 4.54);
 });
@@ -208,9 +211,9 @@ test('en un tema oscuro cuyo enlace pasa a un contraste claro, el texto sobre é
 });
 
 // TEST-03 (feature 005, ADR-0014): el par del texto sobre el enlace solo avisa.
-test('onLink/link es el último par: texto sobre el enlace, mínimo 4.5:1 y sin bloquear (ADR-0014)', () => {
+test('onLink/link va justo después del contorno: texto sobre el enlace, mínimo 4.5:1 y sin bloquear (ADR-0014)', () => {
   assert.equal(PARES_DE_CONTRASTE[19].par, 'borderStrong/surface');
-  assert.deepEqual(PARES_DE_CONTRASTE.at(-1), {
+  assert.deepEqual(PARES_DE_CONTRASTE[20], {
     par: 'onLink/link',
     texto: '--ws-on-link',
     fondo: '--ws-link',
@@ -311,11 +314,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve siempre los 21 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
+test('revisarContraste devuelve siempre los 27 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 21);
+    assert.equal(pares.length, 27);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),
@@ -344,4 +347,112 @@ test('revisarContraste: bloquea indica qué pares frenan el guardado, con indepe
       .map(({ par }) => par);
     assert.deepEqual(bloqueantes, ['contrast/background', 'contrast/surface']);
   }
+});
+
+// Lote 03 (PBI-0061, ADR-0019): el error y la alerta son tokens del tema que calcula el BFF.
+const TOKENS_DE_AVISO = [
+  '--ws-danger',
+  '--ws-danger-soft',
+  '--ws-danger-line',
+  '--ws-warning',
+  '--ws-warning-soft',
+];
+const AVISO_DE_HOY = {
+  '--ws-danger': '#B42318',
+  '--ws-danger-soft': '#FEF3F2',
+  '--ws-danger-line': '#FECDCA',
+  '--ws-warning': '#8A4B08',
+  '--ws-warning-soft': '#FFF6E5',
+};
+const BASE_OSCURA = { background: '#111318', surface: '#1B1E25', contrast: '#F5F7FA' };
+
+test('el error y la alerta son cinco tokens del tema, justo después de la franja superior y fuera de la escala neutra (PBI-0061)', () => {
+  const inicio = TOKENS_DEL_TEMA.indexOf('--ws-on-topbar') + 1;
+  assert.deepEqual(TOKENS_DEL_TEMA.slice(inicio, inicio + 5), TOKENS_DE_AVISO);
+  assert.equal(TOKENS_DEL_TEMA[inicio + 5], '--ws-store-bg');
+  for (const nombre of TOKENS_DE_AVISO) assert.equal(ESCALA_NEUTRA.includes(nombre), false, nombre);
+});
+
+test('sobre una base clara, el error y la alerta conservan los colores de hoy, herede o no la escala de un predefinido', () => {
+  const bases = [
+    caso('principal claro').colores,
+    caso('#123456').colores,
+    {
+      primary: '#1D4ED8',
+      secondary: '#C2410C',
+      background: '#FFFFFF',
+      surface: '#F0F0F0',
+      contrast: '#595959',
+    },
+  ];
+  for (const colores of bases) {
+    const tokens = tokensDelTema(colores, casos.predefinidos);
+    for (const [nombre, valor] of Object.entries(AVISO_DE_HOY)) assert.equal(tokens[nombre], valor, nombre);
+  }
+});
+
+test('sobre una base oscura, el error y la alerta pasan a su variante clara, con el fondo suave y la línea mezclados con la superficie', () => {
+  const tokens = tokensDelTema(caso('base oscura').colores, casos.predefinidos);
+  assert.equal(tokens['--ws-danger'], '#FDA29B');
+  assert.equal(tokens['--ws-danger-soft'], 'color-mix(in srgb, #FDA29B 12%, #1B1E25)');
+  assert.equal(tokens['--ws-danger-line'], 'color-mix(in srgb, #FDA29B 40%, #1B1E25)');
+  assert.equal(tokens['--ws-warning'], '#FEC84B');
+  assert.equal(tokens['--ws-warning-soft'], 'color-mix(in srgb, #FEC84B 12%, #1B1E25)');
+});
+
+test('los seis pares del error y la alerta van al final, piden 4.5:1 y solo avisan (PBI-0061)', () => {
+  assert.deepEqual(
+    PARES_DE_CONTRASTE.slice(21).map(({ par, texto, fondo, minimo, bloquea }) => [
+      par,
+      texto,
+      fondo,
+      minimo,
+      bloquea,
+    ]),
+    [
+      ['danger/background', '--ws-danger', '--ws-bg', 4.5, false],
+      ['danger/surface', '--ws-danger', '--ws-surface', 4.5, false],
+      ['danger/dangerSoft', '--ws-danger', '--ws-danger-soft', 4.5, false],
+      ['warning/background', '--ws-warning', '--ws-bg', 4.5, false],
+      ['warning/surface', '--ws-warning', '--ws-surface', 4.5, false],
+      ['warning/warningSoft', '--ws-warning', '--ws-warning-soft', 4.5, false],
+    ],
+  );
+});
+
+test('sobre la superficie #1B1E25 de un tema oscuro, el error y la alerta pasan de 2.54:1 y 2.45:1 a 4.5:1 o más en sus seis pares', () => {
+  const pares = medirPares(tokensDelTema(caso('base oscura').colores, casos.predefinidos));
+  for (const { par } of PARES_DE_CONTRASTE.slice(21)) assert.ok(pares[par] >= 4.5, `${par}: ${pares[par]}`);
+});
+
+// Lote 03 (PBI-0062, ADR-0019): el texto sobre el principal, el más legible entre más candidatos.
+test('con un principal muy claro sobre una base oscura, el texto sobre el principal es la superficie, no el blanco ni el contraste', () => {
+  const tokens = tokensDelTema(
+    { primary: '#FFFFBB', secondary: '#F97316', ...BASE_OSCURA },
+    casos.predefinidos,
+  );
+  assert.equal(tokens['--ws-on-primary'], '#1B1E25');
+  const pares = medirPares(tokens);
+  for (const par of ['onPrimary/primary', 'onPrimary/primaryStrong', 'onTopbar/topbar'])
+    assert.ok(pares[par] >= 4.5, `${par}: ${pares[par]}`);
+});
+
+test('en un tema propio, el texto sobre el principal es el más legible entre el blanco, el contraste y la superficie', () => {
+  const principales = ['#1D4ED8', '#F2B705', '#FFFFBB', '#3B82F6', '#10B981', '#777777', '#E5E7EB'];
+  const bases = [
+    { background: '#F3F5F8', surface: '#FFFFFF', contrast: '#0F172A' },
+    BASE_OSCURA,
+    { background: '#FFFFFF', surface: '#F0F0F0', contrast: '#595959' },
+  ];
+  for (const primary of principales)
+    for (const base of bases) {
+      const tokens = tokensDelTema({ primary, secondary: '#C2410C', ...base }, casos.predefinidos);
+      const mejor = Math.max(
+        ...['#FFFFFF', base.contrast, base.surface].map((candidato) =>
+          relacionDeContraste(primary, candidato),
+        ),
+      );
+      const elegido = coloresCalculados(tokens)['--ws-on-primary'];
+      assert.equal(relacionDeContraste(elegido, primary), mejor, `${primary} sobre ${base.surface}`);
+    }
 });

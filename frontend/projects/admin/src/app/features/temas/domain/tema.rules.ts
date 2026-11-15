@@ -74,8 +74,8 @@ export function textoMasLegible(fondo: string, candidatos: readonly string[]): s
 }
 
 /**
- * Tokens CSS que forman el mapa de un tema, en el orden en que se sirven. Los tokens fijos
- * (`--ws-danger*`, `--ws-warning*`, `--ws-on-media`, `--ws-scrim`) no dependen del tema.
+ * Tokens CSS que forman el mapa de un tema, en el orden en que se sirven. Los tokens fijos (`--ws-on-media`,
+ * `--ws-scrim`) no dependen del tema.
  */
 export const TOKENS_DEL_TEMA: readonly NombreToken[] = Object.freeze<NombreToken[]>([
   '--ws-primary',
@@ -94,6 +94,12 @@ export const TOKENS_DEL_TEMA: readonly NombreToken[] = Object.freeze<NombreToken
   '--ws-focus-ring',
   '--ws-topbar',
   '--ws-on-topbar',
+  // Error y alerta (ADR-0019): los calcula el tema, fuera de `ESCALA_NEUTRA`.
+  '--ws-danger',
+  '--ws-danger-soft',
+  '--ws-danger-line',
+  '--ws-warning',
+  '--ws-warning-soft',
   // Lienzo de la tienda (ADR-0013): justo antes de `--ws-bg`, para quedar fuera de `ESCALA_NEUTRA`.
   '--ws-store-bg',
   '--ws-bg',
@@ -171,6 +177,40 @@ function escalaNeutraDerivada({
   };
 }
 
+/**
+ * Variantes del error y de la alerta (ADR-0019). La de fondos claros son los colores que `tokens.css` fijaba antes
+ * del tema; la de fondos oscuros, un rojo y un ámbar claros con el fondo suave y la línea mezclados con la superficie.
+ */
+const AVISOS = {
+  danger: { claro: '#B42318', suave: '#FEF3F2', linea: '#FECDCA', oscuro: '#FDA29B' },
+  warning: { claro: '#8A4B08', suave: '#FFF6E5', oscuro: '#FEC84B' },
+} as const;
+
+/** Contraste del color con el peor de los fondos sobre los que se escribe (el fondo principal y la superficie). */
+const legibilidadSobre = (color: string, fondos: readonly string[]): number =>
+  Math.min(...fondos.map((fondo) => relacionDeContraste(color, fondo)));
+
+/**
+ * El error y la alerta: la variante cuyo texto se lee mejor sobre el fondo principal y la superficie del tema.
+ * Sobre fondos claros, la de hoy; sobre fondos oscuros, la clara, con su fondo suave y su línea mezclados con la
+ * superficie.
+ */
+function tokensDeAviso({ background: F, surface: Sf }: ColoresTema): Partial<Record<NombreToken, string>> {
+  const variante = ({ claro, oscuro }: { readonly claro: string; readonly oscuro: string }): string =>
+    legibilidadSobre(claro, [F, Sf]) >= legibilidadSobre(oscuro, [F, Sf]) ? claro : oscuro;
+  const peligro = variante(AVISOS.danger);
+  const alerta = variante(AVISOS.warning);
+  const peligroClaro = peligro === AVISOS.danger.claro;
+  const alertaClara = alerta === AVISOS.warning.claro;
+  return {
+    '--ws-danger': peligro,
+    '--ws-danger-soft': peligroClaro ? AVISOS.danger.suave : mezcla(peligro, 12, Sf),
+    '--ws-danger-line': peligroClaro ? AVISOS.danger.linea : mezcla(peligro, 40, Sf),
+    '--ws-warning': alerta,
+    '--ws-warning-soft': alertaClara ? AVISOS.warning.suave : mezcla(alerta, 12, Sf),
+  };
+}
+
 function tokensDeMarca({
   primary: P,
   secondary: S,
@@ -178,7 +218,9 @@ function tokensDeMarca({
   surface: Sf,
   contrast: C,
 }: ColoresTema): Partial<Record<NombreToken, string>> {
-  const sobrePrincipal = textoMasLegible(P, [BLANCO, C]);
+  // El más legible entre el blanco, el contraste y la superficie (ADR-0019): con un principal muy claro sobre una
+  // base oscura, el blanco y el contraste son claros y solo la superficie se lee. A y C lo fijan con su literal.
+  const sobrePrincipal = textoMasLegible(P, [BLANCO, C, Sf]);
   const pesoFuerte = mismoColor(sobrePrincipal, BLANCO) ? 62 : 88;
   const fuerteLegible =
     relacionDeContraste(sobrePrincipal, mezclarSrgb(P, pesoFuerte / 100, C)) >= TEXTO_MINIMO;
@@ -205,7 +247,9 @@ function tokensDeMarca({
     '--ws-focus-ring': legibleSobreFondos(INTERFAZ_MINIMO) ? P : C,
     // Franja superior de la tienda: en un tema propio, el principal fuerte; A y C la fijan como se presentó.
     '--ws-topbar': principalFuerte,
-    '--ws-on-topbar': textoMasLegible(colorFuerte, [BLANCO, C]),
+    // Con los mismos candidatos que el texto sobre el principal: la franja es el principal fuerte, que en una base
+    // oscura se aclara hacia el contraste (ADR-0019).
+    '--ws-on-topbar': textoMasLegible(colorFuerte, [BLANCO, C, Sf]),
   };
 }
 
@@ -224,7 +268,12 @@ export function tokensDelTema(entrada: ColoresTema, predefinidos: Predefinidos =
   const neutra: Partial<Record<NombreToken, string>> = base
     ? Object.fromEntries(ESCALA_NEUTRA.map((nombre) => [nombre, base.tokens[nombre]]))
     : escalaNeutraDerivada(colores);
-  const tokens = { ...tokensDeMarca(colores), '--ws-store-bg': colores.background, ...neutra };
+  const tokens = {
+    ...tokensDeMarca(colores),
+    ...tokensDeAviso(colores),
+    '--ws-store-bg': colores.background,
+    ...neutra,
+  };
   return Object.freeze(
     Object.fromEntries(TOKENS_DEL_TEMA.map((nombre) => [nombre, tokens[nombre]])),
   ) as TokensTema;
@@ -379,6 +428,43 @@ export const PARES_DE_CONTRASTE: readonly DefinicionDePar[] = Object.freeze<Defi
   },
   // Texto y marcas sobre el enlace, que Material pinta con su `on-primary` (ADR-0014): pide texto y solo avisa.
   { par: 'onLink/link', texto: '--ws-on-link', fondo: '--ws-link', minimo: TEXTO_MINIMO, bloquea: false },
+  // El error y la alerta (ADR-0019) sobre los fondos en que se escriben y sobre su propio fondo suave: solo avisan.
+  { par: 'danger/background', texto: '--ws-danger', fondo: '--ws-bg', minimo: TEXTO_MINIMO, bloquea: false },
+  {
+    par: 'danger/surface',
+    texto: '--ws-danger',
+    fondo: '--ws-surface',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'danger/dangerSoft',
+    texto: '--ws-danger',
+    fondo: '--ws-danger-soft',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'warning/background',
+    texto: '--ws-warning',
+    fondo: '--ws-bg',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'warning/surface',
+    texto: '--ws-warning',
+    fondo: '--ws-surface',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'warning/warningSoft',
+    texto: '--ws-warning',
+    fondo: '--ws-warning-soft',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
 ]);
 
 /** Relación de contraste, sin redondear, de cada par de `PARES_DE_CONTRASTE` en un mapa de tokens. */
@@ -393,7 +479,7 @@ export function medirPares(tokens: ValoresDeToken): Record<string, number> {
 }
 
 /**
- * Revisión de contraste de un tema (AC-14, D7): los 21 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
+ * Revisión de contraste de un tema (AC-14, D7): los 27 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
  * sobre los tokens que derivan de sus cinco colores. `bloquea` dice si ese par impide guardar cuando queda
  * bajo su mínimo y no depende de la medida.
  *
@@ -418,7 +504,20 @@ export function revisarContraste(
 
 const LARGO_MAXIMO_DEL_NOMBRE = 40;
 
-const claveDelNombre = (nombre: string): string => String(nombre).trim().toLocaleLowerCase('es');
+/** Caracteres que no se ven: de control (Cc) y de formato, como los de ancho cero o de dirección (Cf). */
+const INVISIBLES = /[\p{Cc}\p{Cf}]/u;
+
+/**
+ * Clave con la que se comparan los nombres, como en el BFF (PBI-0069): dos nombres que se ven iguales tienen la misma
+ * clave. Une las formas Unicode equivalentes (NFKC), quita lo invisible, junta los espacios y no distingue mayúsculas.
+ */
+const claveDelNombre = (nombre: string): string =>
+  String(nombre)
+    .normalize('NFKC')
+    .replace(new RegExp(INVISIBLES.source, 'gu'), '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .toLocaleLowerCase('es');
 
 /** Resultado de validar el nombre de un tema: el nombre recortado, o el código y el mensaje del rechazo. */
 export type ValidacionNombreTema =
@@ -430,8 +529,8 @@ export type ValidacionNombreTema =
     };
 
 /**
- * Valida el nombre de un tema con las reglas del BFF: de 1 a 40 caracteres tras recortarlo y único sin
- * distinguir mayúsculas. `nombresExistentes` son los nombres de los predefinidos y de los temas propios,
+ * Valida el nombre de un tema con las reglas del BFF: sin caracteres invisibles, de 1 a 40 caracteres tras
+ * recortarlo y distinto a la vista de los demás (sin distinguir mayúsculas, espacios ni formas Unicode equivalentes). `nombresExistentes` son los nombres de los predefinidos y de los temas propios,
  * sin el del tema que se edita.
  */
 export function validarNombreTema(
@@ -439,6 +538,12 @@ export function validarNombreTema(
   nombresExistentes: readonly string[],
 ): ValidacionNombreTema {
   const recortado = String(nombre ?? '').trim();
+  if (INVISIBLES.test(recortado))
+    return {
+      valido: false,
+      codigo: 'INVALID_THEME_NAME',
+      mensaje: 'El nombre del tema no puede llevar caracteres invisibles.',
+    };
   if (recortado.length === 0 || recortado.length > LARGO_MAXIMO_DEL_NOMBRE)
     return {
       valido: false,
