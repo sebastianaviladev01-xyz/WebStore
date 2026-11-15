@@ -46,3 +46,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el pedido no cambia y el selector vuelve a mostrar su estado.
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0023, PBI-0066, PBI-0067, PBI-0126 y PBI-0145), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
+### Escenario 06 – Filtro y pedidos nuevos
+
+- **Dado** que el usuario está en Pedidos o en cualquier página del Admin
+- **Cuando** elige un estado en el panel de filtros y pulsa «Buscar», o abre la campana de la cabecera
+- **Entonces** el estado queda en la URL; la campana dice cuántos pedidos confirmados llegaron desde la última vez que la abrió, los lista y lleva a cada uno.
+
+> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0155 y PBI-0033; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-funciones-nuevas.spec.ts` y `admin-guardado-y-datos.spec.ts`.

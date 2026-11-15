@@ -40,3 +40,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** no se elimina: el Admin dice por qué y cuántas subcategorías o productos la usan, y el BFF lo rechaza.
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0131; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
+### Escenario 05 – Imagen de la categoría
+
+- **Dado** que el administrador edita una categoría
+- **Cuando** le carga una imagen pequeña y guarda
+- **Entonces** el Admin la reduce a 160 px antes de guardarla, la tienda la muestra junto al nombre de la categoría en sus menús y, si se quita, la tienda se ve como antes.
+
+> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0052; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-funciones-nuevas.spec.ts` y `storefront-categoria-imagen.spec.ts`.

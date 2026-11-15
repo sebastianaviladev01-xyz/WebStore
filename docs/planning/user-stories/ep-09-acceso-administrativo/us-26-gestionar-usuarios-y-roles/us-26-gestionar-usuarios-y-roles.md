@@ -58,4 +58,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ## Fuera de alcance y pendientes
 
 - Los permisos de los roles son provisionales hasta que Daniel responda (PBI-0013 del [backlog](../../../backlog.md), lote 07).
-- La edición de los datos propios (perfil) va en el lote 07b (PBI-0034).
+- La edición de los datos propios (perfil) se entregó en el lote 07b (PBI-0034) como escenario de [US25](../us-25-iniciar-sesion-admin/us-25-iniciar-sesion-admin.md): no pasa por Usuarios.

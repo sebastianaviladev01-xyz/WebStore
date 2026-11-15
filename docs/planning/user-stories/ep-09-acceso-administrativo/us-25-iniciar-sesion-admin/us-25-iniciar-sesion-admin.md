@@ -40,3 +40,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el Admin lo lleva al acceso, que dice «Tu sesión venció. Vuelve a iniciar sesión para continuar.».
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0071 y PBI-0124), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
+### Escenario 05 – Perfil propio
+
+- **Dado** que un usuario del Admin, de cualquiera de los tres roles, abre su perfil
+- **Cuando** cambia su nombre o su correo, o su contraseña indicando la actual
+- **Entonces** el BFF lo guarda si el correo no es de otro usuario y la contraseña nueva es segura, y al cambiar la contraseña cierra sus demás sesiones.
+
+> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0034; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
