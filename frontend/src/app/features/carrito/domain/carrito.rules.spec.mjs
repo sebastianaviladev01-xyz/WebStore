@@ -11,7 +11,7 @@ const source = await readFile(new URL('./carrito.rules.ts', import.meta.url), 'u
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { unirLineasGuardadas, agregarAlCarrito, conciliarCarrito } = await import(
+const { unirLineasGuardadas, agregarAlCarrito, conciliarCarrito, desglosarIgv } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -107,4 +107,17 @@ test('PBI-0106: precio y stock cambiados en la misma línea se informan los dos'
     { tipo: 'precio', nombre: 'Soundbar', antes: 100, ahora: 90 },
     { tipo: 'stock', nombre: 'Soundbar', antes: 4, ahora: 3 },
   ]);
+});
+
+test('PBI-0117 (lote 05): el IGV del carrito es el mismo que calcula el BFF, redondeado al céntimo', async () => {
+  const { roundMoney } = await import('../../../../../../backend/src/domain/pedidos/pedido.rules.mjs');
+  assert.deepEqual(desglosarIgv(118), { valorDeVenta: 100, igv: 18 });
+  assert.deepEqual(desglosarIgv(0), { valorDeVenta: 0, igv: 0 });
+  for (let centimos = 0; centimos <= 2_000_000; centimos += 37) {
+    const subtotal = centimos / 100;
+    const { valorDeVenta, igv } = desglosarIgv(subtotal);
+    // La misma fórmula que el checkout del BFF (`checkout.use-cases.mjs`): igv = roundMoney(subtotal - subtotal / 1.18).
+    assert.equal(igv, roundMoney(subtotal - subtotal / 1.18), `IGV de ${subtotal}`);
+    assert.equal(valorDeVenta, roundMoney(subtotal - igv), `valor de venta de ${subtotal}`);
+  }
 });
