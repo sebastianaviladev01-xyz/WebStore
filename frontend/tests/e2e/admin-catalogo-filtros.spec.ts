@@ -67,12 +67,13 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 const lista = (page: Page) => page.getByRole('region', { name: 'Lista de productos' });
 const panel = (page: Page) => page.getByRole('search', { name: 'Filtros de productos' });
-const editar = (zona: Locator) => zona.getByRole('link', { name: 'Editar', exact: true });
+const editar = (zona: Locator) => zona.getByRole('link', { name: /^Editar / });
 
+// Lote 07 (PBI-0132): la lista es una tabla; cada producto, una fila con su «Editar producto <nombre>».
 const filaDe = (page: Page, nombre: string) =>
   lista(page)
-    .locator('div')
-    .filter({ has: page.getByRole('link', { name: 'Editar', exact: true }) })
+    .getByRole('row')
+    .filter({ has: page.getByRole('link', { name: /^Editar / }) })
     .filter({ hasText: nombre });
 
 /** Nombres de los productos de la lista, en orden: el texto del `strong` de cada fila. */
@@ -442,7 +443,9 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await elegir(page, panelCategorias(page), 'Categoría padre', 'TV y audio');
       await buscarCategorias(page);
       await expect(filaCategoria(page, 'Proyectores 008')).toHaveCount(1);
-      await filaCategoria(page, 'OLED').getByRole('link', { name: 'Editar', exact: true }).click();
+      await filaCategoria(page, 'OLED')
+        .getByRole('link', { name: /^Editar / })
+        .click();
       await expect(page).toHaveURL(/\/categorias\/cat-tv-oled\?padre=cat-tv$/);
       const edicion = page.getByRole('form', { name: 'Editar categoría' });
       await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('OLED');
@@ -465,7 +468,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       // Otra sesión elimina una categoría con la lista abierta: al abrirla, ya no existe.
       await retirarCategorias(['e2e-008-barras']);
       await filaCategoria(page, 'Barras de sonido 008')
-        .getByRole('link', { name: 'Editar', exact: true })
+        .getByRole('link', { name: /^Editar / })
         .click();
       await expect(page).toHaveURL(/\/categorias\/e2e-008-barras\?padre=cat-tv$/);
       await expect(page.getByText('Esta categoría ya no existe')).toBeVisible();
@@ -554,7 +557,9 @@ test.describe('Filtros y registro de marcas del Admin', () => {
 
       // «Editar» abre los datos actuales: otra sesión volvió a activar «Zenith».
       await cambiarMarcas((actuales) => actuales.map((m) => (m.id === 'b-zen' ? { ...m, active: true } : m)));
-      await filaMarca(page, 'Zenith').getByRole('link', { name: 'Editar', exact: true }).click();
+      await filaMarca(page, 'Zenith')
+        .getByRole('link', { name: /^Editar / })
+        .click();
       await expect(page).toHaveURL(/\/marcas\/b-zen\?nombre=zen$/);
       const edicion = page.getByRole('form', { name: 'Editar marca' });
       await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Zenith');
@@ -566,7 +571,9 @@ test.describe('Filtros y registro de marcas del Admin', () => {
 
       // Otra sesión elimina una marca con la lista abierta: al abrirla, ya no existe.
       await cambiarMarcas((actuales) => actuales.filter((m) => m.name !== 'Zentro 008'));
-      await filaMarca(page, 'Zentro 008').getByRole('link', { name: 'Editar', exact: true }).click();
+      await filaMarca(page, 'Zentro 008')
+        .getByRole('link', { name: /^Editar / })
+        .click();
       await expect(page.getByText('Esta marca ya no existe')).toBeVisible();
       await expect(page.getByRole('form', { name: 'Editar marca' })).toHaveCount(0);
       await page.getByRole('link', { name: 'Volver a marcas' }).click();
@@ -622,7 +629,10 @@ const VISTAS_DEL_CATALOGO: readonly {
       page.getByRole('link', { name: pagina.nuevo, exact: true }),
       pagina.panel(page).getByRole('button', { name: 'Buscar', exact: true }),
       pagina.panel(page).getByRole('button', { name: 'Limpiar filtros' }),
-      pagina.lista(page).getByRole('link', { name: 'Editar', exact: true }).first(),
+      pagina
+        .lista(page)
+        .getByRole('link', { name: /^Editar / })
+        .first(),
     ],
   })),
   ...[

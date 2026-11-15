@@ -15,6 +15,8 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { mensajeDeError } from '../domain/formulario.rules';
+import { conservarBorrador } from './borrador';
 import { Marca } from '../domain/tienda.model';
 
 /**
@@ -43,6 +45,11 @@ import { Marca } from '../domain/tienda.model';
         </p>
       </div>
     } @else {
+      @if (borrador.aviso(); as aviso) {
+        <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
+          {{ aviso }}
+        </p>
+      }
       @if (staleNotice()) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="alert">
           {{ staleNotice() }}
@@ -57,6 +64,7 @@ import { Marca } from '../domain/tienda.model';
         <mat-form-field>
           <mat-label>Nombre</mat-label>
           <input matInput formControlName="name" />
+          <mat-error>{{ mensaje(form.controls.name.errors) }}</mat-error>
         </mat-form-field>
         <mat-checkbox formControlName="active">Activa</mat-checkbox>
         @if (error()) {
@@ -107,11 +115,20 @@ export class RegistroMarcaPage {
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     active: new FormControl(true, { nonNullable: true }),
   });
+  protected readonly mensaje = mensajeDeError;
+  /** PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición; se aplica después de traer la marca. */
+  protected readonly borrador = conservarBorrador({
+    form: this.form,
+    guardar: () => this.form.getRawValue(),
+    restaurar: (valor) => this.form.setValue(valor),
+    diferido: true,
+  });
   constructor() {
     // Al abrir la edición (o cambiar de `:id` sin salir de la página) se traen los datos actuales.
     effect(() => {
       const id = this.editing();
       if (id) untracked(() => void this.edit(id));
+      else untracked(() => this.borrador.aplicar());
     });
   }
   /** Trae el snapshot actual y rellena el formulario; si ya no existe, lo dice; si la consulta falla, avisa. */
@@ -128,12 +145,18 @@ export class RegistroMarcaPage {
     }
     const b = this.admin.brands().find((x) => x.id === id);
     this.base = b ?? null;
-    if (b) this.form.setValue({ name: b.name, active: b.active });
-    else this.missing.set(true);
+    if (b) {
+      this.form.setValue({ name: b.name, active: b.active });
+      this.borrador.aplicar();
+    } else this.missing.set(true);
     this.loadingBrand.set(false);
   }
   protected async save() {
-    if (this.form.invalid || this.admin.saving()) return;
+    if (this.admin.saving()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     this.error.set(null);
     const saved = await this.admin.guardarMarca(this.base, {
       id: this.editing() ?? this.idNuevo,
@@ -143,6 +166,6 @@ export class RegistroMarcaPage {
       await this.router.navigate(['/marcas'], { queryParamsHandling: 'preserve' });
       return;
     }
-    this.error.set(this.admin.error() ?? 'No pudimos guardar la marca. Inténtalo de nuevo.');
+    this.error.set(this.admin.tomarError() ?? 'No pudimos guardar la marca. Inténtalo de nuevo.');
   }
 }

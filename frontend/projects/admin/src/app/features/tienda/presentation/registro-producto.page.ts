@@ -17,6 +17,8 @@ import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules';
+import { mensajeDeError } from '../domain/formulario.rules';
+import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
@@ -56,6 +58,11 @@ const MAX_GALLERY_PHOTOS = 6;
         </p>
       </div>
     } @else {
+      @if (borrador.aviso(); as aviso) {
+        <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
+          {{ aviso }}
+        </p>
+      }
       @if (staleNotice()) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="alert">
           {{ staleNotice() }}
@@ -72,25 +79,23 @@ const MAX_GALLERY_PHOTOS = 6;
           <mat-form-field [subscriptSizing]="form.controls.name.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>Nombre</mat-label>
             <input matInput formControlName="name" />
-            @if (form.controls.name.hasError('repetido')) {
-              <mat-error>{{ form.controls.name.getError('repetido') }}</mat-error>
-            }
+            <mat-error>{{ mensaje(form.controls.name.errors) }}</mat-error>
           </mat-form-field>
           <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
           <mat-form-field [subscriptSizing]="form.controls.sku.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>SKU</mat-label>
             <input matInput formControlName="sku" [readonly]="!session.can('products.manage')" />
-            @if (form.controls.sku.hasError('repetido')) {
-              <mat-error>{{ form.controls.sku.getError('repetido') }}</mat-error>
-            }
+            <mat-error>{{ mensaje(form.controls.sku.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Descripción</mat-label>
             <textarea matInput rows="3" formControlName="description"></textarea>
+            <mat-error>{{ mensaje(form.controls.description.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Imagen principal</mat-label>
             <input matInput formControlName="imageUrl" />
+            <mat-error>{{ mensaje(form.controls.imageUrl.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field subscriptSizing="dynamic">
             <mat-label>Miniatura optimizada</mat-label>
@@ -166,6 +171,7 @@ const MAX_GALLERY_PHOTOS = 6;
           <mat-form-field>
             <mat-label>Características (una por línea)</mat-label>
             <textarea matInput rows="4" formControlName="highlights"></textarea>
+            <mat-error>{{ mensaje(form.controls.highlights.errors) }}</mat-error>
           </mat-form-field>
           <div class="grid grid-cols-2 gap-3">
             <mat-form-field>
@@ -176,10 +182,12 @@ const MAX_GALLERY_PHOTOS = 6;
                 formControlName="price"
                 [readonly]="!session.can('products.manage')"
               />
+              <mat-error>{{ mensaje(form.controls.price.errors) }}</mat-error>
             </mat-form-field>
             <mat-form-field>
               <mat-label>Stock</mat-label>
               <input matInput type="number" formControlName="stock" />
+              <mat-error>{{ mensaje(form.controls.stock.errors) }}</mat-error>
             </mat-form-field>
           </div>
           <mat-form-field>
@@ -189,6 +197,7 @@ const MAX_GALLERY_PHOTOS = 6;
                 <mat-option [value]="c.id">{{ c.name }}</mat-option>
               }
             </mat-select>
+            <mat-error>{{ mensaje(form.controls.categoryId.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Marca</mat-label>
@@ -197,6 +206,7 @@ const MAX_GALLERY_PHOTOS = 6;
                 <mat-option [value]="b.id">{{ b.name }}</mat-option>
               }
             </mat-select>
+            <mat-error>{{ mensaje(form.controls.brandId.errors) }}</mat-error>
           </mat-form-field>
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
         </div>
@@ -270,6 +280,20 @@ export class RegistroProductoPage {
     brandId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     active: new FormControl(true, { nonNullable: true }),
   });
+  protected readonly mensaje = mensajeDeError;
+  /**
+   * PBI-0151: lo escrito (con la galería) vuelve si la sesión venció a mitad de la edición; se aplica después de
+   * traer el producto.
+   */
+  protected readonly borrador = conservarBorrador({
+    form: this.form,
+    guardar: () => ({ valor: this.form.getRawValue(), galeria: this.gallery() }),
+    restaurar: (borrador) => {
+      this.form.setValue(borrador.valor);
+      this.gallery.set(borrador.galeria);
+    },
+    diferido: true,
+  });
   constructor() {
     // El vendedor no cambia categoría, marca ni estado: se deshabilitan en el control (getRawValue los conserva).
     if (!this.session.can('products.manage')) {
@@ -284,6 +308,7 @@ export class RegistroProductoPage {
     effect(() => {
       const id = this.editingId();
       if (id) untracked(() => void this.edit(id));
+      else untracked(() => this.borrador.aplicar());
     });
   }
   /** Fotos adicionales del producto en edición; se guardan junto con el resto del formulario. */
@@ -343,8 +368,10 @@ export class RegistroProductoPage {
     }
     const p = this.admin.products().find((item) => item.id === id);
     this.base = p ?? null;
-    if (p) this.fill(p);
-    else this.missing.set(true);
+    if (p) {
+      this.fill(p);
+      this.borrador.aplicar();
+    } else this.missing.set(true);
     this.loadingProduct.set(false);
   }
   private fill(p: Producto) {
@@ -415,6 +442,6 @@ export class RegistroProductoPage {
       await this.router.navigate(['/productos'], { queryParamsHandling: 'preserve' });
       return;
     }
-    this.saveError.set(this.admin.error() ?? 'No pudimos guardar el producto. Inténtalo de nuevo.');
+    this.saveError.set(this.admin.tomarError() ?? 'No pudimos guardar el producto. Inténtalo de nuevo.');
   }
 }

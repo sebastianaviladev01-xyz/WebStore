@@ -114,10 +114,17 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
               class="inline-flex items-center text-link"
               [routerLink]="['/categorias', entry.category.id]"
               queryParamsHandling="preserve"
+              [attr.aria-label]="'Editar categoría ' + entry.category.name"
             >
               Editar
             </a>
-            <button class="text-danger" (click)="remove(entry.category.id)">Eliminar</button>
+            <button
+              class="text-danger"
+              [attr.aria-label]="'Eliminar categoría ' + entry.category.name"
+              (click)="remove(entry.category.id)"
+            >
+              Eliminar
+            </button>
           </div>
         </div>
       } @empty {

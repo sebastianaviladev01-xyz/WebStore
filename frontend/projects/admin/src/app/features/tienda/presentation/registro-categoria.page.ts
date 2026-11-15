@@ -15,6 +15,9 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { mensajeDeError } from '../domain/formulario.rules';
+import { motivoDeCategoriaRepetida, slugDe } from '../domain/registro-unico.rules';
+import { conservarBorrador } from './borrador';
 import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.rules';
 import { Categoria } from '../domain/tienda.model';
 
@@ -44,6 +47,11 @@ import { Categoria } from '../domain/tienda.model';
         </p>
       </div>
     } @else {
+      @if (borrador.aviso(); as aviso) {
+        <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
+          {{ aviso }}
+        </p>
+      }
       @if (staleNotice()) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="alert">
           {{ staleNotice() }}
@@ -56,9 +64,11 @@ import { Categoria } from '../domain/tienda.model';
         aria-labelledby="titulo-formulario-categoria"
       >
         <div class="grid gap-3">
-          <mat-form-field>
+          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+          <mat-form-field [subscriptSizing]="form.controls.name.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>Nombre</mat-label>
             <input matInput formControlName="name" />
+            <mat-error>{{ mensaje(form.controls.name.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Categoría padre</mat-label>
@@ -128,6 +138,14 @@ export class RegistroCategoriaPage {
     parentId: new FormControl('', { nonNullable: true }),
     order: new FormControl<number | null>(null),
   });
+  protected readonly mensaje = mensajeDeError;
+  /** PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición; se aplica después de traer la categoría. */
+  protected readonly borrador = conservarBorrador({
+    form: this.form,
+    guardar: () => this.form.getRawValue(),
+    restaurar: (valor) => this.form.setValue(valor),
+    diferido: true,
+  });
   /** Lista en orden jerárquico: cada subcategoría debajo de su padre. */
   protected readonly tree = computed(() => aplanarArbolCategorias(this.admin.categories()));
   /** Una categoría no puede colgar de sí misma ni de una de sus subcategorías: formaría un ciclo en el menú de la tienda. */
@@ -142,6 +160,7 @@ export class RegistroCategoriaPage {
     effect(() => {
       const id = this.editing();
       if (id) untracked(() => void this.edit(id));
+      else untracked(() => this.borrador.aplicar());
     });
   }
   protected indent(depth: number) {
@@ -161,16 +180,30 @@ export class RegistroCategoriaPage {
     }
     const c = this.admin.categories().find((x) => x.id === id);
     this.base = c ?? null;
-    if (c) this.form.setValue({ name: c.name, parentId: c.parentId ?? '', order: c.order ?? null });
-    else this.missing.set(true);
+    if (c) {
+      this.form.setValue({ name: c.name, parentId: c.parentId ?? '', order: c.order ?? null });
+      this.borrador.aplicar();
+    } else this.missing.set(true);
     this.loadingCategory.set(false);
   }
   protected async save() {
-    if (this.form.invalid || this.admin.saving()) return;
+    if (this.admin.saving()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const v = this.form.getRawValue();
     const id = this.editing() ?? this.idNuevo;
     if (v.parentId && (v.parentId === id || idsDescendientes(this.admin.categories(), id).has(v.parentId))) {
       this.error.set('Elige un padre que no sea la misma categoría ni una de sus subcategorías.');
+      return;
+    }
+    // PBI-0148: dirección única, comprobada antes de enviar (el BFF la vuelve a comprobar). Un choque que ya existía
+    // antes de editar (datos anteriores) no bloquea: solo se revisa si el nombre cambia de dirección.
+    const repetida = motivoDeCategoriaRepetida(this.admin.categories(), { id, name: v.name });
+    if (repetida && (!this.base || slugDe(this.base.name) !== slugDe(v.name))) {
+      this.form.controls.name.setErrors({ repetido: repetida });
+      this.form.controls.name.markAsTouched();
       return;
     }
     this.error.set(null);
@@ -184,6 +217,6 @@ export class RegistroCategoriaPage {
       await this.router.navigate(['/categorias'], { queryParamsHandling: 'preserve' });
       return;
     }
-    this.error.set(this.admin.error() ?? 'No pudimos guardar la categoría. Inténtalo de nuevo.');
+    this.error.set(this.admin.tomarError() ?? 'No pudimos guardar la categoría. Inténtalo de nuevo.');
   }
 }

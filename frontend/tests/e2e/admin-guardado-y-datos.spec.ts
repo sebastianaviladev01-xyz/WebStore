@@ -211,14 +211,14 @@ test.describe('Guardado del Admin', () => {
     const eliminar = page.getByRole('button', { name: `Eliminar cliente ${nombre}` });
     await expect(eliminar).toBeVisible();
 
-    // El cliente nuevo es el último de la lista: su «Editar» es el último.
-    await page.getByRole('button', { name: 'Editar', exact: true }).last().click();
+    // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
+    await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Editar cliente' })).toBeVisible();
     await page.getByRole('button', { name: 'Cancelar' }).click();
     await expect(page.getByRole('heading', { level: 2, name: 'Nuevo cliente' })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
 
-    await page.getByRole('button', { name: 'Editar', exact: true }).last().click();
+    await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
     page.once('dialog', (dialogo) => void dialogo.accept());
     await eliminar.click();
     await expect(eliminar).toHaveCount(0);
@@ -472,21 +472,14 @@ test.describe('Acceso, sesión y Contenido', () => {
     await nombre.fill('Tienda en edición 06');
     const guardar = page.getByRole('button', { name: 'Guardar configuración' });
     await guardar.click();
-    // El motivo sale justo encima del botón (además del aviso general de la cabecera).
-    const error = page.getByRole('alert').filter({ hasText: 'pesa demasiado' }).last();
+    // El motivo sale justo encima del botón, una sola vez: la cabecera ya no lo repite (lote 07, PBI-0150).
+    const error = page.getByRole('alert').filter({ hasText: 'pesa demasiado' });
+    await expect(error).toHaveCount(1);
     await expect(error).toBeVisible();
     const cajaError = (await error.boundingBox())!;
     const cajaBoton = (await guardar.boundingBox())!;
     expect(cajaBoton.y - (cajaError.y + cajaError.height)).toBeGreaterThanOrEqual(0);
     expect(cajaBoton.y - (cajaError.y + cajaError.height)).toBeLessThan(40);
-    await expect(nombre).toHaveValue('Tienda en edición 06');
-    // «Actualizar» trae los datos del BFF, pero no reescribe lo que la persona está editando.
-    const recarga = page.waitForResponse(
-      (respuesta) =>
-        respuesta.url().endsWith('/bff/admin/snapshot') && respuesta.request().method() === 'GET',
-    );
-    await page.getByRole('button', { name: 'Actualizar' }).click();
-    await recarga;
     await expect(nombre).toHaveValue('Tienda en edición 06');
     await page.unroute('**/bff/admin/snapshot');
     expect((await leerSnapshot()).config).toEqual(antes);

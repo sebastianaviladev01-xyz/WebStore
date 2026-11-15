@@ -28,12 +28,12 @@ test('el administrador ve y gestiona solo a los vendedores, sin eliminarlos', as
     await expect(listaDeUsuarios(page).getByRole('button', { name: /Eliminar/ })).toHaveCount(0);
 
     // El rol solo puede ser «Vendedor».
-    await page.getByRole('combobox', { name: 'Rol' }).click();
+    await page.getByRole('combobox', { name: 'Rol', exact: true }).click();
     await expect(page.getByRole('option')).toHaveText(['Vendedor']);
     await page.keyboard.press('Escape');
 
-    await page.getByRole('textbox', { name: 'Nombre' }).first().fill('Vendedora del lote 07');
-    await page.getByRole('textbox', { name: 'Correo' }).first().fill(correo);
+    await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Vendedora del lote 07');
+    await page.getByRole('textbox', { name: 'Correo', exact: true }).fill(correo);
     await page.getByLabel('Contraseña temporal').fill('Temporal1234');
     await page.getByRole('button', { name: 'Guardar usuario' }).click();
     await expect(listaDeUsuarios(page)).toContainText('Vendedora del lote 07');
@@ -62,7 +62,7 @@ test('el superadministrador ve los tres roles y puede eliminar usuarios', async 
   await expect(
     listaDeUsuarios(page).getByRole('button', { name: 'Eliminar usuario Vendedor Demo' }),
   ).toBeVisible();
-  await page.getByRole('combobox', { name: 'Rol' }).click();
+  await page.getByRole('combobox', { name: 'Rol', exact: true }).click();
   await expect(page.getByRole('option')).toHaveText(['Superadministrador', 'Administrador', 'Vendedor']);
 });
 
