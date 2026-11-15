@@ -14,17 +14,6 @@ export const WRITE_PERMISSIONS = {
   orders: 'orders.manage',
 };
 
-/** Colecciones que el Admin reemplaza tal como llegan. */
-export const REPLACEABLE_COLLECTIONS = [
-  'categories',
-  'brands',
-  'customers',
-  'banners',
-  'rates',
-  'complaints',
-  'config',
-];
-
 /** Rechaza el guardado si incluye una colección que el rol no puede modificar. */
 export function requireWritableCollections(next, role) {
   for (const [key, permission] of Object.entries(WRITE_PERMISSIONS))

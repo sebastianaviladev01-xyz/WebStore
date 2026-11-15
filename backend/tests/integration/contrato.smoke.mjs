@@ -39,6 +39,14 @@ async function request(path, options = {}) {
   return response.status === 204 ? null : response.json();
 }
 const authorization = (token) => ({ authorization: `Bearer ${token}` });
+const errorDe = async (response) => (await response.json()).error ?? {};
+/** Exige el estado y el código de error; devuelve el `error` del Problem. */
+async function esperarError(response, status, code, contexto) {
+  const error = response.status === status ? await errorDe(response) : {};
+  if (response.status !== status || error.code !== code)
+    throw new Error(`${contexto}: se esperaba ${status} ${code} y llegó ${response.status} ${error.code}`);
+  return error;
+}
 async function adminLogin(email = 'owner@webstore.demo', password = 'WebStore#2026') {
   return request('/bff/admin/sessions', { method: 'POST', body: JSON.stringify({ email, password }) });
 }
@@ -480,14 +488,56 @@ try {
   });
   if (lockout.status !== 409) throw new Error('El BFF permitió quedarse sin superadministrador');
 
+  // Guardado del Admin (PBI-0089 y PBI-0095): todo o nada, y cada colección validada antes de aplicar.
+  const precioAntes = (await request('/bff/catalog/products'))[0].price;
+  const rechazado = await put(owner, {
+    revision: superSnapshot.revision,
+    products: superSnapshot.products.map((item, index) => (index === 0 ? { ...item, price: 1 } : item)),
+    users: [],
+  });
+  if (rechazado.status !== 409) throw new Error('Un guardado sin superadministrador debe responder 409');
+  if ((await request('/bff/catalog/products'))[0].price !== precioAntes)
+    throw new Error('Un guardado rechazado dejó aplicado el precio');
+  for (const [cambio, contexto] of [
+    [{ rates: 'x' }, 'Tarifas que no son una lista'],
+    [{ config: null }, 'Configuración nula'],
+    [
+      { products: superSnapshot.products.map((item, i) => (i ? item : { ...item, stock: -1 })) },
+      'Stock negativo',
+    ],
+    [{ orders: [{ id: 'WS-1', status: 'lo-que-sea' }] }, 'Estado de pedido desconocido'],
+  ]) {
+    const error = await esperarError(
+      await put(owner, { revision: superSnapshot.revision, ...cambio }),
+      400,
+      'INVALID_COLLECTION',
+      contexto,
+    );
+    if (!error.details?.collection) throw new Error(`${contexto}: INVALID_COLLECTION sin details.collection`);
+  }
+  await esperarError(
+    await put(owner, { revision: superSnapshot.revision, complaints: [] }),
+    409,
+    'COMPLAINTS_READ_ONLY',
+    'Borrar las reclamaciones',
+  );
+  const respondido = await put(owner, {
+    revision: superSnapshot.revision,
+    complaints: superSnapshot.complaints.map((item) =>
+      item.id === complaint.id
+        ? { ...item, status: 'resolved', providerResponse: 'Atendido', amount: 1 }
+        : item,
+    ),
+  });
+  const reclamoRespondido = (await respondido.json()).complaints.find((item) => item.id === complaint.id);
+  if (
+    reclamoRespondido?.status !== 'resolved' ||
+    reclamoRespondido.providerResponse !== 'Atendido' ||
+    reclamoRespondido.amount !== 100
+  )
+    throw new Error('El Admin debe responder la reclamación sin cambiar su monto');
+
   // Apariencia y temas (TEST-13): rutas públicas, rutas del Admin con `themes.manage`, revisión propia y caché.
-  const errorDe = async (response) => (await response.json()).error ?? {};
-  const esperarError = async (response, status, code, contexto) => {
-    const error = response.status === status ? await errorDe(response) : {};
-    if (response.status !== status || error.code !== code)
-      throw new Error(`${contexto}: se esperaba ${status} ${code} y llegó ${response.status} ${error.code}`);
-    return error;
-  };
   const temas = (session, path = '', options = {}) =>
     raw(`/bff/admin/${path || 'themes'}`, {
       ...options,
