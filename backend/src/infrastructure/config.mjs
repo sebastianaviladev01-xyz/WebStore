@@ -58,3 +58,42 @@ export function avisoDeFeriados(nonWorkingDates, year) {
   if ([...nonWorkingDates].some(delAnio)) return null;
   return `Aviso: WEBSTORE_NON_WORKING_DATES no tiene ninguna fecha de ${year}. El plazo de los reclamos solo excluye sábados y domingos; agrega los feriados nacionales de Perú de ${year} (AAAA-MM-DD, separados por coma).`;
 }
+
+const UNA_HORA_MS = 60 * 60 * 1000;
+
+/**
+ * Vigía del calendario de feriados (PBI-0163): repite `avisoDeFeriados` cuando cambia el año de Lima con el BFF en
+ * marcha, no solo al arrancar. `comprobar()` avisa una sola vez por año (la primera llamada cuenta como cambio);
+ * `iniciar()` la repite cada `cada` milisegundos con un temporizador que no mantiene vivo el proceso, y `detener()`
+ * lo cancela. `hoy`, `avisar`, `programar` y `cancelar` se inyectan para probarla sin reloj real.
+ */
+export function crearVigiaDeFeriados({
+  nonWorkingDates,
+  hoy,
+  avisar,
+  cada = UNA_HORA_MS,
+  programar = setInterval,
+  cancelar = clearInterval,
+}) {
+  let ultimoAnio = null;
+  let temporizador = null;
+  const comprobar = () => {
+    const anio = hoy().slice(0, 4);
+    if (anio === ultimoAnio) return;
+    ultimoAnio = anio;
+    const aviso = avisoDeFeriados(nonWorkingDates, anio);
+    if (aviso) avisar(aviso);
+  };
+  return {
+    comprobar,
+    iniciar() {
+      if (temporizador) return;
+      temporizador = programar(comprobar, cada);
+      temporizador.unref?.();
+    },
+    detener() {
+      if (temporizador) cancelar(temporizador);
+      temporizador = null;
+    },
+  };
+}
