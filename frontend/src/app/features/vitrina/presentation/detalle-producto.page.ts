@@ -169,6 +169,17 @@ import { AgregarAlCarritoDialog } from './agregar-al-carrito.dialog';
             </div>
           </div>
         </div>
+      } @else if (catalog.error()) {
+        <div class="rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger" role="alert">
+          <p>No pudimos cargar el producto. Revisa tu conexión e inténtalo nuevamente.</p>
+          <button
+            type="button"
+            class="mt-2 font-semibold underline underline-offset-4"
+            (click)="catalog.load()"
+          >
+            Reintentar
+          </button>
+        </div>
       } @else {
         <div class="ws-card grid min-h-96 place-items-center p-8 text-center">
           <div>
@@ -208,11 +219,12 @@ export class DetalleProductoPage {
   protected addToCart(): void {
     const product = this.product();
     if (product) {
-      this.cart.add(product, this.quantity());
+      const solicitadas = this.quantity();
+      const agregadas = this.cart.add(product, solicitadas);
       this.dialog.open(AgregarAlCarritoDialog, {
         width: '500px',
         maxWidth: 'calc(100vw - 32px)',
-        data: product,
+        data: { product, solicitadas, agregadas, enCarrito: this.cart.quantityOf(product.id) },
       });
     }
   }

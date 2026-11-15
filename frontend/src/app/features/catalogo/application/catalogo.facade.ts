@@ -19,11 +19,19 @@ export class CatalogoFacade {
   readonly error = this.errorState.asReadonly();
   readonly featuredProducts = computed(() => this.products().filter((product) => product.featured));
 
+  /** Carga en curso: quien pide otra mientras tanto espera la misma (el checkout la pide al entrar). */
+  private inFlight: Promise<void> | null = null;
+
   constructor() {
     void this.load();
   }
 
-  async load(): Promise<void> {
+  load(): Promise<void> {
+    this.inFlight ??= this.fetch().finally(() => (this.inFlight = null));
+    return this.inFlight;
+  }
+
+  private async fetch(): Promise<void> {
     this.loadingState.set(true);
     this.errorState.set(null);
 
