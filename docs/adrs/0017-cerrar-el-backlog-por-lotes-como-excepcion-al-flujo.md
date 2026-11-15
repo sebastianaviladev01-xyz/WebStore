@@ -96,7 +96,7 @@ Se ejecutaron once lotes entre el 2026-11-14 y el 2026-11-15, cada uno con su PR
 | 02, pruebas y limpieza del BFF | [#57](https://github.com/sebastianaviladev01-xyz/WebStore/pull/57) |
 | 08, pruebas y deuda del frontend | [#58](https://github.com/sebastianaviladev01-xyz/WebStore/pull/58) |
 | 10, accesibilidad pendiente | [#59](https://github.com/sebastianaviladev01-xyz/WebStore/pull/59) |
-| 09, cierre documental | El PR de este cierre |
+| 09, cierre documental | [#60](https://github.com/sebastianaviladev01-xyz/WebStore/pull/60) |
 
 Los hallazgos de cada lote se anotaron con su PBI y se asignaron a un lote posterior, como pide el reparto; por eso la excepción cubrió también los PBI-0143 a PBI-0166, anotados durante la entrega.
 
