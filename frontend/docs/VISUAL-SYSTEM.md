@@ -72,7 +72,7 @@ Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo p
 
 La franja superior (`--ws-topbar` y `--ws-on-topbar`) es: en B, `--ws-primary-strong` con `#ffffff`; en A, `#2E1A5C` con `#FFFFFF`; en C, grafito `#1F2328` con `#FFFFFF`; en un tema propio, su `primary-strong` con el más legible entre blanco, el color de contraste y la superficie (lote 03).
 
-Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la paleta: `--ws-on-media` (texto y botones sobre fotos y velos) y `--ws-scrim` (velo del cajón de navegación). El error y la alerta eran fijos hasta el lote 03: con A, B y C conservan sus valores (`#B42318`, `#FEF3F2`, `#FECDCA`, `#8A4B08` y `#FFF6E5`), y en un tema propio se calculan ([ADR-0019](../../docs/adrs/0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md)).
+Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la paleta: `--ws-on-media` (texto y botones sobre fotos y velos) y `--ws-scrim` (velo negro al 45 %). Dónde se usan hoy: `--ws-scrim` solo pinta el fondo que oscurece la página tras el cajón de navegación abierto, en la tienda y en el Admin (`bg-scrim`); ningún texto va sobre él ni sobre una foto con él, así que no necesita un contraste mínimo (PBI-0166, descartada en el lote 10). `--ws-on-media` pinta el fondo del enlace «Saltar al contenido» y los botones `ws-btn-on-dark` y `ws-btn-light`, que hoy ninguna plantilla usa. El texto que sí va sobre una foto, el contador del carrusel del inicio con «Tono de la foto: Oscura», se define aparte ([Controles del carrusel sobre fotos](#controles-del-carrusel-sobre-fotos)). El error y la alerta eran fijos hasta el lote 03: con A, B y C conservan sus valores (`#B42318`, `#FEF3F2`, `#FECDCA`, `#8A4B08` y `#FFF6E5`), y en un tema propio se calculan ([ADR-0019](../../docs/adrs/0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md)).
 
 **Derivación de un tema propio.** Cada token que no es uno de los cinco colores se calcula con `color-mix(in srgb, <hex> N%, <hex>)` sobre colores literales (P, S, F, Sf y C son el principal, el secundario, el fondo principal, el secundario y el contraste):
 
@@ -219,6 +219,10 @@ Feature 005, entregada con el [PR #35](https://github.com/sebastianaviladev01-xy
   - «Ayuda» y «Seguimiento de pedidos» de la franja superior, subrayados al pasar el puntero.
 
   Los enlaces sin utilidades, como «Olvidé mi contraseña», siguen heredando el color y sin subrayado. Las clases `ws-*` y el foco (`a:focus-visible`) siguen fuera de capa y no cambian.
+
+### Controles del carrusel sobre fotos
+
+Con «Tono de la foto: Oscura» en el banner (Admin, solo en escritorio), los controles del carrusel del inicio (contador «1 / N», barra de progreso y flechas) pasan a una cápsula de vidrio: `--ws-ink` al **62 %** sobre la foto, con el texto y los íconos en `--ws-surface`. Desde el lote 10 (PBI-0167) la opacidad es el 62 % y no el 50 %: es lo justo para que el contador, de 14 px, llegue a 4,5:1 (WCAG 1.4.3) sobre una foto blanca, el peor caso, con el `--ws-ink` más claro de los temas predefinidos (el de C: 3,16:1 con el 50 % y 4,52:1 con el 62 %; A pasa de 3,43:1 a 5,06:1 y B de 3,41:1 a 5,02:1). Lo comprueba `src/styles/controles-sobre-fotos.spec.mjs`, que lee la opacidad de `home.css` y el `--ws-ink` y el `--ws-surface` de los tres temas, y falla si el vidrio se aclara. Un tema propio con `--ws-ink` más claro que el de C no está cubierto por esa prueba.
 
 ## Movimiento
 

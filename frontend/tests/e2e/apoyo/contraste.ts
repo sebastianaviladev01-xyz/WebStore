@@ -1,12 +1,23 @@
 import { expect, request as nuevoRequest, test, type Locator, type Page } from '@playwright/test';
 
 import { cuentasAdmin, urls } from './entorno';
+import {
+  SALTO,
+  aRgb,
+  bordeIzquierdo,
+  capturar,
+  distancia,
+  masDistinto,
+  rectangulo,
+  type Pixel,
+} from './pintado';
 
 /**
- * Apoyo de las e2e de contraste (feature 005: TEST-10 a TEST-12). Las pruebas solo leen colores con
- * `getComputedStyle` y calculan la relación WCAG 2.x aquí, en Node: no importan código del BFF. Localizan cada
- * control por su rol y su nombre y, dentro de los de Material, las piezas por su posición en el DOM, nunca por
- * clases `mdc-*` (STD-04, PBI-0050).
+ * Apoyo de las e2e de contraste (feature 005: TEST-10 a TEST-12). Las pruebas leen colores con `getComputedStyle`
+ * y calculan la relación WCAG 2.x aquí, en Node: no importan código del BFF. Localizan cada control por su rol y su
+ * nombre. Lo que Material dibuja por dentro (la marca de la casilla, el punto del botón de opción, la marca de la
+ * opción seleccionada, la capa de estado) se mide por lo que se pinta, leyendo píxeles (`apoyo/pintado.ts`, como
+ * `apoyo/campos.ts`), nunca por su estructura ni por clases `mdc-*` (STD-04, PBI-0050, PBI-0164).
  */
 
 /** Temas predefinidos, en el orden en que se recorren. */
@@ -81,11 +92,6 @@ export function relacionDeContraste(primerPlano: string, fondo: string): number 
 /** Un color opaco calculado por el navegador (`rgb()` o `color(srgb …)`), como `rgb()` para compararlo. */
 export function enRgb(color: string): string {
   return aTexto(aRgba(color));
-}
-
-/** Color opaco que resulta de `encima` sobre `debajo`, como `rgb()`. */
-export function componer(encima: string, debajo: string): string {
-  return aTexto(sobre(aRgba(encima), aRgba(debajo)));
 }
 
 /**
@@ -177,72 +183,108 @@ export async function medirEtiquetaEnfocada(control: Locator): Promise<{ color: 
 }
 
 /**
- * Opción seleccionada de una lista desplegable abierta: su texto y la marca mínima (el `::after` de
- * `mat-pseudo-checkbox`), sobre el fondo de la opción.
+ * Opción seleccionada de una lista desplegable abierta: su texto y su marca (la marca de selección que Material
+ * dibuja), sobre el fondo de la opción. El texto y el fondo salen de los estilos calculados; la marca, de los
+ * píxeles de la opción fuera del texto: el más distinto del fondo es el trazo de la marca.
  */
 export async function medirOpcionSeleccionada(
   opcion: Locator,
 ): Promise<{ texto: string; marca: string; fondo: string }> {
   const texto = await medirTexto(opcion);
-  const marca = await opcion.evaluate((nodo) => {
-    const indicador = nodo.querySelector('mat-pseudo-checkbox');
-    if (!indicador) throw new Error('La opción no tiene marca de selección');
-    return getComputedStyle(indicador, '::after').color;
+  const cajaDelTexto = await opcion.evaluate((raiz) => {
+    const rango = document.createRange();
+    const recorrido = document.createTreeWalker(raiz, NodeFilter.SHOW_TEXT, {
+      acceptNode: (nodo) => (nodo.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP),
+    });
+    const origen = raiz.getBoundingClientRect();
+    const cajas: { x0: number; y0: number; x1: number; y1: number }[] = [];
+    for (let nodo = recorrido.nextNode(); nodo; nodo = recorrido.nextNode()) {
+      rango.selectNodeContents(nodo);
+      const { left, top, right, bottom } = rango.getBoundingClientRect();
+      cajas.push({
+        x0: left - origen.left,
+        y0: top - origen.top,
+        x1: right - origen.left,
+        y1: bottom - origen.top,
+      });
+    }
+    if (!cajas.length) return null;
+    return {
+      x0: Math.min(...cajas.map((caja) => caja.x0)),
+      y0: Math.min(...cajas.map((caja) => caja.y0)),
+      x1: Math.max(...cajas.map((caja) => caja.x1)),
+      y1: Math.max(...cajas.map((caja) => caja.y1)),
+    };
   });
-  return { texto: texto.color, marca, fondo: texto.fondo };
+  if (!cajaDelTexto) throw new Error('La opción no tiene texto');
+  const imagen = await capturar(opcion);
+  const fondo = imagen.pixel(2, 2);
+  const fueraDelTexto: Pixel[] = [];
+  for (let y = 0; y < imagen.alto; y++) {
+    for (let x = 0; x < imagen.ancho; x++) {
+      const dentro =
+        x >= cajaDelTexto.x0 - 2 &&
+        x <= cajaDelTexto.x1 + 2 &&
+        y >= cajaDelTexto.y0 - 2 &&
+        y <= cajaDelTexto.y1 + 2;
+      if (!dentro) fueraDelTexto.push(imagen.pixel(x, y));
+    }
+  }
+  const marca = masDistinto(fondo, fueraDelTexto);
+  if (distancia(marca, fondo) < SALTO) throw new Error('La opción no muestra una marca de selección');
+  return { texto: texto.color, marca: aRgb(marca), fondo: texto.fondo };
 }
 
 /**
- * Botón de opción de Material marcado: el punto y el anillo, hijos del recuadro que sigue al `input`, sobre el
- * fondo efectivo del contenedor de `mat-radio-button`.
+ * Botón de opción de Material marcado, por lo que se ve: el punto es el color del centro del control, el anillo el
+ * del primer borde que se cruza yendo desde la izquierda por la fila central, y el fondo, la esquina de la captura.
  */
 export async function medirBotonDeOpcion(
   radio: Locator,
 ): Promise<{ punto: string; anillo: string; fondo: string }> {
   await radio.scrollIntoViewIfNeeded();
+  await radio.page().mouse.move(0, 0);
   await asentar(radio.page());
-  const medida = await radio.evaluate((input) => {
-    const recuadro = input.nextElementSibling;
-    const [anillo, punto] = recuadro ? Array.from(recuadro.children) : [];
-    if (!anillo || !punto) throw new Error('El botón de opción no tiene anillo y punto');
-    const fondos: string[] = [];
-    for (
-      let nodo = input.closest('mat-radio-button')?.parentElement ?? null;
-      nodo;
-      nodo = nodo.parentElement
-    ) {
-      fondos.push(getComputedStyle(nodo).backgroundColor);
-    }
-    return {
-      punto: getComputedStyle(punto).backgroundColor,
-      anillo: getComputedStyle(anillo).borderTopColor,
-      capas: fondos,
-    };
-  });
-  return { punto: medida.punto, anillo: medida.anillo, fondo: fondoEfectivo(medida.capas) };
+  const imagen = await capturar(radio);
+  const [cx, cy] = [Math.floor(imagen.ancho / 2), Math.floor(imagen.alto / 2)];
+  const fondo = imagen.pixel(0, 0);
+  const borde = bordeIzquierdo(imagen, cy, cx, 'el botón de opción');
+  const anillo = masDistinto(
+    fondo,
+    [0, 1, 2].map((paso) => imagen.pixel(borde + paso, cy)),
+  );
+  return { punto: aRgb(imagen.pixel(cx, cy)), anillo: aRgb(anillo), fondo: aRgb(fondo) };
 }
 
 /**
- * Capa de estado de un botón de Material con el puntero encima: el `::before` del hijo que la pinta (el primero
- * con contenido y color de fondo), con su opacidad.
+ * Relleno de un botón de Material, por lo que se ve, en reposo y con el puntero encima: el color de un píxel
+ * dentro del botón, junto a su borde izquierdo y fuera del texto. La diferencia entre los dos es la capa de estado.
  */
-export async function medirCapaDeEstado(boton: Locator): Promise<{ color: string; opacidad: number }> {
+export async function medirBotonConPuntero(boton: Locator): Promise<{ reposo: string; conPuntero: string }> {
+  const page = boton.page();
+  await boton.blur();
+  await page.mouse.move(0, 0);
+  await asentar(page);
+  const enReposo = await capturar(boton);
   await boton.hover();
-  await asentar(boton.page());
-  return boton.evaluate((nodo) => {
-    for (const hijo of Array.from(nodo.children)) {
-      const antes = getComputedStyle(hijo, '::before');
-      if (antes.content === 'none' || antes.backgroundColor === 'rgba(0, 0, 0, 0)') continue;
-      return { color: antes.backgroundColor, opacidad: Number(antes.opacity) };
-    }
-    throw new Error('El botón no tiene capa de estado');
-  });
+  await asentar(page);
+  const conElPuntero = await capturar(boton);
+  const [x, y] = [10, Math.floor(enReposo.alto / 2)];
+  return { reposo: aRgb(enReposo.pixel(x, y)), conPuntero: aRgb(conElPuntero.pixel(x, y)) };
 }
 
-/** Da a un color la opacidad indicada, para componerlo sobre su fondo. */
-export function conOpacidad(color: string, opacidad: number): string {
-  const { r, g, b, a } = aRgba(color);
-  return `rgba(${r}, ${g}, ${b}, ${a * opacidad})`;
+/** `true` si cada canal de `medido` está a 1 o menos del de `esperado`: un `color-mix()` y su píxel difieren por el redondeo. */
+export function mismoColor(medido: string, esperado: string): boolean {
+  const [a, b] = [aRgba(medido), aRgba(esperado)];
+  return Math.abs(a.r - b.r) <= 1 && Math.abs(a.g - b.g) <= 1 && Math.abs(a.b - b.b) <= 1;
+}
+
+/** `true` si `color` está entre `desde` y `hasta` en cada canal (con 1 de margen): lo que resulta de mezclar uno con otro. */
+export function estaEntre(color: string, desde: string, hasta: string): boolean {
+  const [c, d, h] = [aRgba(color), aRgba(desde), aRgba(hasta)];
+  return (['r', 'g', 'b'] as const).every(
+    (canal) => c[canal] >= Math.min(d[canal], h[canal]) - 1 && c[canal] <= Math.max(d[canal], h[canal]) + 1,
+  );
 }
 
 export interface MedidaCasilla {
@@ -253,35 +295,40 @@ export interface MedidaCasilla {
 }
 
 /**
- * Colores de una casilla de Material, localizada por su rol y su nombre (el `input`). El recuadro es el hermano
- * siguiente del `input` que contiene el `svg` de la marca, y la marca es su `path`; la tarjeta es el fondo
- * efectivo del contenedor de `mat-checkbox`.
+ * Colores de una casilla de Material, localizada por su rol y su nombre (el `input`), por lo que se ve. La captura
+ * del control (con el puntero y el foco fuera) da la tarjeta en su esquina; el recuadro empieza en el primer salto
+ * de color de la fila central; el borde es el píxel más distinto de la tarjeta junto a ese salto; el relleno, un
+ * píxel dentro del recuadro, lejos de la marca; y la marca, el píxel más distinto del relleno dentro del recuadro.
+ * Una casilla sin marcar no tiene relleno (sale igual que la tarjeta).
  */
 export async function medirCasilla(casilla: Locator): Promise<MedidaCasilla> {
   await casilla.scrollIntoViewIfNeeded();
+  await casilla.page().mouse.move(0, 0);
   await asentar(casilla.page());
-  const medida = await casilla.evaluate((input) => {
-    let recuadro = input.nextElementSibling;
-    while (recuadro && !recuadro.querySelector('svg')) recuadro = recuadro.nextElementSibling;
-    if (!recuadro) throw new Error('La casilla no tiene recuadro con marca');
-    const trazo = recuadro.querySelector('svg path')!;
-    const capas: string[] = [];
-    for (let nodo = input.closest('mat-checkbox')?.parentElement ?? null; nodo; nodo = nodo.parentElement) {
-      capas.push(getComputedStyle(nodo).backgroundColor);
-    }
-    const estilo = getComputedStyle(recuadro);
-    return {
-      marca: getComputedStyle(trazo).stroke,
-      relleno: estilo.backgroundColor,
-      borde: estilo.borderTopColor,
-      capas,
-    };
-  });
+  const imagen = await capturar(casilla);
+  const [cx, cy] = [Math.floor(imagen.ancho / 2), Math.floor(imagen.alto / 2)];
+  const tarjeta = imagen.pixel(0, 0);
+  const izquierda = bordeIzquierdo(imagen, cy, cx, 'la casilla');
+  const lado = cx - izquierda;
+  const arriba = cy - lado;
+  const relleno = imagen.pixel(izquierda + 3, arriba + 3);
+  const interior = rectangulo(
+    imagen,
+    izquierda + 3,
+    arriba + 3,
+    izquierda + 2 * lado - 3,
+    arriba + 2 * lado - 3,
+  );
   return {
-    marca: medida.marca,
-    relleno: medida.relleno,
-    borde: medida.borde,
-    tarjeta: fondoEfectivo(medida.capas),
+    marca: aRgb(masDistinto(relleno, interior)),
+    relleno: aRgb(relleno),
+    borde: aRgb(
+      masDistinto(
+        tarjeta,
+        [0, 1, 2].map((paso) => imagen.pixel(izquierda + paso, cy)),
+      ),
+    ),
+    tarjeta: aRgb(tarjeta),
   };
 }
 
