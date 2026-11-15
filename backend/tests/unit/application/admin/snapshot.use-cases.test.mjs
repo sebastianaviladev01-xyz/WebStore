@@ -205,3 +205,48 @@ test('PBI-0095: el Admin no borra ni agrega reclamos', () => {
     assert.equal(store.state.complaints.length, 2);
   }
 });
+
+// Lote 02 (PBI-0102): el guardado desactualizado y el reintento del Admin.
+
+test('un guardado con una revisión vieja o ausente responde STALE_SNAPSHOT sin cambiar ni guardar nada', () => {
+  for (const revision of [4, 6, undefined, null, '5']) {
+    const store = crearAlmacen();
+    const casos = createSnapshotUseCases({ store, security });
+    const antes = structuredClone(store.state);
+    assert.throws(
+      () => casos.save(superadmin, { revision, brands: [{ id: 'b-x', name: 'Nueva', active: true }] }),
+      { code: 'STALE_SNAPSHOT', kind: 'conflict' },
+      String(revision),
+    );
+    assert.deepEqual(store.state, antes);
+    assert.equal(store.guardados, 0);
+  }
+});
+
+test('la revisión se comprueba antes que los datos y que los permisos', () => {
+  const store = crearAlmacen();
+  const casos = createSnapshotUseCases({ store, security });
+  assert.throws(() => casos.save({ id: 'u-4', role: 'vendedor' }, { revision: 1, users: [] }), {
+    code: 'STALE_SNAPSHOT',
+  });
+});
+
+test('tras el rechazo, el Admin recarga y reintenta sobre la revisión nueva: se aplica y la revisión sube', () => {
+  const store = crearAlmacen();
+  const casos = createSnapshotUseCases({ store, security });
+  const marca = { id: 'b-x', name: 'Nueva', active: true };
+  // Otra persona guarda primero.
+  casos.save(superadmin, { revision: 5, brands: { upsert: [{ id: 'b-y', name: 'Otra', active: true }] } });
+  assert.equal(store.state.revision, 6);
+  assert.throws(() => casos.save(superadmin, { revision: 5, brands: { upsert: [marca] } }), {
+    code: 'STALE_SNAPSHOT',
+  });
+  const vista = casos.save(superadmin, {
+    revision: casos.get(superadmin).revision,
+    brands: { upsert: [marca] },
+  });
+  assert.equal(vista.revision, 7);
+  assert.ok(store.state.brands.some((item) => item.id === 'b-x'));
+  assert.ok(store.state.brands.some((item) => item.id === 'b-y'));
+  assert.equal(store.guardados, 2);
+});
