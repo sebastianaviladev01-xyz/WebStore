@@ -303,7 +303,24 @@ try {
       request: 'Solicito revisión del caso.',
     }),
   });
-  if (!complaint.id.startsWith('REC-')) throw new Error('No se generó código de reclamación');
+  if (!/^REC-\d{4}-\d{5}$/.test(complaint.id)) throw new Error('No se generó código de reclamación');
+  const montoInvalido = await raw('/bff/complaints', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'Cliente Smoke',
+      document: '12345678',
+      email: 'smoke@example.com',
+      phone: '999999999',
+      address: 'Av Demo 123',
+      subject: 'Producto de prueba',
+      amount: 'abc',
+      type: 'reclamo',
+      detail: 'Detalle.',
+      request: 'Revisión.',
+    }),
+  });
+  if (montoInvalido.status !== 400 || (await montoInvalido.json()).error?.code !== 'INVALID_COMPLAINT_AMOUNT')
+    throw new Error('Un monto no numérico debe responder 400 INVALID_COMPLAINT_AMOUNT');
   const toLimaDate = (date) =>
     new Intl.DateTimeFormat('en-CA', {
       timeZone: 'America/Lima',
