@@ -18,6 +18,17 @@ export class SesionVencidaError extends Error {
   }
 }
 
+/**
+ * El BFF no respondió (sin conexión, `0`) o falló (`5xx`) en una operación del panel (lote 08, PBI-0134). Es lo que
+ * sale de `data/` en lugar del `HttpErrorResponse` de Angular, que no es del dominio: la facade lo trata como
+ * cualquier otro fallo y muestra su aviso.
+ */
+export class ServicioNoDisponibleError extends Error {
+  constructor(readonly status: number) {
+    super(`BFF_NO_DISPONIBLE_${status}`);
+  }
+}
+
 /** Aviso del acceso cuando la sesión venció a mitad de una operación (PBI-0124). */
 export const AVISO_SESION_VENCIDA = 'Tu sesión venció. Vuelve a iniciar sesión para continuar.';
 

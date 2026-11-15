@@ -5,6 +5,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
   finAntesDelInicio,
@@ -394,7 +395,12 @@ export class BannersPage {
 
   /** Si se elimina el banner en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string): Promise<void> {
-    if (!confirm('¿Eliminar banner?')) return;
-    if ((await this.admin.eliminarBanner(id)) && this.editing() === id) this.reset();
+    await eliminarRegistro({
+      pregunta: '¿Eliminar banner?',
+      id,
+      editando: () => this.editing(),
+      eliminar: (idEliminado) => this.admin.eliminarBanner(idEliminado),
+      salirDeLaEdicion: () => this.reset(),
+    });
   }
 }

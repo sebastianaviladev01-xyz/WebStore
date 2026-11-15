@@ -10,11 +10,15 @@ import {
   SnapshotDesactualizadoError,
 } from '../domain/tienda.gateway';
 import { bearer } from '../../../core/bff-http';
-import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
+import { ServicioNoDisponibleError, SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 
 const SNAPSHOT_URL = '/bff/admin/snapshot';
 const MENSAJE_DEMASIADO_GRANDE =
   'Lo que intentas guardar pesa demasiado (más de 2 MB). Usa imágenes más livianas o una URL.';
+
+/** De `data/` no sale un `HttpErrorResponse` (PBI-0134): un fallo sin traducir es del servicio. */
+const errorDelDominio = (error: HttpErrorResponse): ServicioNoDisponibleError =>
+  new ServicioNoDisponibleError(error.status);
 
 @Injectable()
 export class BffTiendaGateway implements TiendaGateway {
@@ -24,8 +28,9 @@ export class BffTiendaGateway implements TiendaGateway {
     try {
       return await firstValueFrom(this.http.get<SnapshotTienda>(SNAPSHOT_URL, { headers: bearer(token) }));
     } catch (error) {
-      if (error instanceof HttpErrorResponse && error.status === 401) throw new SesionVencidaError();
-      throw error;
+      if (!(error instanceof HttpErrorResponse)) throw error;
+      if (error.status === 401) throw new SesionVencidaError();
+      throw errorDelDominio(error);
     }
   }
 
@@ -46,7 +51,7 @@ export class BffTiendaGateway implements TiendaGateway {
       if (error.status === 413) throw new ReglaTiendaError(MENSAJE_DEMASIADO_GRANDE);
       if (error.status >= 400 && error.status < 500 && problem?.message)
         throw new ReglaTiendaError(problem.message);
-      throw error;
+      throw errorDelDominio(error);
     }
   }
 }

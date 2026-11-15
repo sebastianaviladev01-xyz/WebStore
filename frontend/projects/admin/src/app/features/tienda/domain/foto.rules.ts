@@ -28,3 +28,11 @@ export const primeraQueCabe = (versiones: readonly string[], maximo = BYTES_MAXI
  */
 export const LADO_IMAGEN_CATEGORIA = 160;
 export const MAX_CARACTERES_IMAGEN_CATEGORIA = 100_000;
+
+/** Fotos adicionales de un producto además de la principal (lote 08, PBI-0134: antes era una constante de la página). */
+export const MAXIMO_FOTOS_DE_GALERIA = 6;
+
+/** ¿Entra otra foto en la galería que ya tiene `cantidad`? */
+export const hayLugarEnLaGaleria = (cantidad: number): boolean => cantidad < MAXIMO_FOTOS_DE_GALERIA;
+
+export const mensajeDeGaleriaLlena = (): string => `Máximo ${MAXIMO_FOTOS_DE_GALERIA} fotos adicionales.`;

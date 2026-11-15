@@ -3,7 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { firstValueFrom, Observable } from 'rxjs';
 
 import { bearer } from '../../../core/bff-http';
-import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
+import { ServicioNoDisponibleError, SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { Notificaciones } from '../domain/notificacion.model';
 import { NotificacionesGateway } from '../domain/notificaciones.gateway';
 
@@ -31,8 +31,9 @@ export class BffNotificacionesGateway implements NotificacionesGateway {
     try {
       return await firstValueFrom(peticion);
     } catch (error) {
-      if (error instanceof HttpErrorResponse && error.status === 401) throw new SesionVencidaError();
-      throw error;
+      if (!(error instanceof HttpErrorResponse)) throw error;
+      // De `data/` no sale un `HttpErrorResponse` (lote 08, PBI-0134).
+      throw error.status === 401 ? new SesionVencidaError() : new ServicioNoDisponibleError(error.status);
     }
   }
 }
