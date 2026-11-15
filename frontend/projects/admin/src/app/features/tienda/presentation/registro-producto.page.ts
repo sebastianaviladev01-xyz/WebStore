@@ -68,14 +68,16 @@ const MAX_GALLERY_PHOTOS = 6;
         aria-labelledby="titulo-formulario-producto"
       >
         <div class="grid gap-3">
-          <mat-form-field>
+          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+          <mat-form-field [subscriptSizing]="form.controls.name.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>Nombre</mat-label>
             <input matInput formControlName="name" />
             @if (form.controls.name.hasError('repetido')) {
               <mat-error>{{ form.controls.name.getError('repetido') }}</mat-error>
             }
           </mat-form-field>
-          <mat-form-field>
+          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+          <mat-form-field [subscriptSizing]="form.controls.sku.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>SKU</mat-label>
             <input matInput formControlName="sku" [readonly]="!session.can('products.manage')" />
             @if (form.controls.sku.hasError('repetido')) {

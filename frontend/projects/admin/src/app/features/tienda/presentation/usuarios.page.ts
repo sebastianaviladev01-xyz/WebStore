@@ -74,7 +74,8 @@ const EMPTY_USER = {
             <mat-label>Nombre</mat-label>
             <input matInput formControlName="name" />
           </mat-form-field>
-          <mat-form-field>
+          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+          <mat-form-field [subscriptSizing]="form.controls.email.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>Correo</mat-label>
             <input matInput type="email" formControlName="email" />
             @if (form.controls.email.hasError('repetido')) {

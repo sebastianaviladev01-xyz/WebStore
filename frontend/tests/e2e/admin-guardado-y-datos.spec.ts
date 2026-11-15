@@ -347,7 +347,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     const fin = page.getByLabel('Fin');
     await fin.fill('2030-12-01');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(fin).toHaveAccessibleDescription('El fin debe ser el mismo día del inicio o después.');
+    await expect(fin).toHaveAccessibleDescription('Debe ser el día del inicio o después.');
     expect(guardados()).toBe(0);
   });
 });

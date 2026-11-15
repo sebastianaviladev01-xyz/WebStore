@@ -127,11 +127,14 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
               <mat-label>Inicio</mat-label>
               <input matInput type="date" formControlName="startAt" />
             </mat-form-field>
-            <mat-form-field>
+            <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+            <mat-form-field
+              [subscriptSizing]="form.controls.endAt.hasError('antesDelInicio') ? 'dynamic' : 'fixed'"
+            >
               <mat-label>Fin</mat-label>
               <input matInput type="date" formControlName="endAt" />
               @if (form.controls.endAt.hasError('antesDelInicio')) {
-                <mat-error>El fin debe ser el mismo día del inicio o después.</mat-error>
+                <mat-error>Debe ser el día del inicio o después.</mat-error>
               }
             </mat-form-field>
           </div>
