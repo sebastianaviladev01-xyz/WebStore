@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** administrador o vendedor
+- **Como** administrador (el vendedor cambia el stock desde la ficha de cada producto, en Productos)
 - **Quiero** actualizar el stock de los productos
 - **Para** que la tienda venda solo lo que hay
 
@@ -40,3 +40,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el Admin no pisa el stock vendido: no guarda y pide revisar los datos actuales. Si el usuario cambió otro campo, el Admin lo reaplica y conserva el stock vendido (Escenario 02).
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0120 y PBI-0127), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
+### Escenario 05 – Quién entra en Inventario
+
+- **Dado** que un vendedor abre el Admin
+- **Cuando** busca Inventario en el menú o escribe `/inventario`
+- **Entonces** no lo ve y la ruta lo lleva al Resumen; el stock lo cambia en la ficha del producto. El superadministrador y el administrador entran en Inventario, que tiene el panel de filtros (por nombre o SKU y por estado del stock).
+
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013 y PBI-0139). Provisional, por confirmar con Daniel ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-acceso.spec.ts` y `admin-listados.spec.ts`.

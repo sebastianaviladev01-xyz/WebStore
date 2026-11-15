@@ -568,45 +568,130 @@ try {
       body: JSON.stringify(update),
     });
 
+  // Permisos de los roles (lote 07, PBI-0013, provisional): el vendedor crea y modifica productos sin eliminarlos,
+  // sin pedidos ni inventario; el administrador gestiona solo a los vendedores y no tiene Contenido.
   const seller = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
-  const sellerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(seller.token) });
-  if (seller.user.role !== 'vendedor' || sellerSnapshot.users.length || sellerSnapshot.rates.length)
-    throw new Error('El vendedor recibió colecciones fuera de su rol');
+  let sellerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(seller.token) });
   if (
-    !sellerSnapshot.orders.length ||
-    !sellerSnapshot.orders[0].items?.length ||
-    !sellerSnapshot.orders[0].district
+    seller.user.role !== 'vendedor' ||
+    sellerSnapshot.users.length ||
+    sellerSnapshot.rates.length ||
+    sellerSnapshot.orders.length ||
+    sellerSnapshot.customers.length
   )
-    throw new Error('El vendedor no recibe el detalle de pedidos (líneas y distrito)');
+    throw new Error('El vendedor recibió colecciones fuera de su rol');
   if (sellerSnapshot.roles?.map((role) => role.id).join() !== 'superadmin,admin,vendedor')
     throw new Error('El snapshot no publica los roles fijos');
-  const forbidden = await put(seller, {
-    revision: sellerSnapshot.revision,
-    products: [...sellerSnapshot.products, { ...sellerSnapshot.products[0], id: 'forbidden' }],
-  });
-  if (forbidden.status !== 403) throw new Error('El BFF permitió ampliar catálogo con rol restringido');
+  await esperarError(
+    await put(seller, {
+      revision: sellerSnapshot.revision,
+      products: { remove: [sellerSnapshot.products[0].id] },
+    }),
+    403,
+    'CATALOG_SCOPE_VIOLATION',
+    'El vendedor elimina un producto',
+  );
+  await esperarError(
+    await put(seller, { revision: sellerSnapshot.revision, products: sellerSnapshot.products.slice(1) }),
+    403,
+    'CATALOG_SCOPE_VIOLATION',
+    'El vendedor envía el catálogo sin un producto',
+  );
   const sellerCategories = await put(seller, {
     revision: sellerSnapshot.revision,
     categories: sellerSnapshot.categories,
   });
   if (sellerCategories.status !== 403) throw new Error('El vendedor pudo modificar categorías');
+  await esperarError(
+    await put(seller, {
+      revision: sellerSnapshot.revision,
+      orders: { upsert: [{ id: order.id, status: 'processing' }] },
+    }),
+    403,
+    'INSUFFICIENT_ROLE',
+    'El vendedor cambia un pedido',
+  );
+  const sellerProduct = {
+    ...sellerSnapshot.products[0],
+    id: 'p-smoke-vendedor',
+    name: 'Producto creado por el vendedor',
+    sku: 'SMOKE-VENDEDOR',
+    gallery: ['assets/products/tv.svg'],
+    price: 1,
+  };
+  const sellerCreate = await put(seller, {
+    revision: sellerSnapshot.revision,
+    products: { upsert: [sellerProduct] },
+  });
+  if (!sellerCreate.ok) throw new Error(`El vendedor no pudo crear un producto: ${sellerCreate.status}`);
+  sellerSnapshot = await sellerCreate.json();
   const sellerEdit = await put(seller, {
     revision: sellerSnapshot.revision,
-    products: sellerSnapshot.products.map((item, index) =>
-      index === 0 ? { ...item, gallery: ['assets/products/tv.svg'], price: 1 } : item,
-    ),
+    products: { upsert: [{ id: sellerProduct.id, price: 2 }] },
   });
-  if (!sellerEdit.ok) throw new Error(`El vendedor no pudo editar la ficha: ${sellerEdit.status}`);
-  const afterSellerEdit = (await request('/bff/catalog/products'))[0];
-  if (afterSellerEdit.images.length !== 2 || afterSellerEdit.price === 1)
-    throw new Error('El vendedor no puede editar fotos o pudo cambiar el precio');
+  if (!sellerEdit.ok) throw new Error(`El vendedor no pudo cambiar el precio: ${sellerEdit.status}`);
+  const creadoPorVendedor = (await request('/bff/catalog/products')).find(
+    (item) => item.id === sellerProduct.id,
+  );
+  if (creadoPorVendedor?.images.length !== 2 || creadoPorVendedor.price !== 2)
+    throw new Error('El producto del vendedor no llegó a la tienda con su precio y sus fotos');
 
   const manager = await adminLogin('admin@webstore.demo', 'Admin#2026');
   let managerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(manager.token) });
-  if (manager.user.role !== 'admin' || managerSnapshot.users.length || !managerSnapshot.rates.length)
+  if (
+    manager.user.role !== 'admin' ||
+    !managerSnapshot.rates.length ||
+    managerSnapshot.users.map((user) => user.role).join() !== 'vendedor'
+  )
     throw new Error('El rol Administrador no recibe lo que le corresponde');
-  const managerUsers = await put(manager, { revision: managerSnapshot.revision, users: [] });
-  if (managerUsers.status !== 403) throw new Error('El Administrador pudo gestionar usuarios');
+  await esperarError(
+    await put(manager, { revision: managerSnapshot.revision, users: [] }),
+    403,
+    'USER_SCOPE_VIOLATION',
+    'El Administrador reemplaza la lista de usuarios',
+  );
+  await esperarError(
+    await put(manager, {
+      revision: managerSnapshot.revision,
+      users: { upsert: [{ id: managerSnapshot.users[0].id, role: 'admin' }] },
+    }),
+    403,
+    'USER_SCOPE_VIOLATION',
+    'El Administrador asciende a un vendedor',
+  );
+  await esperarError(
+    await put(manager, {
+      revision: managerSnapshot.revision,
+      users: { remove: [managerSnapshot.users[0].id] },
+    }),
+    403,
+    'USER_SCOPE_VIOLATION',
+    'El Administrador elimina a un vendedor',
+  );
+  await esperarError(
+    await put(manager, { revision: managerSnapshot.revision, config: { storeName: 'Otra' } }),
+    403,
+    'INSUFFICIENT_ROLE',
+    'El Administrador cambia Contenido',
+  );
+  const managerSeller = await put(manager, {
+    revision: managerSnapshot.revision,
+    users: {
+      upsert: [
+        {
+          id: 'u-smoke-vendedor',
+          name: 'Vendedor del administrador',
+          email: 'vendedor-smoke@webstore.demo',
+          role: 'vendedor',
+          active: false,
+          temporaryPassword: 'Temporal1234',
+        },
+      ],
+    },
+  });
+  if (!managerSeller.ok)
+    throw new Error(`El Administrador no pudo crear un vendedor: ${managerSeller.status}`);
+  managerSnapshot = await managerSeller.json();
   const managerReset = await raw('/bff/admin/reset', {
     method: 'POST',
     headers: authorization(manager.token),
@@ -618,6 +703,13 @@ try {
     rates: managerSnapshot.rates.map((rate) => ({ ...rate, price: rate.price + 1 })),
   });
   if (!managerRates.ok) throw new Error('El Administrador no pudo ajustar tarifas');
+  managerSnapshot = await managerRates.json();
+  const managerDelete = await put(manager, {
+    revision: managerSnapshot.revision,
+    products: { remove: [sellerProduct.id] },
+  });
+  if (!managerDelete.ok)
+    throw new Error(`El Administrador no pudo eliminar un producto: ${managerDelete.status}`);
 
   const superSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   const invalidRole = await put(owner, {
@@ -661,6 +753,18 @@ try {
     );
     if (!error.details?.collection) throw new Error(`${contexto}: INVALID_COLLECTION sin details.collection`);
   }
+  // PBI-0148 (lote 07): una categoría nueva con la dirección de otra se rechaza.
+  const categoriaRepetida = await esperarError(
+    await put(owner, {
+      revision: superSnapshot.revision,
+      categories: { upsert: [{ id: 'cat-smoke', name: superSnapshot.categories[0].name.toUpperCase() }] },
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Categoría con la dirección de otra',
+  );
+  if (categoriaRepetida.details?.field !== 'slug')
+    throw new Error('La categoría repetida no se rechazó por su dirección (details.field: slug)');
   await esperarError(
     await put(owner, { revision: superSnapshot.revision, complaints: [] }),
     409,

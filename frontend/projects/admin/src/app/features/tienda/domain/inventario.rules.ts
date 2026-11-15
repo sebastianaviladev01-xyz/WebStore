@@ -11,3 +11,13 @@ export function leerStock(texto: string): LecturaStock {
     ? { valido: true, stock: Number(limpio) }
     : { valido: false, mensaje: MENSAJE_STOCK };
 }
+
+/** Estado del stock de un producto (lote 07): el que muestra Inventario y por el que se filtra (PBI-0139). */
+export type EstadoStock = 'sin-stock' | 'stock-bajo' | 'disponible';
+
+/** Unidades hasta las que el stock es bajo, como el Resumen («Productos con 5 unidades o menos»). */
+export const STOCK_BAJO = 5;
+
+export function estadoDeStock(stock: number): EstadoStock {
+  return stock === 0 ? 'sin-stock' : stock <= STOCK_BAJO ? 'stock-bajo' : 'disponible';
+}

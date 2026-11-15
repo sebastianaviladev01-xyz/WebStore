@@ -22,7 +22,9 @@ body {
 a:focus-visible,
 button:focus-visible,
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+/* PBI-0132: «Cargar foto» y «Cargar logo» son etiquetas con el campo de archivo oculto; el foco se ve en la etiqueta. */
+label:has(> input[type='file']:focus-visible) {
   outline: 2px solid var(--ws-focus-ring);
   outline-offset: 2px;
 }

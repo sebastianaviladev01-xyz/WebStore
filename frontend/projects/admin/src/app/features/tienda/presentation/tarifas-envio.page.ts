@@ -91,8 +91,22 @@ const PAGE_SIZE = 25;
                 </td>
                 <td class="px-4 py-3">
                   <div class="flex justify-end gap-3 font-medium">
-                    <button class="text-link" type="button" (click)="edit(rate.id)">Editar</button>
-                    <button class="text-danger" type="button" (click)="remove(rate.id)">Eliminar</button>
+                    <button
+                      class="text-link"
+                      type="button"
+                      [attr.aria-label]="'Editar tarifa de ' + rate.origin + ' a ' + rate.destination"
+                      (click)="edit(rate.id)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="text-danger"
+                      type="button"
+                      [attr.aria-label]="'Eliminar tarifa de ' + rate.origin + ' a ' + rate.destination"
+                      (click)="remove(rate.id)"
+                    >
+                      Eliminar
+                    </button>
                   </div>
                 </td>
               </tr>

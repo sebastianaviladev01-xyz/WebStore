@@ -7,6 +7,9 @@ import { MatInputModule } from '@angular/material/input';
 import { TiendaFacade } from '../application/tienda.facade';
 import { BYTES_MAXIMOS_FOTO } from '../domain/foto.rules';
 import { ConfiguracionTienda } from '../domain/tienda.model';
+import { mensajeDeError } from '../domain/formulario.rules';
+import { avisoDeNavegacion } from '../domain/navegacion.rules';
+import { conservarBorrador } from './borrador';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
 
 @Component({
@@ -19,6 +22,9 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
       predeterminadas. La tipografía permanece bloqueada a una sola fuente por acuerdo del MVP.
     </p>
 
+    @if (borrador.aviso(); as aviso) {
+      <p class="mt-7 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">{{ aviso }}</p>
+    }
     <form [formGroup]="form" (ngSubmit)="save()" class="admin-card mt-7 p-6">
       <div
         class="mb-6 grid gap-5 rounded-3xl border border-line bg-subtle p-5 md:grid-cols-[180px_1fr] md:items-center"
@@ -73,10 +79,12 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
         <mat-form-field>
           <mat-label>Nombre de tienda</mat-label>
           <input matInput formControlName="storeName" />
+          <mat-error>{{ mensaje(form.controls.storeName.errors) }}</mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Inicial de respaldo</mat-label>
           <input matInput formControlName="logoText" maxlength="3" />
+          <mat-error>{{ mensaje(form.controls.logoText.errors) }}</mat-error>
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>URL/Data URL del logo</mat-label>
@@ -89,6 +97,7 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
         <mat-form-field>
           <mat-label>Correo de contacto</mat-label>
           <input matInput formControlName="contactEmail" />
+          <mat-error>{{ mensaje(form.controls.contactEmail.errors) }}</mat-error>
         </mat-form-field>
         <mat-form-field>
           <mat-label>Teléfono</mat-label>
@@ -102,9 +111,13 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
           <mat-label>Texto footer</mat-label>
           <input matInput formControlName="footerText" />
         </mat-form-field>
-        <mat-form-field class="sm:col-span-2">
+        <!-- PBI-0153: avisa, sin bloquear, si un texto no lleva a ninguna página de la tienda. -->
+        <mat-form-field class="sm:col-span-2" [subscriptSizing]="avisoNavegacion() ? 'dynamic' : 'fixed'">
           <mat-label>Navegación superior</mat-label>
           <input matInput formControlName="topNavigation" />
+          @if (avisoNavegacion(); as aviso) {
+            <mat-hint class="text-warning">{{ aviso }}</mat-hint>
+          }
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>Orden preferido de categorías laterales</mat-label>
@@ -121,18 +134,22 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
         <mat-form-field class="sm:col-span-2">
           <mat-label>Contenido de Contacto</mat-label>
           <textarea matInput rows="4" formControlName="contactContent"></textarea>
+          <mat-error>{{ mensaje(form.controls.contactContent.errors) }}</mat-error>
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>Contenido de Envíos</mat-label>
           <textarea matInput rows="4" formControlName="shippingContent"></textarea>
+          <mat-error>{{ mensaje(form.controls.shippingContent.errors) }}</mat-error>
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>Política de privacidad</mat-label>
           <textarea matInput rows="7" formControlName="privacyContent"></textarea>
+          <mat-error>{{ mensaje(form.controls.privacyContent.errors) }}</mat-error>
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>Términos y condiciones</mat-label>
           <textarea matInput rows="7" formControlName="termsContent"></textarea>
+          <mat-error>{{ mensaje(form.controls.termsContent.errors) }}</mat-error>
         </mat-form-field>
       </div>
 
@@ -197,6 +214,18 @@ export class ContenidoPage {
 
   /** La configuración tal como se cargó en el formulario: lo que cambió se calcula contra ella (PBI-0120). */
   private base: ConfiguracionTienda | null = null;
+  protected readonly mensaje = mensajeDeError;
+  /** PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición y se ingresa otra vez. */
+  protected readonly borrador = conservarBorrador({
+    form: this.form,
+    guardar: () => ({ base: this.base, valor: this.form.getRawValue() }),
+    restaurar: (borrador) => {
+      if (!borrador.base) return false;
+      this.base = borrador.base;
+      this.form.setValue(borrador.valor);
+      return true;
+    },
+  });
   /** Motivo del último guardado rechazado, junto al botón; el formulario conserva lo escrito (PBI-0125). */
   protected readonly saveError = signal<string | null>(null);
   /** Motivo por el que no se pudo usar el logo elegido. */
@@ -265,15 +294,27 @@ export class ContenidoPage {
 
   protected readonly saved = signal(false);
 
+  /** Aviso de la «Navegación superior» con lo escrito ahora y las páginas marcadas (PBI-0153). */
+  protected avisoNavegacion(): string | null {
+    const valor = this.form.getRawValue();
+    return avisoDeNavegacion(valor.topNavigation, valor);
+  }
+
   /** Guarda solo lo que cambió (PBI-0120); si falla, lo escrito se queda y el motivo sale junto al botón (PBI-0125). */
   protected async save(): Promise<void> {
     this.saved.set(false);
     this.saveError.set(null);
     const base = this.base;
-    if (this.form.invalid || !base || this.admin.saving()) return;
+    if (!base || this.admin.saving()) return;
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
     const editado = this.form.getRawValue();
     if (!(await this.admin.guardarConfiguracion(base, editado))) {
-      this.saveError.set(this.admin.error() ?? 'No pudimos guardar la configuración. Inténtalo de nuevo.');
+      this.saveError.set(
+        this.admin.tomarError() ?? 'No pudimos guardar la configuración. Inténtalo de nuevo.',
+      );
       return;
     }
     this.base = this.admin.config() ?? editado;

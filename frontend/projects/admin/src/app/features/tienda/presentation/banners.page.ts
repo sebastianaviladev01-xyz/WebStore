@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
 import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,10 +14,29 @@ import {
   MAXIMO_HEROES_ACTIVOS,
 } from '../domain/banner.rules';
 import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
+import {
+  FILTROS_BANNERS_VACIOS,
+  filtrarBanners,
+  leerFiltrosBanners,
+  parametrosDeFiltrosBanners,
+} from '../domain/filtro-listado.rules';
+import { mensajeDeError } from '../domain/formulario.rules';
+import { conservarBorrador } from './borrador';
+import { filtrosDeListado } from './filtros-de-listado';
+import { PaginacionComponent } from './paginacion.component';
+import { PanelFiltrosComponent } from './panel-filtros.component';
 
 @Component({
   selector: 'ws-banners-page',
-  imports: [ReactiveFormsModule, MatCheckboxModule, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [
+    ReactiveFormsModule,
+    MatCheckboxModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    PanelFiltrosComponent,
+    PaginacionComponent,
+  ],
   template: `
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Banners y campañas</h1>
     <p class="mt-3 max-w-3xl text-sm leading-6 text-muted">
@@ -25,9 +44,36 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
       en el carrusel principal.
     </p>
 
-    <div class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
-      <section class="admin-card overflow-hidden">
-        @for (banner of admin.banners(); track banner.id) {
+    <ws-filter-panel
+      class="mt-7"
+      etiqueta="Filtros de banners"
+      [formGroup]="filtros.borrador"
+      [buscando]="filtros.buscando()"
+      [error]="filtros.error()"
+      (buscar)="filtros.buscar()"
+      (limpiar)="filtros.limpiar()"
+    >
+      <mat-form-field>
+        <mat-label>Buscar banner</mat-label>
+        <input matInput formControlName="texto" />
+        <mat-hint>Por título</mat-hint>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Filtrar por estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="todos">Todos</mat-option>
+          <mat-option value="activos">Activos</mat-option>
+          <mat-option value="inactivos">Inactivos</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ws-filter-panel>
+    @if (borrador.aviso(); as aviso) {
+      <p class="mt-6 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">{{ aviso }}</p>
+    }
+
+    <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_460px]">
+      <section class="admin-card overflow-hidden" aria-label="Lista de banners">
+        @for (banner of pagina().items; track banner.id) {
           <article class="grid gap-4 border-b border-line p-5 sm:grid-cols-[110px_1fr_auto] sm:items-center">
             <div class="grid aspect-[4/3] place-items-center overflow-hidden rounded-2xl bg-subtle p-3">
               <!-- Miniatura: la versión de celular pesa menos que la de escritorio. -->
@@ -50,16 +96,41 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
               </p>
             </div>
             <div class="flex gap-3 text-sm font-semibold">
-              <button type="button" class="text-link" (click)="edit(banner.id)">Editar</button>
-              <button type="button" class="text-danger" (click)="remove(banner.id)">Eliminar</button>
+              <button
+                type="button"
+                class="text-link"
+                [attr.aria-label]="'Editar banner ' + banner.title"
+                (click)="edit(banner.id)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="text-danger"
+                [attr.aria-label]="'Eliminar banner ' + banner.title"
+                (click)="remove(banner.id)"
+              >
+                Eliminar
+              </button>
             </div>
           </article>
         } @empty {
-          <p class="p-8 text-center text-sm text-muted">Aún no hay banners configurados.</p>
+          <p class="p-8 text-center text-sm text-muted">
+            {{
+              admin.banners().length
+                ? 'Ningún banner cumple los filtros.'
+                : 'Aún no hay banners configurados.'
+            }}
+          </p>
         }
+        <ws-pagination
+          [pagina]="pagina()"
+          etiqueta="Páginas de banners"
+          (cambiar)="filtros.irAPagina($event)"
+        />
       </section>
 
-      <form [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
+      <form #registro="ngForm" [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
         <h2 class="text-xl font-semibold">{{ editing() ? 'Editar banner' : 'Nuevo banner' }}</h2>
         <div class="mt-5 grid gap-3">
           <mat-form-field>
@@ -73,28 +144,34 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
           <mat-form-field>
             <mat-label>Antetítulo</mat-label>
             <input matInput formControlName="eyebrow" />
+            <mat-error>{{ mensaje(form.controls.eyebrow.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Título</mat-label>
             <input matInput formControlName="title" />
+            <mat-error>{{ mensaje(form.controls.title.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Descripción</mat-label>
             <textarea matInput rows="3" formControlName="description"></textarea>
+            <mat-error>{{ mensaje(form.controls.description.errors) }}</mat-error>
           </mat-form-field>
           <div class="grid grid-cols-2 gap-3">
             <mat-form-field>
               <mat-label>Texto CTA</mat-label>
               <input matInput formControlName="cta" />
+              <mat-error>{{ mensaje(form.controls.cta.errors) }}</mat-error>
             </mat-form-field>
             <mat-form-field>
               <mat-label>Enlace CTA</mat-label>
               <input matInput formControlName="ctaUrl" />
+              <mat-error>{{ mensaje(form.controls.ctaUrl.errors) }}</mat-error>
             </mat-form-field>
           </div>
           <mat-form-field>
             <mat-label>Imagen desktop</mat-label>
             <input matInput formControlName="imageUrl" />
+            <mat-error>{{ mensaje(form.controls.imageUrl.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Presentación de imagen</mat-label>
@@ -115,6 +192,7 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
             <mat-form-field>
               <mat-label>Posición vertical de la foto (%)</mat-label>
               <input matInput type="number" min="0" max="100" step="0.5" formControlName="imageFocusY" />
+              <mat-error>{{ mensaje(form.controls.imageFocusY.errors) }}</mat-error>
               <mat-hint>0 muestra la parte de arriba y 100 la de abajo. Vacío: 31,5 (como la sala).</mat-hint>
             </mat-form-field>
           }
@@ -126,6 +204,7 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
             <mat-form-field>
               <mat-label>Inicio</mat-label>
               <input matInput type="date" formControlName="startAt" />
+              <mat-error>{{ mensaje(form.controls.startAt.errors) }}</mat-error>
             </mat-form-field>
             <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
             <mat-form-field
@@ -133,9 +212,13 @@ import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/t
             >
               <mat-label>Fin</mat-label>
               <input matInput type="date" formControlName="endAt" />
-              @if (form.controls.endAt.hasError('antesDelInicio')) {
-                <mat-error>Debe ser el día del inicio o después.</mat-error>
-              }
+              <mat-error>
+                {{
+                  form.controls.endAt.hasError('antesDelInicio')
+                    ? 'Debe ser el día del inicio o después.'
+                    : mensaje(form.controls.endAt.errors)
+                }}
+              </mat-error>
             </mat-form-field>
           </div>
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
@@ -172,13 +255,24 @@ export class BannersPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly placementLabels = ETIQUETAS_UBICACION_BANNER;
   protected readonly placements = Object.keys(ETIQUETAS_UBICACION_BANNER) as UbicacionBanner[];
-  private readonly formDirective = viewChild.required(FormGroupDirective);
+  // Por referencia: el panel de filtros (PBI-0139) también es un FormGroupDirective y va antes en la plantilla.
+  private readonly formDirective = viewChild.required<FormGroupDirective>('registro');
   protected readonly editing = signal<string | null>(null);
   /** El banner tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
   private base: Banner | null = null;
   /** Id del banner nuevo; cambia al empezar otro, para que un segundo envío no cree otro (PBI-0121). */
   private idNuevo = crypto.randomUUID();
   protected readonly error = signal<string | null>(null);
+  protected readonly mensaje = mensajeDeError;
+  protected readonly filtros = filtrosDeListado({
+    leer: leerFiltrosBanners,
+    escribir: parametrosDeFiltrosBanners,
+    vacios: FILTROS_BANNERS_VACIOS,
+    que: 'los banners',
+  });
+  protected readonly pagina = computed(() =>
+    this.filtros.paginar(filtrarBanners(this.admin.banners(), this.filtros.aplicados())),
+  );
   protected readonly form = new FormGroup({
     eyebrow: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -200,6 +294,17 @@ export class BannersPage {
     startAt: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     endAt: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     active: new FormControl(true, { nonNullable: true }),
+  });
+  /** PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición y se ingresa otra vez. */
+  protected readonly borrador = conservarBorrador({
+    form: this.form,
+    guardar: () => ({ base: this.base, idNuevo: this.idNuevo, valor: this.form.getRawValue() }),
+    restaurar: (borrador) => {
+      this.base = borrador.base;
+      this.idNuevo = borrador.idNuevo;
+      this.editing.set(borrador.base?.id ?? null);
+      this.form.setValue(borrador.valor);
+    },
   });
 
   protected edit(id: string): void {

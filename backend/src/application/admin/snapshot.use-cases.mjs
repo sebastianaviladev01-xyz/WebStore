@@ -15,13 +15,15 @@ import {
 } from '../../domain/admin/colecciones.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
 import { requireWritableCollections } from '../../domain/admin/snapshot.rules.mjs';
-import { requireValidAdminUsers } from '../../domain/admin/usuario-admin.rules.mjs';
+import { requireUsersInScope, requireValidAdminUsers } from '../../domain/admin/usuario-admin.rules.mjs';
 import {
   requireRemovedWithoutChildren,
+  requireUniqueCategorySlugs,
   requireValidCategoryTree,
 } from '../../domain/catalogo/categoria.rules.mjs';
 import {
   applyProductContentEdits,
+  requireNoRemovedProducts,
   requireRemovedNotInUse,
   requireUniqueSlugs,
 } from '../../domain/catalogo/producto.rules.mjs';
@@ -38,8 +40,11 @@ function applyProducts(state, value, role) {
     throw new DomainError('validation', 'INVALID_PRODUCTS', 'La colección de productos es obligatoria.');
   const products = resolveCollectionChanges('products', state.products, value);
   let next;
-  if (can(role, 'products.manage')) next = requireValidProducts(products);
-  else if (can(role, 'products.edit'))
+  if (can(role, 'products.manage')) {
+    next = requireValidProducts(products);
+    // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
+    if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
+  } else if (can(role, 'products.edit'))
     next = applyProductContentEdits(state.products, requireValidProductContent(products));
   else throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
   requireUniqueSlugs(next, state.products);
@@ -49,6 +54,8 @@ function applyProducts(state, value, role) {
 function applyUsers(state, value, actor, security) {
   const users = resolveCollectionChanges('users', state.users, value);
   requireValidUserShapes(users);
+  // PBI-0013: el administrador solo gestiona a los vendedores y no elimina usuarios.
+  requireUsersInScope(state.users, users, actor.role);
   requireValidAdminUsers(users, actor);
   const previousIds = new Set(state.users.map((item) => item.id));
   state.users = users.map(({ temporaryPassword, ...item }) => item);
@@ -82,6 +89,7 @@ const REPLACEABLE = {
     requireValidCategories(categories);
     requireRemovedWithoutChildren(categories, previous);
     requireValidCategoryTree(categories);
+    requireUniqueCategorySlugs(categories, previous);
     return categories;
   },
   brands: requireValidBrands,

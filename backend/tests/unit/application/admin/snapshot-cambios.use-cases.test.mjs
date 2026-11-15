@@ -127,15 +127,13 @@ test('PBI-0120: los cambios con una forma desconocida se rechazan', () => {
   }
 });
 
-test('PBI-0120: el vendedor cambia el stock con un cambio parcial, pero no crea ni elimina productos', () => {
+test('PBI-0120: el vendedor cambia el stock con un cambio parcial, pero no elimina productos (PBI-0013)', () => {
   const stock = guardar(vendedor, { products: { upsert: [{ id: 'p-003', stock: 1 }] } }).resultado();
   assert.equal(stock.products.find((item) => item.id === 'p-003').stock, 1);
-  for (const products of [
-    { remove: ['p-003'] },
-    { upsert: [{ ...producto('p-003'), id: 'p-nuevo', sku: 'OTRO' }] },
-  ]) {
-    assert.throws(guardar(vendedor, { products }).resultado, rechazo('CATALOG_SCOPE_VIOLATION'));
-  }
+  assert.throws(
+    guardar(vendedor, { products: { remove: ['p-003'] } }).resultado,
+    rechazo('CATALOG_SCOPE_VIOLATION'),
+  );
 });
 
 test('PBI-0120: el estado de un pedido y la respuesta de un reclamo también llegan como cambios', () => {
@@ -334,4 +332,32 @@ test('PBI-0145: el pedido del Admin trae la fecha de aceptación de los término
   const [conTerminos, anterior] = buildAdminSnapshot(state, 'superadmin').orders;
   assert.equal(conTerminos.termsAcceptedAt, '2026-11-01T00:00:00.000Z');
   assert.equal(anterior.termsAcceptedAt, null);
+});
+
+// Lote 07 (ADR-0017), PBI-0148: la tienda abre una categoría por el slug de su nombre; dos con el mismo slug se pisan.
+test('PBI-0148: una categoría con la dirección de otra se rechaza diciendo cuál', () => {
+  const otra = seed.categories[0];
+  const { store, resultado } = guardar(superadmin, {
+    categories: { upsert: [{ id: 'cat-nueva', name: ` ${otra.name.toUpperCase()} `, parentId: null }] },
+  });
+  assert.throws(
+    resultado,
+    rechazo('INVALID_COLLECTION', { collection: 'categories', field: 'slug', id: 'cat-nueva' }),
+  );
+  assert.equal(store.guardados, 0);
+});
+
+test('PBI-0148: dos categorías que ya compartían dirección no bloquean el guardado de otra', () => {
+  const [primera, segunda] = seed.categories;
+  const store = crearAlmacen({
+    categories: seed.categories.map((item) =>
+      item.id === segunda.id ? { ...item, name: primera.name } : item,
+    ),
+  });
+  const snapshot = guardar(
+    superadmin,
+    { categories: { upsert: [{ id: 'cat-otra', name: 'Categoría lote 07', parentId: null }] } },
+    store,
+  ).resultado();
+  assert.ok(snapshot.categories.some((item) => item.id === 'cat-otra'));
 });

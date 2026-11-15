@@ -1,7 +1,8 @@
 /**
  * Roles fijos acordados el 05/11: no se crean ni se editan, solo se asignan a usuarios.
  * Replica la tabla del BFF (backend/src/domain/sesion/rol.rules.mjs) solo para mostrar u ocultar opciones;
- * el BFF vuelve a validar cada operación.
+ * el BFF vuelve a validar cada operación. Permisos de la reunión del 11/11 (lote 07, PBI-0013; provisional, por
+ * confirmar con Daniel).
  */
 export type Rol = 'superadmin' | 'admin' | 'vendedor';
 
@@ -9,11 +10,13 @@ export type Permiso =
   | 'dashboard.view'
   | 'products.edit'
   | 'products.manage'
+  | 'products.delete'
   | 'inventory.manage'
   | 'categories.manage'
   | 'brands.manage'
   | 'customers.manage'
   | 'users.manage'
+  | 'users.delete'
   | 'orders.manage'
   | 'banners.manage'
   | 'content.manage'
@@ -33,11 +36,13 @@ const ALL: readonly Permiso[] = [
   'dashboard.view',
   'products.edit',
   'products.manage',
+  'products.delete',
   'inventory.manage',
   'categories.manage',
   'brands.manage',
   'customers.manage',
   'users.manage',
+  'users.delete',
   'orders.manage',
   'banners.manage',
   'content.manage',
@@ -47,9 +52,10 @@ const ALL: readonly Permiso[] = [
   'themes.manage',
 ];
 
-/** Permisos exclusivos del superadministrador: usuarios, reinicio de la demo y temas (feature 002). */
+/** Permisos exclusivos del superadministrador: configuración de la tienda y eliminar usuarios. */
 const SOLO_SUPERADMIN: ReadonlySet<Permiso> = new Set<Permiso>([
-  'users.manage',
+  'users.delete',
+  'content.manage',
   'store.reset',
   'themes.manage',
 ]);
@@ -58,22 +64,28 @@ export const ROLES: readonly DefinicionRol[] = [
   {
     id: 'superadmin',
     label: 'Superadministrador',
-    description: 'Acceso total, incluida la gestión de usuarios y roles.',
+    description: 'Acceso total: configuración de la tienda, temas, contenido y todos los usuarios.',
     permissions: ALL,
   },
   {
     id: 'admin',
     label: 'Administrador',
-    description: 'Opera toda la tienda: catálogo, contenido, envíos, pedidos y reclamaciones.',
+    description: 'Opera la tienda y gestiona a los vendedores, sin temas ni contenido.',
     permissions: ALL.filter((permission) => !SOLO_SUPERADMIN.has(permission)),
   },
   {
     id: 'vendedor',
     label: 'Vendedor',
-    description: 'Mantiene fichas e inventario y actualiza el estado de los pedidos.',
-    permissions: ['dashboard.view', 'products.edit', 'inventory.manage', 'orders.manage'],
+    description: 'Crea productos y modifica sus fichas, precios y stock.',
+    permissions: ['dashboard.view', 'products.edit', 'products.manage'],
   },
 ];
+
+/** Roles de los usuarios que ve y gestiona cada rol con `users.manage` (PBI-0013), como el BFF. */
+const ROLES_GESTIONABLES: Partial<Record<Rol, readonly Rol[]>> = {
+  superadmin: ['superadmin', 'admin', 'vendedor'],
+  admin: ['vendedor'],
+};
 
 export function definicionDeRol(role: Rol | null | undefined): DefinicionRol | undefined {
   return ROLES.find((definition) => definition.id === role);
@@ -81,4 +93,9 @@ export function definicionDeRol(role: Rol | null | undefined): DefinicionRol | u
 
 export function rolPuede(role: Rol | null | undefined, permission: Permiso): boolean {
   return definicionDeRol(role)?.permissions.includes(permission) ?? false;
+}
+
+/** Roles de los usuarios que `role` puede ver, crear y editar en Usuarios; vacío si no gestiona usuarios. */
+export function rolesGestionables(role: Rol | null | undefined): readonly Rol[] {
+  return role && rolPuede(role, 'users.manage') ? (ROLES_GESTIONABLES[role] ?? []) : [];
 }

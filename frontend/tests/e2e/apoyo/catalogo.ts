@@ -168,6 +168,9 @@ export interface SnapshotApi {
   customers: { email: string }[];
   banners: { id: string; ctaUrl: string; cta: string }[];
   config: Record<string, unknown>;
+  /** Lote 07: usuarios del Admin, para dejar como estaban los que crea una prueba. */
+  users: { id: string; email: string; role: string; active: boolean }[];
+  complaints: { id: string; createdAt: string; dueAt: string }[];
 }
 
 /** Snapshot del Admin en este momento (lote 06). */

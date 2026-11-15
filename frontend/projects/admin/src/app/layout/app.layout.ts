@@ -146,15 +146,11 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
         <header class="border-b border-line bg-surface px-5 py-3">
           <div class="admin-container flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-muted">Backoffice de la tienda</p>
-            <!-- ml-auto: si la cabecera se parte en dos líneas, el menú de usuario sigue a la derecha. -->
+            <!--
+              ml-auto: si la cabecera se parte en dos líneas, el menú de usuario sigue a la derecha. Sin «Actualizar»
+              (PBI-0140): cada página consulta sus datos al entrar y el Resumen tiene su propio botón.
+            -->
             <div class="ml-auto flex min-w-0 items-center gap-3">
-              <button
-                class="min-h-10 rounded-lg border border-line px-4 text-sm font-medium hover:bg-subtle"
-                type="button"
-                (click)="admin.load()"
-              >
-                Actualizar
-              </button>
               <ws-admin-menu-usuario />
             </div>
           </div>
@@ -222,10 +218,14 @@ export class AppLayout {
   });
 
   constructor() {
-    void this.admin.load();
     // PBI-0124: si la sesión vence o se cierra a mitad de una operación, se vuelve al acceso, que dice por qué.
     effect(() => {
-      if (!this.session.isAuthenticated()) untracked(() => void this.router.navigate(['/login']));
+      if (!this.session.isAuthenticated())
+        untracked(() => {
+          // PBI-0151: si venció, el acceso lleva de vuelta a esta página tras ingresar.
+          this.session.anotarRutaVencida(this.router.url);
+          void this.router.navigate(['/login']);
+        });
     });
   }
 

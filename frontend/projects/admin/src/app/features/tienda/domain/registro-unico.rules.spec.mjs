@@ -13,7 +13,7 @@ const source = [
 const moduleSource = ts.transpileModule(source.replace(/^import [\s\S]*?;$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { slugDe, motivoDeProductoRepetido, usuarioConElMismoCorreo } = await import(
+const { slugDe, motivoDeProductoRepetido, motivoDeCategoriaRepetida, usuarioConElMismoCorreo } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -65,4 +65,18 @@ test('PBI-0123: el correo de otro usuario, sin distinguir mayúsculas ni espacio
   );
   assert.equal(usuarioConElMismoCorreo(usuarios, { id: 'u-3', email: 'admin@webstore.demo' }), null);
   assert.equal(usuarioConElMismoCorreo(usuarios, { id: 'u-nuevo', email: 'nuevo@webstore.demo' }), null);
+});
+
+// Lote 07 (ADR-0017), PBI-0148: dos categorías no pueden compartir dirección en la tienda (el slug del nombre).
+test('PBI-0148: una categoría con la dirección de otra, aunque cambien tildes o mayúsculas, se dice cuál', () => {
+  const categorias = [
+    { id: 'cat-tv', name: 'TV y audio' },
+    { id: 'cat-cocina', name: 'Cocina' },
+  ];
+  assert.equal(
+    motivoDeCategoriaRepetida(categorias, { id: 'nueva', name: 'tv  Y Áudio' }),
+    'Ya hay una categoría con la dirección tv-y-audio: «TV y audio». Cambia el nombre.',
+  );
+  assert.equal(motivoDeCategoriaRepetida(categorias, { id: 'cat-tv', name: 'TV y Audio' }), null, 'la misma');
+  assert.equal(motivoDeCategoriaRepetida(categorias, { id: 'nueva', name: 'Climatización' }), null);
 });

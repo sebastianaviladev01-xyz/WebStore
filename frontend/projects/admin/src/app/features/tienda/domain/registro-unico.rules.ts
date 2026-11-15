@@ -1,7 +1,7 @@
 /**
  * Datos que no se pueden repetir entre registros (lote 06, ADR-0017): el SKU y la dirección de ficha de un producto
- * (PBI-0129) y el correo de un usuario administrativo (PBI-0123). El Admin los comprueba antes de enviar; el BFF
- * los vuelve a comprobar.
+ * (PBI-0129), la dirección de una categoría (PBI-0148, lote 07) y el correo de un usuario administrativo
+ * (PBI-0123). El Admin los comprueba antes de enviar; el BFF los vuelve a comprobar.
  */
 
 import { normalizarCorreo } from './correo.rules';
@@ -59,4 +59,19 @@ export function usuarioConElMismoCorreo<T extends { readonly id: string; readonl
 ): T | null {
   const correo = normalizarCorreo(usuario.email);
   return usuarios.find((otro) => otro.id !== usuario.id && normalizarCorreo(otro.email) === correo) ?? null;
+}
+
+/**
+ * Por qué una categoría choca con otra (lote 07, PBI-0148): la tienda la abre por el slug de su nombre, como el BFF.
+ * `null` si no choca.
+ */
+export function motivoDeCategoriaRepetida(
+  categorias: readonly { readonly id: string; readonly name: string }[],
+  categoria: { readonly id: string; readonly name: string },
+): string | null {
+  const slug = slugDe(categoria.name);
+  const otra = categorias.find(
+    (candidata) => candidata.id !== categoria.id && slugDe(candidata.name) === slug,
+  );
+  return otra ? `Ya hay una categoría con la dirección ${slug}: «${otra.name}». Cambia el nombre.` : null;
 }

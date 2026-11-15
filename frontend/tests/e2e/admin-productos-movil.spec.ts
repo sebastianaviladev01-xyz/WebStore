@@ -16,7 +16,8 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea), el precio, el
  *   stock y las acciones se ven, caben en la lista y no se solapan; la cabecera se oculta o cabe; la celda del
  *   stock dice «Stock N» y el 0 tiene el color de `--ws-danger`.
- * - TEST-04 (AC-01, AC-03): lo mismo con el vendedor y B a 375 px, sin «Eliminar» ni «Nuevo producto».
+ * - TEST-04 (AC-01, AC-03): lo mismo con el vendedor y B a 375 px, sin «Eliminar» (desde el lote 07, con «Nuevo
+ *   producto»: PBI-0013).
  * - TEST-05 (AC-05): con B, a 768 y 1440 px, el escritorio sigue igual (cabecera, una sola línea por fila, la
  *   celda solo con el número, la ayuda de la miniatura en una línea); a 767 px, la cabecera se oculta y la celda
  *   dice «Stock N».
@@ -94,16 +95,18 @@ const etiqueta = ({ tema, ancho }: Lugar, que: string): string => `${tema} · ${
 
 const lista = (page: Page) => page.getByRole('region', { name: 'Lista de productos' });
 
+// Lote 07 (PBI-0132): la lista es una tabla. La fila de encabezados se oculta en el celular, así que se busca por
+// su rol en el DOM (también oculta).
 const cabecera = (page: Page) =>
   lista(page)
-    .locator('div')
+    .locator('[role="row"]')
     .filter({ has: page.getByText('Producto', { exact: true }) })
     .filter({ has: page.getByText('Precio', { exact: true }) });
 
 const filaDe = (page: Page, nombre: string) =>
   lista(page)
-    .locator('div')
-    .filter({ has: page.getByRole('link', { name: 'Editar', exact: true }) })
+    .getByRole('row')
+    .filter({ has: page.getByRole('link', { name: /^Editar / }) })
     .filter({ hasText: nombre });
 
 /** Hijos directos de la fila (bloque, precio, stock, acciones): cajas, y texto visible de cada uno. */
@@ -160,7 +163,7 @@ async function abrirProductos(page: Page, ancho: number, alto: number): Promise<
   await page.goto('/productos');
   await expect(page.getByRole('heading', { level: 1, name: 'Productos' })).toBeVisible();
   await expect(lista(page)).toBeVisible();
-  await expect(lista(page).getByRole('link', { name: 'Editar', exact: true })).toHaveCount(PRODUCTOS.length);
+  await expect(lista(page).getByRole('link', { name: /^Editar / })).toHaveCount(PRODUCTOS.length);
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -237,7 +240,7 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
     const visibles: [string, Locator][] = [
       ['nombre', fila.getByText(producto.nombre, { exact: true })],
       ['línea del SKU', fila.getByText(producto.sku)],
-      ['Editar', fila.getByRole('link', { name: 'Editar', exact: true })],
+      ['Editar', fila.getByRole('link', { name: /^Editar / })],
     ];
     if (conEliminar) {
       visibles.push(['Eliminar', fila.getByRole('button', { name: `Eliminar producto ${producto.nombre}` })]);
@@ -298,14 +301,15 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
   }
 
   if (!conEliminar) {
+    // Lote 07 (PBI-0013): el vendedor crea productos («Nuevo producto»), pero no los elimina.
     await expect(page.getByRole('button', { name: /^Eliminar producto/ })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toBeVisible();
   }
 }
 
 /** Pulsa «Editar» en una fila, espera `/productos/:id` y el formulario «Editar producto». No guarda. */
 async function editarProducto(page: Page, nombre: string): Promise<Locator> {
-  const editar = filaDe(page, nombre).getByRole('link', { name: 'Editar', exact: true });
+  const editar = filaDe(page, nombre).getByRole('link', { name: /^Editar / });
   await editar.evaluate((nodo) => nodo.scrollIntoView({ block: 'center' }));
   await editar.click();
   await expect(page).toHaveURL(/\/productos\/(?!nuevo)[^/?]+$/);

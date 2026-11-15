@@ -1,5 +1,5 @@
 import { DomainError } from '../comun/domain-error.mjs';
-import { isAdminRole } from '../sesion/rol.rules.mjs';
+import { can, isAdminRole, managedUserRoles } from '../sesion/rol.rules.mjs';
 
 /**
  * La lista de usuarios del Admin usa solo roles fijos, conserva al menos un superadministrador activo
@@ -26,4 +26,34 @@ export function requireValidAdminUsers(users, actor) {
       'SELF_LOCKOUT',
       'No puedes eliminar, desactivar ni cambiar el rol de tu propia cuenta.',
     );
+}
+
+const CAMPOS_DEL_USUARIO = ['name', 'email', 'role', 'active'];
+const mismoUsuario = (a, b) => CAMPOS_DEL_USUARIO.every((campo) => a[campo] === b[campo]);
+
+/**
+ * Alcance de quien gestiona usuarios (lote 07, PBI-0013): solo crea, cambia o deja en un rol los usuarios de los roles
+ * que gestiona (el administrador, los vendedores), los demás deben quedar como estaban, y solo elimina usuarios con
+ * `users.delete`. `previous` es la lista vigente y `next`, la que resultaría del guardado.
+ */
+export function requireUsersInScope(previous, next, actorRole) {
+  const gestionables = new Set(managedUserRoles(actorRole));
+  // Un rol que no es de los fijos lo rechaza `requireValidAdminUsers` con `INVALID_ROLE`.
+  const fueraDeAlcance = (role) => isAdminRole(role) && !gestionables.has(role);
+  const fuera = (mensaje) => new DomainError('forbidden', 'USER_SCOPE_VIOLATION', mensaje);
+  const soloVendedores = 'Tu rol solo puede gestionar usuarios con rol Vendedor.';
+  const nextById = new Map(next.map((user) => [user.id, user]));
+  const previousById = new Map(previous.map((user) => [user.id, user]));
+  for (const user of previous) {
+    const despues = nextById.get(user.id);
+    if (!despues) {
+      if (!can(actorRole, 'users.delete'))
+        throw fuera('Tu rol no puede eliminar usuarios. Desactívalo para quitarle el acceso.');
+      if (fueraDeAlcance(user.role)) throw fuera(soloVendedores);
+    } else if (fueraDeAlcance(user.role) && !mismoUsuario(user, despues)) throw fuera(soloVendedores);
+  }
+  for (const user of next) {
+    const antes = previousById.get(user.id);
+    if (fueraDeAlcance(user.role) && (!antes || !mismoUsuario(antes, user))) throw fuera(soloVendedores);
+  }
 }

@@ -21,7 +21,7 @@ const perfiles = [
     nombre: 'Superadministrador Demo',
     iniciales: 'SD',
     etiqueta: 'Superadministrador',
-    descripcion: 'Acceso total, incluida la gestión de usuarios y roles.',
+    descripcion: 'Acceso total: configuración de la tienda, temas, contenido y todos los usuarios.',
   },
   {
     rol: 'admin',
@@ -29,7 +29,7 @@ const perfiles = [
     nombre: 'Administración Demo',
     iniciales: 'AD',
     etiqueta: 'Administrador',
-    descripcion: 'Opera toda la tienda: catálogo, contenido, envíos, pedidos y reclamaciones.',
+    descripcion: 'Opera la tienda y gestiona a los vendedores, sin temas ni contenido.',
   },
   {
     rol: 'vendedor',
@@ -37,7 +37,7 @@ const perfiles = [
     nombre: 'Vendedor Demo',
     iniciales: 'VD',
     etiqueta: 'Vendedor',
-    descripcion: 'Mantiene fichas e inventario y actualiza el estado de los pedidos.',
+    descripcion: 'Crea productos y modifica sus fichas, precios y stock.',
   },
 ] as const;
 
@@ -109,25 +109,16 @@ test('el menú se abre y se recorre con el teclado', async ({ page }) => {
   await expect(boton).toBeFocused();
 });
 
-test('fuera del menú la cabecera tiene «Actualizar», que recarga los datos, y no «Cerrar sesión»', async ({
-  page,
-}) => {
+test('la cabecera no tiene «Actualizar» ni «Cerrar sesión» fuera del menú (PBI-0140)', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   const cabecera = page.getByRole('banner');
 
-  await expect(cabecera.getByRole('button', { name: 'Actualizar' })).toBeVisible();
+  await expect(cabecera.getByRole('button', { name: 'Actualizar' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Cerrar sesión' })).toHaveCount(0);
   await expect(page.getByRole('menuitem', { name: 'Cerrar sesión' })).toHaveCount(0);
   // Ni el nombre ni el rol sueltos: solo dentro del botón del menú.
   await expect(cabecera.locator('strong')).toHaveCount(1);
   await expect(botonMenuUsuario(page).locator('strong')).toHaveText('Superadministrador Demo');
-
-  // «Actualizar» vuelve a pedir el snapshot (D6).
-  const recarga = page.waitForRequest(
-    (request) => request.method() === 'GET' && new URL(request.url()).pathname === '/bff/admin/snapshot',
-  );
-  await cabecera.getByRole('button', { name: 'Actualizar' }).click();
-  await recarga;
 });
 
 test('«Cerrar sesión» lleva al acceso y borra el token, también si el BFF falla', async ({ page }) => {

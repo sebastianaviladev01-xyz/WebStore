@@ -81,6 +81,24 @@ export class TiendaFacade {
     }
   }
   /**
+   * Datos de una página al entrar (lote 07, PBI-0140; sin «Actualizar» en la cabecera): la primera vez se cargan con
+   * el aviso de carga y de error del panel (`load()`); después se vuelven a consultar sin aviso global
+   * (`refresh()`), y un fallo conserva lo que había.
+   */
+  async entrar(): Promise<void> {
+    if (this.state()) await this.refresh();
+    else await this.load();
+  }
+  /**
+   * Motivo del último guardado fallido, para la página que lo muestra junto a su botón (PBI-0150): lo quita del aviso
+   * general del panel, para que un lector de pantalla no lo lea dos veces.
+   */
+  tomarError(): string | null {
+    const error = this.error();
+    this.error.set(null);
+    return error;
+  }
+  /**
    * Vuelve a pedir el snapshot para trabajar con los datos actuales («Buscar» y la edición de un registro). Si el
    * BFF responde, reemplaza el estado y devuelve `true`; si falla, conserva el estado y devuelve `false`. No toca
    * `loading` ni `error`, para que la página avise junto a su panel sin el aviso global de la cabecera.

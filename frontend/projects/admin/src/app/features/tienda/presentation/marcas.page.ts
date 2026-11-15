@@ -96,10 +96,13 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
               class="inline-flex items-center text-link"
               [routerLink]="['/marcas', b.id]"
               queryParamsHandling="preserve"
+              [attr.aria-label]="'Editar marca ' + b.name"
             >
               Editar
             </a>
-            <button class="text-danger" (click)="remove(b.id)">Eliminar</button>
+            <button class="text-danger" [attr.aria-label]="'Eliminar marca ' + b.name" (click)="remove(b.id)">
+              Eliminar
+            </button>
           </div>
         </div>
       } @empty {

@@ -41,10 +41,31 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
     TarjetaIndicadorComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Resumen</h1>
-    <p class="mt-2 text-sm text-muted">
-      Hola, {{ session.user()?.name }}. Esto es lo que necesita atención hoy.
-    </p>
+    <!-- PBI-0140: «Actualizar» del Resumen, junto a sus cifras; solo vuelve a consultar los datos del Resumen. -->
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-semibold tracking-tight text-ink">Resumen</h1>
+        <p class="mt-2 text-sm text-muted">
+          Hola, {{ session.user()?.name }}. Esto es lo que necesita atención hoy.
+        </p>
+      </div>
+      <button
+        class="min-h-10 rounded-lg border border-line px-4 text-sm font-medium hover:bg-subtle disabled:opacity-50"
+        type="button"
+        [disabled]="actualizando()"
+        (click)="actualizar()"
+      >
+        {{ actualizando() ? 'Actualizando…' : 'Actualizar' }}
+      </button>
+    </div>
+    @if (errorActualizar(); as mensaje) {
+      <p
+        class="mt-4 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+        role="alert"
+      >
+        {{ mensaje }}
+      </p>
+    }
 
     <!-- Sin snapshot (BFF caído o sesión vencida) el aviso de error del panel basta: no se muestran cifras a medias. -->
     @if (admin.snapshot()) {
@@ -78,7 +99,7 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
           titulo="Stock bajo"
           [valor]="(admin.lowStock().length | number) ?? '0'"
           nota="Productos con 5 unidades o menos"
-          enlace="/inventario"
+          [enlace]="enlaceStock()"
           [alerta]="true"
         />
       </div>
@@ -124,11 +145,11 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
               [attr.data-plegado]="bloqueAbierto('pedidos-por-dia') ? null : ''"
             >
               <div class="ws-plegable-contenido">
-                <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ mes }}</p>
+                <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ mes() }}</p>
                 <ws-admin-grafico-pedidos
                   class="mt-4"
                   [serie]="serie()"
-                  [mes]="mes"
+                  [mes]="mes()"
                   [conClientes]="verClientes()"
                 />
               </div>
@@ -206,8 +227,8 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
                   <p class="text-sm text-muted">Sin alertas.</p>
                 }
               </div>
-              <a routerLink="/inventario" class="mt-5 inline-flex text-sm font-medium text-link">
-                Gestionar inventario →
+              <a [routerLink]="enlaceStock()" class="mt-5 inline-flex text-sm font-medium text-link">
+                {{ session.can('inventory.manage') ? 'Gestionar inventario →' : 'Gestionar productos →' }}
               </a>
             </div>
           </div>
@@ -347,18 +368,27 @@ export class ResumenPage {
   /** Fecha de los últimos pedidos en la hora de Lima, como el gráfico (PBI-0067). */
   protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly session = inject(SesionFacade);
-  /** Instante de referencia de los tramos y del gráfico: se fija al abrir la página, como las cifras del snapshot. */
-  private readonly ahora = new Date();
-  protected readonly mes = MES_EN_LIMA.format(this.ahora);
+  /**
+   * Instante de referencia de los tramos y del gráfico: se fija al abrir la página y al pulsar «Actualizar», como las
+   * cifras del snapshot.
+   */
+  private readonly ahora = signal(new Date());
+  protected readonly mes = computed(() => MES_EN_LIMA.format(this.ahora()));
+  protected readonly actualizando = signal(false);
+  protected readonly errorActualizar = signal<string | null>(null);
   protected readonly etiquetas = ETIQUETAS_ESTADO_PEDIDO;
 
   protected readonly verPedidos = computed(() => this.session.can('orders.manage'));
   protected readonly verClientes = computed(() => this.session.can('customers.manage'));
+  /** El vendedor no tiene Inventario (PBI-0013): el stock lo cambia en la ficha de cada producto. */
+  protected readonly enlaceStock = computed(() =>
+    this.session.can('inventory.manage') ? '/inventario' : '/productos',
+  );
 
   protected readonly indicadores = computed(() =>
-    calcularIndicadores(this.admin.orders(), this.admin.customers(), this.ahora),
+    calcularIndicadores(this.admin.orders(), this.admin.customers(), this.ahora()),
   );
-  protected readonly serie = computed(() => serieDelMes(this.admin.orders(), this.ahora));
+  protected readonly serie = computed(() => serieDelMes(this.admin.orders(), this.ahora()));
   protected readonly distritos = computed(() => distritosConMasPedidos(this.admin.orders()));
   protected readonly ultimos = computed(() => ultimosPedidos(this.admin.orders()));
   protected readonly estados = computed(() => {
@@ -393,6 +423,19 @@ export class ResumenPage {
 
   protected alternarBloque(id: BloqueResumen): void {
     this.bloquesPlegados.update((plegados) => alternarPlegable(plegados, id));
+  }
+
+  /** Vuelve a consultar los datos del Resumen (PBI-0140); si falla, conserva las cifras y lo dice junto al botón. */
+  protected async actualizar(): Promise<void> {
+    this.actualizando.set(true);
+    this.errorActualizar.set(null);
+    const actual = await this.admin.refresh();
+    this.actualizando.set(false);
+    if (actual) this.ahora.set(new Date());
+    else
+      this.errorActualizar.set(
+        'No pudimos actualizar el Resumen. Las cifras son las de la última consulta; inténtalo de nuevo.',
+      );
   }
 
   /** Mismos colores de estado que la página de Pedidos. */

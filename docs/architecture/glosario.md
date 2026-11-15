@@ -65,8 +65,8 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Sesión administrativa | Acceso autenticado al Admin, con token opaco enviado como `Bearer`. | `SesionFacade`, `SesionGateway`, `SesionConcedida`, `sesionGuard` | `adminSessions`; `/bff/admin/sessions` |
 | Perfil | Página de solo lectura del Admin con el nombre, el correo y el rol (con su descripción) del usuario de la sesión. Se abre desde el menú de usuario de la cabecera y la ven los tres roles. No edita nada. | `PerfilPage` (`/perfil`), `MenuUsuarioComponent` | Sin endpoint: usa los datos de la sesión ya concedida |
 | Rol | Conjunto fijo de permisos de un usuario administrativo. Se asigna, no se crea ni se edita. Valores en [Rol](#rol-rol). | `Rol`, `DefinicionRol`, `ROLES`, `rolPuede()` | `role`; `ADMIN_ROLES`, `can()` en `domain/sesion/rol.rules.mjs` |
-| Permiso | Operación que un rol puede hacer en el Admin, por ejemplo `products.edit` o `orders.manage`. | `Permiso`, `permisoGuard(permiso)` | `ADMIN_PERMISSIONS`; `403 INSUFFICIENT_ROLE` |
-| Resumen | Pantalla inicial del Admin, visible para los tres roles: cuatro tarjetas con «Ver más», gráfico por día del mes, pedidos por distrito, alertas de inventario, últimos pedidos y pedidos por estado. Las fuentes la llaman también «Dashboard». Sus bloques de pedidos y de clientes dependen de `orders.manage` y `customers.manage`. | `ResumenPage`, `TarjetaIndicadorComponent`, `GraficoPedidosComponent`; reglas en `resumen.rules.ts` | Permiso `dashboard.view`; datos del snapshot `/bff/admin/snapshot`, sin endpoint nuevo |
+| Permiso | Operación que un rol puede hacer en el Admin, por ejemplo `products.delete` o `orders.manage`. Gestionar usuarios (`users.manage`) tiene además un alcance por rol: el administrador solo gestiona vendedores (lote 07). | `Permiso`, `permisoGuard(permiso)`, `rolesGestionables()` | `ADMIN_PERMISSIONS`, `managedUserRoles()`; `403 INSUFFICIENT_ROLE`, `403 CATALOG_SCOPE_VIOLATION`, `403 USER_SCOPE_VIOLATION` |
+| Resumen | Pantalla inicial del Admin, visible para los tres roles: cuatro tarjetas con «Ver más», gráfico por día del mes, pedidos por distrito, alertas de inventario, últimos pedidos y pedidos por estado. Las fuentes la llaman también «Dashboard». Sus bloques de pedidos y de clientes dependen de `orders.manage` y `customers.manage` (el vendedor solo ve el stock bajo y las alertas de inventario, lote 07). Tiene su propio «Actualizar» junto a las cifras (PBI-0140). | `ResumenPage`, `TarjetaIndicadorComponent`, `GraficoPedidosComponent`; reglas en `resumen.rules.ts` | Permiso `dashboard.view`; datos del snapshot `/bff/admin/snapshot`, sin endpoint nuevo |
 | Total de ventas | Suma del `total` (productos y envío) de los pedidos que no están cancelados, redondeada a céntimos. | `calcularIndicadores` (`Indicador`) | `orders[].total` |
 | Cliente nuevo | Cliente cuyo primer pedido, incluidos los cancelados, cae en la fecha de Lima considerada. El cliente no tiene fecha de alta: se toma la de su primer pedido, buscado por correo sin espacios ni mayúsculas. | `clientesNuevosPorFecha`, `DiaDelMes.clientesNuevos` | `orders[].customerEmail`, `orders[].createdAt` |
 | Variación | Porcentaje entero del mes en curso frente al mismo tramo del mes anterior; `null` («—») si el tramo anterior vale 0. | `variacionPorcentual`, `tramosDeComparacion`, `Indicador.variacion` | — |
@@ -117,11 +117,11 @@ Las etiquetas visibles son las del código; los valores almacenados siguen en in
 
 | Valor | Etiqueta | Puede |
 |---|---|---|
-| `superadmin` | Superadministrador | Todo, incluida la gestión de usuarios y el reinicio de la demo |
-| `admin` | Administrador | Toda la operación de la tienda, sin gestionar usuarios |
-| `vendedor` | Vendedor | Resumen, ficha de productos existentes, inventario y estado de pedidos |
+| `superadmin` | Superadministrador | La configuración de la tienda (Contenido, Temas y reinicio de la demo), los usuarios de cualquier rol (el único que los elimina) y todo lo de los otros roles |
+| `admin` | Administrador | Toda la operación de la tienda (también eliminar productos) y los vendedores en Usuarios (crear, editar, activar y desactivar); sin Contenido ni Temas |
+| `vendedor` | Vendedor | Resumen y Productos: crea productos y modifica todos sus campos, sin eliminarlos |
 
-Los permisos exactos de cada rol están en el [contrato](../../backend/docs/BFF-CONTRACT.md#roles-fijos-acordados-el-0511). Los del vendedor están pendientes de confirmar ([decisiones pendientes](../planning/PENDING-DECISIONS.md)).
+Los permisos exactos de cada rol están en el [contrato](../../backend/docs/BFF-CONTRACT.md#roles-fijos-acordados-el-0511). Son los de la reunión del 11/11, provisionales por confirmar con Daniel (lote 07, PBI-0013; [decisiones pendientes](../planning/PENDING-DECISIONS.md), «Permisos de los roles»).
 
 ### Tipo de reclamo (`TipoReclamo`)
 

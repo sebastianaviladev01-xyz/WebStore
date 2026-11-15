@@ -1,16 +1,23 @@
 /**
  * Roles fijos del Admin acordados el 05/11: no se crean ni se editan desde el panel, solo se asignan.
  * El BFF es la autoridad; el Admin replica esta tabla únicamente para mostrar u ocultar opciones.
+ *
+ * Permisos de la reunión del 11/11 (lote 07, ADR-0017, PBI-0013; provisional, por confirmar con Daniel): el
+ * superadministrador tiene la configuración de la tienda (temas, contenido y reinicio) y todo lo demás; el
+ * administrador opera la tienda, elimina productos y gestiona a los vendedores; el vendedor crea productos y
+ * modifica todos sus campos, sin eliminarlos.
  */
 export const ADMIN_PERMISSIONS = [
   'dashboard.view',
   'products.edit',
   'products.manage',
+  'products.delete',
   'inventory.manage',
   'categories.manage',
   'brands.manage',
   'customers.manage',
   'users.manage',
+  'users.delete',
   'orders.manage',
   'banners.manage',
   'content.manage',
@@ -20,8 +27,8 @@ export const ADMIN_PERMISSIONS = [
   'themes.manage',
 ];
 
-/** Permisos exclusivos del superadministrador: usuarios, reinicio de la demo y temas (feature 002). */
-const SOLO_SUPERADMIN = new Set(['users.manage', 'store.reset', 'themes.manage']);
+/** Permisos exclusivos del superadministrador: configuración de la tienda y eliminar usuarios. */
+const SOLO_SUPERADMIN = new Set(['users.delete', 'content.manage', 'store.reset', 'themes.manage']);
 
 const OPERATION = ADMIN_PERMISSIONS.filter((permission) => !SOLO_SUPERADMIN.has(permission));
 
@@ -29,22 +36,34 @@ export const ADMIN_ROLES = [
   {
     id: 'superadmin',
     label: 'Superadministrador',
-    description: 'Acceso total, incluida la gestión de usuarios y roles.',
+    description: 'Acceso total: configuración de la tienda, temas, contenido y todos los usuarios.',
     permissions: ADMIN_PERMISSIONS,
   },
   {
     id: 'admin',
     label: 'Administrador',
-    description: 'Opera toda la tienda: catálogo, contenido, envíos, pedidos y reclamaciones.',
+    description: 'Opera la tienda y gestiona a los vendedores, sin temas ni contenido.',
     permissions: OPERATION,
   },
   {
     id: 'vendedor',
     label: 'Vendedor',
-    description: 'Mantiene fichas e inventario y actualiza el estado de los pedidos.',
-    permissions: ['dashboard.view', 'products.edit', 'inventory.manage', 'orders.manage'],
+    description: 'Crea productos y modifica sus fichas, precios y stock.',
+    permissions: ['dashboard.view', 'products.edit', 'products.manage'],
   },
 ];
+
+/**
+ * Roles de los usuarios que ve y gestiona cada rol con `users.manage` (PBI-0013): el superadministrador, todos; el
+ * administrador, solo los vendedores (y solo puede asignarles ese rol).
+ */
+const MANAGED_USER_ROLES = {
+  superadmin: ['superadmin', 'admin', 'vendedor'],
+  admin: ['vendedor'],
+};
+
+/** Roles de los usuarios que puede ver, crear y editar `role`; vacío si no gestiona usuarios. */
+export const managedUserRoles = (role) => (can(role, 'users.manage') ? (MANAGED_USER_ROLES[role] ?? []) : []);
 
 /** Roles de versiones anteriores del mock y su equivalente fijo. */
 export const LEGACY_ROLES = { owner: 'superadmin', 'catalog-maintainer': 'vendedor' };
@@ -53,6 +72,8 @@ const permissionsByRole = new Map(ADMIN_ROLES.map((role) => [role.id, new Set(ro
 
 export const isAdminRole = (role) => permissionsByRole.has(role);
 
-export const can = (role, permission) => permissionsByRole.get(role)?.has(permission) ?? false;
+export function can(role, permission) {
+  return permissionsByRole.get(role)?.has(permission) ?? false;
+}
 
 export const migrateRole = (role) => LEGACY_ROLES[role] ?? role;

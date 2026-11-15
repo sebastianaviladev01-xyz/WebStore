@@ -79,6 +79,8 @@ export class LoginPage {
       return;
     }
     const value = this.form.getRawValue();
-    if (await this.session.login(value.email, value.password)) await this.router.navigate(['/']);
+    // PBI-0151: tras una sesión vencida, vuelve a la página donde estaba (y a su borrador); si no, al Resumen.
+    if (await this.session.login(value.email, value.password))
+      await this.router.navigateByUrl(this.session.tomarRetorno());
   }
 }

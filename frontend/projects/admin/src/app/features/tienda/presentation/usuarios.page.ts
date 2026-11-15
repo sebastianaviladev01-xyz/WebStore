@@ -7,9 +7,20 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
-import { Rol } from '../../sesion/domain/rol.rules';
+import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
 import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
 import { usuarioConElMismoCorreo } from '../domain/registro-unico.rules';
+import {
+  FILTROS_USUARIOS_VACIOS,
+  filtrarUsuarios,
+  leerFiltrosUsuarios,
+  parametrosDeFiltrosUsuarios,
+} from '../domain/filtro-listado.rules';
+import { mensajeDeError } from '../domain/formulario.rules';
+import { conservarBorrador } from './borrador';
+import { filtrosDeListado } from './filtros-de-listado';
+import { PaginacionComponent } from './paginacion.component';
+import { PanelFiltrosComponent } from './panel-filtros.component';
 
 const EMPTY_USER = {
   name: '',
@@ -21,7 +32,15 @@ const EMPTY_USER = {
 
 @Component({
   selector: 'ws-users-page',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatSelectModule, MatCheckboxModule],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+    MatCheckboxModule,
+    PanelFiltrosComponent,
+    PaginacionComponent,
+  ],
   template: `
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Usuarios y roles</h1>
     <p class="mt-2 max-w-2xl text-sm text-muted">
@@ -30,7 +49,7 @@ const EMPTY_USER = {
     </p>
 
     <section class="mt-6 grid gap-3 md:grid-cols-3" aria-label="Roles disponibles">
-      @for (role of admin.roles(); track role.id) {
+      @for (role of rolesVisibles(); track role.id) {
         <article class="admin-card p-4">
           <h2 class="font-semibold text-ink">{{ role.label }}</h2>
           <p class="mt-1 text-sm text-muted">{{ role.description }}</p>
@@ -42,9 +61,48 @@ const EMPTY_USER = {
       }
     </section>
 
+    <!-- PBI-0139: panel de filtros encima de la lista. -->
+    <ws-filter-panel
+      class="mt-6"
+      etiqueta="Filtros de usuarios"
+      [formGroup]="filtros.borrador"
+      [buscando]="filtros.buscando()"
+      [error]="filtros.error()"
+      (buscar)="filtros.buscar()"
+      (limpiar)="filtros.limpiar()"
+    >
+      <mat-form-field>
+        <mat-label>Buscar usuario</mat-label>
+        <input matInput formControlName="texto" />
+        <mat-hint>Nombre o correo</mat-hint>
+      </mat-form-field>
+      @if (rolesVisibles().length > 1) {
+        <mat-form-field>
+          <mat-label>Filtrar por rol</mat-label>
+          <mat-select formControlName="rol">
+            <mat-option value="">Todos</mat-option>
+            @for (role of rolesVisibles(); track role.id) {
+              <mat-option [value]="role.id">{{ role.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+      <mat-form-field>
+        <mat-label>Filtrar por estado</mat-label>
+        <mat-select formControlName="estado">
+          <mat-option value="todos">Todos</mat-option>
+          <mat-option value="activos">Activos</mat-option>
+          <mat-option value="inactivos">Inactivos</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </ws-filter-panel>
+    @if (borrador.aviso(); as aviso) {
+      <p class="mt-6 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">{{ aviso }}</p>
+    }
+
     <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
       <section class="admin-card overflow-hidden" aria-label="Usuarios administrativos">
-        @for (user of admin.users(); track user.id) {
+        @for (user of pagina().items; track user.id) {
           <div
             class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-line p-4 last:border-b-0 sm:grid-cols-[minmax(0,1fr)_170px_auto]"
           >
@@ -58,34 +116,56 @@ const EMPTY_USER = {
               {{ roleLabel(user.role) }}{{ user.active ? '' : ' · inactivo' }}
             </span>
             <div class="flex gap-3 text-sm font-medium">
-              <button class="text-link" type="button" (click)="edit(user.id)">Editar</button>
-              @if (user.id !== session.user()?.id) {
-                <button class="text-danger" type="button" (click)="remove(user.id)">Eliminar</button>
+              <button
+                class="text-link"
+                type="button"
+                [attr.aria-label]="'Editar usuario ' + user.name"
+                (click)="edit(user.id)"
+              >
+                Editar
+              </button>
+              @if (session.can('users.delete') && user.id !== session.user()?.id) {
+                <button
+                  class="text-danger"
+                  type="button"
+                  [attr.aria-label]="'Eliminar usuario ' + user.name"
+                  (click)="remove(user.id)"
+                >
+                  Eliminar
+                </button>
               }
             </div>
           </div>
+        } @empty {
+          <p class="p-8 text-center text-sm text-muted">
+            {{ admin.users().length ? 'Ningún usuario cumple los filtros.' : 'Todavía no hay usuarios.' }}
+          </p>
         }
+        <ws-pagination
+          [pagina]="pagina()"
+          etiqueta="Páginas de usuarios"
+          (cambiar)="filtros.irAPagina($event)"
+        />
       </section>
 
-      <form [formGroup]="form" (ngSubmit)="save()" class="admin-card h-fit p-6">
+      <form #registro="ngForm" [formGroup]="form" (ngSubmit)="save()" class="admin-card h-fit p-6">
         <h2 class="text-xl font-semibold">{{ editing() ? 'Editar usuario' : 'Nuevo usuario' }}</h2>
         <div class="mt-5 grid gap-3">
           <mat-form-field>
             <mat-label>Nombre</mat-label>
             <input matInput formControlName="name" />
+            <mat-error>{{ error(form.controls.name.errors) }}</mat-error>
           </mat-form-field>
           <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
           <mat-form-field [subscriptSizing]="form.controls.email.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>Correo</mat-label>
             <input matInput type="email" formControlName="email" />
-            @if (form.controls.email.hasError('repetido')) {
-              <mat-error>{{ form.controls.email.getError('repetido') }}</mat-error>
-            }
+            <mat-error>{{ error(form.controls.email.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
             <mat-label>Rol</mat-label>
             <mat-select formControlName="role">
-              @for (role of admin.roles(); track role.id) {
+              @for (role of rolesVisibles(); track role.id) {
                 <mat-option [value]="role.id">{{ role.label }}</mat-option>
               }
             </mat-select>
@@ -100,6 +180,7 @@ const EMPTY_USER = {
                 formControlName="temporaryPassword"
               />
               <mat-hint>Mínimo 10 caracteres, con letras y números.</mat-hint>
+              <mat-error>{{ errorClave(form.controls.temporaryPassword.errors) }}</mat-error>
             </mat-form-field>
           }
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
@@ -131,12 +212,36 @@ export class UsuariosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly session = inject(SesionFacade);
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
-  private readonly formDirective = viewChild.required(FormGroupDirective);
+  // Por referencia: el panel de filtros (PBI-0139) también es un FormGroupDirective y va antes en la plantilla.
+  private readonly formDirective = viewChild.required<FormGroupDirective>('registro');
   protected readonly editing = signal<string | null>(null);
   /** El usuario tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
   private base: UsuarioAdmin | null = null;
   /** Id del usuario nuevo; cambia al empezar otro, para que un segundo envío no cree otro (PBI-0121). */
   private idNuevo = crypto.randomUUID();
+  /**
+   * Roles que el rol de la sesión gestiona (PBI-0013): el administrador solo ve y asigna «Vendedor». El BFF solo le
+   * envía esos usuarios y rechaza cualquier otro cambio.
+   */
+  protected readonly rolesVisibles = computed(() => {
+    const gestionables = rolesGestionables(this.session.role());
+    return this.admin.roles().filter((role) => gestionables.includes(role.id));
+  });
+  protected readonly filtros = filtrosDeListado({
+    leer: leerFiltrosUsuarios,
+    escribir: parametrosDeFiltrosUsuarios,
+    vacios: FILTROS_USUARIOS_VACIOS,
+    que: 'los usuarios',
+  });
+  protected readonly pagina = computed(() =>
+    this.filtros.paginar(filtrarUsuarios(this.admin.users(), this.filtros.aplicados())),
+  );
+  protected readonly error = mensajeDeError;
+  /** La contraseña temporal dice su regla, no «revisa el formato». */
+  protected errorClave(errores: Readonly<Record<string, unknown>> | null): string | null {
+    if (!errores) return null;
+    return 'required' in errores ? 'Completa este campo.' : 'Mínimo 10 caracteres, con letras y números.';
+  }
   protected readonly countByRole = computed(() => {
     const counts = new Map<Rol, number>();
     for (const user of this.admin.users()) counts.set(user.role, (counts.get(user.role) ?? 0) + 1);
@@ -151,6 +256,24 @@ export class UsuariosPage {
       nonNullable: true,
       validators: [Validators.minLength(10), Validators.pattern(/^(?=.*[A-Za-z])(?=.*\d).+$/)],
     }),
+  });
+  /**
+   * PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición y se ingresa otra vez. La contraseña
+   * temporal no se conserva: hay que escribirla de nuevo.
+   */
+  protected readonly borrador = conservarBorrador({
+    form: this.form,
+    guardar: () => ({
+      base: this.base,
+      idNuevo: this.idNuevo,
+      valor: { ...this.form.getRawValue(), temporaryPassword: '' },
+    }),
+    restaurar: (borrador) => {
+      this.base = borrador.base;
+      this.idNuevo = borrador.idNuevo;
+      this.editing.set(borrador.base?.id ?? null);
+      this.form.setValue(borrador.valor);
+    },
   });
 
   protected roleLabel(role: Rol): string {
@@ -173,7 +296,10 @@ export class UsuariosPage {
 
   protected async save(): Promise<void> {
     if (this.admin.saving()) return;
-    if (this.form.invalid || (!this.editing() && !this.form.controls.temporaryPassword.value)) {
+    // PBI-0132: la contraseña temporal es obligatoria al crear, y el campo lo dice.
+    if (!this.editing() && !this.form.controls.temporaryPassword.value)
+      this.form.controls.temporaryPassword.setErrors({ required: true });
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
@@ -197,7 +323,7 @@ export class UsuariosPage {
 
   /** Si se elimina el usuario en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string): Promise<void> {
-    if (!confirm('¿Eliminar usuario?')) return;
+    if (!this.session.can('users.delete') || !confirm('¿Eliminar usuario?')) return;
     if ((await this.admin.eliminarUsuario(id)) && this.editing() === id) this.reset();
   }
 

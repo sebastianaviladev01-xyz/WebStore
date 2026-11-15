@@ -113,51 +113,60 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
       </mat-form-field>
     </ws-filter-panel>
     <section class="admin-card mt-6 overflow-hidden" aria-label="Lista de productos">
-      <div
-        class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
-      >
-        <span>Producto</span>
-        <span>Precio</span>
-        <span>Stock</span>
-        <span></span>
-      </div>
-      @for (p of pagina().items; track p.id) {
+      <!-- PBI-0132: la lista es una tabla con sus encabezados (en el celular, sin la fila de encabezados visible). -->
+      <div role="table" aria-label="Productos">
         <div
-          class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
+          role="row"
+          class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
         >
-          <div class="min-w-0 max-md:col-span-full">
-            <strong class="block truncate">{{ p.name }}</strong>
-            <p class="text-xs text-muted">
-              {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
-              {{ p.gallery.length === 0 ? 'foto' : 'fotos' }}
-            </p>
-          </div>
-          <span class="max-md:col-start-2">{{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}</span>
-          <span [class.text-danger]="p.stock === 0" class="font-semibold">
-            <span class="font-normal text-muted md:hidden">Stock&nbsp;</span>
-            <span>{{ p.stock }}</span>
-          </span>
-          <div class="flex gap-2">
-            <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
-            <a
-              class="inline-flex items-center font-semibold text-link"
-              [routerLink]="['/productos', p.id]"
-              queryParamsHandling="preserve"
-            >
-              Editar
-            </a>
-            @if (session.can('products.manage')) {
-              <button
-                class="min-h-10 font-semibold text-danger"
-                [attr.aria-label]="'Eliminar producto ' + p.name"
-                (click)="remove(p.id)"
-              >
-                Eliminar
-              </button>
-            }
-          </div>
+          <span role="columnheader">Producto</span>
+          <span role="columnheader">Precio</span>
+          <span role="columnheader">Stock</span>
+          <span role="columnheader"><span class="sr-only">Acciones</span></span>
         </div>
-      } @empty {
+        @for (p of pagina().items; track p.id) {
+          <div
+            role="row"
+            class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
+          >
+            <div role="cell" class="min-w-0 max-md:col-span-full">
+              <strong class="block truncate">{{ p.name }}</strong>
+              <p class="text-xs text-muted">
+                {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
+                {{ p.gallery.length === 0 ? 'foto' : 'fotos' }}
+              </p>
+            </div>
+            <span role="cell" class="max-md:col-start-2">
+              {{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}
+            </span>
+            <span role="cell" [class.text-danger]="p.stock === 0" class="font-semibold">
+              <span class="font-normal text-muted md:hidden">Stock&nbsp;</span>
+              <span>{{ p.stock }}</span>
+            </span>
+            <div role="cell" class="flex gap-2">
+              <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
+              <a
+                class="inline-flex items-center font-semibold text-link"
+                [routerLink]="['/productos', p.id]"
+                queryParamsHandling="preserve"
+                [attr.aria-label]="'Editar producto ' + p.name"
+              >
+                Editar
+              </a>
+              @if (session.can('products.delete')) {
+                <button
+                  class="min-h-10 font-semibold text-danger"
+                  [attr.aria-label]="'Eliminar producto ' + p.name"
+                  (click)="remove(p.id)"
+                >
+                  Eliminar
+                </button>
+              }
+            </div>
+          </div>
+        }
+      </div>
+      @if (!pagina().items.length) {
         <p class="border-t border-line p-10 text-center text-sm text-muted">
           {{ admin.products().length ? 'Ningún producto cumple los filtros.' : 'Todavía no hay productos.' }}
         </p>
@@ -239,7 +248,7 @@ export class ProductosPage {
     return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
   protected async remove(id: string) {
-    if (this.session.can('products.manage') && confirm('¿Eliminar producto?'))
+    if (this.session.can('products.delete') && confirm('¿Eliminar producto?'))
       await this.admin.eliminarProducto(id);
   }
 }

@@ -63,11 +63,12 @@ export function filtrarMarcas(marcas: readonly Marca[], filtros: FiltrosMarcas):
 /** Parámetros de consulta de la URL de un listado, tal como los entrega el router. */
 export type ParametrosUrl = Readonly<Record<string, string | undefined>>;
 
-const leerEstado = (valor: string | undefined): EstadoFiltro =>
+/** Estado activo o inactivo de la URL; otro valor, «todos». También lo usa `filtro-listado.rules.ts` (lote 07). */
+export const leerEstado = (valor: string | undefined): EstadoFiltro =>
   valor === 'activos' || valor === 'inactivos' ? valor : 'todos';
 
 /** Solo los parámetros con valor: un texto vacío (o de espacios) y el estado «todos» no se escriben. */
-const sinPorDefecto = (parametros: Record<string, string>): Record<string, string> =>
+export const sinPorDefecto = (parametros: Record<string, string>): Record<string, string> =>
   Object.fromEntries(
     Object.entries(parametros)
       .map(([clave, valor]) => [clave, valor.trim()] as const)

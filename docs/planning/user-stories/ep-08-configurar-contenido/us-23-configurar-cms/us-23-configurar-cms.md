@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** administrador
+- **Como** superadministrador (desde el lote 07, Contenido es configuración de la tienda: PBI-0013, provisional por confirmar con Daniel en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
 - **Quiero** configurar el logo, el color, el contacto, la navegación, el pie de página y las páginas informativas
 - **Para** adaptar la tienda sin cambiar el código
 
@@ -17,25 +17,25 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ### Escenario 01 – Identidad
 
-- **Dado** que el administrador está en Contenido
+- **Dado** que el superadministrador está en Contenido
 - **Cuando** carga un logo, o indica su URL, y cambia el color principal
 - **Entonces** la tienda muestra el logo y el color nuevos.
 
 ### Escenario 02 – Navegación, contacto y pie
 
-- **Dado** que el administrador está en Contenido
+- **Dado** que el superadministrador está en Contenido
 - **Cuando** cambia la navegación superior o lateral, el mensaje superior, el contacto o el pie de página
 - **Entonces** la tienda los muestra en su cabecera, su menú lateral y su pie.
 
 ### Escenario 03 – Tipografía única
 
-- **Dado** que el administrador está en Contenido
+- **Dado** que el superadministrador está en Contenido
 - **Cuando** revisa la tipografía
 - **Entonces** la ve como un campo de solo lectura: el MVP usa una sola tipografía.
 
 ### Escenario 04 – Páginas informativas
 
-- **Dado** que el administrador está en Contenido
+- **Dado** que el superadministrador está en Contenido
 - **Cuando** edita el texto de Contacto, Envíos, Privacidad o Términos, o activa o desactiva una de ellas
 - **Entonces** la tienda publica el texto nuevo y respeta la activación.
 
@@ -43,7 +43,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el administrador editó el contenido y el guardado falla (por ejemplo, un logo demasiado pesado)
 - **Cuando** mira el formulario
-- **Entonces** lo escrito se conserva, el motivo sale junto a «Guardar configuración» y «Actualizar» no lo reescribe. El logo se reduce antes de guardarse.
+- **Entonces** lo escrito se conserva, el motivo sale junto a «Guardar configuración» y los datos que llegan del BFF no lo reescriben (desde el lote 07 ya no hay «Actualizar» en la cabecera). El logo se reduce antes de guardarse.
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0119 y PBI-0125), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
 
@@ -51,3 +51,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - Está pendiente revisar si Contenido equivale a la configuración de OpenCart (PBI-0015 del [backlog](../../../backlog.md)).
 - La paleta por defecto está pendiente de confirmar (PBI-0014 del [backlog](../../../backlog.md)).
+
+### Escenario 06 – Aviso de la navegación superior
+
+- **Dado** que el superadministrador escribe en «Navegación superior» un texto que la tienda no reconoce (por ejemplo, «Despachos») o que lleva a una página desactivada
+- **Cuando** sale del campo o sigue escribiendo
+- **Entonces** el campo avisa qué textos no se mostrarán y por qué, sin impedir guardar.
+
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0153), provisional por confirmar con Daniel. Lo prueba `admin-listados.spec.ts`. Los campos de Contenido no cambian (PBI-0141, «Alcance de Contenido del Admin»).
