@@ -223,3 +223,14 @@ test('todas las líneas import de tema.rules.ts son import type (el spec las bor
   assert.ok(imports.length > 0);
   for (const linea of imports) assert.match(linea, /^import type \{.*\} from '\.\/tema\.model';$/);
 });
+
+// Lote 08 (ADR-0017), PBI-0079: el texto de «el tema activo no se borra» lo define el BFF (`ACTIVE_THEME_IN_USE`) y el
+// Admin lo toma de su réplica en lugar de copiarlo en la página. La prueba importa solo esa constante del BFF para ver
+// cuándo divergen (el resto de la réplica se compara con `casos-tema.json`, como datos).
+test('PBI-0079: el mensaje de no borrar el tema activo es el mismo que el del BFF', async () => {
+  const { MENSAJE_TEMA_ACTIVO_EN_USO } = await import(
+    `data:text/javascript;base64,${Buffer.from(modulo).toString('base64')}`
+  );
+  const bff = await import('../../../../../../../../backend/src/domain/temas/tema-propio.rules.mjs');
+  assert.equal(MENSAJE_TEMA_ACTIVO_EN_USO, bff.MENSAJE_TEMA_ACTIVO_EN_USO);
+});

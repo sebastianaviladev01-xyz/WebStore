@@ -99,12 +99,12 @@ import { esCambioDeFechaValido, fechaDeLima } from '../domain/fecha-entrega.rule
                 <p class="mt-1 text-sm text-muted">Despacho desde {{ o.shippingOrigin }}.</p>
               }
               <form [formGroup]="form" class="ws-outline-fields mt-4 grid gap-3 sm:grid-cols-2">
-                <mat-form-field appearance="outline">
+                <mat-form-field>
                   <mat-label>Dirección</mat-label>
                   <input matInput formControlName="addressLine" />
                   <mat-error>Ingresa la dirección.</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field>
                   <mat-label>Distrito</mat-label>
                   <mat-select formControlName="district">
                     @for (d of destinations(); track d) {
@@ -113,21 +113,21 @@ import { esCambioDeFechaValido, fechaDeLima } from '../domain/fecha-entrega.rule
                   </mat-select>
                   <mat-error>Selecciona un distrito.</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field>
                   <mat-label>Provincia</mat-label>
                   <input matInput formControlName="province" />
                   <mat-error>Ingresa la provincia.</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field>
                   <mat-label>Departamento</mat-label>
                   <input matInput formControlName="department" />
                   <mat-error>Ingresa el departamento.</mat-error>
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field>
                   <mat-label>Referencia</mat-label>
                   <input matInput formControlName="reference" />
                 </mat-form-field>
-                <mat-form-field appearance="outline">
+                <mat-form-field>
                   <mat-label>Fecha de entrega</mat-label>
                   <input matInput type="date" formControlName="deliveryDate" [attr.min]="today" />
                   @if (form.controls.deliveryDate.hasError('required')) {

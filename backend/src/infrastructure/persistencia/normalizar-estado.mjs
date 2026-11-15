@@ -6,7 +6,7 @@ import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { migrateRole } from '../../domain/sesion/rol.rules.mjs';
 import { isSessionAlive } from '../../domain/sesion/sesion.rules.mjs';
 import { exigirTemaValido } from '../../domain/temas/tema-propio.rules.mjs';
-import { TEMAS_PREDEFINIDOS } from '../../domain/temas/temas-predefinidos.mjs';
+import { TEMA_POR_DEFECTO, TEMAS_PREDEFINIDOS } from '../../domain/temas/temas-predefinidos.mjs';
 import { hashPassword } from '../seguridad/password-hasher.mjs';
 import { newId } from '../seguridad/tokens.mjs';
 import { seed } from './seed.mjs';
@@ -17,7 +17,6 @@ import { seed } from './seed.mjs';
  */
 export const SCHEMA_VERSION = 3;
 
-const TEMA_POR_DEFECTO = 'b';
 const COLORES_DE_B = TEMAS_PREDEFINIDOS.find((tema) => tema.id === TEMA_POR_DEFECTO).colors;
 const NOMBRE_DEL_TEMA_MIGRADO = 'Colores de Contenido';
 const COLOR_HEX = /^#[0-9a-f]{6}$/i;

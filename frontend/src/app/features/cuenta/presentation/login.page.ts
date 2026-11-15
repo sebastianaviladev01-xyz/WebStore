@@ -25,7 +25,7 @@ import { rutaDeRetorno } from '../domain/cuenta.rules';
           </p>
         }
         <div class="mt-7 grid gap-3">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Correo</mat-label>
             <input matInput type="email" autocomplete="email" formControlName="email" />
             @if (form.controls.email.hasError('required')) {
@@ -34,7 +34,7 @@ import { rutaDeRetorno } from '../domain/cuenta.rules';
               <mat-error>Ingresa un correo válido.</mat-error>
             }
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Contraseña</mat-label>
             <input matInput type="password" autocomplete="current-password" formControlName="password" />
             <mat-error>Ingresa tu contraseña.</mat-error>

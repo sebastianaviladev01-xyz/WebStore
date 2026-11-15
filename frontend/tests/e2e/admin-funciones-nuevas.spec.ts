@@ -1,6 +1,6 @@
 import { expect, request as nuevoRequest, test, type Page } from '@playwright/test';
 
-import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
+import { actualizarProducto, enviarCambios, leerProductos, leerSnapshot } from './apoyo/catalogo';
 import { correoUnico, cuentasAdmin, fechaDeEntrega, ingresarAlAdmin, menuAdmin, urls } from './apoyo/entorno';
 
 /**
@@ -228,6 +228,52 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
       );
     } finally {
       await otra.close();
+    }
+  });
+
+  test('se pone al día al volver a la pestaña y cada minuto, sin cambiar de página (PBI-0160)', async ({
+    page,
+  }) => {
+    // Los tres pedidos descuentan stock de p-004, que otras specs también usan: se deja como estaba.
+    const stockInicial = (await leerProductos()).find((producto) => producto.id === 'p-004')!.stock;
+    try {
+      await page.clock.install();
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      const campana = page.getByRole('button', { name: /^Notificaciones/ });
+      await campana.click();
+      await page.keyboard.press('Escape');
+      await expect(campana).toHaveAccessibleName('Notificaciones: no hay pedidos nuevos');
+
+      // Al volver a la pestaña: el navegador avisa con `visibilitychange`.
+      await crearPedido('Vuelta Lote 08');
+      await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+      await expect(campana).toHaveAccessibleName('Notificaciones: 1 pedido nuevo');
+
+      // Con la pestaña visible, cada minuto.
+      await crearPedido('Minuto Lote 08');
+      await page.clock.fastForward(61_000);
+      await expect(campana).toHaveAccessibleName('Notificaciones: 2 pedidos nuevos');
+
+      // Con la pestaña oculta no consulta: el pedido nuevo espera a que vuelva.
+      await page.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
+      });
+      await crearPedido('Oculta Lote 08');
+      const consultas: string[] = [];
+      page.on('request', (peticion) => {
+        if (peticion.url().includes('/bff/admin/notifications')) consultas.push(peticion.url());
+      });
+      await page.clock.fastForward(61_000);
+      await page.clock.fastForward(61_000);
+      expect(consultas).toEqual([]);
+      await expect(campana).toHaveAccessibleName('Notificaciones: 2 pedidos nuevos');
+      await page.evaluate(() => {
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
+        document.dispatchEvent(new Event('visibilitychange'));
+      });
+      await expect(campana).toHaveAccessibleName('Notificaciones: 3 pedidos nuevos');
+    } finally {
+      await actualizarProducto('p-004', { stock: stockInicial });
     }
   });
 

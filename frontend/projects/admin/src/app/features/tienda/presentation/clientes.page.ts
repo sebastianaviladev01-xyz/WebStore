@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild
 import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
   FILTROS_CLIENTES_VACIOS,
@@ -214,7 +215,12 @@ export class ClientesPage {
   }
   /** Si se elimina el cliente en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string) {
-    if (!confirm('¿Eliminar cliente?')) return;
-    if ((await this.admin.eliminarCliente(id)) && this.editing() === id) this.reset();
+    await eliminarRegistro({
+      pregunta: '¿Eliminar cliente?',
+      id,
+      editando: () => this.editing(),
+      eliminar: (idEliminado) => this.admin.eliminarCliente(idEliminado),
+      salirDeLaEdicion: () => this.reset(),
+    });
   }
 }

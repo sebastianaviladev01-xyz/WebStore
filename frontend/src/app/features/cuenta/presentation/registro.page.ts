@@ -20,12 +20,12 @@ import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
           Tu cuenta es opcional para comprar y te permite administrar tus datos y pedidos.
         </p>
         <div class="mt-7 grid gap-3 sm:grid-cols-2">
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Nombres y apellidos</mat-label>
             <input matInput autocomplete="name" formControlName="fullName" />
             <mat-error>Ingresa tu nombre y apellidos.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Correo</mat-label>
             <input matInput autocomplete="email" type="email" formControlName="email" />
             @if (form.controls.email.hasError('required')) {
@@ -34,17 +34,17 @@ import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
               <mat-error>Ingresa un correo válido.</mat-error>
             }
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>Teléfono</mat-label>
             <input matInput autocomplete="tel" formControlName="phone" />
             <mat-error>Ingresa tu teléfono.</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline">
+          <mat-form-field>
             <mat-label>DNI</mat-label>
             <input matInput inputmode="numeric" formControlName="document" />
             <mat-error>Ingresa tu DNI (al menos 8 caracteres).</mat-error>
           </mat-form-field>
-          <mat-form-field appearance="outline" class="sm:col-span-2">
+          <mat-form-field class="sm:col-span-2">
             <mat-label>Contraseña</mat-label>
             <input matInput autocomplete="new-password" type="password" formControlName="password" />
             <mat-hint>10 caracteres como mínimo, con letras y números.</mat-hint>

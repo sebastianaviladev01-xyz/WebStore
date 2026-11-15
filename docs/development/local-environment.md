@@ -160,6 +160,7 @@ Con los tres servidores levantados, desde `frontend/`:
 - Variables: `CDP_ENDPOINT` (otro puerto), `VISUAL_QA_URL` (página), `VISUAL_QA_WIDTH` (un solo ancho), `VISUAL_QA_FULL_PAGE=1` (página completa), `VISUAL_QA_OUTPUT` (carpeta de salida) y, en `cdp-admin-qa.mjs`, `ADMIN_URL` (el Admin de un worktree, por ejemplo `http://localhost:4500`; por omisión, el de desarrollo).
 - Las capturas van a `frontend/output/`, que no se versiona. Para comparar, guarda las de antes en una carpeta propia con `VISUAL_QA_OUTPUT` antes de cambiar el código.
 - Usa un perfil temporal (`--user-data-dir`), no tu perfil personal, y mantén el puerto en `127.0.0.1`.
+- Capturas por tema y ancho con comparación píxel a píxel (PBI-0057): no usan el Chrome de depuración, sino Playwright con el Chrome instalado. `node tools/qa/preparar-datos.mjs`, `node tools/qa/capturas.mjs <escenarios.mjs> antes|despues` y `node tools/qa/comparar.mjs <carpeta>`; se explican en [Comparar capturas](agent-execution.md#comparar-capturas).
 - Los anchos de referencia son los de la [validación](../../frontend/docs/VALIDATION.md#responsive-y-revisión-visual): 1440, 1280, 1024, 768, 390 y 360 px.
 
 ### Puertos de las capturas

@@ -169,7 +169,9 @@ export interface SnapshotApi {
   banners: { id: string; ctaUrl: string; cta: string }[];
   config: Record<string, unknown>;
   /** Lote 07: usuarios del Admin, para dejar como estaban los que crea una prueba. */
-  users: { id: string; email: string; role: string; active: boolean }[];
+  users: { id: string; name: string; email: string; role: string; active: boolean }[];
+  /** Lote 08: tarifas de envío, para dejar como estaban las que crea una prueba. */
+  rates: { id: string; origin: string; destination: string; price: number }[];
   complaints: { id: string; createdAt: string; dueAt: string }[];
 }
 

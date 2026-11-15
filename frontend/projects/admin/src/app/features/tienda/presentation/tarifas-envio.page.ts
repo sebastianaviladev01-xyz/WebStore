@@ -6,6 +6,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { BorradorTarifas, borradorDeTarifasVigente, leerDistritos } from '../domain/tarifa-envio.rules';
 import { TarifaEnvio } from '../domain/tienda.model';
@@ -332,9 +333,13 @@ export class TarifasEnvioPage {
   }
 
   protected async remove(id: string): Promise<void> {
-    if (!confirm('¿Eliminar tarifa?')) return;
-    // Si se elimina la tarifa en edición, el formulario sale de la edición: no se vuelve a crear (PBI-0122).
-    if ((await this.admin.eliminarTarifa(id)) && this.editing() === id) this.reset();
+    await eliminarRegistro({
+      pregunta: '¿Eliminar tarifa?',
+      id,
+      editando: () => this.editing(),
+      eliminar: (idEliminado) => this.admin.eliminarTarifa(idEliminado),
+      salirDeLaEdicion: () => this.reset(),
+    });
   }
 
   protected reset(): void {

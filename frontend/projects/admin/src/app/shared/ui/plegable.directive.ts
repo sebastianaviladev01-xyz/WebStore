@@ -1,4 +1,4 @@
-import { Directive, ElementRef, inject, OnInit, Renderer2 } from '@angular/core';
+import { Directive, ElementRef, inject, input, OnInit, Renderer2 } from '@angular/core';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
@@ -29,6 +29,28 @@ export class FlechaPlegableDirective implements OnInit {
     this.renderer.setAttribute(trazo, 'd', 'm4 6 4 4 4-4');
     this.renderer.appendChild(this.svg.nativeElement, trazo);
   }
+}
+
+/** `id` de la región que controla el botón de un bloque plegable: el botón la nombra con `aria-controls`. */
+export const idDeBloque = (id: string): string => `bloque-${id}`;
+
+/**
+ * Región de un bloque plegable (lote 08, PBI-0081): lleva el `id` que nombra el botón (`bloque-<id>`), la clase
+ * `ws-plegable` que anima el pliegue y `data-plegado` mientras está plegada. Sustituye los tres atributos que cada
+ * bloque del Resumen escribía a mano, con el `id` repetido en el botón.
+ */
+@Directive({
+  selector: '[wsAdminBloquePlegable]',
+  host: {
+    class: 'ws-plegable',
+    '[id]': 'idDeLaRegion()',
+    '[attr.data-plegado]': "abierto() ? null : ''",
+  },
+})
+export class BloquePlegableDirective {
+  readonly id = input.required<string>({ alias: 'wsAdminBloquePlegable' });
+  readonly abierto = input.required<boolean>();
+  protected idDeLaRegion = () => idDeBloque(this.id());
 }
 
 /** Conjunto de plegables con `id` alternado: lo quita si estaba y lo añade si no (menú lateral y Resumen). */

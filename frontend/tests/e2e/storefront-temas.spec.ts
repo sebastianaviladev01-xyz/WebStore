@@ -277,7 +277,11 @@ test.describe('tema activo en la primera carga', () => {
   });
 });
 
-/** Colores del lienzo (`html` y `body`), del buscador visible de la cabecera y de la cabecera que lo contiene. */
+/**
+ * Colores del lienzo (`html` y `body`), del contenedor que se ve (el `div` de `ws-store-shell`, PBI-0077: lo que pinta
+ * el lienzo de la tienda, no solo el documento detrás), del buscador visible de la cabecera y de la cabecera que lo
+ * contiene.
+ */
 async function lienzoYBuscador(page: Page) {
   const buscador = page.getByRole('searchbox', { name: 'Buscar productos' }).filter({ visible: true });
   await expect(buscador).toHaveCount(1);
@@ -291,6 +295,10 @@ async function lienzoYBuscador(page: Page) {
   return {
     html: await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor),
     body: await page.evaluate(() => getComputedStyle(document.body).backgroundColor),
+    contenedor: await page
+      .locator('ws-store-shell > div')
+      .first()
+      .evaluate((nodo) => getComputedStyle(nodo).backgroundColor),
     ...deLaCabecera,
   };
 }
@@ -313,6 +321,7 @@ test.describe('TEST-14: lienzo de la tienda y buscador de la cabecera', () => {
       const medida = await lienzoYBuscador(page);
       expect(medida.html).toBe(FONDO_DE_LA_TIENDA[tema]);
       expect(medida.body).toBe(FONDO_DE_LA_TIENDA[tema]);
+      expect(medida.contenedor).toBe(FONDO_DE_LA_TIENDA[tema]);
       // El buscador pinta `--ws-bg` del tema activo, no el lienzo ni el fondo de la cabecera (AC-06).
       const fondoPrincipal = await page.evaluate(() => {
         const muestra = document.createElement('span');
@@ -326,6 +335,25 @@ test.describe('TEST-14: lienzo de la tienda y buscador de la cabecera', () => {
       expect(medida.buscador).not.toBe(FONDO_DE_LA_TIENDA[tema]);
       expect(medida.buscador).not.toBe(medida.cabecera);
       if (tema === 'b') expect(medida.buscador).toBe(FONDO_PRINCIPAL_DE_B);
+    });
+  }
+
+  // PBI-0077: la página 404 no usa el contenedor de la tienda: pinta su propio `main`.
+  for (const [tema, ancho] of [
+    ['b', 1440],
+    ['b', 375],
+    ['c', 1440],
+  ] as const) {
+    test(`la página 404 con ${tema.toUpperCase()} a ${ancho} px pinta el lienzo de la tienda`, async ({
+      page,
+    }) => {
+      await activarTema(tema);
+      await page.setViewportSize({ width: ancho, height: 900 });
+      await abrir(page, '/no-existe');
+      await expect(page.getByRole('heading', { level: 1, name: 'Página no encontrada' })).toBeVisible();
+      expect(await page.getByRole('main').evaluate((nodo) => getComputedStyle(nodo).backgroundColor)).toBe(
+        FONDO_DE_LA_TIENDA[tema],
+      );
     });
   }
 
@@ -349,6 +377,7 @@ test.describe('TEST-14: lienzo de la tienda y buscador de la cabecera', () => {
       const medida = await lienzoYBuscador(page);
       expect(medida.body).toBe(FONDO_PRINCIPAL_DE_B);
       expect(medida.html).toBe(FONDO_PRINCIPAL_DE_B);
+      expect(medida.contenedor).toBe(FONDO_PRINCIPAL_DE_B);
       expect(
         await page.evaluate(() =>
           getComputedStyle(document.documentElement).getPropertyValue('--ws-store-bg').trim().toUpperCase(),

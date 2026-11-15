@@ -94,7 +94,7 @@ El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles. El BFF
 
 Los reclamos ya registrados conservan su fecha de vencimiento (`dueAt`): cambiar la lista solo afecta a los reclamos nuevos.
 
-**Aviso al arrancar:** si la lista no tiene ninguna fecha del año en curso (Lima), el BFF escribe en su log «Aviso: WEBSTORE_NON_WORKING_DATES no tiene ninguna fecha de AAAA…» y sigue arrancando. Si lo ves a comienzos de año, renueva la lista. Solo se comprueba al arrancar: reinicia el BFF cuando cambies la lista, y al cambiar de año.
+**Aviso de feriados:** si la lista no tiene ninguna fecha del año en curso (Lima), el BFF escribe en su log «Aviso: WEBSTORE_NON_WORKING_DATES no tiene ninguna fecha de AAAA…» y sigue arrancando. Lo escribe al arrancar y otra vez cuando cambia el año de Lima con el BFF en marcha (se revisa cada hora), una sola vez por año. Si lo ves a comienzos de año, renueva la lista. La variable se lee al arrancar: reinicia el BFF cuando cambies la lista.
 
 **Comprobación:** registra un reclamo de prueba en una copia de datos y revisa que `dueAt` salte los feriados de la lista; o arranca el BFF y comprueba que su log no trae el aviso.
 

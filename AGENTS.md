@@ -72,7 +72,7 @@ npm run setup              # dependencias de la raíz y de frontend/ (npm ci); e
 npm run start:bff          # BFF de prueba: http://localhost:3000
 npm run start:storefront   # Storefront: http://localhost:4200
 npm run start:admin        # Admin: http://localhost:4300
-npm run verify             # agentes, sintaxis, formato, lint, arquitectura, build, pruebas y contrato
+npm run verify             # agentes, sintaxis, formato, lint, tipos, arquitectura, build, pruebas y contrato
 npm run test:e2e           # e2e con Playwright (unos minutos; en segundo plano si la herramienta limita la duración)
 npm run audit:all          # npm audit de la raíz y de frontend/
 npm run check:agents       # catálogo, punteros de .claude/skills/ e imports de los CLAUDE.md (ADR-0008)

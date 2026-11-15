@@ -30,17 +30,17 @@ import { CuentaFacade } from '../application/cuenta.facade';
             <h1 class="text-4xl font-semibold">Datos personales</h1>
             <p class="mt-2 text-sm text-muted">{{ user.email }} · cuenta verificada</p>
             <div class="mt-7 grid gap-3 sm:grid-cols-2">
-              <mat-form-field appearance="outline">
+              <mat-form-field>
                 <mat-label>Nombre</mat-label>
                 <input matInput autocomplete="name" formControlName="fullName" />
                 <mat-error>Ingresa tu nombre.</mat-error>
               </mat-form-field>
-              <mat-form-field appearance="outline">
+              <mat-form-field>
                 <mat-label>Teléfono</mat-label>
                 <input matInput autocomplete="tel" formControlName="phone" />
                 <mat-error>Ingresa tu teléfono.</mat-error>
               </mat-form-field>
-              <mat-form-field appearance="outline">
+              <mat-form-field>
                 <mat-label>DNI</mat-label>
                 <input matInput formControlName="document" />
                 <mat-error>Ingresa tu DNI (al menos 8 caracteres).</mat-error>

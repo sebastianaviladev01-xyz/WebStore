@@ -61,7 +61,7 @@ export interface ResultadoAgregarAlCarrito {
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button type="button" (click)="close()">Seguir comprando</button>
-      <button mat-flat-button type="button" cdkFocusInitial (click)="go('/carrito')">Ver carrito</button>
+      <button mat-flat-button type="button" cdkFocusInitial (click)="verCarrito()">Ver carrito</button>
     </mat-dialog-actions>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,9 +88,9 @@ export class AgregarAlCarritoDialog {
   protected close(): void {
     this.ref.close();
   }
-  protected async go(path: '/carrito'): Promise<void> {
+  protected async verCarrito(): Promise<void> {
     this.ref.close();
-    await this.router.navigate([path]);
+    await this.router.navigate(['/carrito']);
   }
 }
 

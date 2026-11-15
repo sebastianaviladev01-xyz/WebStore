@@ -111,10 +111,13 @@ export function exigirTemaPropio(id, temasPropios) {
   return tema;
 }
 
+/** Texto de `ACTIVE_THEME_IN_USE`; el Admin lo toma de aquí (lote 08, PBI-0079). */
+export const MENSAJE_TEMA_ACTIVO_EN_USO = 'Activa otro tema antes de borrar este.';
+
 /** Devuelve el tema propio `id` si se puede borrar: debe existir, no ser predefinido ni el tema activo (AC-09). */
 export function exigirTemaBorrable(id, apariencia) {
   const tema = exigirTemaPropio(id, apariencia.customThemes);
   if (id === apariencia.activeThemeId)
-    throw new DomainError('conflict', 'ACTIVE_THEME_IN_USE', 'Activa otro tema antes de borrar este.');
+    throw new DomainError('conflict', 'ACTIVE_THEME_IN_USE', MENSAJE_TEMA_ACTIVO_EN_USO);
   return tema;
 }

@@ -169,6 +169,40 @@ const LISTADOS: readonly Listado[] = [
   },
 ];
 
+test.describe('PBI-0085: una consulta fallida al entrar se dice', () => {
+  test('si el BFF no responde al cambiar de página, el panel avisa que muestra la última consulta y lo quita al responder', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const aviso = page
+      .getByRole('status')
+      .filter({ hasText: 'No pudimos actualizar los datos de esta página' });
+    await expect(aviso).toHaveCount(0);
+
+    let caido = true;
+    await page.route('**/bff/admin/snapshot', (ruta) =>
+      caido && ruta.request().method() === 'GET'
+        ? ruta.fulfill({ status: 503, body: '{}' })
+        : ruta.fallback(),
+    );
+    // Un enlace del menú cambia de página sin recargar: la consulta de datos falla y las cifras son las de antes.
+    await desplegarGrupo(page, 'Catálogo');
+    await menuAdmin(page).getByRole('link', { name: 'Productos' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Productos' })).toBeVisible();
+    await expect(aviso).toBeVisible();
+    // Sigue siendo usable: los productos de la consulta anterior están en la lista y no hay el error general del panel.
+    await expect(page.getByRole('region', { name: 'Lista de productos' })).toContainText('OLED Vision');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'No pudimos cargar la información del panel' }),
+    ).toHaveCount(0);
+
+    caido = false;
+    await menuAdmin(page).getByRole('link', { name: 'Inventario' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible();
+    await expect(aviso).toHaveCount(0);
+  });
+});
+
 test.describe('PBI-0139: filtros de los demás listados', () => {
   for (const listado of LISTADOS) {
     test(`${listado.titulo}: el panel va entre el título y la lista, filtra con «Buscar» y se limpia`, async ({

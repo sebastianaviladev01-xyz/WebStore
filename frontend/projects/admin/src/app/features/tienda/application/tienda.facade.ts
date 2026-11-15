@@ -14,6 +14,7 @@ import {
 } from '../domain/cambio-registro.rules';
 import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { ROLES } from '../../sesion/domain/rol.rules';
+import { conPocoStock } from '../domain/inventario.rules';
 import { ajustarPreciosTarifas, asignarPrecioTarifa } from '../domain/tarifa-envio.rules';
 import {
   Banner,
@@ -61,16 +62,22 @@ export class TiendaFacade {
   readonly orders = computed(() => this.state()?.orders ?? []);
   readonly complaints = computed(() => this.state()?.complaints ?? []);
   readonly config = computed(() => this.state()?.config ?? null);
-  readonly lowStock = computed(() => this.products().filter((p) => p.stock <= 5));
+  readonly lowStock = computed(() => this.products().filter((p) => conPocoStock(p.stock)));
   readonly loading = signal(false);
   /** Hay un guardado en curso (PBI-0121): los formularios desactivan «Guardar» y no envían otro. */
   readonly saving = signal(false);
   readonly error = signal<string | null>(null);
+  /**
+   * La última consulta al entrar a una página falló y el panel muestra los datos de la anterior (lote 08, PBI-0085):
+   * antes lo hacía sin decirlo. Se quita en cuanto una consulta responde.
+   */
+  readonly desactualizado = signal(false);
   async load() {
     this.loading.set(true);
     this.error.set(null);
     try {
       this.state.set(await this.repo.load(this.session.requireToken()));
+      this.desactualizado.set(false);
     } catch (error) {
       if (error instanceof SesionVencidaError) this.session.expirar();
       this.error.set(
@@ -86,8 +93,9 @@ export class TiendaFacade {
    * (`refresh()`), y un fallo conserva lo que había.
    */
   async entrar(): Promise<void> {
-    if (this.state()) await this.refresh();
-    else await this.load();
+    if (this.state()) {
+      if (!(await this.refresh())) this.desactualizado.set(true);
+    } else await this.load();
   }
   /**
    * Motivo del último guardado fallido, para la página que lo muestra junto a su botón (PBI-0150): lo quita del aviso
@@ -106,6 +114,7 @@ export class TiendaFacade {
   async refresh(): Promise<boolean> {
     try {
       this.state.set(await this.repo.load(this.session.requireToken()));
+      this.desactualizado.set(false);
       return true;
     } catch (error) {
       if (error instanceof SesionVencidaError) this.session.expirar();

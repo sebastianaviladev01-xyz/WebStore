@@ -1,5 +1,6 @@
 import { expect, request as nuevoRequest, test, type Locator, type Page } from '@playwright/test';
 
+import { activarTema, colorDelToken } from './apoyo/contraste';
 import { cuentasAdmin, desplegarGrupo, desplegarTodos, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
@@ -47,7 +48,7 @@ async function conApi<T>(accion: (api: ClienteTemas) => Promise<T>): Promise<T> 
 
     const leer = async (respuesta: Awaited<ReturnType<typeof contexto.get>>): Promise<TemasAdminDto> => {
       expect(respuesta.ok()).toBe(true);
-      return respuesta.json();
+      return (await respuesta.json()) as TemasAdminDto;
     };
     const listar = async () => leer(await contexto.get('/bff/admin/themes', { headers }));
     return await accion({
@@ -185,6 +186,31 @@ test.describe('Temas del Admin', () => {
     expect((await primarioDe(vista)).toLowerCase()).toBe('#0f766e');
     expect(await primarioDe(raiz)).toBe(antes.raiz);
   });
+
+  // PBI-0077: «el Admin conserva su fondo principal» solo se probaba con B. Con A y con C, el lienzo del Admin es el
+  // `--ws-bg` del tema activo, no el `--ws-store-bg` de la tienda.
+  for (const tema of ['a', 'c'] as const) {
+    test(`con ${tema.toUpperCase()}, el Admin pinta su fondo principal y no el lienzo de la tienda`, async ({
+      page,
+    }) => {
+      await activarTema(tema);
+      await page.goto('/login');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      const [principal, lienzoDeLaTienda] = await Promise.all([
+        colorDelToken(page, '--ws-bg'),
+        colorDelToken(page, '--ws-store-bg'),
+      ]);
+      expect(principal).not.toBe(lienzoDeLaTienda);
+      const fondos = () =>
+        page.evaluate(() => [
+          getComputedStyle(document.body).backgroundColor,
+          getComputedStyle(document.querySelector('main')!).backgroundColor,
+        ]);
+      expect(await fondos()).toEqual([principal, principal]);
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      expect((await fondos())[0]).toBe(principal);
+    });
+  }
 
   test('TEST-15: con B, el Admin sigue en el fondo principal y la vista previa usa el lienzo de la tienda', async ({
     page,

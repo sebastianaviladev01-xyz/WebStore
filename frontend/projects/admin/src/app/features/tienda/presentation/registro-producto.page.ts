@@ -18,11 +18,10 @@ import { Router, RouterLink } from '@angular/router';
 import { TiendaFacade } from '../application/tienda.facade';
 import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
+import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena } from '../domain/foto.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
-
-const MAX_GALLERY_PHOTOS = 6;
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -333,8 +332,8 @@ export class RegistroProductoPage {
       this.photoError.set('Esa foto ya está en el producto.');
       return;
     }
-    if (this.gallery().length >= MAX_GALLERY_PHOTOS) {
-      this.photoError.set(`Máximo ${MAX_GALLERY_PHOTOS} fotos adicionales.`);
+    if (!hayLugarEnLaGaleria(this.gallery().length)) {
+      this.photoError.set(mensajeDeGaleriaLlena());
       return;
     }
     this.gallery.update((items) => [...items, url]);

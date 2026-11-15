@@ -80,6 +80,8 @@ test('el menú se abre con clic, muestra la cuenta y sus opciones en orden, y Es
   await expect(cuenta).toContainText('Superadministrador');
   await expect(panel.getByRole('menuitem')).toHaveText(['Perfil', 'Cerrar sesión']);
 
+  // PBI-0055: Material mueve el foco al menú de forma diferida; Escape antes de que llegue lo dejaría en el cuerpo.
+  await expect(panel.getByRole('menuitem', { name: 'Perfil' })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(panel).toBeHidden();
   await expect(boton).toBeFocused();
@@ -105,7 +107,10 @@ test('el menú se abre y se recorre con el teclado', async ({ page }) => {
   // Espacio también lo abre.
   await page.keyboard.press(' ');
   await expect(panel).toBeVisible();
+  // PBI-0055: se espera el foco en el menú, como tras abrirlo con Enter, antes de cerrarlo.
+  await expect(panel.getByRole('menuitem', { name: 'Perfil' })).toBeFocused();
   await page.keyboard.press('Escape');
+  await expect(panel).toBeHidden();
   await expect(boton).toBeFocused();
 });
 
@@ -192,7 +197,13 @@ test.describe('Menú de usuario en móvil (375 px)', () => {
     await expect(iniciales(page)).toHaveText('SD');
     // Bajo sm: el nombre y el rol no se ven, pero siguen en el nombre accesible, que empieza por las iniciales que
     // sí se ven (PBI-0070, WCAG 2.5.3).
-    await expect(boton.locator('strong').locator('..')).toHaveCSS('width', '1px');
+    // El botón queda compacto (las iniciales y la flecha): el nombre y el rol no ocupan lugar a la vista, y en
+    // escritorio sí.
+    const anchoMovil = (await boton.boundingBox())!.width;
+    expect(anchoMovil).toBeLessThanOrEqual(80);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    expect((await boton.boundingBox())!.width).toBeGreaterThan(anchoMovil + 100);
+    await page.setViewportSize({ width: 375, height: 812 });
     await expect(boton).toHaveAccessibleName(/^SD Superadministrador Demo Superadministrador$/i);
 
     const panel = await abrirMenuUsuario(page);

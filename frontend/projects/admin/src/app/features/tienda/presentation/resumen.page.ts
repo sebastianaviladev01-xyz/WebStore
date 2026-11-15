@@ -2,18 +2,25 @@ import { CurrencyPipe, DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { alternarPlegable, FlechaPlegableDirective } from '../../../shared/ui/plegable.directive';
+import {
+  alternarPlegable,
+  BloquePlegableDirective,
+  FlechaPlegableDirective,
+  idDeBloque,
+} from '../../../shared/ui/plegable.directive';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
   calcularIndicadores,
-  distribucionPorEstado,
   distritosConMasPedidos,
+  gruposDeEstado,
+  GrupoDeEstado,
   serieDelMes,
   actividadReciente,
   ultimosPedidos,
   ZONA_IANA_LIMA,
 } from '../domain/resumen.rules';
+import { NOTA_STOCK_BAJO } from '../domain/inventario.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO } from '../domain/tienda.model';
 import { clasesDeEstadoPedido } from './estado-pedido';
@@ -38,6 +45,7 @@ type BloqueResumen =
     DecimalPipe,
     NgTemplateOutlet,
     RouterLink,
+    BloquePlegableDirective,
     FlechaPlegableDirective,
     GraficoPedidosComponent,
     TarjetaIndicadorComponent,
@@ -100,7 +108,7 @@ type BloqueResumen =
         <ws-admin-tarjeta-indicador
           titulo="Stock bajo"
           [valor]="(admin.lowStock().length | number) ?? '0'"
-          nota="Productos con 5 unidades o menos"
+          [nota]="notaStockBajo"
           [enlace]="enlaceStock()"
           [alerta]="true"
         />
@@ -115,7 +123,7 @@ type BloqueResumen =
           type="button"
           class="flex cursor-pointer items-center gap-2 rounded-md text-left"
           [attr.aria-expanded]="bloqueAbierto(id)"
-          [attr.aria-controls]="'bloque-' + id"
+          [attr.aria-controls]="idDeRegion(id)"
           (click)="alternarBloque(id)"
         >
           {{ titulo }}
@@ -141,11 +149,7 @@ type BloqueResumen =
                 "
               />
             </h2>
-            <div
-              id="bloque-pedidos-por-dia"
-              class="ws-plegable"
-              [attr.data-plegado]="bloqueAbierto('pedidos-por-dia') ? null : ''"
-            >
+            <div wsAdminBloquePlegable="pedidos-por-dia" [abierto]="bloqueAbierto('pedidos-por-dia')">
               <div class="ws-plegable-contenido">
                 <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ mes() }}</p>
                 <ws-admin-grafico-pedidos
@@ -167,11 +171,7 @@ type BloqueResumen =
                 "
               />
             </h2>
-            <div
-              id="bloque-distritos"
-              class="ws-plegable"
-              [attr.data-plegado]="bloqueAbierto('distritos') ? null : ''"
-            >
+            <div wsAdminBloquePlegable="distritos" [abierto]="bloqueAbierto('distritos')">
               <div class="ws-plegable-contenido">
                 <p class="mt-1 text-sm text-muted">Los cinco distritos con más pedidos</p>
                 @if (distritos().length) {
@@ -213,11 +213,7 @@ type BloqueResumen =
               "
             />
           </h2>
-          <div
-            id="bloque-alertas"
-            class="ws-plegable"
-            [attr.data-plegado]="bloqueAbierto('alertas') ? null : ''"
-          >
+          <div wsAdminBloquePlegable="alertas" [abierto]="bloqueAbierto('alertas')">
             <div class="ws-plegable-contenido">
               <div class="mt-4 grid gap-2">
                 @for (product of admin.lowStock(); track product.id) {
@@ -257,11 +253,7 @@ type BloqueResumen =
               </h2>
               <a routerLink="/pedidos" class="text-sm font-medium text-link">Ver todos los pedidos →</a>
             </div>
-            <div
-              id="bloque-ultimos-pedidos"
-              class="ws-plegable"
-              [attr.data-plegado]="bloqueAbierto('ultimos-pedidos') ? null : ''"
-            >
+            <div wsAdminBloquePlegable="ultimos-pedidos" [abierto]="bloqueAbierto('ultimos-pedidos')">
               <div class="ws-plegable-contenido">
                 <!-- relative: los sr-only de la tabla quedan dentro del contenedor que se desplaza y no ensanchan la página. -->
                 <div class="relative overflow-x-auto">
@@ -332,15 +324,11 @@ type BloqueResumen =
               "
             />
           </h2>
-          <div
-            id="bloque-estados"
-            class="ws-plegable"
-            [attr.data-plegado]="bloqueAbierto('estados') ? null : ''"
-          >
+          <div wsAdminBloquePlegable="estados" [abierto]="bloqueAbierto('estados')">
             <div class="ws-plegable-contenido">
               <p class="mt-1 text-sm text-muted">Porcentaje sobre todos los pedidos registrados</p>
               <div class="mt-4 grid gap-5 sm:grid-cols-3">
-                @for (estado of estados(); track estado.nombre) {
+                @for (estado of estados(); track estado.clave) {
                   <div>
                     <div class="flex items-baseline justify-between gap-3">
                       <span class="text-sm font-medium">{{ estado.nombre }}</span>
@@ -350,7 +338,7 @@ type BloqueResumen =
                     <div class="mt-2 h-2 rounded-full bg-soft" aria-hidden="true">
                       <div
                         class="h-full rounded-full"
-                        [class]="estado.color"
+                        [class]="colorDeBarra[estado.clave]"
                         [style.width.%]="estado.porcentaje"
                       ></div>
                     </div>
@@ -379,11 +367,7 @@ type BloqueResumen =
                 "
               />
             </h2>
-            <div
-              id="bloque-actividad"
-              class="ws-plegable"
-              [attr.data-plegado]="bloqueAbierto('actividad') ? null : ''"
-            >
+            <div wsAdminBloquePlegable="actividad" [abierto]="bloqueAbierto('actividad')">
               <div class="ws-plegable-contenido">
                 <p class="mt-1 text-sm text-muted">Pedidos, cambios de estado, cuentas y reclamos</p>
                 @if (actividad().length) {
@@ -446,25 +430,14 @@ export class ResumenPage {
   protected readonly distritos = computed(() => distritosConMasPedidos(this.admin.orders()));
   protected readonly ultimos = computed(() => ultimosPedidos(this.admin.orders()));
   protected readonly actividad = computed(() => actividadReciente(this.admin.snapshot()?.activity ?? []));
-  protected readonly estados = computed(() => {
-    const distribucion = distribucionPorEstado(this.admin.orders());
-    const etiqueta = ETIQUETAS_ESTADO_PEDIDO;
-    return [
-      {
-        nombre: 'Completados',
-        detalle: etiqueta.delivered,
-        porcentaje: distribucion.completados,
-        color: 'bg-primary-strong',
-      },
-      {
-        nombre: 'En proceso',
-        detalle: `${etiqueta.confirmed}, ${etiqueta.processing.toLowerCase()} y ${etiqueta.shipped.toLowerCase()}`,
-        porcentaje: distribucion.enProceso,
-        color: 'bg-primary',
-      },
-      { nombre: 'Otros', detalle: etiqueta.cancelled, porcentaje: distribucion.otros, color: 'bg-danger' },
-    ];
-  });
+  protected readonly estados = computed(() => gruposDeEstado(this.admin.orders()));
+  protected readonly colorDeBarra: Readonly<Record<GrupoDeEstado, string>> = {
+    completados: 'bg-primary-strong',
+    enProceso: 'bg-primary',
+    otros: 'bg-danger',
+  };
+  protected readonly notaStockBajo = NOTA_STOCK_BAJO;
+  protected readonly idDeRegion = idDeBloque;
 
   /**
    * Bloques plegados. Vive con la página: al entrar al Resumen, también al volver desde otra página o al

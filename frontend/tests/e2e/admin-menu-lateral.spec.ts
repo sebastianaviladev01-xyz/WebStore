@@ -153,6 +153,24 @@ test.describe('Menú lateral en escritorio', () => {
     await expect(enlace(page, 'Productos')).toBeHidden();
   });
 
+  // PBI-0077: los enlaces de un grupo plegado no reciben el foco: desde su título, Tab salta al del grupo siguiente.
+  test('con un grupo plegado, Tab salta sus enlaces; con el grupo desplegado, entra en ellos', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const catalogo = titulo(page, 'Catálogo');
+    await expect(catalogo).toHaveAttribute('aria-expanded', 'false');
+    await catalogo.focus();
+    await page.keyboard.press('Tab');
+    await expect(titulo(page, 'Ventas')).toBeFocused();
+
+    await catalogo.focus();
+    await page.keyboard.press('Enter');
+    await expect(catalogo).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Tab');
+    await expect(enlace(page, 'Productos')).toBeFocused();
+  });
+
   test('el vendedor ve General y Catálogo, plegables y sin grupos vacíos (PBI-0013)', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     await titulosDeLosGrupos(page, ['General', 'Catálogo']);

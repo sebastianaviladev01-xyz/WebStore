@@ -25,6 +25,12 @@ import {
 } from '../../catalogo/domain/filtro-catalogo.rules';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
+/**
+ * Las fotos de las dos primeras filas (tres columnas) se piden con prioridad: son las que se ven al abrir el catálogo
+ * y `NgOptimizedImage` avisa (NG02955) si la más grande al pintar no la lleva (PBI-0159, lote 08).
+ */
+const FOTOS_PRIORITARIAS = 6;
+
 @Component({
   selector: 'ws-catalog-page',
   imports: [
@@ -102,7 +108,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
             </button>
           </div>
           <div class="grid gap-4">
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Buscar por nombre</mat-label>
               <input
                 matInput
@@ -113,7 +119,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
               />
             </mat-form-field>
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Categoría</mat-label>
               <mat-select
                 [value]="filtros().categoria"
@@ -126,7 +132,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Precio máximo</mat-label>
               <mat-select
                 canSelectNullableOptions
@@ -188,8 +194,8 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
             </div>
           } @else {
             <div class="ws-catalog-products">
-              @for (product of filteredProducts(); track product.id; let first = $first) {
-                <ws-product-card [product]="product" [priority]="first" />
+              @for (product of filteredProducts(); track product.id; let index = $index) {
+                <ws-product-card [product]="product" [priority]="index < fotosPrioritarias" />
               }
             </div>
           }
@@ -200,6 +206,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CatalogoPage {
+  protected readonly fotosPrioritarias = FOTOS_PRIORITARIAS;
   readonly categoria = input<string | undefined>();
   readonly buscar = input<string | undefined>();
   readonly precio = input<string | undefined>();

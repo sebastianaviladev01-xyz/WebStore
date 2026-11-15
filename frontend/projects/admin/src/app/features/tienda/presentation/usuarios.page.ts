@@ -6,6 +6,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
+import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
 import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
@@ -323,8 +324,14 @@ export class UsuariosPage {
 
   /** Si se elimina el usuario en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string): Promise<void> {
-    if (!this.session.can('users.delete') || !confirm('¿Eliminar usuario?')) return;
-    if ((await this.admin.eliminarUsuario(id)) && this.editing() === id) this.reset();
+    if (!this.session.can('users.delete')) return;
+    await eliminarRegistro({
+      pregunta: '¿Eliminar usuario?',
+      id,
+      editando: () => this.editing(),
+      eliminar: (idEliminado) => this.admin.eliminarUsuario(idEliminado),
+      salirDeLaEdicion: () => this.reset(),
+    });
   }
 
   protected reset(): void {

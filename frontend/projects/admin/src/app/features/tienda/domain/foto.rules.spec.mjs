@@ -44,6 +44,21 @@ test('PBI-0052: la imagen de la categoría se reduce a 160 px y debe caber en el
   assert.equal(primeraQueCabe([dataUrl(120_000)], MAX_CARACTERES_IMAGEN_CATEGORIA), null);
 });
 
-test('PBI-0119: seis fotos al máximo, con el resto del producto, caben en un guardado de 2 MB', () => {
-  assert.ok(7 * BYTES_MAXIMOS_FOTO < 2 * 1024 * 1024 - 64 * 1024);
+// Lote 08 (ADR-0017), PBI-0134: el límite de la galería es una regla de dominio, no una constante de la página.
+test('PBI-0134: la galería admite seis fotos adicionales y avisa al llegar al máximo', async () => {
+  const { MAXIMO_FOTOS_DE_GALERIA, hayLugarEnLaGaleria, mensajeDeGaleriaLlena } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  assert.equal(MAXIMO_FOTOS_DE_GALERIA, 6);
+  assert.equal(hayLugarEnLaGaleria(0), true);
+  assert.equal(hayLugarEnLaGaleria(5), true, 'con cinco entra la sexta');
+  assert.equal(hayLugarEnLaGaleria(6), false, 'con seis ya no entra otra');
+  assert.equal(mensajeDeGaleriaLlena(), 'Máximo 6 fotos adicionales.');
+});
+
+test('PBI-0119: la galería llena y la foto principal, con el resto del producto, caben en un guardado de 2 MB', async () => {
+  const { MAXIMO_FOTOS_DE_GALERIA } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  assert.ok((MAXIMO_FOTOS_DE_GALERIA + 1) * BYTES_MAXIMOS_FOTO < 2 * 1024 * 1024 - 64 * 1024);
 });
