@@ -43,9 +43,15 @@ export default defineConfig({
     viewport: { width: 1440, height: 900 },
     trace: 'retain-on-failure',
   },
+  // El prefijo se busca en el nombre del archivo, no en la ruta completa: en un worktree llamado, por ejemplo,
+  // `lote-06-admin-guardado-y-datos`, todas las specs entraban también en el proyecto del Admin (PBI-0147).
   projects: [
-    { name: 'storefront', testMatch: /storefront-.*\.spec\.ts/, use: { baseURL: storefrontUrl } },
-    { name: 'admin', testMatch: /admin-.*\.spec\.ts/, use: { baseURL: adminUrl } },
+    {
+      name: 'storefront',
+      testMatch: /(^|[\\/])storefront-[^\\/]*\.spec\.ts$/,
+      use: { baseURL: storefrontUrl },
+    },
+    { name: 'admin', testMatch: /(^|[\\/])admin-[^\\/]*\.spec\.ts$/, use: { baseURL: adminUrl } },
   ],
   webServer: [
     {

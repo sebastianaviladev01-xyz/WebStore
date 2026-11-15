@@ -160,3 +160,37 @@ export async function leerMarcas(): Promise<MarcaApi[]> {
 /** Reemplaza las marcas del BFF por las que devuelve `cambio` a partir de las actuales. */
 export const cambiarMarcas = (cambio: (actuales: MarcaApi[]) => MarcaApi[]) =>
   cambiarColeccion('brands', cambio);
+
+/** Lo que las e2e del lote 06 leen del snapshot del Admin. */
+export interface SnapshotApi {
+  revision: number;
+  orders: { id: string; status: string }[];
+  customers: { email: string }[];
+  banners: { id: string; ctaUrl: string; cta: string }[];
+  config: Record<string, unknown>;
+}
+
+/** Snapshot del Admin en este momento (lote 06). */
+export async function leerSnapshot(): Promise<SnapshotApi> {
+  return conAdmin(async (api, headers) => {
+    const respuesta = await api.get('/bff/admin/snapshot', { headers });
+    expect(respuesta.ok()).toBe(true);
+    return respuesta.json();
+  });
+}
+
+/**
+ * Envía cambios al snapshot como «otra sesión», con la forma `{ upsert, remove }` del lote 06 (por ejemplo,
+ * `{ banners: { upsert: [{ id: 'bn-4', ctaUrl: '…' }] } }`). Ante `409 STALE_SNAPSHOT` vuelve a leer la revisión.
+ */
+export async function enviarCambios(cambios: Record<string, unknown>): Promise<void> {
+  await conAdmin(async (api, headers) => {
+    for (let intento = 1; intento <= 3; intento++) {
+      const { revision } = await (await api.get('/bff/admin/snapshot', { headers })).json();
+      const guardado = await api.put('/bff/admin/snapshot', { headers, data: { revision, ...cambios } });
+      if (guardado.ok()) return;
+      if (guardado.status() !== 409 || intento === 3)
+        throw new Error(`PUT /bff/admin/snapshot: ${guardado.status()} ${await guardado.text()}`);
+    }
+  });
+}
