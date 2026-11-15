@@ -33,8 +33,7 @@ test.describe('PBI-0026 y PBI-0054: sin avisos de NgOptimizedImage', () => {
     return lista;
   };
 
-  // Solo NG02953, que es lo que prueba: el NG02955 del catálogo depende de qué foto pinta antes el navegador y
-  // salió en el CI del PR #55 sin salir en local (PBI-0159).
+  // El NG02955 del catálogo se comprueba aparte, por estructura (PBI-0159): depende de qué foto pinta antes el navegador.
   test('al volver a pintar el catálogo no cambia `priority` (NG02953)', async ({ page }) => {
     const lista = avisos(page, /NG02953/);
     await page.goto('/catalogo');
@@ -46,6 +45,30 @@ test.describe('PBI-0026 y PBI-0054: sin avisos de NgOptimizedImage', () => {
     await page.waitForTimeout(500);
     expect(lista).toEqual([]);
   });
+
+  // PBI-0159: `NgOptimizedImage` avisa (NG02955) si la foto que el navegador toma como la más grande al pintar no
+  // lleva `priority`. Cuál es depende de qué foto carga antes, así que se comprueba lo que lo evita siempre: toda foto
+  // de tarjeta que se ve al abrir el catálogo, en cualquier ancho, es prioritaria.
+  for (const ancho of [1440, 768, 375]) {
+    test(`el catálogo a ${ancho} px da prioridad a todas las fotos que se ven al abrirlo (NG02955)`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: ancho, height: ancho === 375 ? 812 : 900 });
+      const lista = avisos(page, /NG0(2953|2955)/);
+      await page.goto('/catalogo');
+      await expect(productos(page)).toHaveCount(6);
+      await page.waitForLoadState('load');
+      const fotos = productos(page).getByRole('img');
+      const [visibles, sinPrioridad] = await fotos.evaluateAll((imagenes) => {
+        const alto = window.innerHeight;
+        const vistas = imagenes.filter((img) => img.getBoundingClientRect().top < alto);
+        return [vistas.length, vistas.filter((img) => img.getAttribute('fetchpriority') !== 'high').length];
+      });
+      expect(visibles).toBeGreaterThan(0);
+      expect(sinPrioridad).toBe(0);
+      expect(lista).toEqual([]);
+    });
+  }
 
   test('la foto del carrito a 375 px es prioritaria y la ficha no avisa de tamaños (NG02955, NG0913)', async ({
     page,
