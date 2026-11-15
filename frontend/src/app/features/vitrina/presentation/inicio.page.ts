@@ -5,6 +5,7 @@ import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { hijosDeCategoria, descendientesDeCategoria } from '../../catalogo/domain/categoria.rules';
 import { VarianteInicio } from '../../contenido/domain/contenido.model';
+import { esEnlaceExterno } from '../../contenido/domain/enlace.rules';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { CarruselBannersComponent } from './carrusel-banners.component';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
@@ -150,9 +151,14 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
                   <h3>{{ banner.title }}</h3>
                   <span>{{ banner.description }}</span>
                   <div class="ws-campaign-actions">
-                    <a [routerLink]="linkFor(banner.ctaUrl)" class="ws-btn-secondary">
-                      {{ banner.ctaLabel }}
-                    </a>
+                    <!-- PBI-0128: un enlace externo va en un href; el router lo convertiría en una ruta rota. -->
+                    @if (esEnlaceExterno(banner.ctaUrl)) {
+                      <a [href]="banner.ctaUrl" class="ws-btn-secondary">{{ banner.ctaLabel }}</a>
+                    } @else {
+                      <a [routerLink]="linkFor(banner.ctaUrl)" class="ws-btn-secondary">
+                        {{ banner.ctaLabel }}
+                      </a>
+                    }
                     <small>{{ banner.eyebrow }}</small>
                   </div>
                 </div>
@@ -273,6 +279,8 @@ export class InicioPage {
       .filter((collection) => collection.products.length > 0)
       .slice(0, 2),
   );
+
+  protected readonly esEnlaceExterno = esEnlaceExterno;
 
   protected linkFor(url: string): UrlTree {
     return this.router.parseUrl(url);
