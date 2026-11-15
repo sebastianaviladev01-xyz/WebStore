@@ -61,11 +61,11 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 
 ### Roles
 
-Roles fijos acordados el 05/11 (se asignan, no se editan):
+Roles fijos acordados el 05/11 (se asignan, no se editan), con los permisos de la reunión del 11/11 que aplicó el lote 07 (provisionales, por confirmar con Daniel: [decisiones pendientes](PENDING-DECISIONS.md), «Permisos de los roles»):
 
-- `superadmin`: todo, incluida la gestión de usuarios.
-- `admin`: toda la operación de la tienda, sin gestionar usuarios.
-- `vendedor`: resumen, ficha de productos existentes, inventario y estado de pedidos. No crea ni elimina productos ni cambia SKU, precio, categoría, marca o estado activo.
+- `superadmin`: todo, incluidos temas, contenido, el reinicio de la demo y la gestión de todos los usuarios.
+- `admin`: toda la operación de la tienda (catálogo, inventario, clientes, pedidos, banners, tarifas y reclamaciones), elimina productos y gestiona a los vendedores sin eliminarlos. No configura temas ni contenido.
+- `vendedor`: resumen y productos. Crea productos y modifica todos sus campos, sin eliminarlos. No gestiona inventario ni pedidos.
 
 Los datos de versiones anteriores se migran solos: `owner` → `superadmin` y `catalog-maintainer` → `vendedor`.
 
