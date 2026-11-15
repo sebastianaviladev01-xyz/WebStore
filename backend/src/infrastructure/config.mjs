@@ -47,3 +47,14 @@ export function readConfig(env) {
     },
   };
 }
+
+/**
+ * Aviso del calendario de días no laborables (PBI-0010; provisional, por confirmar con Daniel): la lista de
+ * `WEBSTORE_NON_WORKING_DATES` es la única fuente de feriados y hay que renovarla cada año. Devuelve el texto del
+ * aviso si no trae ninguna fecha `AAAA-MM-DD` de `year`, o `null` si la trae.
+ */
+export function avisoDeFeriados(nonWorkingDates, year) {
+  const delAnio = (fecha) => fecha.startsWith(`${year}-`) && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(fecha);
+  if ([...nonWorkingDates].some(delAnio)) return null;
+  return `Aviso: WEBSTORE_NON_WORKING_DATES no tiene ninguna fecha de ${year}. El plazo de los reclamos solo excluye sábados y domingos; agrega los feriados nacionales de Perú de ${year} (AAAA-MM-DD, separados por coma).`;
+}

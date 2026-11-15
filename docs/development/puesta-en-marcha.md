@@ -78,6 +78,26 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 
 **Comprobación:** `GET /bff/appearance` responde `"activeThemeId":"c"`, y la tienda se ve con el amarillo `#F2B705` y el grafito `#1F2328`.
 
+## 5. Calendario de días no laborables
+
+El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles. El BFF excluye sábados y domingos y, además, las fechas de `WEBSTORE_NON_WORKING_DATES`. Esa variable es la **única fuente de feriados**: no hay pantalla en el Admin ni una lista de feriados en el código. Es una decisión provisional, por confirmar con Daniel ([decisiones pendientes](../planning/PENDING-DECISIONS.md), «Calendario de días no laborables»).
+
+1. Cada año, antes de que empiece, arma la lista con los feriados nacionales de Perú de ese año, en formato `AAAA-MM-DD` y separados por coma. De referencia: 1 de enero, Jueves y Viernes Santo (cambian cada año), 1 de mayo, 29 de junio, 28 y 29 de julio, 6 y 30 de agosto, 8 de octubre, 1 de noviembre, 8 y 9 de diciembre y 25 de diciembre. Confírmalos con el calendario oficial del año y añade los días no laborables que decrete el Gobierno (los «feriados puente»), porque cambian de un año a otro.
+2. Defínela como variable de entorno del host o del servicio que arranca el BFF, con las fechas de uno o más años (la lista puede conservar las de años anteriores):
+
+   ```powershell
+   $env:WEBSTORE_NON_WORKING_DATES = "2027-01-01,2027-03-25,2027-03-26,2027-05-01,2027-06-29,2027-07-28,2027-07-29,2027-08-06,2027-08-30,2027-10-08,2027-11-01,2027-12-08,2027-12-09,2027-12-25"
+   ```
+
+   Las fechas de ejemplo son de 2027 y hay que confirmarlas con el calendario oficial. En Bash: `export WEBSTORE_NON_WORKING_DATES="..."`.
+3. Reinicia el BFF: la variable se lee al arrancar.
+
+Los reclamos ya registrados conservan su fecha de vencimiento (`dueAt`): cambiar la lista solo afecta a los reclamos nuevos.
+
+**Aviso al arrancar:** si la lista no tiene ninguna fecha del año en curso (Lima), el BFF escribe en su log «Aviso: WEBSTORE_NON_WORKING_DATES no tiene ninguna fecha de AAAA…» y sigue arrancando. Si lo ves a comienzos de año, renueva la lista. Solo se comprueba al arrancar: reinicia el BFF cuando cambies la lista, y al cambiar de año.
+
+**Comprobación:** registra un reclamo de prueba en una copia de datos y revisa que `dueAt` salte los feriados de la lista; o arranca el BFF y comprueba que su log no trae el aviso.
+
 ## Revisa también
 
 - **Códigos de verificación y reinicio:** por defecto, el BFF no devuelve en la respuesta los códigos de verificación ni de recuperación, y `POST /bff/admin/reset` responde `403 STORE_RESET_DISABLED`. Solo cambian con `WEBSTORE_EXPOSE_TEST_CODES=true`, `WEBSTORE_ALLOW_STORE_RESET=true` o el modo demo: una instalación cliente no define ninguna de las tres.
@@ -90,4 +110,5 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 - [ ] Las tres cuentas sembradas tienen contraseñas propias, o están desactivadas.
 - [ ] El logo de la tienda está cargado en Contenido.
 - [ ] El tema activo es el de la tienda: C para Ecom.
+- [ ] `WEBSTORE_NON_WORKING_DATES` trae los feriados del año en curso y el log del BFF no avisa de que faltan.
 - [ ] `WEBSTORE_EXPOSE_TEST_CODES` y `WEBSTORE_ALLOW_STORE_RESET` no están definidas, y `WEBSTORE_ALLOWED_ORIGINS` lleva los orígenes de la instalación.

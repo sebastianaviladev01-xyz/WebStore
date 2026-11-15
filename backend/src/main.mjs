@@ -30,12 +30,16 @@ import { createReclamosUseCases } from './application/reclamos/reclamos.use-case
 import { createTemasQueries } from './application/temas/temas.queries.mjs';
 import { createTemasUseCases } from './application/temas/temas.use-cases.mjs';
 import { createVisitasUseCases } from './application/visitas/visitas.use-cases.mjs';
-import { readConfig } from './infrastructure/config.mjs';
+import { avisoDeFeriados, readConfig } from './infrastructure/config.mjs';
+import { limaDate } from './domain/comun/reloj.mjs';
 import { createJsonStateStore } from './infrastructure/persistencia/json-state-store.mjs';
 import { hashPassword, passwordMatches } from './infrastructure/seguridad/password-hasher.mjs';
 import { createCode, createToken, digest, newId } from './infrastructure/seguridad/tokens.mjs';
 
 const config = readConfig(process.env);
+// PBI-0010: la lista de feriados se renueva cada año; si falta el año en curso, el log lo dice.
+const avisoDeCalendario = avisoDeFeriados(config.nonWorkingDates, limaDate().slice(0, 4));
+if (avisoDeCalendario) console.warn(avisoDeCalendario);
 let store;
 try {
   store = createJsonStateStore({ dataFile: config.dataFile, demoPasswords: config.demoPasswords });
