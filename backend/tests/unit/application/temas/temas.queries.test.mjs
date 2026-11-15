@@ -148,14 +148,14 @@ test('hojaDeEstilos: formato exacto, cada token una vez y en orden', () => {
 
 const declaraciones = (css) => css.slice(':root:root {\n'.length, -'}\n'.length).trimEnd().split('\n');
 
-test('hojaDeEstilos: 32 declaraciones, con el lienzo de la tienda justo antes del fondo principal (B y un propio)', () => {
+test('hojaDeEstilos: 37 declaraciones, con el lienzo de la tienda justo antes del fondo principal (B y un propio)', () => {
   const casos = [
     ['b', '  --ws-store-bg: #f9fafc;', '  --ws-bg: #f3f5f8;'],
     ['n', '  --ws-store-bg: #F0F0F0;', '  --ws-bg: #F0F0F0;'],
   ];
   for (const [id, lienzo, fondo] of casos) {
     const lineas = declaraciones(consultas(id).hojaDeEstilos(false));
-    assert.equal(lineas.length, 32, id);
+    assert.equal(lineas.length, 37, id);
     const indice = lineas.indexOf(lienzo);
     assert.ok(indice >= 0, `${id}: falta «${lienzo.trim()}»`);
     assert.equal(lineas[indice + 1], fondo, id);

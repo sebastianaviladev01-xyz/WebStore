@@ -23,6 +23,12 @@
   /* Franja superior de la tienda: en B, el principal oscuro; A y C la fijan como se presentó. */
   --ws-topbar: var(--ws-primary-strong);
   --ws-on-topbar: #ffffff;
+  /* Error y alerta (ADR-0019): los calcula el BFF en cada tema; sobre fondos oscuros pasan a su variante clara. */
+  --ws-danger: #b42318;
+  --ws-danger-soft: #fef3f2;
+  --ws-danger-line: #fecdca;
+  --ws-warning: #8a4b08;
+  --ws-warning-soft: #fff6e5;
 
   /* Lienzo de la tienda (ADR-0013): fuera de la escala neutra; el Admin sigue con --ws-bg. */
   --ws-store-bg: #f9fafc;
@@ -49,12 +55,6 @@
   --ws-on-media: #ffffff;
   --ws-scrim: rgb(0 0 0 / 0.45);
 
-  --ws-danger: #b42318;
-  --ws-danger-soft: #fef3f2;
-  --ws-danger-line: #fecdca;
-  --ws-warning: #8a4b08;
-  --ws-warning-soft: #fff6e5;
-
   --ws-focus: color-mix(in srgb, var(--ws-primary) 18%, transparent);
   --ws-radius: 10px;
   --ws-radius-lg: 14px;
@@ -77,6 +77,17 @@
   --mat-sys-outline: var(--ws-border-strong);
   --mat-sys-outline-variant: var(--ws-border);
   --mat-sys-error: var(--ws-danger);
+  /* El error de un campo relleno con el puntero encima, que Material pintaría en un rojo oscuro fijo (ADR-0019). */
+  --mat-sys-on-error-container: var(--ws-danger);
+  /* Fondos que el tema base de Material fija (lote 03, PBI-0060): el relleno de los campos y el panel de las listas
+     desplegables y de autocompletar salen del tema. Con A, B y C quedan casi como antes (#E0E2EC y #EFEDF0); con un
+     tema oscuro, oscuros, y lo escrito se lee. El panel usa el fondo principal y no la superficie suave, que está más
+     cerca de #EFEDF0 pero dejaría la opción seleccionada casi igual que el panel. */
+  --mat-sys-surface-variant: var(--ws-border);
+  --mat-sys-surface-container: var(--ws-bg);
+  /* La opción seleccionada de una lista desplegable (PBI-0053): el fondo suave del principal y su texto. */
+  --mat-sys-secondary-container: var(--ws-primary-soft);
+  --mat-sys-on-secondary-container: var(--ws-on-primary-soft);
   /* El botón relleno es el principal: fondo, texto y capa de estado (el velo al pasar el puntero o enfocar) del
      principal, no del enlace. Con C, el enlace es el grafito de --ws-on-primary y --ws-on-link es blanco: sin
      estos tres, «Ver carrito» sería grafito con texto blanco, o su velo pasaría a blanco sobre el ámbar. */

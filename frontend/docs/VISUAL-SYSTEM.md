@@ -51,7 +51,7 @@ No hay verde: los estados positivos usan el azul (`primary-soft` + `primary-stro
 
 ### Temas y tokens del tema
 
-Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo principal, fondo secundario (la superficie) y contraste (el texto). El BFF calcula de ellos el mapa completo de **32 tokens** (`TOKENS_DEL_TEMA`); la tienda y el Admin solo lo aplican. Son nuevos respecto a la paleta B original (antes eran un color fijo o reutilizaban `--ws-primary` o `--ws-primary-strong`):
+Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo principal, fondo secundario (la superficie) y contraste (el texto). El BFF calcula de ellos el mapa completo de **37 tokens** (`TOKENS_DEL_TEMA`); la tienda y el Admin solo lo aplican. Son nuevos respecto a la paleta B original (antes eran un color fijo o reutilizaban `--ws-primary` o `--ws-primary-strong`):
 
 | Token | Uso |
 |---|---|
@@ -65,26 +65,29 @@ Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo p
 | `--ws-on-topbar` | Texto de la franja superior |
 | `--ws-footer-heading` | Títulos y enlaces al pasar el cursor en el pie |
 | `--ws-store-bg` | Lienzo de la tienda (feature 004) |
+| `--ws-danger`, `--ws-danger-soft`, `--ws-danger-line` | Error: texto, recuadro y su borde (lote 03, [ADR-0019](../../docs/adrs/0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md)) |
+| `--ws-warning`, `--ws-warning-soft` | Alerta: texto y recuadro (lote 03) |
 
 **Lienzo de la tienda** ([ADR-0013](../../docs/adrs/0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md), feature 004, entregado con el [PR #26](https://github.com/sebastianaviladev01-xyz/WebStore/pull/26)). La tienda pinta el fondo de sus páginas (`html`, `body`, el shell y la página 404) con `--ws-store-bg` y la clase `bg-store-canvas`; el Admin conserva su lienzo plomo, `--ws-bg` con `bg-canvas`, y lo único suyo que usa el lienzo de la tienda es la vista previa de Temas. `bg-canvas` sigue siendo el relleno de los dos buscadores de la tienda, que así se siguen viendo como campo sobre la cabecera blanca. El valor es el **tono intermedio**, a medio camino entre el fondo principal y el blanco, elegido por Daniel el 2026-11-13 frente al blanco puro (AC-14): A `#FAFAFB`, B `#F9FAFC` y C `#F9F9FA`. En un tema propio, el lienzo de la tienda es su fondo principal. Las tarjetas, el resumen y el panel del checkout se separan del lienzo por su relleno blanco (1.04, 1.04 y 1.05:1 con A, B y C) y por su borde de 1 px. Con B, la colección alternada del inicio (`subtle`, `#F6F8FA`) queda algo más oscura que el lienzo.
 
-La franja superior (`--ws-topbar` y `--ws-on-topbar`) es: en B, `--ws-primary-strong` con `#ffffff`; en A, `#2E1A5C` con `#FFFFFF`; en C, grafito `#1F2328` con `#FFFFFF`; en un tema propio, su `primary-strong` con el más legible entre blanco y el color de contraste.
+La franja superior (`--ws-topbar` y `--ws-on-topbar`) es: en B, `--ws-primary-strong` con `#ffffff`; en A, `#2E1A5C` con `#FFFFFF`; en C, grafito `#1F2328` con `#FFFFFF`; en un tema propio, su `primary-strong` con el más legible entre blanco, el color de contraste y la superficie (lote 03).
 
-Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la paleta: `--ws-danger*`, `--ws-warning*`, `--ws-on-media` (texto y botones sobre fotos y velos) y `--ws-scrim` (velo del cajón de navegación).
+Quedan **fijos en `tokens.css`**, fuera del mapa, porque no dependen de la paleta: `--ws-on-media` (texto y botones sobre fotos y velos) y `--ws-scrim` (velo del cajón de navegación). El error y la alerta eran fijos hasta el lote 03: con A, B y C conservan sus valores (`#B42318`, `#FEF3F2`, `#FECDCA`, `#8A4B08` y `#FFF6E5`), y en un tema propio se calculan ([ADR-0019](../../docs/adrs/0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md)).
 
 **Derivación de un tema propio.** Cada token que no es uno de los cinco colores se calcula con `color-mix(in srgb, <hex> N%, <hex>)` sobre colores literales (P, S, F, Sf y C son el principal, el secundario, el fondo principal, el secundario y el contraste):
 
 - Con texto blanco sobre el principal, `primary-strong` es `color-mix(P 62%, C)`; con el texto en el color de contraste, `color-mix(P 88%, C)`. Si el texto sobre P no llega a 4.5:1 sobre el resultado, `primary-strong` es P.
 - `primary-soft` es `color-mix(P 10%, Sf)`; `accent-strong`, `color-mix(S 78%, C)`; `accent-soft`, `color-mix(S 9%, Sf)`.
-- `on-primary` y `on-accent` son blanco o C, el que más contraste dé sobre P y sobre S. `on-primary-soft` es `primary-strong` si llega a 4.5:1 sobre el tinte; si no, C.
+- `on-primary` es, entre blanco, C y Sf, el que más contraste dé sobre P, y `on-topbar`, con los mismos candidatos, sobre `primary-strong` (lote 03, ADR-0019): con un principal muy claro sobre una base oscura, la superficie. `on-accent` es blanco o C, el que más contraste dé sobre S. `on-primary-soft` es `primary-strong` si llega a 4.5:1 sobre el tinte; si no, C.
 - `link` y `focus-ring` son P si llega a 4.5:1 y 3:1 sobre F y sobre Sf; si no, C.
 - `on-link` es, entre blanco, C y Sf, el que más contraste dé sobre el `link` ya calculado. A diferencia de `on-primary`, considera la superficie: en un tema oscuro es lo único que se lee sobre un enlace claro. En A, B, C y los temas claros da el blanco ([ADR-0014](../../docs/adrs/0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md)).
 - Neutros: `muted` `color-mix(C 68%, Sf)`, `muted-strong` `color-mix(C 82%, Sf)`, `surface-subtle` `color-mix(C 3%, Sf)`, `surface-soft` `color-mix(C 9%, Sf)`, `border` `color-mix(C 14%, Sf)`, `border-strong` `color-mix(C 50%, Sf)`, `disabled` `color-mix(C 10%, Sf)`, `disabled-text` `color-mix(C 68%, Sf)` y `dot` `color-mix(P 30%, Sf)`.
 - Pie: `footer` es C, `footer-text` `color-mix(Sf 78%, C)`, `footer-rule` `color-mix(Sf 15%, C)` y `footer-heading` Sf.
+- Error y alerta (lote 03): para cada uno, la variante cuyo texto se lee mejor sobre F y sobre Sf. Sobre fondos claros, los valores de A, B y C; sobre fondos oscuros, `#FDA29B` y `#FEC84B`, con el recuadro `color-mix(texto 12%, Sf)` y la línea del error `color-mix(texto 40%, Sf)`. Con la superficie `#1B1E25`, el error y la alerta pasan de 2.54 y 2.45:1 a 8.59 y 10.78:1.
 
 **Base neutra.** Si el fondo principal, el fondo secundario y el contraste de un tema propio coinciden con los de un predefinido, sin distinguir mayúsculas, el tema hereda la escala neutra de ese predefinido: `bg`, superficies, `ink`, `text`, `muted` y `muted-strong`, bordes, deshabilitados, `dot` y los cuatro tokens del pie. Así, un tema que solo cambia el principal y el secundario sobre la base de B se ve como antes con esos dos colores. Los tokens de marca (principal, acento y los que se calculan con ellos) se derivan siempre.
 
-**Contraste al guardar.** Hay 21 pares medidos (`PARES_DE_CONTRASTE`). Solo el contraste sobre el fondo principal y sobre el secundario bloquean el guardado de un tema propio; el foco y el contorno de los campos piden 3:1 y el resto 4.5:1, y esos solo avisan. La feature 004 añadió cinco: el texto, el texto secundario, el enlace y el foco sobre el lienzo de la tienda (`*/storeBackground`) y el contorno de los campos sobre la superficie (`borderStrong/surface`, WCAG 1.4.11). Para que este último llegue a 3:1 con B, `--ws-border-strong` de B pasó de `#8a96a8` (2.996:1) a `#8894a6` (3.07:1); A y C no cambian. La feature 005 añadió el par 21, `onLink/link` (el texto sobre el enlace, 4.5:1, solo avisa). Con las reglas actuales no baja de 4.5:1 en ningún tema válido, porque la superficie es candidata y `contrast/surface` bloquea: es una red de seguridad.
+**Contraste al guardar.** Hay 27 pares medidos (`PARES_DE_CONTRASTE`). Solo el contraste sobre el fondo principal y sobre el secundario bloquean el guardado de un tema propio; el foco y el contorno de los campos piden 3:1 y el resto 4.5:1, y esos solo avisan. La feature 004 añadió cinco: el texto, el texto secundario, el enlace y el foco sobre el lienzo de la tienda (`*/storeBackground`) y el contorno de los campos sobre la superficie (`borderStrong/surface`, WCAG 1.4.11). Para que este último llegue a 3:1 con B, `--ws-border-strong` de B pasó de `#8a96a8` (2.996:1) a `#8894a6` (3.07:1); A y C no cambian. La feature 005 añadió el par 21, `onLink/link` (el texto sobre el enlace, 4.5:1, solo avisa). Con las reglas actuales no baja de 4.5:1 en ningún tema válido, porque la superficie es candidata y `contrast/surface` bloquea: es una red de seguridad. El lote 03 añadió seis, a 4.5:1 y sin bloquear: el error y la alerta sobre el fondo, sobre la superficie y sobre su recuadro (`danger/*` y `warning/*`). Con A, B y C: error 5.98, 6.02 y 5.92:1 sobre el fondo, 6.57:1 sobre la superficie y 6.05:1 sobre su recuadro; alerta 6.19, 6.22 y 6.12:1, 6.79:1 y 6.33:1.
 
 **Contraste medido de los predefinidos** (fórmula de WCAG 2.1, sobre los mapas reales; todos alcanzan su mínimo):
 
@@ -179,6 +182,19 @@ Feature 004, entregada con el [PR #26](https://github.com/sebastianaviladev01-xy
 - **Panel del checkout** (`ws-checkout-panel`). Los tres pasos van en un solo panel con el aspecto del resumen del pedido: superficie, borde `line`, radio de 14 px y relleno de 28 px (22 px hasta 600 px), sin el `sticky` del resumen. En escritorio va a la izquierda del resumen; en móvil, encima.
 - **Campos con contorno.** Los campos del checkout usan `appearance="outline"`, como los filtros del catálogo; los demás formularios no cambian. El panel fija los tokens `--mat-form-field-outlined-*`: en reposo, contorno de 1 px en `--ws-border-strong`, sin relleno; con el foco, 2 px en `--ws-focus-ring`; con error, `--ws-danger`, también con el ratón encima; radio `--ws-radius`. Con el ratón encima, el contorno en reposo pasa a `--ws-ink` (valor de Material). La etiqueta sube al borde en 150 ms; con `prefers-reduced-motion`, sin transición. Sin `::ng-deep` ni clases internas de Material (STD-04). Contraste sobre la superficie, con A, B y C: contorno en reposo 3.43, 3.07 y 3.16:1; contorno y etiqueta con el foco 10.23, 6.70 y 15.80:1; error 6.57:1. Con C, el foco es grafito (`#1F2328`), el `--ws-focus-ring` de C.
 
+### Fondos de Material con el tema
+
+Lote 03 (PBI-0060 y PBI-0053). El tema base de Material (`azure-blue.css`) fijaba el relleno de los campos (`#E0E2EC`), el panel de las listas desplegables (`#EFEDF0`) y la opción seleccionada (`#DAE2F9` con `#3E4759`): con un tema propio oscuro, lo escrito en un campo quedaba a 1.20:1. `tokens.css` los toma del tema, con tokens que ya existían:
+
+| Token de Material | Token del tema | A, B y C | Qué cambia a la vista |
+|---|---|---|---|
+| `--mat-sys-surface-variant` (relleno de los campos) | `--ws-border` | `#DFDEDF`, `#DDE3EC`, `#E0E0E1` | B casi igual; A y C pierden el tinte azulado |
+| `--mat-sys-surface-container` (panel de las listas y de autocompletar) | `--ws-bg` | `#F4F4F6`, `#F3F5F8`, `#F2F3F5` | Algo más claro (de 3 a 8 unidades por canal) |
+| `--mat-sys-secondary-container` y `--mat-sys-on-secondary-container` (opción seleccionada y su marca) | `--ws-primary-soft` y `--ws-on-primary-soft` | 10.95, 8.69 y 5.48:1 | Toma el tinte del principal (cambio pedido) |
+| `--mat-sys-on-error-container` (error de un campo relleno con el puntero encima) | `--ws-danger` | 6.57:1 sobre la superficie | Antes `#93000A` |
+
+El panel usa el fondo principal y no la superficie suave, que está algo más cerca de `#EFEDF0` pero dejaría la opción seleccionada casi igual que el panel. Material pinta los colores de la opción seleccionada solo cuando no es la activa (al abrir la lista, la seleccionada es la activa y lleva el velo de foco). Con el relleno nuevo, el texto, la etiqueta y la etiqueta enfocada se leen como antes: con B, 13.83, 4.95 y 5.19:1 (antes 13.82, 4.94 y 5.19:1).
+
 ### Material y enlaces de la tienda
 
 Feature 005, entregada con el [PR #35](https://github.com/sebastianaviladev01-xyz/WebStore/pull/35):
@@ -214,7 +230,7 @@ En Destacados se volvió a las pestañas subrayadas del inicio anterior: la pest
 
 Se mantuvieron de la tienda actual, por ser mejores para el comprador: la cantidad de productos en cada categoría, la descripción corta en la ficha, las etiquetas de texto en las acciones de la cabecera, las colecciones alternadas y la aparición al hacer scroll.
 
-La versión anterior a esta alineación sigue disponible en `/inicio-anterior` para compararlas.
+La versión anterior a esta alineación sigue disponible en `/inicio-anterior` para compararlas. Desde el lote 03 (PBI-0084), su texto no usa el principal: el contador del carrusel («1 / 3») y la categoría del menú con el puntero encima o activa van en `--ws-link`. Con C, el contador pasa de 2.14:1 (ámbar) a 15.01:1 (grafito); con A y B pasa del principal fuerte al color de los enlaces (9.80:1 y 6.42:1 sobre el lienzo).
 
 ## Admin
 

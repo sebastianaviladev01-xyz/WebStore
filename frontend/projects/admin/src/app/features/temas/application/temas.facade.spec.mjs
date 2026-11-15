@@ -29,6 +29,7 @@ const fuente = [
   await leer('../domain/tema-visible.rules.ts'),
   await leer('../../sesion/domain/sesion.gateway.ts'),
   await leer('../domain/temas.gateway.ts'),
+  await leer('./cookie-vista-previa.ts'),
   await leer('./temas.facade.ts'),
 ].join('\n');
 const salida = ts.transpileModule(fuente, {

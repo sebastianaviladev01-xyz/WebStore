@@ -2,6 +2,7 @@ import { CurrencyPipe, DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { alternarPlegable, FlechaPlegableDirective } from '../../../shared/ui/plegable.directive';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
@@ -10,16 +11,18 @@ import {
   distritosConMasPedidos,
   serieDelMes,
   ultimosPedidos,
+  ZONA_IANA_LIMA,
 } from '../domain/resumen.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
-import { ETIQUETAS_ESTADO_PEDIDO, EstadoPedido } from '../domain/tienda.model';
+import { ETIQUETAS_ESTADO_PEDIDO } from '../domain/tienda.model';
+import { clasesDeEstadoPedido } from './estado-pedido';
 import { GraficoPedidosComponent } from './grafico-pedidos.component';
 import { TarjetaIndicadorComponent } from './tarjeta-indicador.component';
 
 const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
   month: 'long',
   year: 'numeric',
-  timeZone: 'America/Lima',
+  timeZone: ZONA_IANA_LIMA,
 });
 
 /** Bloques del Resumen con título, los que se pliegan (D1: la fila de tarjetas no). */
@@ -33,6 +36,7 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
     DecimalPipe,
     NgTemplateOutlet,
     RouterLink,
+    FlechaPlegableDirective,
     GraficoPedidosComponent,
     TarjetaIndicadorComponent,
   ],
@@ -92,18 +96,7 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
           (click)="alternarBloque(id)"
         >
           {{ titulo }}
-          <svg
-            class="ws-plegable-indicador h-4 w-4 text-muted"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="1.75"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m4 6 4 4 4-4" />
-          </svg>
+          <svg wsAdminFlecha class="ws-plegable-indicador h-4 w-4 text-muted"></svg>
         </button>
       </ng-template>
 
@@ -399,17 +392,9 @@ export class ResumenPage {
   }
 
   protected alternarBloque(id: BloqueResumen): void {
-    this.bloquesPlegados.update((plegados) => {
-      const siguientes = new Set(plegados);
-      if (!siguientes.delete(id)) siguientes.add(id);
-      return siguientes;
-    });
+    this.bloquesPlegados.update((plegados) => alternarPlegable(plegados, id));
   }
 
   /** Mismos colores de estado que la página de Pedidos. */
-  protected insignia(status: EstadoPedido): string {
-    if (status === 'cancelled') return 'bg-danger-soft text-danger';
-    if (status === 'delivered') return 'bg-soft text-body';
-    return 'bg-primary-soft text-on-primary-soft';
-  }
+  protected readonly insignia = clasesDeEstadoPedido;
 }

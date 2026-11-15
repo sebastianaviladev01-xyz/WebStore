@@ -221,6 +221,26 @@ informar(
   ),
 );
 
+// Lote 03 (PBI-0080): los roles del Admin, que Perfil y Usuarios muestran, tienen el mismo id, nombre y descripción
+// que los del BFF, en el mismo orden. El Admin no importa código del BFF: se leen del texto de su `rol.rules.ts`.
+const { ADMIN_ROLES } = await import(path('backend/src/domain/sesion/rol.rules.mjs'));
+const rolesDelAdmin = [
+  ...adminRoles.matchAll(/id: '([\w-]+)',\s*label: '([^']+)',\s*description: '([^']+)'/g),
+].map(([, id, label, description]) => ({ id, label, description }));
+informar(
+  'Roles del Admin con el mismo id, nombre y descripción que los del BFF',
+  rolesDelAdmin.length === ADMIN_ROLES.length
+    ? ADMIN_ROLES.flatMap(({ id, label, description }, i) =>
+        ['id', 'label', 'description']
+          .filter((campo) => rolesDelAdmin[i][campo] !== { id, label, description }[campo])
+          .map(
+            (campo) =>
+              `${id}.${campo}: Admin «${rolesDelAdmin[i][campo]}», BFF «${{ id, label, description }[campo]}»`,
+          ),
+      )
+    : [`El Admin define ${rolesDelAdmin.length} roles y el BFF ${ADMIN_ROLES.length}`],
+);
+
 // (c) Los dos index.html cargan theme.css antes de que arranque Angular, con un <link> que bloquea el pintado:
 // sin media ni async, y fuera de la optimización de CSS crítico (data-beasties-skip, frontend/architecture.md §5).
 const LINK_DEL_TEMA = /<link rel="stylesheet" href="\/bff\/appearance\/theme\.css" data-beasties-skip \/>/;

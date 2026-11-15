@@ -65,11 +65,11 @@ test('predefinidos: mapa completo de tokens en orden y pares de contraste en cen
   }
 });
 
-test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 32 tokens, 21 pares y solo dos bloquean', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 32);
+test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 37 tokens, 27 pares y solo dos bloquean', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 37);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.ok(Object.isFrozen(TOKENS_DEL_TEMA) && Object.isFrozen(PARES_DE_CONTRASTE));
-  assert.equal(PARES_DE_CONTRASTE.length, 21);
+  assert.equal(PARES_DE_CONTRASTE.length, 27);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
@@ -78,11 +78,11 @@ test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 32 tokens, 21 pares y solo dos bloqu
     assert.equal(minimo, par.startsWith('focusRing/') || par.startsWith('borderStrong/') ? 3 : 4.5, par);
 });
 
-test('el texto sobre el enlace va justo después del enlace, fuera de la escala neutra, y su par es el último (ADR-0014)', () => {
+test('el texto sobre el enlace va justo después del enlace, fuera de la escala neutra, y su par sigue al del contorno (ADR-0014)', () => {
   const indice = TOKENS_DEL_TEMA.indexOf('--ws-on-link');
   assert.equal(TOKENS_DEL_TEMA[indice - 1], '--ws-link');
   assert.ok(indice < TOKENS_DEL_TEMA.indexOf('--ws-bg'), 'antes de la escala neutra');
-  assert.deepEqual(PARES_DE_CONTRASTE.at(-1), {
+  assert.deepEqual(PARES_DE_CONTRASTE[20], {
     par: 'onLink/link',
     texto: '--ws-on-link',
     fondo: '--ws-link',
@@ -134,11 +134,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve los 21 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
+test('revisarContraste devuelve los 27 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 21);
+    assert.equal(pares.length, 27);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),
@@ -186,6 +186,36 @@ test('validarNombreTema devuelve los mismos mensajes que el BFF', () => {
     mensaje: 'Ya existe un tema con ese nombre.',
   });
   assert.deepEqual(validarNombreTema('  Nuevo  ', ['Otro']), { valido: true, nombre: 'Nuevo' });
+  // PBI-0069: el mismo mensaje que el BFF para un nombre con caracteres invisibles.
+  assert.deepEqual(validarNombreTema('Mi​tema', []), {
+    valido: false,
+    codigo: 'INVALID_THEME_NAME',
+    mensaje: 'El nombre del tema no puede llevar caracteres invisibles.',
+  });
+});
+
+// Lote 03 (PBI-0061 y PBI-0062, ADR-0019): la réplica calcula el error, la alerta y el texto sobre el principal como el
+// BFF; los casos de `tokensDelTema` lo comprueban valor por valor y aquí, el orden y los pares nuevos.
+test('el error y la alerta van justo después de la franja superior y sus seis pares, al final, solo avisan', () => {
+  const inicio = TOKENS_DEL_TEMA.indexOf('--ws-on-topbar') + 1;
+  assert.deepEqual(TOKENS_DEL_TEMA.slice(inicio, inicio + 5), [
+    '--ws-danger',
+    '--ws-danger-soft',
+    '--ws-danger-line',
+    '--ws-warning',
+    '--ws-warning-soft',
+  ]);
+  assert.deepEqual(
+    PARES_DE_CONTRASTE.slice(21).map(({ par, bloquea, minimo }) => [par, bloquea, minimo]),
+    [
+      ['danger/background', false, 4.5],
+      ['danger/surface', false, 4.5],
+      ['danger/dangerSoft', false, 4.5],
+      ['warning/background', false, 4.5],
+      ['warning/surface', false, 4.5],
+      ['warning/warningSoft', false, 4.5],
+    ],
+  );
 });
 
 test('todas las líneas import de tema.rules.ts son import type (el spec las borra al transpilar)', () => {

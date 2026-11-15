@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-const source = await readFile(new URL('./resumen.rules.ts', import.meta.url), 'utf8');
+// La regla del correo se antepone porque el archivo se transpila sin sus import (PBI-0080).
+const source = [
+  await readFile(new URL('./correo.rules.ts', import.meta.url), 'utf8'),
+  await readFile(new URL('./resumen.rules.ts', import.meta.url), 'utf8'),
+].join('\n');
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;

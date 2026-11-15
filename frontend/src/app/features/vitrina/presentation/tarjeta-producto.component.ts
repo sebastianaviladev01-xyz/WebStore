@@ -8,7 +8,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { CarritoFacade } from '../../carrito/application/carrito.facade';
 import { Producto } from '../../catalogo/domain/producto.model';
-import { AgregarAlCarritoDialog } from './agregar-al-carrito.dialog';
+import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 
 @Component({
   selector: 'ws-product-card',
@@ -112,10 +112,11 @@ export class TarjetaProductoComponent {
   protected addToCart(): void {
     const product = this.product();
     const agregadas = this.cart.add(product);
-    this.dialog.open(AgregarAlCarritoDialog, {
-      width: '500px',
-      maxWidth: 'calc(100vw - 32px)',
-      data: { product, solicitadas: 1, agregadas, enCarrito: this.cart.quantityOf(product.id) },
+    abrirAgregarAlCarrito(this.dialog, {
+      product,
+      solicitadas: 1,
+      agregadas,
+      enCarrito: this.cart.quantityOf(product.id),
     });
   }
 

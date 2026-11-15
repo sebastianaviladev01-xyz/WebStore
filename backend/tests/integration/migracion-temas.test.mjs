@@ -112,3 +112,68 @@ test('un BFF sin archivo de estado arranca con B activo y Contenido sin colores'
     await unlink(dataFile).catch(() => {});
   }
 });
+
+// Lote 03 (PBI-0068): un tema propio inválido en el archivo de datos ya no deja al BFF respondiendo 500.
+test('un tema propio con un color inválido se descarta al arrancar, se avisa en el log y la apariencia responde 200', async () => {
+  const dataFile = join(tmpdir(), `webstore-temas-invalidos-${process.pid}.json`);
+  const coloresDeB = { background: '#F3F5F8', surface: '#FFFFFF', contrast: '#0F172A' };
+  const bueno = {
+    id: 't-bueno',
+    name: 'Bueno',
+    colors: { primary: '#123456', secondary: '#654321', ...coloresDeB },
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+  const roto = {
+    ...bueno,
+    id: 't-roto',
+    name: 'Roto',
+    colors: { ...bueno.colors, primary: 'red;}body{display:none' },
+  };
+  await writeFile(
+    dataFile,
+    JSON.stringify({
+      schemaVersion: 3,
+      appearance: { revision: 2, activeThemeId: 't-roto', customThemes: [roto, bueno] },
+    }),
+  );
+  const child = spawn(process.execPath, [serverEntry], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    env: { ...process.env, PORT: '3170', WEBSTORE_DATA_FILE: dataFile, WEBSTORE_DEMO_MODE: 'true' },
+  });
+  let log = '';
+  child.stdout.on('data', (trozo) => (log += trozo));
+  child.stderr.on('data', (trozo) => (log += trozo));
+  const base = 'http://localhost:3170';
+  try {
+    for (let intento = 0; intento < 50; intento++) {
+      try {
+        if ((await fetch(`${base}/health`)).ok) break;
+      } catch {
+        await sleep(100);
+      }
+    }
+    const apariencia = await fetch(`${base}/bff/appearance`);
+    assert.equal(apariencia.status, 200);
+    const cuerpo = await apariencia.json();
+    assert.equal(cuerpo.activeThemeId, 'b', 'el activo era el descartado: queda B');
+    assert.deepEqual(
+      cuerpo.themes.map(({ id }) => id),
+      ['a', 'b', 'c', 't-bueno'],
+    );
+    const hoja = await fetch(`${base}/bff/appearance/theme.css`);
+    assert.equal(hoja.status, 200);
+    assert.doesNotMatch(await hoja.text(), /display:none/);
+    assert.match(log, /Tema propio descartado.*t-roto.*INVALID_THEME_COLOR|INVALID_THEME_COLOR.*t-roto/);
+    assert.match(log, /El tema activo «t-roto» no existe/);
+  } finally {
+    child.kill();
+    await sleep(150);
+  }
+  try {
+    const guardado = JSON.parse(await readFile(dataFile, 'utf8'));
+    assert.deepEqual(guardado.appearance, { revision: 2, activeThemeId: 'b', customThemes: [bueno] });
+  } finally {
+    await unlink(dataFile).catch(() => {});
+  }
+});

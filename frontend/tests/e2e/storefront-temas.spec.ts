@@ -1,5 +1,6 @@
 import { expect, request as nuevoRequest, test, type Page, type Route } from '@playwright/test';
 
+import { activarTema } from './apoyo/contraste';
 import { cuentasAdmin, urls } from './apoyo/entorno';
 
 /**
@@ -43,15 +44,6 @@ async function conApiDelAdmin<T>(
   } finally {
     await api.dispose();
   }
-}
-
-async function activarTema(themeId: string): Promise<void> {
-  await conApiDelAdmin(async (api, headers) => {
-    const temas = await api.get('/bff/admin/themes', { headers });
-    const { revision } = await temas.json();
-    const activado = await api.put('/bff/admin/active-theme', { headers, data: { revision, themeId } });
-    expect(activado.ok()).toBe(true);
-  });
 }
 
 /** Sin `/bff/appearance` (el JSON), Angular no aplica ningún tema: el color solo puede venir de la hoja. */

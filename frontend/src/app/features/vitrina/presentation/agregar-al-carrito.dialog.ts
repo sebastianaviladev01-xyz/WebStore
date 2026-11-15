@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { Producto } from '../../catalogo/domain/producto.model';
@@ -56,4 +56,12 @@ export class AgregarAlCarritoDialog {
     this.ref.close();
     await this.router.navigate([path]);
   }
+}
+
+/** Abre «Producto agregado» con su tamaño: la tarjeta y la ficha lo abren igual (PBI-0080). */
+export function abrirAgregarAlCarrito(
+  dialog: MatDialog,
+  data: ResultadoAgregarAlCarrito,
+): MatDialogRef<AgregarAlCarritoDialog> {
+  return dialog.open(AgregarAlCarritoDialog, { width: '500px', maxWidth: 'calc(100vw - 32px)', data });
 }

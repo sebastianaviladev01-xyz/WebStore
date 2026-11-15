@@ -212,3 +212,130 @@ test('una apariencia v3 incompleta se completa: revisión 0 y lista vacía', () 
     customThemes: [],
   });
 });
+
+// --- Lote 03 (PBI-0068): un tema propio inválido no deja al BFF sin apariencia ---
+
+const temaGuardado = (id, name, colors = { primary: '#123456', secondary: '#654321', ...BASE_DE_B }) => ({
+  id,
+  name,
+  colors,
+  createdAt: '2026-01-01T00:00:00.000Z',
+  updatedAt: '2026-01-01T00:00:00.000Z',
+});
+
+/** Estado v3 con estos temas propios y este activo; devuelve el estado normalizado y los avisos. */
+function cargarConTemas(customThemes, activeThemeId = 'b') {
+  const v3 = normalizeState(estadoV2(), demoPasswords);
+  v3.appearance = { revision: 5, activeThemeId, customThemes };
+  const avisos = [];
+  const next = normalizeState(v3, demoPasswords, (aviso) => avisos.push(aviso));
+  return { next, avisos };
+}
+
+test('PBI-0068: un tema propio con un color que no es #RRGGBB se descarta al cargar y, si era el activo, queda B', () => {
+  const roto = temaGuardado('t-roto', 'Roto', {
+    ...temaGuardado('x', 'x').colors,
+    primary: 'red;}body{display:none',
+  });
+  const bueno = temaGuardado('t-bueno', 'Bueno');
+  const { next, avisos } = cargarConTemas([roto, bueno], 't-roto');
+  assert.deepEqual(next.appearance.customThemes, [bueno]);
+  assert.equal(next.appearance.activeThemeId, 'b');
+  assert.equal(next.appearance.revision, 5);
+  assert.equal(avisos.length, 2, avisos.join('\n'));
+  assert.match(avisos[0], /t-roto/);
+  assert.match(avisos[0], /INVALID_THEME_COLOR/);
+  assert.match(
+    avisos[0],
+    /red;\}body\{display:none/,
+    'el aviso guarda el tema descartado para poder recuperarlo',
+  );
+  assert.match(avisos[1], /t-roto.*b/);
+});
+
+test('PBI-0068: se descartan los temas que no son objetos, sin id de texto, con un id repetido o de un predefinido', () => {
+  const bueno = temaGuardado('t-1', 'Bueno');
+  const { next, avisos } = cargarConTemas([
+    null,
+    'texto',
+    { ...temaGuardado('', 'Sin id') },
+    { ...temaGuardado('t-x', 'Id numérico'), id: 7 },
+    bueno,
+    temaGuardado('t-1', 'Repite id'),
+    temaGuardado('a', 'Pisa A'),
+  ]);
+  assert.deepEqual(next.appearance.customThemes, [bueno]);
+  assert.equal(avisos.length, 6);
+});
+
+test('PBI-0068: se descartan los temas con un nombre inválido o con un contraste que impide guardarlos', () => {
+  const { next, avisos } = cargarConTemas([
+    temaGuardado('t-1', ''),
+    temaGuardado('t-2', 'x'.repeat(41)),
+    temaGuardado('t-3', 'Gris', {
+      primary: '#1D4ED8',
+      secondary: '#C2410C',
+      ...BASE_DE_B,
+      contrast: '#9CA3AF',
+    }),
+    { id: 't-4', name: 'Sin colores' },
+  ]);
+  assert.deepEqual(next.appearance.customThemes, []);
+  assert.deepEqual(
+    avisos.map((aviso) => /\b([A-Z_]{6,})\b/.exec(aviso)?.[1]),
+    ['INVALID_THEME_NAME', 'INVALID_THEME_NAME', 'INSUFFICIENT_THEME_CONTRAST', 'INVALID_THEME_COLOR'],
+  );
+});
+
+test('PBI-0068: un nombre repetido (también con un predefinido) se renombra con «(2)», «(3)»… y conserva el tema', () => {
+  const { next, avisos } = cargarConTemas(
+    [temaGuardado('t-1', 'Mi tema'), temaGuardado('t-2', 'mi TEMA'), temaGuardado('t-3', 'Azul cobalto')],
+    't-2',
+  );
+  assert.deepEqual(
+    next.appearance.customThemes.map(({ id, name }) => [id, name]),
+    [
+      ['t-1', 'Mi tema'],
+      ['t-2', 'mi TEMA (2)'],
+      ['t-3', 'Azul cobalto (2)'],
+    ],
+  );
+  assert.equal(next.appearance.activeThemeId, 't-2');
+  assert.equal(avisos.length, 2);
+  assert.match(avisos[0], /mi TEMA \(2\)/);
+});
+
+test('PBI-0068: los temas válidos se conservan tal cual, con los colores en mayúsculas, y no se avisa de nada', () => {
+  const bueno = temaGuardado('t-1', 'Bueno', { primary: '#123456', secondary: '#654321', ...BASE_DE_B });
+  const minusculas = temaGuardado('t-2', 'Otro', { ...bueno.colors, primary: '#abcdef' });
+  const { next, avisos } = cargarConTemas([bueno, minusculas], 't-1');
+  assert.deepEqual(next.appearance.customThemes, [
+    bueno,
+    { ...minusculas, colors: { ...minusculas.colors, primary: '#ABCDEF' } },
+  ]);
+  assert.equal(next.appearance.activeThemeId, 't-1');
+  assert.deepEqual(avisos, []);
+});
+
+test('PBI-0068: normalizar sin quien reciba los avisos no falla', () => {
+  const v3 = normalizeState(estadoV2(), demoPasswords);
+  v3.appearance.customThemes = [temaGuardado('t-1', '')];
+  assert.deepEqual(normalizeState(v3, demoPasswords).appearance.customThemes, []);
+});
+
+test('PBI-0068 y PBI-0069: un nombre guardado con caracteres invisibles los pierde; si no queda nada, el tema se descarta', () => {
+  const { next, avisos } = cargarConTemas([
+    temaGuardado('t-1', 'Mi​tema'),
+    temaGuardado('t-2', '​'),
+    temaGuardado('t-3', 'Azul cobalto'),
+  ]);
+  assert.deepEqual(
+    next.appearance.customThemes.map(({ id, name }) => [id, name]),
+    [
+      ['t-1', 'Mitema'],
+      ['t-3', 'Azul cobalto (2)'],
+    ],
+  );
+  assert.equal(avisos.length, 3);
+  assert.match(avisos[1], /descartado.*INVALID_THEME_NAME/);
+});

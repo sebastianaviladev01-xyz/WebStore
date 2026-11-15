@@ -3,6 +3,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { Router, RouterLink } from '@angular/router';
 
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
+import { FlechaPlegableDirective } from '../shared/ui/plegable.directive';
 import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rules';
 
 /**
@@ -14,7 +15,7 @@ import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rule
  */
 @Component({
   selector: 'ws-admin-menu-usuario',
-  imports: [MatMenuModule, RouterLink],
+  imports: [FlechaPlegableDirective, MatMenuModule, RouterLink],
   template: `
     <!-- Bajo sm: solo las iniciales; el nombre y el rol siguen en el nombre accesible del botón (AC-13). Las
          iniciales también lo integran, porque son lo que se ve: quien usa control por voz las nombra (PBI-0070). -->
@@ -34,18 +35,7 @@ import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rule
           {{ session.roleLabel() }}
         </span>
       </span>
-      <svg
-        class="h-3.5 w-3.5 shrink-0 text-muted"
-        viewBox="0 0 16 16"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.75"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path d="m4 6 4 4 4-4" />
-      </svg>
+      <svg wsAdminFlecha class="h-3.5 w-3.5 shrink-0 text-muted"></svg>
     </button>
     <mat-menu
       #menuUsuario="matMenu"

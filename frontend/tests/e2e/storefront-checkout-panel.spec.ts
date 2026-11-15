@@ -1,6 +1,6 @@
-import { expect, request as nuevoRequest, test, type Locator, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
-import { cuentasAdmin, urls } from './apoyo/entorno';
+import { activarTema, colorDelToken } from './apoyo/contraste';
 
 /**
  * Panel y campos del checkout (feature 004, D4 y D5). TEST-12 (AC-08, AC-09, AC-10, AC-12): los tres pasos van
@@ -15,40 +15,12 @@ const FICHA = '/catalogo/soundbar-cinema-500';
 const PASOS = ['1. Datos del cliente', '2. Entrega', '3. Método de pago'];
 const SIN_RELLENO = 'rgba(0, 0, 0, 0)';
 
-async function activarTema(themeId: string): Promise<void> {
-  const api = await nuevoRequest.newContext({ baseURL: urls.bff });
-  try {
-    const sesion = await api.post('/bff/admin/sessions', {
-      data: { email: cuentasAdmin.superadmin.email, password: cuentasAdmin.superadmin.password },
-    });
-    expect(sesion.ok()).toBe(true);
-    const headers = { authorization: `Bearer ${(await sesion.json()).token}` };
-    const { revision } = await (await api.get('/bff/admin/themes', { headers })).json();
-    const activado = await api.put('/bff/admin/active-theme', { headers, data: { revision, themeId } });
-    expect(activado.ok()).toBe(true);
-  } finally {
-    await api.dispose();
-  }
-}
-
 async function abrirCheckout(page: Page): Promise<void> {
   await page.goto(FICHA);
   await page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Seguir comprando' }).click();
   await page.goto('/checkout');
   await expect(page.getByRole('heading', { level: 1, name: 'Finalizar compra', exact: true })).toBeVisible();
-}
-
-/** Color calculado de un token del tema, en el formato de `getComputedStyle` (`rgb(…)`). */
-function colorDelToken(page: Page, token: string): Promise<string> {
-  return page.evaluate((nombre) => {
-    const sonda = document.createElement('div');
-    sonda.style.color = `var(${nombre})`;
-    document.body.append(sonda);
-    const color = getComputedStyle(sonda).color;
-    sonda.remove();
-    return color;
-  }, token);
 }
 
 const campo = (page: Page, etiqueta: string): Locator =>
@@ -83,7 +55,7 @@ async function revisarPanelYCampos(page: Page): Promise<void> {
 
   const [superficie, borde, bordeFuerte, foco, error] = await Promise.all(
     ['--ws-surface', '--ws-border', '--ws-border-strong', '--ws-focus-ring', '--ws-danger'].map((t) =>
-      colorDelToken(page, t),
+      colorDelToken(page, t, { crudo: true }),
     ),
   );
   await expect(panel).toHaveCSS('background-color', superficie);

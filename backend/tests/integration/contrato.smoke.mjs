@@ -737,13 +737,13 @@ try {
     throw new Error('/bff/appearance debe traer tokens["--ws-store-bg"] igual a #f9fafc con B');
   const lineaDelLienzo = declaraciones.indexOf('  --ws-store-bg: #f9fafc;');
   if (
-    declaraciones.length !== 32 ||
+    declaraciones.length !== 37 ||
     lineaDelLienzo < 0 ||
     declaraciones[lineaDelLienzo + 1] !== '  --ws-bg: #f3f5f8;' ||
     !declaraciones.includes('  --ws-border-strong: #8894a6;')
   )
     throw new Error(
-      'theme.css de B debe tener 32 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
+      'theme.css de B debe tener 37 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
     );
   // Texto sobre el enlace (ADR-0014): una clave más en Tema.tokens y una declaración más, justo después de --ws-link.
   if (aparienciaPublica.themes[0].tokens['--ws-on-link'] !== '#ffffff')
@@ -751,6 +751,22 @@ try {
   const lineaDelEnlace = declaraciones.indexOf('  --ws-link: var(--ws-primary);');
   if (lineaDelEnlace < 0 || declaraciones[lineaDelEnlace + 1] !== '  --ws-on-link: #ffffff;')
     throw new Error('theme.css de B debe declarar --ws-on-link: #ffffff justo después de --ws-link');
+  // Error y alerta (ADR-0019): cinco claves más en Tema.tokens y cinco declaraciones, justo después de --ws-on-topbar,
+  // con los valores que tokens.css fijaba antes en B.
+  const avisosDeB = [
+    '  --ws-danger: #b42318;',
+    '  --ws-danger-soft: #fef3f2;',
+    '  --ws-danger-line: #fecdca;',
+    '  --ws-warning: #8a4b08;',
+    '  --ws-warning-soft: #fff6e5;',
+  ];
+  const lineaDeLaFranja = declaraciones.indexOf('  --ws-on-topbar: #ffffff;');
+  if (
+    lineaDeLaFranja < 0 ||
+    declaraciones.slice(lineaDeLaFranja + 1, lineaDeLaFranja + 6).join('|') !== avisosDeB.join('|') ||
+    aparienciaPublica.themes[0].tokens['--ws-danger'] !== '#b42318'
+  )
+    throw new Error('theme.css de B debe declarar el error y la alerta de B justo después de --ws-on-topbar');
   const revalidada = await hoja({ 'if-none-match': etagB });
   if (revalidada.status !== 304 || (await revalidada.text()) !== '')
     throw new Error('theme.css con If-None-Match igual al ETag debe responder 304 sin cuerpo');

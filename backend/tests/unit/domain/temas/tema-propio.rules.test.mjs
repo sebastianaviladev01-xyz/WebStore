@@ -59,6 +59,10 @@ test('los errores del nombre llevan su tipo y su mensaje', () => {
   assert.throws(() => exigirTemaValido({ name: 'Azul cobalto', colors: coloresB }, []), {
     message: 'Ya existe un tema con ese nombre.',
   });
+  // PBI-0069: un nombre con caracteres invisibles dice por qué se rechaza.
+  assert.throws(() => exigirTemaValido({ name: 'Mi​tema', colors: coloresB }, []), {
+    message: 'El nombre del tema no puede llevar caracteres invisibles.',
+  });
 });
 
 test('un nombre ausente o que no es texto se trata como vacío o como texto', () => {

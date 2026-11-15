@@ -78,6 +78,11 @@ export function relacionDeContraste(primerPlano: string, fondo: string): number 
   return (x + 0.05) / (y + 0.05);
 }
 
+/** Un color opaco calculado por el navegador (`rgb()` o `color(srgb …)`), como `rgb()` para compararlo. */
+export function enRgb(color: string): string {
+  return aTexto(aRgba(color));
+}
+
 /** Color opaco que resulta de `encima` sobre `debajo`, como `rgb()`. */
 export function componer(encima: string, debajo: string): string {
   return aTexto(sobre(aRgba(encima), aRgba(debajo)));
@@ -112,8 +117,12 @@ export async function fondoDe(elemento: Locator): Promise<string> {
   return fondoEfectivo(await elemento.evaluate(capasDeFondo));
 }
 
-/** Color calculado de un token del tema activo, como `rgb()`: una sonda con `color: var(token)`. */
-export async function colorDelToken(page: Page, token: string): Promise<string> {
+/**
+ * Color calculado de un token del tema activo, como `rgb()`: una sonda con `color: var(token)`. Con
+ * `{ crudo: true }`, tal como lo da `getComputedStyle` (un `color-mix()` llega como `color(srgb …)`), para
+ * compararlo con `toHaveCSS`.
+ */
+export async function colorDelToken(page: Page, token: string, { crudo = false } = {}): Promise<string> {
   const color = await page.evaluate((nombre) => {
     const sonda = document.createElement('span');
     sonda.style.color = `var(${nombre})`;
@@ -123,7 +132,7 @@ export async function colorDelToken(page: Page, token: string): Promise<string> 
     return color;
   }, token);
   // Un token con `color-mix()` llega como `color(srgb …)`: se pasa a `rgb()` para compararlo con un color medido.
-  return aTexto(aRgba(color));
+  return crudo ? color : aTexto(aRgba(color));
 }
 
 /** Espera a que terminen las animaciones y transiciones en curso (casillas, menús, diálogos). */

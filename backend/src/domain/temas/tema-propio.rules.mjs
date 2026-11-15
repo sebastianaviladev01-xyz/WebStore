@@ -12,10 +12,30 @@ const CAMPOS_DE_COLOR = Object.freeze(['primary', 'secondary', 'background', 'su
 const LARGO_MAXIMO_DEL_NOMBRE = 40;
 const COLOR_HEX = /^#[0-9a-f]{6}$/i;
 
-const claveDelNombre = (nombre) => String(nombre).trim().toLocaleLowerCase('es');
+/** Caracteres que no se ven: de control (Cc) y de formato, como los de ancho cero o de dirección (Cf). */
+const INVISIBLES = /[\p{Cc}\p{Cf}]/u;
+
+/**
+ * Clave con la que se comparan los nombres (PBI-0069): dos nombres que se ven iguales tienen la misma clave. Une
+ * las formas Unicode equivalentes (NFKC: «Á» compuesta o con tilde combinada, letras de ancho completo, espacio
+ * duro), quita lo invisible, junta los espacios seguidos y no distingue mayúsculas.
+ */
+const claveDelNombre = (nombre) =>
+  String(nombre)
+    .normalize('NFKC')
+    .replace(new RegExp(INVISIBLES.source, 'gu'), '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .toLocaleLowerCase('es');
 
 function exigirNombreValido(entrada) {
   const nombre = String(entrada?.name ?? '').trim();
+  if (INVISIBLES.test(nombre))
+    throw new DomainError(
+      'validation',
+      'INVALID_THEME_NAME',
+      'El nombre del tema no puede llevar caracteres invisibles.',
+    );
   if (nombre.length === 0 || nombre.length > LARGO_MAXIMO_DEL_NOMBRE)
     throw new DomainError(
       'validation',
