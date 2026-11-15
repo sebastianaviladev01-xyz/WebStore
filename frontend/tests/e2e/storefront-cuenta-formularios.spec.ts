@@ -98,6 +98,33 @@ test.describe('PBI-0098: verificar la cuenta', () => {
   });
 });
 
+test.describe('PBI-0154: recuperar la contraseña no promete un correo', () => {
+  test('los textos hablan de un código que se genera, no de un correo que se envía, y se puede cambiar la contraseña', async ({
+    page,
+    request,
+  }) => {
+    const { correo } = await cuentaVerificada(request);
+    await page.goto('/cuenta/recuperar');
+    const main = page.getByRole('main');
+    await expect(main).toContainText('Escribe el correo de tu cuenta para generar un código temporal.');
+    await page.getByRole('textbox', { name: 'Correo' }).fill(correo);
+    await page.getByRole('button', { name: 'Enviar código' }).click();
+    await expect(main.getByRole('status')).toHaveText(
+      'Si hay una cuenta con ese correo, generamos un código temporal.',
+    );
+    // Ningún texto de la página dice que llegará un correo.
+    await expect(main).not.toContainText(/recibirás|enviaremos|te enviamos|bandeja/i);
+    const codigo = (await page.getByText('Canal local de demostración:').locator('..').textContent())?.match(
+      /\d{6}/,
+    )?.[0];
+    expect(codigo).toBeTruthy();
+    await page.getByRole('textbox', { name: 'Código de recuperación' }).fill(codigo!);
+    await page.getByRole('textbox', { name: 'Nueva contraseña' }).fill('Nueva2026xyz');
+    await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
+    await expect(main.getByRole('status')).toHaveText('Contraseña actualizada. Ya puedes iniciar sesión.');
+  });
+});
+
 test.describe('PBI-0047: campos con contorno', () => {
   const formularios: readonly { ruta: string; campo: string }[] = [
     { ruta: '/cuenta/login', campo: 'Correo' },
