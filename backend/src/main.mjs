@@ -32,7 +32,14 @@ import { hashPassword, passwordMatches } from './infrastructure/seguridad/passwo
 import { createCode, createToken, digest, newId } from './infrastructure/seguridad/tokens.mjs';
 
 const config = readConfig(process.env);
-const store = createJsonStateStore({ dataFile: config.dataFile, demoPasswords: config.demoPasswords });
+let store;
+try {
+  store = createJsonStateStore({ dataFile: config.dataFile, demoPasswords: config.demoPasswords });
+} catch (error) {
+  // Un archivo de datos dañado no se reemplaza por la demo (PBI-0088): el BFF no arranca y dice por qué.
+  console.error(error.message);
+  process.exit(1);
+}
 const security = { hashPassword, passwordMatches, digest, createCode, createToken, newId };
 
 const cuentas = createCuentasUseCases({ store, security, exposeTestCodes: config.exposeTestCodes });
