@@ -40,4 +40,4 @@ WebStore es una tienda en línea estándar que Simplesoft ofrece a comercios per
 - Hasta tres banners en el hero.
 - Envío calculado según distrito, desde la tienda más cercana.
 - Pedidos modificables o cancelables durante 24 horas.
-- Pendientes de decisión: pasarela de pago, facturación electrónica, correo transaccional, modelo de tarifas por zonas, multi-tenant y revisión legal. Ver `docs/planning/PENDING-DECISIONS.md`.
+- Pendientes de decisión: pasarela de pago, facturación electrónica, correo transaccional, multi-tenant y revisión legal. El modelo de tarifas de envío (tabla origen → distrito) quedó cerrado en la reunión del 05/11. Ver `docs/planning/PENDING-DECISIONS.md`.
