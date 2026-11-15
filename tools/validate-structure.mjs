@@ -83,7 +83,10 @@ for (const [label, ok] of [
   ],
   [
     'Registro de producto nuevo protegido por products.manage, antes que productos/:id',
-    /path: 'productos\/nuevo',\s*canMatch: \[permisoGuard\('products\.manage'\)\]/.test(adminRoutes) &&
+    // Lote 07 (PBI-0140): la ruta puede llevar antes su `resolve`, que consulta los datos al entrar.
+    /path: 'productos\/nuevo',\s*(?:resolve: \w+,\s*)?canMatch: \[permisoGuard\('products\.manage'\)\]/.test(
+      adminRoutes,
+    ) &&
       productNewRoute >= 0 &&
       productNewRoute < productEditRoute,
   ],

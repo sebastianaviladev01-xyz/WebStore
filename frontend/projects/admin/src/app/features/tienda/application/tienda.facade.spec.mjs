@@ -308,3 +308,44 @@ test('PBI-0120: el estado de un pedido viaja solo como { id, status } y no pisa 
   assert.deepEqual(envios, [{ revision: 1, orders: { upsert: [{ id: 'WS-1', status: 'cancelled' }] } }]);
   assert.match(facade.error(), /otra persona cambió el estado/);
 });
+
+// Lote 07 (ADR-0017). PBI-0140: sin «Actualizar» en la cabecera, cada página consulta los datos al entrar con
+// `entrar()`: la primera vez, como `load()` (con el aviso de carga y de error del panel); después, como `refresh()`,
+// sin aviso global.
+test('PBI-0140: entrar() la primera vez carga con loading y, si falla, deja el aviso del panel', async () => {
+  const { facade } = montar([new Error('caída'), INICIAL]);
+  await facade.entrar();
+  assert.equal(facade.error(), MENSAJE_CARGA);
+  assert.deepEqual(facade.loading.historial, [true, false]);
+  await facade.entrar();
+  assert.equal(facade.snapshot(), INICIAL);
+  assert.equal(facade.error(), null);
+});
+
+test('PBI-0140: con datos ya cargados, entrar() los vuelve a consultar sin aviso global', async () => {
+  const { facade, llamadas } = montar([INICIAL, ACTUAL, new Error('caída')]);
+  await facade.entrar();
+  const loadingAntes = facade.loading.historial.length;
+  await facade.entrar();
+  assert.equal(llamadas(), 2);
+  assert.equal(facade.snapshot(), ACTUAL);
+  await facade.entrar();
+  assert.equal(facade.snapshot(), ACTUAL, 'un fallo conserva lo que había');
+  assert.equal(facade.error(), null);
+  assert.equal(facade.loading.historial.length, loadingAntes, 'no vuelve a mostrar «Cargando operación…»');
+});
+
+// PBI-0150: la página que muestra el motivo de un guardado fallido junto a su botón lo toma de la facade, y la
+// cabecera ya no lo repite (antes, los dos con role="alert").
+test('PBI-0150: tomarError() devuelve el motivo y lo quita del aviso del panel', async () => {
+  const { facade } = montarGuardado({
+    cargas: [INICIO],
+    guardados: [new ReglaTiendaError('Pesa demasiado.')],
+  });
+  await facade.load();
+  const config = INICIO.config;
+  assert.equal(await facade.guardarConfiguracion(config, { ...config, storeName: 'Otra' }), false);
+  assert.equal(facade.tomarError(), 'Pesa demasiado.');
+  assert.equal(facade.error(), null);
+  assert.equal(facade.tomarError(), null);
+});

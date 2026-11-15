@@ -2,6 +2,10 @@ import { Routes } from '@angular/router';
 
 import { sesionGuard } from './features/sesion/application/sesion.guard';
 import { permisoGuard } from './features/sesion/application/permiso.guard';
+import { datosDelPanelResolver } from './features/tienda/application/datos-del-panel.resolver';
+
+/** PBI-0140: la página consulta los datos al entrar. */
+const conDatos = { datos: datosDelPanelResolver };
 
 export const adminRoutes: Routes = [
   {
@@ -17,11 +21,13 @@ export const adminRoutes: Routes = [
       {
         path: '',
         pathMatch: 'full',
+        resolve: conDatos,
         loadComponent: () => import('./features/tienda/presentation/resumen.page').then((m) => m.ResumenPage),
         title: 'WebStore Admin | Resumen',
       },
       {
         path: 'productos',
+        resolve: conDatos,
         canMatch: [permisoGuard('products.edit')],
         loadComponent: () =>
           import('./features/tienda/presentation/productos.page').then((m) => m.ProductosPage),
@@ -31,6 +37,7 @@ export const adminRoutes: Routes = [
         // Antes que `productos/:id`: sin `products.manage`, `permisoGuard` redirige al Resumen y el router no
         // prueba la ruta siguiente, así que «nuevo» nunca llega como identificador (AC-11).
         path: 'productos/nuevo',
+        resolve: conDatos,
         canMatch: [permisoGuard('products.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/registro-producto.page').then((m) => m.RegistroProductoPage),
@@ -45,6 +52,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'inventario',
+        resolve: conDatos,
         canMatch: [permisoGuard('inventory.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/inventario.page').then((m) => m.InventarioPage),
@@ -52,6 +60,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'categorias',
+        resolve: conDatos,
         canMatch: [permisoGuard('categories.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/categorias.page').then((m) => m.CategoriasPage),
@@ -60,6 +69,7 @@ export const adminRoutes: Routes = [
       {
         // Antes que `categorias/:id`, para que «nueva» no llegue como identificador.
         path: 'categorias/nueva',
+        resolve: conDatos,
         canMatch: [permisoGuard('categories.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/registro-categoria.page').then(
@@ -78,6 +88,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'marcas',
+        resolve: conDatos,
         canMatch: [permisoGuard('brands.manage')],
         loadComponent: () => import('./features/tienda/presentation/marcas.page').then((m) => m.MarcasPage),
         title: 'WebStore Admin | Marcas',
@@ -85,6 +96,7 @@ export const adminRoutes: Routes = [
       {
         // Antes que `marcas/:id`, para que «nueva» no llegue como identificador.
         path: 'marcas/nueva',
+        resolve: conDatos,
         canMatch: [permisoGuard('brands.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
@@ -99,6 +111,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'clientes',
+        resolve: conDatos,
         canMatch: [permisoGuard('customers.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/clientes.page').then((m) => m.ClientesPage),
@@ -106,6 +119,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'usuarios',
+        resolve: conDatos,
         canMatch: [permisoGuard('users.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/usuarios.page').then((m) => m.UsuariosPage),
@@ -113,18 +127,21 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'pedidos',
+        resolve: conDatos,
         canMatch: [permisoGuard('orders.manage')],
         loadComponent: () => import('./features/tienda/presentation/pedidos.page').then((m) => m.PedidosPage),
         title: 'WebStore Admin | Pedidos',
       },
       {
         path: 'banners',
+        resolve: conDatos,
         canMatch: [permisoGuard('banners.manage')],
         loadComponent: () => import('./features/tienda/presentation/banners.page').then((m) => m.BannersPage),
         title: 'WebStore Admin | Banners',
       },
       {
         path: 'contenido',
+        resolve: conDatos,
         canMatch: [permisoGuard('content.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/contenido.page').then((m) => m.ContenidoPage),
@@ -138,6 +155,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'envios',
+        resolve: conDatos,
         canMatch: [permisoGuard('shipping.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/tarifas-envio.page').then((m) => m.TarifasEnvioPage),
@@ -145,6 +163,7 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'reclamaciones',
+        resolve: conDatos,
         canMatch: [permisoGuard('complaints.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/reclamaciones.page').then((m) => m.ReclamacionesPage),
