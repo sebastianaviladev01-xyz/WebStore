@@ -38,6 +38,6 @@ Usaremos cinco tokens del tema para el error y la alerta, con dos variantes fija
 
 **Más fácil:** un tema oscuro o de principal claro muestra los errores, las alertas, los botones y la franja con texto legible, y el Admin avisa si un tema propio deja alguno bajo su mínimo.
 
-**Más difícil:** el mapa tiene 37 tokens; quien añada un token al tema debe seguir el mismo patrón (BFF, réplica del Admin, `casos-tema.json`, `tokens.css`, contrato y smoke test). El texto sobre el acento (`--ws-on-accent`) sigue eligiendo entre el blanco y el contraste: queda en el backlog como PBI aparte.
+**Más difícil:** en una base oscura, el principal fuerte pasa a ser la mezcla al 88 % con el contraste, y el texto sobre el tinte (`--ws-on-primary-soft`), que lo usa si llega a 4.5:1, baja en la base oscura de `casos-tema.json` de 13.78:1 a 4.70:1: sigue sobre el mínimo, con menos margen. El mapa tiene 37 tokens; quien añada un token al tema debe seguir el mismo patrón (BFF, réplica del Admin, `casos-tema.json`, `tokens.css`, contrato y smoke test). El texto sobre el acento (`--ws-on-accent`) sigue eligiendo entre el blanco y el contraste: queda en el [backlog](../planning/backlog.md) como PBI-0152.
 
 **Fuera de alcance:** el color de los fondos de Material (relleno de los campos, panel y opción seleccionada de las listas), que se resuelve en `tokens.css` con tokens que ya existían, sin cambiar el mapa ([`VISUAL-SYSTEM.md`](../../frontend/docs/VISUAL-SYSTEM.md)).
