@@ -13,7 +13,7 @@ const VIGENCIA_VISTA_PREVIA_SEGUNDOS = 2592000;
 /**
  * Carga la apariencia del BFF y pinta el tema visible: escribe sus tokens en `:root` y el color de la
  * barra del navegador. En modo demo recuerda la vista previa elegida en la cookie `ws_tema_vista_previa`
- * (sin `Domain`, ver ADR-0012). Si la carga falla, no toca el DOM y queda lo que pinta `tokens.css`.
+ * (sin `Domain`, ver ADR-0012): la tienda y el Admin solo la comparten en el mismo host. Si la carga falla, no toca el DOM y queda lo que pinta `tokens.css`.
  */
 @Injectable({ providedIn: 'root' })
 export class TemasFacade {
