@@ -58,6 +58,8 @@ export default defineConfig({
       env: {
         PORT: String(ports.bff),
         WEBSTORE_DATA_FILE: dataFile,
+        // El BFF no devuelve los códigos de verificación por defecto (lote 01, PBI-0091): la e2e de la cuenta
+        // los pide aquí de forma explícita, sin depender de que el modo demo también los encienda.
         WEBSTORE_EXPOSE_TEST_CODES: 'true',
         WEBSTORE_NON_WORKING_DATES: '',
         WEBSTORE_ALLOWED_ORIGINS: `${storefrontUrl},${adminUrl}`,

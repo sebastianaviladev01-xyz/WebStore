@@ -91,7 +91,7 @@ function applyAdminChanges(state, next, user, security) {
 }
 
 /** Snapshot del Admin: lectura filtrada por rol, guardado parcial con control de revisión y reinicio. */
-export function createSnapshotUseCases({ store, security }) {
+export function createSnapshotUseCases({ store, security, resetEnabled = false }) {
   function save(user, next) {
     // El Admin envía solo las colecciones que cambió, junto con la revisión sobre la que trabajó.
     if (next.revision !== store.state.revision)
@@ -111,9 +111,16 @@ export function createSnapshotUseCases({ store, security }) {
 
   /**
    * Vuelve a los datos de demostración (con B activo y sin temas propios). Las dos revisiones siguen avanzando
-   * para invalidar los snapshots y las listas de temas abiertos.
+   * para invalidar los snapshots y las listas de temas abiertos. Solo con `resetEnabled` (modo demo o
+   * `WEBSTORE_ALLOW_STORE_RESET=true`): en la tienda de un cliente borraría pedidos, cuentas y reclamos (PBI-0090).
    */
   function reset(user) {
+    if (!resetEnabled)
+      throw new DomainError(
+        'forbidden',
+        'STORE_RESET_DISABLED',
+        'El reinicio de la tienda solo está disponible en el modo demo.',
+      );
     const previousRevision = store.state.revision;
     const previousThemesRevision = store.state.appearance.revision;
     store.state = store.initialState();

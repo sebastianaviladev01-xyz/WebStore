@@ -20,7 +20,9 @@ const child = spawn(process.execPath, [serverEntry], {
     ...process.env,
     PORT: String(port),
     WEBSTORE_DATA_FILE: dataFile,
+    // Fuera del modo demo, los códigos y el reinicio se piden de forma explícita (PBI-0090 y PBI-0091).
     WEBSTORE_EXPOSE_TEST_CODES: 'true',
+    WEBSTORE_ALLOW_STORE_RESET: 'true',
     WEBSTORE_NON_WORKING_DATES: '',
   },
 });

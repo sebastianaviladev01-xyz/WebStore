@@ -55,7 +55,10 @@ const routes = [
   ...reclamosRoutes(createReclamosUseCases({ store, nonWorkingDates: config.nonWorkingDates })),
   ...checkoutRoutes(createCheckoutUseCases({ store, security })),
   ...pedidosRoutes(createPedidosUseCases({ store, security })),
-  ...adminRoutes(adminSesiones, createSnapshotUseCases({ store, security })),
+  ...adminRoutes(
+    adminSesiones,
+    createSnapshotUseCases({ store, security, resetEnabled: config.allowStoreReset }),
+  ),
   ...temasRoutes({
     consultas: createTemasQueries({ store }),
     casosDeUso: createTemasUseCases({ store, security }),
