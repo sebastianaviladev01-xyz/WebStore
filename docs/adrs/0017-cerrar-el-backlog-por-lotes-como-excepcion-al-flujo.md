@@ -50,15 +50,15 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. La sesión principal re
 | 02 | Pruebas y limpieza del BFF | PBI-0010, 0102, 0103 |
 | 03 | Temas y contraste | PBI-0053, 0060 a 0062, 0068, 0069, 0072, 0080, 0084 |
 | 04 | Tienda: carrito y checkout | PBI-0040, 0063 a 0065, 0074, 0076, 0086, 0092 y 0096 (parte de la tienda), 0104, 0106, 0107, 0110, 0143 |
-| 05 | Tienda: cuenta, catálogo y accesibilidad | PBI-0020, 0024, 0026, 0039, 0046, 0047, 0054, 0075, 0098 (parte de la tienda), 0105, 0108, 0109, 0111 a 0118 |
-| 06 | Admin: guardado y datos | PBI-0023, 0066, 0067, 0070, 0071, 0119 a 0131, 0142 |
+| 05 | Tienda: cuenta, catálogo y accesibilidad | PBI-0020, 0024, 0026, 0039, 0046, 0047, 0054, 0075, 0098 (parte de la tienda), 0105, 0108, 0109, 0111 a 0118, 0146 |
+| 06 | Admin: guardado y datos | PBI-0023, 0066, 0067, 0070, 0071, 0119 a 0131, 0142, 0145 |
 | 07 | Admin: interfaz y permisos | PBI-0013, 0027, 0028, 0033, 0034, 0044, 0052, 0059, 0132, 0139 a 0141 |
-| 08 | Pruebas y deuda del frontend | PBI-0022, 0025, 0029, 0050, 0055 a 0057, 0077 a 0079, 0081, 0082, 0085, 0133, 0134, 0136 |
+| 08 | Pruebas y deuda del frontend | PBI-0022, 0025, 0029, 0050, 0055 a 0057, 0077 a 0079, 0081, 0082, 0085, 0133, 0134, 0136, 0144 |
 | 09 | Cierre documental | Decisiones provisionales (PBI-0015 a 0019, 0021, 0051, 0083) y elementos externos (PBI-0001 a 0009, 0011, 0012, 0041 a 0043, 0058) |
 
 **Orden de ejecución, por prioridad** (Sebastián Avila, 2026-11-14: «ordénalos por orden de prioridad»): 01, 04, 06, 03, 05, 07, 02, 08 y 09. Va primero lo que puede perder datos, dinero o seguridad, y al final la deuda técnica y los documentos. El número de cada lote no cambia.
 
-El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un hallazgo fuera del alcance de un lote se anota con su PBI y se asigna al lote de su área: PBI-0143, del lote 01, va en el 04.
+El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un hallazgo fuera del alcance de un lote se anota con su PBI y se asigna al lote de su área: PBI-0143, del lote 01, va en el 04; PBI-0144, 0145 y 0146, del lote 04, van en el 08, el 06 y el 05.
 
 *Motivo:* el plazo no admite seis etapas por elemento, y los lotes conservan lo que protege el resultado: prueba primero, CI, capturas y revisión por PR.
 
