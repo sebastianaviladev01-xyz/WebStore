@@ -704,6 +704,52 @@ try {
     'Cuerpo que no es JSON',
   );
 
+  // Stock (lote 01): las líneas repetidas se suman y un producto inactivo no se vende.
+  const conStock = (await request('/bff/catalog/products')).find((item) => item.stock >= 2);
+  const repetidas = await raw('/bff/checkout/orders', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...command,
+      items: [
+        { productId: conStock.id, quantity: conStock.stock },
+        { productId: conStock.id, quantity: 1 },
+      ],
+    }),
+  });
+  const errorRepetidas = await esperarError(repetidas, 409, 'INSUFFICIENT_STOCK', 'Líneas repetidas');
+  if (errorRepetidas.details?.productId !== conStock.id)
+    throw new Error('INSUFFICIENT_STOCK no indica el producto');
+  let catalogoAdmin = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  catalogoAdmin = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: catalogoAdmin.revision,
+      products: catalogoAdmin.products.map((item) =>
+        item.id === conStock.id ? { ...item, active: false } : item,
+      ),
+    }),
+  });
+  await esperarError(
+    await raw('/bff/checkout/orders', {
+      method: 'POST',
+      body: JSON.stringify({ ...command, items: [{ productId: conStock.id, quantity: 1 }] }),
+    }),
+    409,
+    'PRODUCT_UNAVAILABLE',
+    'Producto inactivo',
+  );
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: catalogoAdmin.revision,
+      products: catalogoAdmin.products.map((item) =>
+        item.id === conStock.id ? { ...item, active: true } : item,
+      ),
+    }),
+  });
+
   console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
   console.log('✓ Storefront → Admin: pedido/cliente/inventario');
   console.log('✓ Pedidos: acceso por cuenta o token, stock liberado al cancelar, envío desde la tabla');

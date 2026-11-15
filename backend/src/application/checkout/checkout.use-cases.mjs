@@ -54,7 +54,7 @@ export function createCheckoutUseCases({ store, security }) {
         'SHIPPING_UNAVAILABLE',
         'Todavía no contamos con una tarifa para ese destino.',
       );
-    store.state.products = reserveStock(store.state.products, requested);
+    store.state.products = reserveStock(store.state.products, requested, { requireActive: true });
     const { state } = store;
     const items = requested.map((item) => ({
       productId: item.productId,
