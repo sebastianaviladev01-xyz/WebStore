@@ -94,7 +94,14 @@ for (const { ancho, alto } of ANCHOS) {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     for (const ruta of ['/', '/productos', '/contenido']) {
       await page.goto(ruta);
-      await sinCruceConLaTuerca(page, menu(page), `Menú del Admin en ${ruta}`);
+      if (ancho < 1024) {
+        // Lote 07b (PBI-0044): por debajo de 1024 px el menú se abre en un panel con la hamburguesa.
+        const abrir = page.getByRole('button', { name: 'Abrir el menú' });
+        await sinCruceConLaTuerca(page, abrir, `Botón del menú en ${ruta}`);
+        await abrir.click();
+        await sinCruceConLaTuerca(page, menu(page), `Menú del Admin en ${ruta}`);
+        await page.keyboard.press('Escape');
+      } else await sinCruceConLaTuerca(page, menu(page), `Menú del Admin en ${ruta}`);
       await sinCruceConLaTuerca(page, botonMenuUsuario(page), `Menú de usuario en ${ruta}`);
     }
   });
