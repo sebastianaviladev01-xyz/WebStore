@@ -78,8 +78,10 @@ for (const [label, ok] of [
   ['Storefront usa BffEnvioGateway', appConfig.includes('BffEnvioGateway')],
   ['Admin usa BffTiendaGateway', adminConfig.includes('BffTiendaGateway')],
   [
-    'Solo products.manage crea productos',
-    productForm.includes("!this.session.can('products.manage') && !this.editingId()"),
+    // PBI-0158: sin la rama de «solo la ficha», crear y editar piden products.manage en la ruta.
+    'Edición de producto protegida por products.manage (PBI-0158)',
+    /path: 'productos\/:id',\s*canMatch: \[permisoGuard\('products\.manage'\)\]/.test(adminRoutes) &&
+      !productForm.includes("can('products.manage')"),
   ],
   [
     'Registro de producto nuevo protegido por products.manage, antes que productos/:id',

@@ -19,35 +19,6 @@ export function requireNoRemovedProducts(currentProducts, products) {
 }
 
 /**
- * Campos de la ficha que mantiene un rol con `products.edit` sin `products.manage`; precio, categoría y marca
- * quedan fuera. Desde el lote 07 ningún rol fijo está en ese caso: el vendedor tiene `products.manage`.
- * Devuelve la nueva lista de productos.
- */
-export function applyProductContentEdits(currentProducts, products) {
-  const currentIds = new Set(currentProducts.map((product) => product.id));
-  const nextIds = new Set(products.map((product) => product.id));
-  if (currentIds.size !== nextIds.size || [...currentIds].some((id) => !nextIds.has(id)))
-    throw new DomainError(
-      'forbidden',
-      'CATALOG_SCOPE_VIOLATION',
-      'Tu rol no puede crear ni eliminar productos.',
-    );
-  return currentProducts.map((current) => {
-    const update = products.find((product) => product.id === current.id);
-    return {
-      ...current,
-      name: update.name,
-      description: update.description,
-      imageUrl: update.imageUrl,
-      thumbnailUrl: update.thumbnailUrl || update.imageUrl,
-      stock: Number(update.stock),
-      highlights: Array.isArray(update.highlights) ? update.highlights : current.highlights,
-      gallery: Array.isArray(update.gallery) ? galleryOf(update) : galleryOf(current),
-    };
-  });
-}
-
-/**
  * Dirección de ficha única (PBI-0129): la tienda abre la ficha por el slug del nombre, así que dos productos con el
  * mismo slug dejan una ficha inalcanzable. Solo se revisan los productos nuevos o cuyo slug cambia: dos que ya lo
  * compartían no bloquean el guardado de otro.

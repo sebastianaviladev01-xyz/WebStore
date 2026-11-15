@@ -91,22 +91,6 @@ export function requireValidProducts(products) {
   return products;
 }
 
-/** Ficha que puede mantener el Vendedor: nombre, textos, imágenes y stock. */
-export function requireValidProductContent(products) {
-  requireItems(products, 'products');
-  for (const product of products)
-    check('products', product, [
-      ['name', hasText, 'cada producto necesita un nombre'],
-      ['stock', nonNegativeInteger, 'el stock debe ser un número entero mayor o igual a 0'],
-      ['description', isText, 'la descripción no es válida', { optional: true }],
-      ['imageUrl', isText, 'la imagen no es válida', { optional: true }],
-      ['thumbnailUrl', optionalText, 'la miniatura no es válida'],
-      ['highlights', textList, 'las características no son válidas', { optional: true }],
-      ['gallery', textList, 'la galería no es válida', { optional: true }],
-    ]);
-  return products;
-}
-
 export function requireValidCategories(categories) {
   requireItems(categories, 'categories');
   for (const category of categories)

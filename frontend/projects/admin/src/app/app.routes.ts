@@ -44,8 +44,9 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Nuevo producto',
       },
       {
+        // PBI-0158: editar envía la ficha completa, así que pide `products.manage` como crear.
         path: 'productos/:id',
-        canMatch: [permisoGuard('products.edit')],
+        canMatch: [permisoGuard('products.manage')],
         loadComponent: () =>
           import('./features/tienda/presentation/registro-producto.page').then((m) => m.RegistroProductoPage),
         title: 'WebStore Admin | Editar producto',

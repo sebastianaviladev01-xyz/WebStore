@@ -7,7 +7,6 @@ import {
   requireValidConfig,
   requireValidCustomers,
   requireValidOrderStatuses,
-  requireValidProductContent,
   requireValidProducts,
   requireValidRates,
   requireValidUserShapes,
@@ -22,7 +21,6 @@ import {
   requireValidCategoryTree,
 } from '../../domain/catalogo/categoria.rules.mjs';
 import {
-  applyProductContentEdits,
   requireNoRemovedProducts,
   requireRemovedNotInUse,
   requireUniqueSlugs,
@@ -39,14 +37,13 @@ function applyProducts(state, value, role) {
   if (value === null || typeof value !== 'object')
     throw new DomainError('validation', 'INVALID_PRODUCTS', 'La colección de productos es obligatoria.');
   const products = resolveCollectionChanges('products', state.products, value);
-  let next;
-  if (can(role, 'products.manage')) {
-    next = requireValidProducts(products);
-    // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
-    if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
-  } else if (can(role, 'products.edit'))
-    next = applyProductContentEdits(state.products, requireValidProductContent(products));
-  else throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
+  // PBI-0158: los productos solo los cambia un rol con `products.manage` (los tres fijos). La rama de «solo la ficha»
+  // (`products.edit` sin `products.manage`) se quitó: si Daniel decide un vendedor con permisos parciales, vuelve.
+  if (!can(role, 'products.manage'))
+    throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
+  const next = requireValidProducts(products);
+  // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
+  if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
   requireUniqueSlugs(next, state.products);
   state.products = next;
 }

@@ -20,7 +20,6 @@ import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules
 import { mensajeDeError } from '../domain/formulario.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
-import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
 
 const MAX_GALLERY_PHOTOS = 6;
@@ -84,7 +83,7 @@ const MAX_GALLERY_PHOTOS = 6;
           <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
           <mat-form-field [subscriptSizing]="form.controls.sku.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>SKU</mat-label>
-            <input matInput formControlName="sku" [readonly]="!session.can('products.manage')" />
+            <input matInput formControlName="sku" />
             <mat-error>{{ mensaje(form.controls.sku.errors) }}</mat-error>
           </mat-form-field>
           <mat-form-field>
@@ -176,12 +175,7 @@ const MAX_GALLERY_PHOTOS = 6;
           <div class="grid grid-cols-2 gap-3">
             <mat-form-field>
               <mat-label>Precio</mat-label>
-              <input
-                matInput
-                type="number"
-                formControlName="price"
-                [readonly]="!session.can('products.manage')"
-              />
+              <input matInput type="number" formControlName="price" />
               <mat-error>{{ mensaje(form.controls.price.errors) }}</mat-error>
             </mat-form-field>
             <mat-form-field>
@@ -241,7 +235,6 @@ const MAX_GALLERY_PHOTOS = 6;
 })
 export class RegistroProductoPage {
   protected readonly admin = inject(TiendaFacade);
-  protected readonly session = inject(SesionFacade);
   private readonly router = inject(Router);
   /** `:id` de `/productos/:id` (`withComponentInputBinding`); no llega en `/productos/nuevo`. */
   readonly id = input<string>();
@@ -295,15 +288,6 @@ export class RegistroProductoPage {
     diferido: true,
   });
   constructor() {
-    // El vendedor no cambia categoría, marca ni estado: se deshabilitan en el control (getRawValue los conserva).
-    if (!this.session.can('products.manage')) {
-      for (const control of [
-        this.form.controls.categoryId,
-        this.form.controls.brandId,
-        this.form.controls.active,
-      ])
-        control.disable();
-    }
     // Al abrir la edición (o cambiar de `:id` sin salir de la página) se traen los datos actuales.
     effect(() => {
       const id = this.editingId();
@@ -394,12 +378,12 @@ export class RegistroProductoPage {
   }
   protected async save() {
     if (this.admin.saving()) return;
-    if (this.form.invalid || (!this.session.can('products.manage') && !this.editingId())) {
+    // Crear y editar piden `products.manage` (la ruta lo exige); la rama de «solo la ficha» se quitó (PBI-0158).
+    if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
     const value = this.form.getRawValue();
-    const old = this.admin.products().find((item) => item.id === this.editingId());
     const parsed = {
       ...value,
       highlights: value.highlights
@@ -409,18 +393,7 @@ export class RegistroProductoPage {
       thumbnailUrl: value.thumbnailUrl.trim() || value.imageUrl,
       gallery: this.gallery(),
     };
-    const safe =
-      !this.session.can('products.manage') && old
-        ? {
-            ...parsed,
-            sku: old.sku,
-            price: old.price,
-            categoryId: old.categoryId,
-            brandId: old.brandId,
-            active: old.active,
-          }
-        : parsed;
-    const editado: Producto = { id: this.editingId() ?? this.idNuevo, ...safe };
+    const editado: Producto = { id: this.editingId() ?? this.idNuevo, ...parsed };
     // PBI-0129: SKU y dirección de ficha únicos, comprobados antes de enviar (el BFF los vuelve a comprobar).
     // Un choque que ya existía antes de editar (datos anteriores) no bloquea: solo se revisa lo que cambió.
     const repetido = motivoDeProductoRepetido(this.admin.products(), editado);
