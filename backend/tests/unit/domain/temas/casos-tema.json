@@ -517,7 +517,7 @@
         "--ws-accent": "#F97316",
         "--ws-accent-strong": "color-mix(in srgb, #F97316 78%, #F5F7FA)",
         "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
-        "--ws-on-accent": "#FFFFFF",
+        "--ws-on-accent": "#1B1E25",
         "--ws-link": "#3B82F6",
         "--ws-on-link": "#1B1E25",
         "--ws-focus-ring": "#3B82F6",
@@ -555,7 +555,7 @@
         "onPrimary/primary": 4.54,
         "onPrimary/primaryStrong": 5.3,
         "onPrimarySoft/primarySoft": 4.7,
-        "onAccent/accent": 2.8,
+        "onAccent/accent": 5.95,
         "link/background": 5.05,
         "link/surface": 4.54,
         "focusRing/background": 5.05,
@@ -595,7 +595,7 @@
         "--ws-accent": "#F97316",
         "--ws-accent-strong": "color-mix(in srgb, #F97316 78%, #F5F7FA)",
         "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
-        "--ws-on-accent": "#FFFFFF",
+        "--ws-on-accent": "#1B1E25",
         "--ws-link": "#FFFFBB",
         "--ws-on-link": "#1B1E25",
         "--ws-focus-ring": "#FFFFBB",
@@ -633,7 +633,7 @@
         "onPrimary/primary": 16.1,
         "onPrimary/primaryStrong": 16.03,
         "onPrimarySoft/primarySoft": 11.91,
-        "onAccent/accent": 2.8,
+        "onAccent/accent": 5.95,
         "link/background": 17.94,
         "link/surface": 16.1,
         "focusRing/background": 17.94,
@@ -730,7 +730,7 @@
       ]
     },
     {
-      "nombre": "la base oscura de TEST-04 solo avisa del acento: el texto sobre el principal y la franja pasan a la superficie (PBI-0062)",
+      "nombre": "la base oscura de TEST-04 ya no avisa del acento: el texto sobre el principal, la franja y el acento pasan a la superficie (PBI-0062 y PBI-0152)",
       "colores": {
         "primary": "#3B82F6",
         "secondary": "#F97316",
@@ -738,14 +738,7 @@
         "surface": "#1B1E25",
         "contrast": "#F5F7FA"
       },
-      "bajoMinimo": [
-        {
-          "par": "onAccent/accent",
-          "relacion": 2.8,
-          "minimo": 4.5,
-          "bloquea": false
-        }
-      ]
+      "bajoMinimo": []
     },
     {
       "nombre": "los colores de B con su contraste no dejan ningún par bajo el mínimo",
