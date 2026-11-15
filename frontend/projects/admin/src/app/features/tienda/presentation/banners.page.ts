@@ -6,7 +6,14 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
-import { UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
+import {
+  finAntesDelInicio,
+  finDelDiaEnLima,
+  heroesQueCoinciden,
+  inicioDelDiaEnLima,
+  MAXIMO_HEROES_ACTIVOS,
+} from '../domain/banner.rules';
+import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
 
 @Component({
   selector: 'ws-banners-page',
@@ -123,6 +130,9 @@ import { UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.mo
             <mat-form-field>
               <mat-label>Fin</mat-label>
               <input matInput type="date" formControlName="endAt" />
+              @if (form.controls.endAt.hasError('antesDelInicio')) {
+                <mat-error>El fin debe ser el mismo día del inicio o después.</mat-error>
+              }
             </mat-form-field>
           </div>
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
@@ -134,10 +144,11 @@ import { UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.mo
         }
         <div class="mt-5 flex gap-3">
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
+            [disabled]="admin.saving()"
           >
-            Guardar
+            {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
           @if (editing()) {
             <button
@@ -160,6 +171,10 @@ export class BannersPage {
   protected readonly placements = Object.keys(ETIQUETAS_UBICACION_BANNER) as UbicacionBanner[];
   private readonly formDirective = viewChild.required(FormGroupDirective);
   protected readonly editing = signal<string | null>(null);
+  /** El banner tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
+  private base: Banner | null = null;
+  /** Id del banner nuevo; cambia al empezar otro, para que un segundo envío no cree otro (PBI-0121). */
+  private idNuevo = crypto.randomUUID();
   protected readonly error = signal<string | null>(null);
   protected readonly form = new FormGroup({
     eyebrow: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -187,6 +202,7 @@ export class BannersPage {
   protected edit(id: string): void {
     const banner = this.admin.banners().find((item) => item.id === id);
     if (!banner) return;
+    this.base = banner;
     this.editing.set(id);
     this.error.set(null);
     this.form.setValue({
@@ -208,31 +224,46 @@ export class BannersPage {
   }
 
   protected async save(): Promise<void> {
+    if (this.admin.saving()) return;
+    const value = this.form.getRawValue();
+    // PBI-0128: el fin va el mismo día del inicio o después; el error queda en el campo «Fin». Se vuelve a validar
+    // primero para quitar el aviso de un intento anterior si ya se corrigió el inicio.
+    this.form.controls.endAt.updateValueAndValidity();
+    if (finAntesDelInicio(value.startAt, value.endAt)) {
+      this.form.controls.endAt.setErrors({ antesDelInicio: true });
+      this.form.controls.endAt.markAsTouched();
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
-    const value = this.form.getRawValue();
-    const activeHeroCount = this.admin
-      .banners()
-      .filter(
-        (banner) => banner.id !== this.editing() && banner.active && banner.placement === 'hero',
-      ).length;
-    if (value.active && value.placement === 'hero' && activeHeroCount >= 3) {
-      this.error.set('Solo pueden existir tres banners activos en el hero principal.');
+    const base = this.base;
+    // PBI-0128: el tope de banners principales activos solo cuenta los que coinciden en fechas (no los vencidos).
+    const coinciden = heroesQueCoinciden(this.admin.banners(), {
+      id: base?.id ?? null,
+      startAt: value.startAt,
+      endAt: value.endAt,
+    });
+    if (value.active && value.placement === 'hero' && coinciden >= MAXIMO_HEROES_ACTIVOS) {
+      this.error.set('Solo pueden existir tres banners activos en el hero principal en las mismas fechas.');
       return;
     }
-    const saved = await this.admin.upsertBanner({
-      id: this.editing() ?? crypto.randomUUID(),
+    // PBI-0128: un banner que no se cambió de fecha conserva las suyas; uno nuevo o con fechas nuevas, en días de Lima.
+    const mismaFecha = (guardada: string | undefined, dia: string) => guardada?.slice(0, 10) === dia;
+    const saved = await this.admin.guardarBanner(base, {
+      id: base?.id ?? this.idNuevo,
       ...value,
-      startAt: `${value.startAt}T00:00:00.000Z`,
-      endAt: `${value.endAt}T23:59:59.999Z`,
+      startAt:
+        mismaFecha(base?.startAt, value.startAt) && base ? base.startAt : inicioDelDiaEnLima(value.startAt),
+      endAt: mismaFecha(base?.endAt, value.endAt) && base ? base.endAt : finDelDiaEnLima(value.endAt),
     });
     if (saved) this.reset();
   }
 
   protected reset(): void {
     this.editing.set(null);
+    this.base = null;
+    this.idNuevo = crypto.randomUUID();
     this.error.set(null);
     // resetForm (no form.reset) limpia también el estado "enviado"; si no, el formulario vacío se muestra con errores.
     this.formDirective().resetForm({
@@ -253,7 +284,9 @@ export class BannersPage {
     });
   }
 
+  /** Si se elimina el banner en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string): Promise<void> {
-    if (confirm('¿Eliminar banner?')) await this.admin.deleteBanner(id);
+    if (!confirm('¿Eliminar banner?')) return;
+    if ((await this.admin.eliminarBanner(id)) && this.editing() === id) this.reset();
   }
 }

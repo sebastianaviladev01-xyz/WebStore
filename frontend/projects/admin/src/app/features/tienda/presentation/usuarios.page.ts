@@ -8,6 +8,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import { Rol } from '../../sesion/domain/rol.rules';
+import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
+import { usuarioConElMismoCorreo } from '../domain/registro-unico.rules';
 
 const EMPTY_USER = {
   name: '',
@@ -75,6 +77,9 @@ const EMPTY_USER = {
           <mat-form-field>
             <mat-label>Correo</mat-label>
             <input matInput type="email" formControlName="email" />
+            @if (form.controls.email.hasError('repetido')) {
+              <mat-error>{{ form.controls.email.getError('repetido') }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field>
             <mat-label>Rol</mat-label>
@@ -100,10 +105,11 @@ const EMPTY_USER = {
         </div>
         <div class="mt-5 flex flex-wrap gap-3">
           <button
-            class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
+            [disabled]="admin.saving()"
           >
-            Guardar usuario
+            {{ admin.saving() ? 'Guardando…' : 'Guardar usuario' }}
           </button>
           @if (editing()) {
             <button
@@ -126,6 +132,10 @@ export class UsuariosPage {
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
   private readonly formDirective = viewChild.required(FormGroupDirective);
   protected readonly editing = signal<string | null>(null);
+  /** El usuario tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
+  private base: UsuarioAdmin | null = null;
+  /** Id del usuario nuevo; cambia al empezar otro, para que un segundo envío no cree otro (PBI-0121). */
+  private idNuevo = crypto.randomUUID();
   protected readonly countByRole = computed(() => {
     const counts = new Map<Rol, number>();
     for (const user of this.admin.users()) counts.set(user.role, (counts.get(user.role) ?? 0) + 1);
@@ -149,6 +159,7 @@ export class UsuariosPage {
   protected edit(id: string): void {
     const user = this.admin.users().find((candidate) => candidate.id === id);
     if (!user) return;
+    this.base = user;
     this.editing.set(id);
     this.form.setValue({
       ...EMPTY_USER,
@@ -160,25 +171,39 @@ export class UsuariosPage {
   }
 
   protected async save(): Promise<void> {
+    if (this.admin.saving()) return;
     if (this.form.invalid || (!this.editing() && !this.form.controls.temporaryPassword.value)) {
       this.form.markAllAsTouched();
       return;
     }
-    // Si el BFF lo rechaza (p. ej. dejar la tienda sin superadministrador), el panel muestra el motivo.
-    const saved = await this.admin.upsertUser({
-      id: this.editing() ?? crypto.randomUUID(),
-      ...this.form.getRawValue(),
-    });
+    const { temporaryPassword, ...datos } = this.form.getRawValue();
+    const base = this.base;
+    const usuario = { id: base?.id ?? this.idNuevo, ...datos };
+    // PBI-0123: un correo de otro usuario no se envía; esa cuenta nunca podría entrar.
+    const otro = usuarioConElMismoCorreo(this.admin.users(), usuario);
+    if (otro) {
+      this.form.controls.email.setErrors({
+        repetido: `Ya hay un usuario con ese correo: ${otro.name}. Usa otro.`,
+      });
+      this.form.controls.email.markAsTouched();
+      return;
+    }
+    // Si el BFF lo rechaza (p. ej. dejar la tienda sin superadministrador), el panel muestra el motivo. La contraseña
+    // temporal solo viaja al crear el usuario.
+    const saved = await this.admin.guardarUsuario(base, base ? usuario : { ...usuario, temporaryPassword });
     if (saved) this.reset();
   }
 
+  /** Si se elimina el usuario en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string): Promise<void> {
     if (!confirm('¿Eliminar usuario?')) return;
-    await this.admin.deleteUser(id);
+    if ((await this.admin.eliminarUsuario(id)) && this.editing() === id) this.reset();
   }
 
   protected reset(): void {
     this.editing.set(null);
+    this.base = null;
+    this.idNuevo = crypto.randomUUID();
     this.formDirective().resetForm(EMPTY_USER);
   }
 }

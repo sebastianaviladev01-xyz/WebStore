@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { SesionGateway, SesionError } from '../domain/sesion.gateway';
+import { AVISO_SESION_VENCIDA, SesionGateway, SesionError } from '../domain/sesion.gateway';
 import { Permiso, Rol, rolPuede, definicionDeRol } from '../domain/rol.rules';
 import { UsuarioAdmin } from '../domain/usuario-admin.model';
 
@@ -60,6 +60,16 @@ export class SesionFacade {
     } catch {
       /* La sesión del navegador ya se cerró. */
     }
+  }
+
+  /**
+   * El BFF rechazó la sesión a mitad de una operación (PBI-0124): se cierra en el navegador y el acceso muestra el
+   * motivo. `AppLayout` lleva al acceso cuando deja de haber usuario.
+   */
+  expirar(): void {
+    if (!this.tokenState()) return;
+    this.clear();
+    this.error.set(AVISO_SESION_VENCIDA);
   }
 
   /** Token vigente para los adaptadores HTTP; sin sesión no se debe llegar a llamar al BFF. */

@@ -16,6 +16,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { motivoParaNoEliminarMarca } from '../domain/eliminacion.rules';
 import { EstadoFiltro, FILTROS_MARCAS_VACIOS } from '../domain/filtro-catalogo.model';
 import {
   filtrarMarcas,
@@ -77,6 +78,11 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         </mat-select>
       </mat-form-field>
     </ws-filter-panel>
+    @if (avisoEliminar()) {
+      <p class="mt-6 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
+        {{ avisoEliminar() }}
+      </p>
+    }
     <section class="admin-card mt-6 p-4" aria-label="Lista de marcas">
       @for (b of pagina().items; track b.id) {
         <div class="flex items-center justify-between border-b border-line p-3">
@@ -132,6 +138,8 @@ export class MarcasPage {
   });
   protected readonly buscando = signal(false);
   protected readonly errorBusqueda = signal<string | null>(null);
+  /** Por qué no se puede eliminar la marca elegida (PBI-0131): la usan productos. */
+  protected readonly avisoEliminar = signal<string | null>(null);
   constructor() {
     // El borrador se iguala a los filtros aplicados cada vez que cambia la URL (también con atrás y adelante).
     effect(() => {
@@ -167,7 +175,16 @@ export class MarcasPage {
       queryParamsHandling: 'merge',
     });
   }
+  /** PBI-0131: una marca que usan productos no se elimina; se dice cuántos la usan, sin pedir confirmación. */
   protected async remove(id: string) {
-    if (confirm('¿Eliminar marca?')) await this.admin.deleteBrand(id);
+    this.avisoEliminar.set(null);
+    const marca = this.admin.brands().find((item) => item.id === id);
+    if (!marca) return;
+    const motivo = motivoParaNoEliminarMarca(marca, this.admin.products());
+    if (motivo) {
+      this.avisoEliminar.set(motivo);
+      return;
+    }
+    if (confirm('¿Eliminar marca?')) await this.admin.eliminarMarca(id);
   }
 }

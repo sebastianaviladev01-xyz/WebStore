@@ -11,6 +11,7 @@ import {
   serieDelMes,
   ultimosPedidos,
 } from '../domain/resumen.rules';
+import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO, EstadoPedido } from '../domain/tienda.model';
 import { GraficoPedidosComponent } from './grafico-pedidos.component';
 import { TarjetaIndicadorComponent } from './tarjeta-indicador.component';
@@ -273,7 +274,7 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
                             </span>
                           </td>
                           <td class="px-4 py-3 whitespace-nowrap tabular-nums">
-                            {{ order.createdAt | date: 'dd/MM/yyyy' }}
+                            {{ order.createdAt | date: 'dd/MM/yyyy' : zonaLima }}
                           </td>
                           <td class="px-4 py-3 text-right font-semibold whitespace-nowrap tabular-nums">
                             {{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' }}
@@ -350,6 +351,8 @@ type BloqueResumen = 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedi
 })
 export class ResumenPage {
   protected readonly admin = inject(TiendaFacade);
+  /** Fecha de los últimos pedidos en la hora de Lima, como el gráfico (PBI-0067). */
+  protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly session = inject(SesionFacade);
   /** Instante de referencia de los tramos y del gráfico: se fija al abrir la página, como las cifras del snapshot. */
   private readonly ahora = new Date();

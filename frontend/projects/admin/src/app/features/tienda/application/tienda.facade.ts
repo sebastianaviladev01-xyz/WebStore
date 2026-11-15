@@ -1,5 +1,18 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
-import { TiendaGateway, ReglaTiendaError, SnapshotDesactualizadoError } from '../domain/tienda.gateway';
+import {
+  CambiosTienda,
+  ColeccionEditable,
+  ReglaTiendaError,
+  SnapshotDesactualizadoError,
+  TiendaGateway,
+} from '../domain/tienda.gateway';
+import {
+  avisoDeCambio,
+  cambiosEntreListas,
+  prepararCambio,
+  ResultadoCambio,
+} from '../domain/cambio-registro.rules';
+import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { ROLES } from '../../sesion/domain/rol.rules';
 import { ajustarPreciosTarifas, asignarPrecioTarifa } from '../domain/tarifa-envio.rules';
 import {
@@ -8,6 +21,7 @@ import {
   Categoria,
   Reclamo,
   Cliente,
+  EstadoPedido,
   Pedido,
   Producto,
   SnapshotTienda,
@@ -16,8 +30,19 @@ import {
 } from '../domain/tienda.model';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
-/** Calcula los cambios a guardar a partir de un snapshot; se vuelve a evaluar si hay que reintentar sobre datos frescos. */
-type Mutation = (snapshot: SnapshotTienda) => Partial<Omit<SnapshotTienda, 'revision'>>;
+/**
+ * Lo que hay que hacer sobre un snapshot: enviar cambios, avisar que no se puede (sin enviar) o nada, porque ya
+ * está hecho. Se calcula otra vez sobre los datos recién cargados si el BFF responde `409 STALE_SNAPSHOT`.
+ */
+type Plan =
+  | { readonly enviar: Omit<CambiosTienda, 'revision'> }
+  | { readonly aviso: string }
+  | { readonly hecho: true };
+type Planificar = (snapshot: SnapshotTienda) => Plan;
+
+const MENSAJE_GUARDADO = 'No pudimos guardar los cambios. Inténtalo de nuevo.';
+const MENSAJE_DESACTUALIZADO =
+  'Los datos cambiaron otra vez mientras guardabas. Revisa los datos actuales y vuelve a intentarlo.';
 @Injectable({ providedIn: 'root' })
 export class TiendaFacade {
   private readonly repo = inject(TiendaGateway);
@@ -38,13 +63,16 @@ export class TiendaFacade {
   readonly config = computed(() => this.state()?.config ?? null);
   readonly lowStock = computed(() => this.products().filter((p) => p.stock <= 5));
   readonly loading = signal(false);
+  /** Hay un guardado en curso (PBI-0121): los formularios desactivan «Guardar» y no envían otro. */
+  readonly saving = signal(false);
   readonly error = signal<string | null>(null);
   async load() {
     this.loading.set(true);
     this.error.set(null);
     try {
       this.state.set(await this.repo.load(this.session.requireToken()));
-    } catch {
+    } catch (error) {
+      if (error instanceof SesionVencidaError) this.session.expirar();
       this.error.set(
         'No pudimos cargar la información del panel. Actualiza la página o vuelve a iniciar sesión.',
       );
@@ -61,113 +89,179 @@ export class TiendaFacade {
     try {
       this.state.set(await this.repo.load(this.session.requireToken()));
       return true;
-    } catch {
+    } catch (error) {
+      if (error instanceof SesionVencidaError) this.session.expirar();
       return false;
     }
   }
-  /** Guarda el cambio; devuelve false si no se pudo y deja el motivo en `error`. */
-  private async patch(mutate: Mutation): Promise<boolean> {
+  /**
+   * Guarda lo que planifica `planificar` sobre el snapshot cargado (lote 06). Solo viajan los registros y los campos
+   * que cambió la persona; la respuesta del BFF reemplaza el estado (no hay actualización optimista que deshacer, así
+   * que un fallo no reescribe los formularios). Ante `409 STALE_SNAPSHOT` recarga y vuelve a planificar sobre los
+   * datos vigentes: si el registro ya no existe o alguien cambió esos mismos campos, no guarda y avisa (PBI-0120 y
+   * PBI-0142). Un `401` cierra la sesión (PBI-0124). Devuelve false si no se guardó y deja el motivo en `error`.
+   */
+  private async guardar(planificar: Planificar): Promise<boolean> {
     const original = this.state();
-    if (!original) return false;
+    if (!original || this.saving()) return false;
+    this.saving.set(true);
     this.error.set(null);
-    // Solo viajan las colecciones modificadas; la respuesta del BFF reemplaza el estado local para no quedar con datos viejos.
-    const apply = async (base: SnapshotTienda) => {
-      const update = mutate(base);
-      this.state.set({ ...base, ...update });
-      this.state.set(
-        await this.repo.save({ revision: base.revision, ...update }, this.session.requireToken()),
-      );
-    };
-    let restore = original;
-    let message = 'No pudimos guardar los cambios. La vista se restauró al último estado confirmado.';
+    let base = original;
     try {
-      await apply(original);
-      return true;
-    } catch (error) {
-      if (error instanceof ReglaTiendaError) message = error.message;
-      if (error instanceof SnapshotDesactualizadoError) {
-        // Hubo ventas u otros cambios mientras tanto: se recarga y se vuelve a aplicar el cambio sobre los datos vigentes.
+      for (let intento = 1; intento <= 2; intento++) {
+        const plan = planificar(base);
+        if ('hecho' in plan) return true;
+        if ('aviso' in plan) {
+          this.error.set(plan.aviso);
+          return false;
+        }
         try {
-          restore = await this.repo.load(this.session.requireToken());
-          await apply(restore);
+          this.state.set(
+            await this.repo.save({ revision: base.revision, ...plan.enviar }, this.session.requireToken()),
+          );
           return true;
-        } catch (retryError) {
-          if (retryError instanceof ReglaTiendaError) message = retryError.message;
+        } catch (error) {
+          if (!(error instanceof SnapshotDesactualizadoError)) throw error;
+          if (intento === 2) {
+            this.error.set(MENSAJE_DESACTUALIZADO);
+            return false;
+          }
+          // Hubo ventas u otros cambios mientras tanto: se recarga y se vuelve a planificar sobre los datos vigentes.
+          base = await this.repo.load(this.session.requireToken());
         }
       }
+      return false;
+    } catch (error) {
+      if (error instanceof SesionVencidaError) this.session.expirar();
+      else this.error.set(error instanceof ReglaTiendaError ? error.message : MENSAJE_GUARDADO);
+      return false;
+    } finally {
+      // Si se recargó y no se guardó, la vista queda con los datos vigentes.
+      if (base !== original && this.state() === original) this.state.set(base);
+      this.saving.set(false);
     }
-    this.state.set(restore);
-    this.error.set(message);
-    return false;
   }
-  upsertProduct(item: Producto): Promise<boolean> {
-    const seen = this.products().find((p) => p.id === item.id);
-    // Si el formulario no tocó el stock, se conserva el del BFF (pudo bajar por ventas desde que se abrió la ficha).
-    return this.patch((s) => {
-      const latest = s.products.find((p) => p.id === item.id);
-      const stock = latest && seen && item.stock === seen.stock ? latest.stock : item.stock;
-      return { products: this.upsert(s.products, { ...item, stock }) };
+  /** Plan para un resultado de `prepararCambio`: enviar el cambio, avisar o nada (ya está hecho). */
+  private plan(coleccion: ColeccionEditable, resultado: ResultadoCambio): Plan {
+    if (resultado.tipo === 'listo') return { enviar: { [coleccion]: { upsert: [resultado.cambio] } } };
+    const aviso = avisoDeCambio(resultado);
+    return aviso ? { aviso } : { hecho: true };
+  }
+  /** Guarda un registro: `base` es como lo vio la persona al empezar (`null` si es nuevo) y `editado`, como quedó. */
+  private guardarRegistro<T extends { readonly id: string }>(
+    coleccion: ColeccionEditable,
+    base: T | null,
+    editado: T,
+  ): Promise<boolean> {
+    return this.guardar((snapshot) => {
+      const vigentes = snapshot[coleccion] as readonly { readonly id: string }[];
+      const vigente = vigentes.find((item) => item.id === editado.id) as T | undefined;
+      return this.plan(coleccion, prepararCambio(vigente, base, editado));
     });
   }
-  deleteProduct(id: string): Promise<boolean> {
-    return this.patch((s) => ({ products: s.products.filter((x) => x.id !== id) }));
+  /** Elimina un registro; si ya no está en los datos vigentes, no hay nada que hacer. */
+  private eliminarRegistro(coleccion: ColeccionEditable, id: string): Promise<boolean> {
+    return this.guardar((snapshot) =>
+      (snapshot[coleccion] as readonly { readonly id: string }[]).some((item) => item.id === id)
+        ? { enviar: { [coleccion]: { remove: [id] } } }
+        : { hecho: true },
+    );
   }
-  upsertCategory(item: Categoria): Promise<boolean> {
-    return this.patch((s) => ({ categories: this.upsert(s.categories, item) }));
+  /** Aplica una operación sobre toda la colección vigente y envía solo los registros que cambian (tarifas). */
+  private guardarLista<T extends { readonly id: string }>(
+    coleccion: ColeccionEditable,
+    operar: (vigentes: readonly T[]) => readonly T[],
+  ): Promise<boolean> {
+    return this.guardar((snapshot) => {
+      const vigentes = snapshot[coleccion] as unknown as readonly T[];
+      const cambios = cambiosEntreListas(vigentes, operar(vigentes));
+      return cambios.upsert.length || cambios.remove.length
+        ? { enviar: { [coleccion]: cambios } }
+        : { hecho: true };
+    });
   }
-  deleteCategory(id: string): Promise<boolean> {
-    return this.patch((s) => ({ categories: s.categories.filter((x) => x.id !== id) }));
+  guardarProducto(base: Producto | null, editado: Producto): Promise<boolean> {
+    return this.guardarRegistro('products', base, editado);
   }
-  upsertBrand(item: Marca): Promise<boolean> {
-    return this.patch((s) => ({ brands: this.upsert(s.brands, item) }));
+  eliminarProducto(id: string): Promise<boolean> {
+    return this.eliminarRegistro('products', id);
   }
-  deleteBrand(id: string): Promise<boolean> {
-    return this.patch((s) => ({ brands: s.brands.filter((x) => x.id !== id) }));
+  guardarCategoria(base: Categoria | null, editado: Categoria): Promise<boolean> {
+    return this.guardarRegistro('categories', base, editado);
   }
-  upsertCustomer(item: Cliente): Promise<boolean> {
-    return this.patch((s) => ({ customers: this.upsert(s.customers, item) }));
+  eliminarCategoria(id: string): Promise<boolean> {
+    return this.eliminarRegistro('categories', id);
   }
-  deleteCustomer(id: string): Promise<boolean> {
-    return this.patch((s) => ({ customers: s.customers.filter((x) => x.id !== id) }));
+  guardarMarca(base: Marca | null, editado: Marca): Promise<boolean> {
+    return this.guardarRegistro('brands', base, editado);
   }
-  upsertUser(item: UsuarioAdmin): Promise<boolean> {
-    return this.patch((s) => ({ users: this.upsert(s.users, item) }));
+  eliminarMarca(id: string): Promise<boolean> {
+    return this.eliminarRegistro('brands', id);
   }
-  deleteUser(id: string): Promise<boolean> {
-    return this.patch((s) => ({ users: s.users.filter((x) => x.id !== id) }));
+  guardarCliente(base: Cliente | null, editado: Cliente): Promise<boolean> {
+    return this.guardarRegistro('customers', base, editado);
   }
-  upsertBanner(item: Banner): Promise<boolean> {
-    return this.patch((s) => ({ banners: this.upsert(s.banners, item) }));
+  eliminarCliente(id: string): Promise<boolean> {
+    return this.eliminarRegistro('customers', id);
   }
-  deleteBanner(id: string): Promise<boolean> {
-    return this.patch((s) => ({ banners: s.banners.filter((x) => x.id !== id) }));
+  guardarUsuario(base: UsuarioAdmin | null, editado: UsuarioAdmin): Promise<boolean> {
+    return this.guardarRegistro('users', base, editado);
   }
-  upsertRate(item: TarifaEnvio): Promise<boolean> {
-    return this.patch((s) => ({ rates: this.upsert(s.rates, item) }));
+  eliminarUsuario(id: string): Promise<boolean> {
+    return this.eliminarRegistro('users', id);
+  }
+  guardarBanner(base: Banner | null, editado: Banner): Promise<boolean> {
+    return this.guardarRegistro('banners', base, editado);
+  }
+  eliminarBanner(id: string): Promise<boolean> {
+    return this.eliminarRegistro('banners', id);
+  }
+  guardarTarifa(base: TarifaEnvio | null, editado: TarifaEnvio): Promise<boolean> {
+    return this.guardarRegistro('rates', base, editado);
+  }
+  eliminarTarifa(id: string): Promise<boolean> {
+    return this.eliminarRegistro('rates', id);
   }
   assignRatePrice(origin: string, destinations: readonly string[], price: number): Promise<boolean> {
-    return this.patch((s) => ({
-      rates: asignarPrecioTarifa(s.rates, origin, destinations, price, () => crypto.randomUUID()),
-    }));
+    return this.guardarLista<TarifaEnvio>('rates', (rates) =>
+      asignarPrecioTarifa(rates, origin, destinations, price, () => crypto.randomUUID()),
+    );
   }
   adjustRatePrices(percent: number, origin: string | null): Promise<boolean> {
-    return this.patch((s) => ({ rates: ajustarPreciosTarifas(s.rates, percent, origin) }));
+    return this.guardarLista<TarifaEnvio>('rates', (rates) => ajustarPreciosTarifas(rates, percent, origin));
   }
-  deleteRate(id: string): Promise<boolean> {
-    return this.patch((s) => ({ rates: s.rates.filter((x) => x.id !== id) }));
+  /** Cambia el estado de un pedido; si otra persona lo cambió mientras tanto, no lo pisa (PBI-0120). */
+  cambiarEstadoPedido(base: Pedido, status: EstadoPedido): Promise<boolean> {
+    return this.guardar((snapshot) => {
+      const vigente = snapshot.orders.find((item) => item.id === base.id);
+      return this.plan(
+        'orders',
+        prepararCambio(
+          vigente && { id: vigente.id, status: vigente.status },
+          { id: base.id, status: base.status },
+          { id: base.id, status },
+        ),
+      );
+    });
   }
-  updateOrder(item: Pedido): Promise<boolean> {
-    return this.patch((s) => ({ orders: this.upsert(s.orders, item) }));
+  guardarReclamo(base: Reclamo, editado: Reclamo): Promise<boolean> {
+    return this.guardarRegistro('complaints', base, editado);
   }
-  updateComplaint(item: Reclamo): Promise<boolean> {
-    return this.patch((s) => ({ complaints: this.upsert(s.complaints, item) }));
-  }
-  updateConfig(config: ConfiguracionTienda): Promise<boolean> {
-    return this.patch(() => ({ config }));
-  }
-  private upsert<T extends { id: string }>(items: readonly T[], item: T): readonly T[] {
-    return items.some((x) => x.id === item.id)
-      ? items.map((x) => (x.id === item.id ? item : x))
-      : [...items, item];
+  /** Guarda solo las claves de la configuración que cambió la persona (PBI-0120 y PBI-0125). */
+  guardarConfiguracion(base: ConfiguracionTienda, editado: ConfiguracionTienda): Promise<boolean> {
+    return this.guardar((snapshot) => {
+      const resultado = prepararCambio(
+        { id: 'config', ...snapshot.config },
+        { id: 'config', ...base },
+        { id: 'config', ...editado },
+      );
+      if (resultado.tipo !== 'listo') {
+        const aviso = avisoDeCambio(resultado);
+        return aviso ? { aviso } : { hecho: true };
+      }
+      const config: Record<string, unknown> = { ...resultado.cambio };
+      delete config['id'];
+      return { enviar: { config: config as Partial<ConfiguracionTienda> } };
+    });
   }
 }

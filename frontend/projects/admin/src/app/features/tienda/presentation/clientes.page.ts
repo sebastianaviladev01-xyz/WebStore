@@ -3,6 +3,9 @@ import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Valida
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TiendaFacade } from '../application/tienda.facade';
+import { Cliente } from '../domain/tienda.model';
+
+const CLIENTE_VACIO = { name: '', email: '', document: '' };
 @Component({
   selector: 'ws-customers-page',
   imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
@@ -35,7 +38,7 @@ import { TiendaFacade } from '../application/tienda.facade';
         }
       </section>
       <form [formGroup]="form" (ngSubmit)="save()" class="admin-card p-6">
-        <h2 class="text-xl font-semibold">Cliente</h2>
+        <h2 class="text-xl font-semibold">{{ editing() ? 'Editar cliente' : 'Nuevo cliente' }}</h2>
         <div class="mt-5 grid gap-3">
           <mat-form-field>
             <mat-label>Nombre</mat-label>
@@ -50,12 +53,24 @@ import { TiendaFacade } from '../application/tienda.facade';
             <input matInput formControlName="document" />
           </mat-form-field>
         </div>
-        <button
-          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
-          type="submit"
-        >
-          Guardar
-        </button>
+        <div class="flex flex-wrap gap-3">
+          <button
+            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            type="submit"
+            [disabled]="admin.saving()"
+          >
+            {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
+          </button>
+          @if (editing()) {
+            <button
+              type="button"
+              class="rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
+              (click)="reset()"
+            >
+              Cancelar
+            </button>
+          }
+        </div>
       </form>
     </div>
   `,
@@ -66,6 +81,10 @@ export class ClientesPage {
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
   private readonly formDirective = viewChild.required(FormGroupDirective);
   protected readonly editing = signal<string | null>(null);
+  /** El cliente tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
+  private base: Cliente | null = null;
+  /** Id del cliente nuevo; cambia al empezar otro, para que un segundo envío no cree otro (PBI-0121). */
+  private idNuevo = crypto.randomUUID();
   protected readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
@@ -74,22 +93,30 @@ export class ClientesPage {
   protected edit(id: string) {
     const c = this.admin.customers().find((x) => x.id === id);
     if (!c) return;
+    this.base = c;
     this.editing.set(id);
     this.form.setValue({ name: c.name, email: c.email, document: c.document });
   }
   protected async save() {
-    if (this.form.invalid) return;
-    const old = this.admin.customers().find((x) => x.id === this.editing());
-    const saved = await this.admin.upsertCustomer({
-      id: this.editing() ?? crypto.randomUUID(),
-      orders: old?.orders ?? 0,
+    if (this.form.invalid || this.admin.saving()) return;
+    const base = this.base;
+    const saved = await this.admin.guardarCliente(base, {
+      id: base?.id ?? this.idNuevo,
+      orders: base?.orders ?? 0,
       ...this.form.getRawValue(),
     });
-    if (!saved) return;
-    this.editing.set(null);
-    this.formDirective().resetForm({ name: '', email: '', document: '' });
+    if (saved) this.reset();
   }
+  /** Sale de la edición (PBI-0130): el formulario vuelve a «Nuevo cliente», vacío. */
+  protected reset() {
+    this.editing.set(null);
+    this.base = null;
+    this.idNuevo = crypto.randomUUID();
+    this.formDirective().resetForm(CLIENTE_VACIO);
+  }
+  /** Si se elimina el cliente en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string) {
-    if (confirm('¿Eliminar cliente?')) await this.admin.deleteCustomer(id);
+    if (!confirm('¿Eliminar cliente?')) return;
+    if ((await this.admin.eliminarCliente(id)) && this.editing() === id) this.reset();
   }
 }

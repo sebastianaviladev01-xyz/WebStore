@@ -8,6 +8,7 @@ import { MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { filtrarTarifas, paginarTarifas, leerDistritos } from '../domain/tarifa-envio.rules';
+import { TarifaEnvio } from '../domain/tienda.model';
 
 const EMPTY_RATE = { origin: '', destinations: '', price: 0 };
 /** Filas por página: con unas 1.600 tarifas, la tabla se recorre en páginas cortas. */
@@ -222,6 +223,8 @@ export class TarifasEnvioPage {
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
   private readonly formDirective = viewChild.required<FormGroupDirective>('rateForm');
   protected readonly editing = signal<string | null>(null);
+  /** La tarifa tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra ella (PBI-0120). */
+  private base: TarifaEnvio | null = null;
   protected readonly originFilter = signal('');
   protected readonly query = signal('');
   private readonly page = signal(1);
@@ -278,11 +281,13 @@ export class TarifasEnvioPage {
   protected edit(id: string): void {
     const rate = this.admin.rates().find((candidate) => candidate.id === id);
     if (!rate) return;
+    this.base = rate;
     this.editing.set(id);
     this.form.setValue({ origin: rate.origin, destinations: rate.destination, price: rate.price });
   }
 
   protected async save(): Promise<void> {
+    if (this.admin.saving()) return;
     const destinations = leerDistritos(this.form.controls.destinations.value);
     if (this.form.invalid || destinations.length === 0) {
       this.form.markAllAsTouched();
@@ -291,7 +296,7 @@ export class TarifasEnvioPage {
     const { origin, price } = this.form.getRawValue();
     const editing = this.editing();
     const saved = editing
-      ? await this.admin.upsertRate({
+      ? await this.admin.guardarTarifa(this.base, {
           id: editing,
           origin: origin.trim(),
           destination: destinations[0],
@@ -312,11 +317,13 @@ export class TarifasEnvioPage {
 
   protected async remove(id: string): Promise<void> {
     if (!confirm('¿Eliminar tarifa?')) return;
-    await this.admin.deleteRate(id);
+    // Si se elimina la tarifa en edición, el formulario sale de la edición: no se vuelve a crear (PBI-0122).
+    if ((await this.admin.eliminarTarifa(id)) && this.editing() === id) this.reset();
   }
 
   protected reset(): void {
     this.editing.set(null);
+    this.base = null;
     this.formDirective().resetForm(EMPTY_RATE);
   }
 }

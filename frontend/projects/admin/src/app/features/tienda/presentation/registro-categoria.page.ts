@@ -16,6 +16,7 @@ import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.rules';
+import { Categoria } from '../domain/tienda.model';
 
 /**
  * Interfaz de registro de una categoría (feature 008): `/categorias/nueva` y `/categorias/:id`. Es el formulario que
@@ -85,10 +86,11 @@ import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.ru
         }
         <div class="mt-4 flex gap-3">
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
+            [disabled]="admin.saving()"
           >
-            Guardar
+            {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
           <a
             class="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
@@ -109,6 +111,10 @@ export class RegistroCategoriaPage {
   /** `:id` de `/categorias/:id` (`withComponentInputBinding`); no llega en `/categorias/nueva`. */
   readonly id = input<string>();
   protected readonly editing = computed(() => this.id() ?? null);
+  /** Id de la categoría nueva, fijo mientras la página está abierta: un segundo envío no crea otra (PBI-0121). */
+  private readonly idNuevo = crypto.randomUUID();
+  /** La categoría tal como se cargó al abrir la edición: lo que cambió se calcula contra ella (PBI-0120). */
+  private base: Categoria | null = null;
   /** Mientras la edición trae los datos actuales: «Cargando…» en lugar del formulario. */
   protected readonly loadingCategory = signal(false);
   /** La categoría en edición ya no está en el snapshot actual: otra persona la eliminó. */
@@ -154,20 +160,21 @@ export class RegistroCategoriaPage {
       );
     }
     const c = this.admin.categories().find((x) => x.id === id);
+    this.base = c ?? null;
     if (c) this.form.setValue({ name: c.name, parentId: c.parentId ?? '', order: c.order ?? null });
     else this.missing.set(true);
     this.loadingCategory.set(false);
   }
   protected async save() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.admin.saving()) return;
     const v = this.form.getRawValue();
-    const id = this.editing() ?? crypto.randomUUID();
+    const id = this.editing() ?? this.idNuevo;
     if (v.parentId && (v.parentId === id || idsDescendientes(this.admin.categories(), id).has(v.parentId))) {
       this.error.set('Elige un padre que no sea la misma categoría ni una de sus subcategorías.');
       return;
     }
     this.error.set(null);
-    const saved = await this.admin.upsertCategory({
+    const saved = await this.admin.guardarCategoria(this.base, {
       id,
       name: v.name,
       parentId: v.parentId || undefined,

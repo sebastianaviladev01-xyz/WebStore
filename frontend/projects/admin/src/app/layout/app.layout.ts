@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, linkedSignal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
 import {
   isActive,
   type IsActiveMatchOptions,
@@ -225,6 +233,10 @@ export class AppLayout {
 
   constructor() {
     void this.admin.load();
+    // PBI-0124: si la sesión vence o se cierra a mitad de una operación, se vuelve al acceso, que dice por qué.
+    effect(() => {
+      if (!this.session.isAuthenticated()) untracked(() => void this.router.navigate(['/login']));
+    });
   }
 
   protected grupoAbierto(id: NavigationGroupId): boolean {
