@@ -1,5 +1,6 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { normalizeEmail, requireFields } from '../../domain/comun/validacion.rules.mjs';
+import { DUMMY_CREDENTIAL } from '../../domain/cuentas/cuenta.rules.mjs';
 import { can } from '../../domain/sesion/rol.rules.mjs';
 import { findAliveSession } from '../../domain/sesion/sesion.rules.mjs';
 import { openSession } from '../sesion/sesiones.mjs';
@@ -35,8 +36,11 @@ export function createAdminSesionesUseCases({ store, security }) {
     const user = state.users.find(
       (candidate) => normalizeEmail(candidate.email) === email && candidate.active,
     );
-    const credential = user ? state.adminCredentials.find((candidate) => candidate.userId === user.id) : null;
-    if (!user || !security.passwordMatches(command.password, credential))
+    // La contraseña se compara siempre, con una credencial ficticia si no hay usuario activo con ese correo, para
+    // que la respuesta tarde lo mismo exista o no (PBI-0100).
+    const credential =
+      (user && state.adminCredentials.find((candidate) => candidate.userId === user.id)) ?? DUMMY_CREDENTIAL;
+    if (!security.passwordMatches(command.password, credential) || !user)
       throw new DomainError(
         'unauthenticated',
         'INVALID_ADMIN_CREDENTIALS',

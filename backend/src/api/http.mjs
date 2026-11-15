@@ -39,16 +39,18 @@ function coincideEtag(ifNoneMatch, etag) {
 
 /**
  * Hoja de estilos con caché revalidable (ADR-0010): `ETag` con el SHA-256 recortado del cuerpo, `no-cache` para
- * revalidar en cada carga y `Vary: Cookie` porque, en modo demo, la cookie de la vista previa cambia el cuerpo.
+ * revalidar en cada carga y, solo en modo demo (`varyByCookie`), `Vary: Cookie`, porque entonces la cookie de la
+ * vista previa cambia el cuerpo; fuera de él, una cookie cualquiera no parte la caché compartida (PBI-0073).
  * Si `If-None-Match` coincide, responde `304` sin cuerpo. No lleva cabeceras CORS: se carga con `<link>`.
  */
-export function css(texto, req) {
+export function css(texto, req, { varyByCookie = false } = {}) {
   const etag = `"${createHash('sha256').update(texto).digest('base64url').slice(0, 22)}"`;
   const headers = {
     'content-type': 'text/css; charset=utf-8',
     'cache-control': 'no-cache',
+    'x-content-type-options': 'nosniff',
     etag,
-    vary: 'Cookie',
+    ...(varyByCookie ? { vary: 'Cookie' } : {}),
   };
   return coincideEtag(req.headers['if-none-match'], etag)
     ? { status: 304, headers, text: '' }
@@ -76,6 +78,9 @@ function corsHeaders(req, allowedOrigins) {
     'content-type': 'application/json; charset=utf-8',
     'access-control-allow-methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
     'access-control-allow-headers': 'content-type,authorization,x-order-token',
+    // Las respuestas llevan tokens y datos personales: ningún navegador ni intermediario las guarda (PBI-0100).
+    'cache-control': 'no-store',
+    'x-content-type-options': 'nosniff',
     vary: 'Origin',
   };
   if (origin && allowedOrigins.has(origin)) headers['access-control-allow-origin'] = origin;

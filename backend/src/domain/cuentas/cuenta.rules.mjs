@@ -15,6 +15,18 @@ export function requirePassword(value) {
   return password;
 }
 
+/** Intentos fallidos que admite un código de seis dígitos antes de anularse (PBI-0100). */
+export const MAX_CODE_ATTEMPTS = 5;
+
+/** El código venció (o no hay vencimiento guardado). */
+export const codeExpired = (expiresAt) => !expiresAt || new Date(expiresAt).getTime() < Date.now();
+
 /** Un código temporal vale si coincide con el emitido y todavía no venció. */
 export const codeIsValid = (expectedHash, expiresAt, candidateHash) =>
-  expectedHash === candidateHash && !(new Date(expiresAt).getTime() < Date.now());
+  Boolean(expectedHash) && expectedHash === candidateHash && !codeExpired(expiresAt);
+
+/**
+ * Credencial ficticia con la forma de una real: el ingreso la compara cuando el correo no existe, para tardar lo
+ * mismo que con uno que sí (PBI-0100). Ninguna contraseña coincide con ella.
+ */
+export const DUMMY_CREDENTIAL = Object.freeze({ salt: '0'.repeat(32), hash: '0'.repeat(128) });

@@ -262,10 +262,44 @@ try {
     }),
   });
   if (!registration.testCode) throw new Error('El canal de prueba no entregó el código temporal');
+  if ('account' in registration) throw new Error('El alta no debe devolver los datos de la cuenta');
+  // Reenviar el código (PBI-0098): 202 con un código nuevo; el anterior deja de valer.
+  const reenvio = await raw('/bff/account-verification-requests', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'account@example.com' }),
+  });
+  const codigoNuevo = reenvio.status === 202 ? (await reenvio.json()).testCode : undefined;
+  if (!/^\d{6}$/.test(codigoNuevo ?? ''))
+    throw new Error('Reenviar el código debe responder 202 con un código');
+  const sinCuenta = await raw('/bff/account-verification-requests', {
+    method: 'POST',
+    body: JSON.stringify({ email: 'nadie@example.com' }),
+  });
+  if (sinCuenta.status !== 202 || 'testCode' in (await sinCuenta.json()))
+    throw new Error('Reenviar a un correo sin cuenta debe responder 202 sin código');
   await request('/bff/account-verifications', {
     method: 'POST',
-    body: JSON.stringify({ email: 'account@example.com', code: registration.testCode }),
+    body: JSON.stringify({ email: 'account@example.com', code: codigoNuevo }),
   });
+  // Alta uniforme (PBI-0100): un correo ya verificado responde 201 como uno nuevo, sin código ni cambios.
+  const repetida = await raw('/bff/accounts', {
+    method: 'POST',
+    body: JSON.stringify({
+      fullName: 'Otra persona',
+      email: 'account@example.com',
+      phone: '999999999',
+      document: '87654321',
+      password: 'OtraClave2026',
+    }),
+  });
+  const cuerpoRepetida = repetida.status === 201 ? await repetida.json() : {};
+  if (repetida.status !== 201 || cuerpoRepetida.testCode || cuerpoRepetida.message !== registration.message)
+    throw new Error('El alta de un correo ya verificado debe responder igual que una nueva, sin código');
+  const cabeceras = (await raw('/bff/catalog/products')).headers;
+  if (cabeceras.get('cache-control') !== 'no-store' || cabeceras.get('x-content-type-options') !== 'nosniff')
+    throw new Error(
+      'Las respuestas JSON deben llevar Cache-Control: no-store y X-Content-Type-Options: nosniff',
+    );
   const accountSession = await request('/bff/account-sessions', {
     method: 'POST',
     body: JSON.stringify({ email: 'account@example.com', password: 'CuentaSmoke2026' }),
@@ -570,10 +604,13 @@ try {
     primeraHoja.status !== 200 ||
     primeraHoja.headers.get('content-type') !== 'text/css; charset=utf-8' ||
     primeraHoja.headers.get('cache-control') !== 'no-cache' ||
-    !/(^|,\s*)Cookie(\s*,|$)/i.test(primeraHoja.headers.get('vary') ?? '') ||
+    primeraHoja.headers.get('x-content-type-options') !== 'nosniff' ||
+    /(^|,\s*)Cookie(\s*,|$)/i.test(primeraHoja.headers.get('vary') ?? '') ||
     !/^"[^"]+"$/.test(etagB ?? '')
   )
-    throw new Error('theme.css debe responder text/css con no-cache, Vary: Cookie y un ETag entre comillas');
+    throw new Error(
+      'theme.css debe responder text/css con no-cache, nosniff, un ETag entre comillas y, fuera del modo demo, sin Vary: Cookie',
+    );
   const declaraciones =
     cuerpoB
       .match(/^:root:root \{\n([\s\S]*)\}\n$/)?.[1]

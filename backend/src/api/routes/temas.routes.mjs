@@ -33,7 +33,9 @@ export const temasRoutes = ({ consultas, casosDeUso, adminSesiones, modoDemo }) 
       method: 'GET',
       path: '/bff/appearance/theme.css',
       handle: ({ req }) =>
-        css(consultas.hojaDeEstilos(modoDemo, modoDemo ? cookie(req, COOKIE_VISTA_PREVIA) : undefined), req),
+        css(consultas.hojaDeEstilos(modoDemo, modoDemo ? cookie(req, COOKIE_VISTA_PREVIA) : undefined), req, {
+          varyByCookie: modoDemo,
+        }),
     },
     { method: 'GET', path: '/bff/appearance', handle: () => ok(consultas.apariencia(modoDemo)) },
     {
