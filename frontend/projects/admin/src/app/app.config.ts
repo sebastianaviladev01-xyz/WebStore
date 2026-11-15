@@ -11,6 +11,8 @@ import { BffTiendaGateway } from './features/tienda/data/bff-tienda.gateway';
 import { TemasGateway } from './features/temas/domain/temas.gateway';
 import { BffTemasGateway } from './features/temas/data/bff-temas.gateway';
 import { TemasFacade } from './features/temas/application/temas.facade';
+import { NotificacionesGateway } from './features/notificaciones/domain/notificaciones.gateway';
+import { BffNotificacionesGateway } from './features/notificaciones/data/bff-notificaciones.gateway';
 import { MODO_DEMO } from './core/modo-demo';
 
 export const adminConfig: ApplicationConfig = {
@@ -24,6 +26,7 @@ export const adminConfig: ApplicationConfig = {
     { provide: SesionGateway, useClass: BffSesionGateway },
     { provide: TiendaGateway, useClass: BffTiendaGateway },
     { provide: TemasGateway, useClass: BffTemasGateway },
+    { provide: NotificacionesGateway, useClass: BffNotificacionesGateway },
     // El acceso (feature sesion) no puede depender de temas: recibe el modo demo por la raíz (PBI-0071).
     { provide: MODO_DEMO, useFactory: () => inject(TemasFacade).modoDemo },
   ],
