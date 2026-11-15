@@ -31,6 +31,7 @@ import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { requirePassword } from '../../domain/cuentas/cuenta.rules.mjs';
 import { changeOrderStatus } from '../../domain/pedidos/pedido.rules.mjs';
 import { can } from '../../domain/sesion/rol.rules.mjs';
+import { conEvento, eventoEstadoDePedido } from '../../domain/admin/actividad.rules.mjs';
 import { buildAdminSnapshot } from './admin.views.mjs';
 
 function applyProducts(state, value, role) {
@@ -68,12 +69,23 @@ function applyUsers(state, value, actor, security) {
   // Un usuario eliminado o desactivado pierde sus sesiones abiertas.
   const activeIds = new Set(state.users.filter((item) => item.active).map((item) => item.id));
   state.adminSessions = state.adminSessions.filter((session) => activeIds.has(session.userId));
+  // Y un usuario eliminado, su «visto» de las notificaciones (PBI-0033).
+  const ids = new Set(state.users.map((item) => item.id));
+  state.adminNotificationsSeen = (state.adminNotificationsSeen ?? []).filter((item) => ids.has(item.userId));
 }
 
 function applyOrderStatuses(state, orders) {
   for (const summary of requireValidOrderStatuses(orderStatusChanges(orders))) {
     const order = state.orders.find((candidate) => candidate.id === summary.id);
-    if (order) state.products = changeOrderStatus(order, summary.status, state.products);
+    if (!order) continue;
+    const anterior = order.status;
+    state.products = changeOrderStatus(order, summary.status, state.products);
+    // PBI-0028: solo un cambio real deja su evento.
+    if (order.status !== anterior)
+      state.activity = conEvento(
+        state.activity ?? [],
+        eventoEstadoDePedido({ at: nowIso() }, order, order.status, 'equipo'),
+      );
   }
 }
 
@@ -127,7 +139,8 @@ function applyAdminChanges(state, next, user, security) {
 }
 
 /** Snapshot del Admin: lectura filtrada por rol, guardado parcial con control de revisión y reinicio. */
-export function createSnapshotUseCases({ store, security, resetEnabled = false }) {
+export function createSnapshotUseCases({ store, security, resetEnabled = false, personasEnLinea = () => 0 }) {
+  const vista = (user) => buildAdminSnapshot(store.state, user.role, personasEnLinea);
   function save(user, next) {
     // El Admin envía solo las colecciones que cambió, junto con la revisión sobre la que trabajó.
     if (next.revision !== store.state.revision)
@@ -142,7 +155,7 @@ export function createSnapshotUseCases({ store, security, resetEnabled = false }
     bumpRevision(draft);
     store.state = draft;
     store.save();
-    return buildAdminSnapshot(store.state, user.role);
+    return vista(user);
   }
 
   /**
@@ -163,11 +176,11 @@ export function createSnapshotUseCases({ store, security, resetEnabled = false }
     store.state.revision = previousRevision + 1;
     store.state.appearance.revision = previousThemesRevision + 1;
     store.save();
-    return buildAdminSnapshot(store.state, user.role);
+    return vista(user);
   }
 
   return {
-    get: (user) => buildAdminSnapshot(store.state, user.role),
+    get: vista,
     save,
     reset,
   };

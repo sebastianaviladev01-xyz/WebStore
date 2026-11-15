@@ -1,7 +1,10 @@
 import { bearerToken, created, noContent, ok, readJsonBody } from '../http.mjs';
 
-/** Panel administrativo: sesión, snapshot por rol, guardado con control de revisión y reinicio. */
-export const adminRoutes = (adminSesiones, snapshot) => [
+/**
+ * Panel administrativo: sesión, snapshot por rol, guardado con control de revisión y reinicio; desde el lote 07b,
+ * perfil propio (PBI-0034) y notificaciones (PBI-0033). Cada ruta valida la sesión y el permiso antes de leer el cuerpo.
+ */
+export const adminRoutes = (adminSesiones, snapshot, perfil, notificaciones) => [
   {
     method: 'POST',
     path: '/bff/admin/sessions',
@@ -32,6 +35,39 @@ export const adminRoutes = (adminSesiones, snapshot) => [
       // La sesión se valida antes de leer el cuerpo.
       const { user } = adminSesiones.requireAdmin(bearerToken(req));
       return ok(snapshot.save(user, await readJsonBody(req)));
+    },
+  },
+  {
+    method: 'PATCH',
+    path: '/bff/admin/profile',
+    handle: async ({ req }) => {
+      const token = bearerToken(req);
+      adminSesiones.requireAdmin(token);
+      return ok(perfil.actualizarDatos(token, await readJsonBody(req)));
+    },
+  },
+  {
+    method: 'PUT',
+    path: '/bff/admin/profile/password',
+    handle: async ({ req }) => {
+      const token = bearerToken(req);
+      adminSesiones.requireAdmin(token);
+      perfil.cambiarContrasena(token, await readJsonBody(req));
+      return noContent();
+    },
+  },
+  {
+    method: 'GET',
+    path: '/bff/admin/notifications',
+    handle: ({ req }) =>
+      ok(notificaciones.get(adminSesiones.requireAdmin(bearerToken(req), 'orders.manage').user)),
+  },
+  {
+    method: 'PUT',
+    path: '/bff/admin/notifications/seen',
+    handle: async ({ req }) => {
+      const { user } = adminSesiones.requireAdmin(bearerToken(req), 'orders.manage');
+      return ok(notificaciones.marcarVisto(user, await readJsonBody(req)));
     },
   },
   {

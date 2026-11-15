@@ -91,6 +91,13 @@ export function requireValidProducts(products) {
   return products;
 }
 
+/** Imagen pequeña de la categoría (lote 07b, PBI-0052): opcional, como Data URL de una imagen, de hasta 100 000 caracteres. */
+export const MAX_IMAGEN_DE_CATEGORIA = 100_000;
+const IMAGEN_DE_CATEGORIA = /^data:image\/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+=*$/;
+const imagenDeCategoria = (value) =>
+  value === null ||
+  (isText(value) && value.length <= MAX_IMAGEN_DE_CATEGORIA && IMAGEN_DE_CATEGORIA.test(value));
+
 export function requireValidCategories(categories) {
   requireItems(categories, 'categories');
   for (const category of categories)
@@ -98,6 +105,12 @@ export function requireValidCategories(categories) {
       ['name', hasText, 'cada categoría necesita un nombre'],
       ['parentId', optionalText, 'la categoría padre no es válida'],
       ['order', (v) => v === undefined || v === null || Number.isFinite(v), 'el orden no es válido'],
+      [
+        'imageUrl',
+        imagenDeCategoria,
+        'la imagen de la categoría debe ser PNG, JPG, WebP o SVG de hasta 70 KB; usa una más pequeña',
+        { optional: true },
+      ],
     ]);
   return categories;
 }

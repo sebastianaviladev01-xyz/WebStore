@@ -1,5 +1,6 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
+import { conEvento, eventoEstadoDePedido } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { bestShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
 import { pickShipping, requireDeliveryDate } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
@@ -76,8 +77,14 @@ export function createPedidosUseCases({ store, security }) {
   function modify(order, action, data) {
     if (action === 'shipping') changeShipping(order, data.shipping);
     if (action === 'delivery-date') changeDeliveryDate(order, data);
-    if (action === 'cancel')
+    if (action === 'cancel') {
       store.state.products = changeOrderStatus(order, 'cancelled', store.state.products);
+      // PBI-0028: el cliente canceló desde la tienda.
+      store.state.activity = conEvento(
+        store.state.activity ?? [],
+        eventoEstadoDePedido({ at: nowIso() }, order, 'cancelled', 'cliente'),
+      );
+    }
     bumpRevision(store.state);
     store.save();
     return orderToPublic(order);

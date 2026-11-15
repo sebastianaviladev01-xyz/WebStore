@@ -10,6 +10,8 @@ const categoryToPublic = (category) => ({
   description: `Explora productos de ${category.name}.`,
   parentId: category.parentId,
   order: category.order,
+  // Lote 07b (PBI-0052): imagen pequeña opcional; sin ella, `null` y la tienda se ve como antes.
+  imageUrl: category.imageUrl ?? null,
 });
 
 /** Ficha pública de un producto; marca y categoría se resuelven con el estado vigente. */
