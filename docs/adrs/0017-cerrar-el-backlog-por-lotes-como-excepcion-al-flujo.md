@@ -58,7 +58,7 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. La sesión principal re
 
 **Orden de ejecución, por prioridad** (Sebastián Avila, 2026-11-14: «ordénalos por orden de prioridad»): 01, 04, 06, 03, 05, 07, 02, 08 y 09. Va primero lo que puede perder datos, dinero o seguridad, y al final la deuda técnica y los documentos. El número de cada lote no cambia.
 
-El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un hallazgo fuera del alcance de un lote se anota con su PBI y se asigna al lote de su área: PBI-0143, del lote 01, va en el 04; PBI-0144, 0145 y 0146, del lote 04, van en el 08, el 06 y el 05; PBI-0148 a 0151, del lote 06, van en el 07. El lote 06 cambia la forma de guardar del Admin: [ADR-0018](0018-guardar-los-cambios-del-admin-por-registro.md). PBI-0152, del lote 03, va en el 02. El lote 03 amplía el mapa del tema: [ADR-0019](0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md).
+El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un hallazgo fuera del alcance de un lote se anota con su PBI y se asigna al lote de su área: PBI-0143, del lote 01, va en el 04; PBI-0144, 0145 y 0146, del lote 04, van en el 08, el 06 y el 05; PBI-0148 a 0151, del lote 06, van en el 07. El lote 06 cambia la forma de guardar del Admin: [ADR-0018](0018-guardar-los-cambios-del-admin-por-registro.md). PBI-0152, del lote 03, va en el 02. PBI-0153, del lote 05, va en el 07. El lote 03 amplía el mapa del tema: [ADR-0019](0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md).
 
 *Motivo:* el plazo no admite seis etapas por elemento, y los lotes conservan lo que protege el resultado: prueba primero, CI, capturas y revisión por PR.
 
