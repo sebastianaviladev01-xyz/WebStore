@@ -39,6 +39,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el superadministrador lo desactiva o lo elimina
 - **Entonces** sus sesiones dejan de ser válidas.
 
+### Escenario 05 – Correo repetido
+
+- **Dado** que ya hay un usuario con un correo (sin contar mayúsculas ni espacios)
+- **Cuando** el superadministrador guarda otro usuario con ese correo
+- **Entonces** el Admin no lo envía y lo dice en el campo «Correo»; el BFF también lo rechaza.
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0123), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - Los permisos exactos del vendedor están pendientes de confirmar (PBI-0013 del [backlog](../../../backlog.md)).

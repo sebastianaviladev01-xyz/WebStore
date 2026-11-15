@@ -123,11 +123,11 @@ export class ReclamacionesPage {
   }
   protected async save() {
     const item = this.selected();
-    if (!item || this.form.invalid) return;
-    const updated = { ...item, ...this.form.getRawValue(), updatedAt: new Date().toISOString() };
+    if (!item || this.form.invalid || this.admin.saving()) return;
     this.saved.set(false);
-    if (!(await this.admin.updateComplaint(updated))) return;
-    this.selected.set(updated);
+    // Solo viajan el estado y la respuesta que cambió la persona; la fecha de actualización la pone el BFF.
+    if (!(await this.admin.guardarReclamo(item, { ...item, ...this.form.getRawValue() }))) return;
+    this.selected.set(this.admin.complaints().find((reclamo) => reclamo.id === item.id) ?? null);
     this.saved.set(true);
   }
 }

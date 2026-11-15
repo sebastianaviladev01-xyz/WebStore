@@ -240,6 +240,6 @@ export class ProductosPage {
   }
   protected async remove(id: string) {
     if (this.session.can('products.manage') && confirm('¿Eliminar producto?'))
-      await this.admin.deleteProduct(id);
+      await this.admin.eliminarProducto(id);
   }
 }

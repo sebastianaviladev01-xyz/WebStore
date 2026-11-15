@@ -1,5 +1,6 @@
 import {
   applyComplaintUpdates,
+  orderStatusChanges,
   requireValidBanners,
   requireValidBrands,
   requireValidCategories,
@@ -10,12 +11,20 @@ import {
   requireValidProducts,
   requireValidRates,
   requireValidUserShapes,
+  resolveCollectionChanges,
 } from '../../domain/admin/colecciones.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
 import { requireWritableCollections } from '../../domain/admin/snapshot.rules.mjs';
 import { requireValidAdminUsers } from '../../domain/admin/usuario-admin.rules.mjs';
-import { requireValidCategoryTree } from '../../domain/catalogo/categoria.rules.mjs';
-import { applyProductContentEdits } from '../../domain/catalogo/producto.rules.mjs';
+import {
+  requireRemovedWithoutChildren,
+  requireValidCategoryTree,
+} from '../../domain/catalogo/categoria.rules.mjs';
+import {
+  applyProductContentEdits,
+  requireRemovedNotInUse,
+  requireUniqueSlugs,
+} from '../../domain/catalogo/producto.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { nowIso } from '../../domain/comun/reloj.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
@@ -24,16 +33,21 @@ import { changeOrderStatus } from '../../domain/pedidos/pedido.rules.mjs';
 import { can } from '../../domain/sesion/rol.rules.mjs';
 import { buildAdminSnapshot } from './admin.views.mjs';
 
-function applyProducts(state, products, role) {
-  if (!Array.isArray(products))
+function applyProducts(state, value, role) {
+  if (value === null || typeof value !== 'object')
     throw new DomainError('validation', 'INVALID_PRODUCTS', 'La colección de productos es obligatoria.');
-  if (can(role, 'products.manage')) state.products = requireValidProducts(products);
+  const products = resolveCollectionChanges('products', state.products, value);
+  let next;
+  if (can(role, 'products.manage')) next = requireValidProducts(products);
   else if (can(role, 'products.edit'))
-    state.products = applyProductContentEdits(state.products, requireValidProductContent(products));
+    next = applyProductContentEdits(state.products, requireValidProductContent(products));
   else throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
+  requireUniqueSlugs(next, state.products);
+  state.products = next;
 }
 
-function applyUsers(state, users, actor, security) {
+function applyUsers(state, value, actor, security) {
+  const users = resolveCollectionChanges('users', state.users, value);
   requireValidUserShapes(users);
   requireValidAdminUsers(users, actor);
   const previousIds = new Set(state.users.map((item) => item.id));
@@ -53,16 +67,20 @@ function applyUsers(state, users, actor, security) {
 }
 
 function applyOrderStatuses(state, orders) {
-  for (const summary of requireValidOrderStatuses(orders)) {
+  for (const summary of requireValidOrderStatuses(orderStatusChanges(orders))) {
     const order = state.orders.find((candidate) => candidate.id === summary.id);
     if (order) state.products = changeOrderStatus(order, summary.status, state.products);
   }
 }
 
-/** Colecciones que se reemplazan enteras, cada una con la regla que valida su forma y contenido (PBI-0095). */
+/**
+ * Colecciones que se reemplazan enteras, o que se cambian con `{ upsert, remove }` (lote 06), cada una con la regla
+ * que valida su forma y contenido (PBI-0095). Cada regla recibe la lista resultante y la vigente.
+ */
 const REPLACEABLE = {
-  categories: (categories) => {
+  categories: (categories, previous) => {
     requireValidCategories(categories);
+    requireRemovedWithoutChildren(categories, previous);
     requireValidCategoryTree(categories);
     return categories;
   },
@@ -75,11 +93,24 @@ const REPLACEABLE = {
 /** Aplica los cambios sobre `state`, que es una copia: si algo falla, el estado vigente no se toca (PBI-0089). */
 function applyAdminChanges(state, next, user, security) {
   requireWritableCollections(next, user.role);
+  const previous = { brands: state.brands, categories: state.categories };
   if (next.products !== undefined) applyProducts(state, next.products, user.role);
   for (const [key, validate] of Object.entries(REPLACEABLE))
-    if (next[key] !== undefined) state[key] = validate(next[key]);
+    if (next[key] !== undefined)
+      state[key] = validate(resolveCollectionChanges(key, state[key], next[key]), state[key]);
+  // PBI-0131: después de aplicar los productos del mismo guardado (pudieron cambiar de marca o de categoría).
+  requireRemovedNotInUse(state.products, {
+    previousBrands: previous.brands,
+    nextBrands: state.brands,
+    previousCategories: previous.categories,
+    nextCategories: state.categories,
+  });
   if (next.complaints !== undefined)
-    state.complaints = applyComplaintUpdates(state.complaints, next.complaints, nowIso());
+    state.complaints = applyComplaintUpdates(
+      state.complaints,
+      resolveCollectionChanges('complaints', state.complaints, next.complaints),
+      nowIso(),
+    );
   // Contenido ya no guarda colores (D3): si un Admin anterior los envía, se descartan sin error (AC-22).
   if (next.config !== undefined)
     state.config = requireValidConfig(

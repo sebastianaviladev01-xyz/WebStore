@@ -265,6 +265,81 @@ try {
   if (partial.revision !== fresh.revision + 1 || partial.products[0].stock !== 13)
     throw new Error('El guardado parcial del Admin no conservó el stock o no avanzó la revisión');
 
+  // Lote 06 (ADR-0017): cambios por registro y por campo, nombres únicos, marcas en uso y términos en el pedido.
+  const conCambio = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: partial.revision,
+      products: { upsert: [{ id: partial.products[1].id, price: partial.products[1].price + 1 }] },
+    }),
+  });
+  if (
+    conCambio.products[1].price !== partial.products[1].price + 1 ||
+    conCambio.products[0].stock !== 13 ||
+    conCambio.products[1].name !== partial.products[1].name
+  )
+    throw new Error('Un cambio { upsert } no aplicó solo el campo enviado (PBI-0120)');
+  const slugRepetido = await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: conCambio.revision,
+        products: {
+          upsert: [
+            {
+              ...conCambio.products[0],
+              id: 'p-smoke-slug',
+              sku: 'SMOKE-SLUG',
+              name: conCambio.products[0].name.toUpperCase(),
+            },
+          ],
+        },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Dirección de ficha repetida (PBI-0129)',
+  );
+  if (slugRepetido.details?.field !== 'slug')
+    throw new Error('La dirección repetida no indica el campo slug');
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: conCambio.revision,
+        brands: { remove: [conCambio.products[0].brandId] },
+      }),
+    }),
+    409,
+    'BRAND_IN_USE',
+    'Marca en uso (PBI-0131)',
+  );
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ revision: conCambio.revision, categories: { remove: ['cat-tv'] } }),
+    }),
+    409,
+    'CATEGORY_HAS_CHILDREN',
+    'Categoría con subcategorías (PBI-0131)',
+  );
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ revision: conCambio.revision, categories: { remove: ['cat-kitchen'] } }),
+    }),
+    409,
+    'CATEGORY_IN_USE',
+    'Categoría en uso (PBI-0131)',
+  );
+  if (!conCambio.orders.some((item) => typeof item.termsAcceptedAt === 'string'))
+    throw new Error('El pedido del Admin no trae termsAcceptedAt (PBI-0145)');
+
   // Jerarquía de categorías: sin ciclos ni padres inexistentes.
   const cyclic = partial.categories.map((category) =>
     category.id === 'cat-tv' ? { ...category, parentId: 'cat-tv-oled' } : category,
@@ -279,7 +354,7 @@ try {
     const invalid = await raw('/bff/admin/snapshot', {
       method: 'PUT',
       headers: authorization(owner.token),
-      body: JSON.stringify({ revision: partial.revision, categories }),
+      body: JSON.stringify({ revision: conCambio.revision, categories }),
     });
     if (invalid.status !== 400) throw new Error('El BFF aceptó una jerarquía de categorías inválida');
   }
@@ -974,6 +1049,9 @@ try {
   console.log('✓ Pedidos: acceso por cuenta o token, stock liberado al cancelar, envío desde la tabla');
   console.log('✓ Concurrencia: un guardado desactualizado del Admin se rechaza (409) sin alterar el stock');
   console.log('✓ Categorías: se rechazan ciclos y padres inexistentes');
+  console.log(
+    '✓ Lote 06: cambios por registro, ficha única, marcas y categorías en uso, términos en el pedido',
+  );
   console.log('✓ Cuentas: registro/verificación/sesión/recuperación/revocación');
   console.log('✓ Roles fijos: superadmin, admin y vendedor con permisos validados en el BFF');
   console.log('✓ Reclamaciones: registro persistente y recepción administrativa');

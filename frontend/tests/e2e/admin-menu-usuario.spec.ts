@@ -42,8 +42,9 @@ const perfiles = [
 ] as const;
 
 const SESSION_KEY = 'webstore-admin-session-v1';
+/** Círculo de las iniciales: el primer elemento del botón. */
 const iniciales = (page: Parameters<typeof botonMenuUsuario>[0]) =>
-  botonMenuUsuario(page).locator('span[aria-hidden="true"]');
+  botonMenuUsuario(page).locator('span').first();
 
 for (const { rol, cuenta, nombre, iniciales: letras, etiqueta } of perfiles) {
   test(`el botón del ${rol} muestra sus iniciales, su nombre y su rol en mayúsculas`, async ({ page }) => {
@@ -55,8 +56,9 @@ for (const { rol, cuenta, nombre, iniciales: letras, etiqueta } of perfiles) {
     // El rol se ve en mayúsculas con CSS; el texto sigue siendo la etiqueta de rol.rules.ts.
     await expect(boton).toContainText(etiqueta.toUpperCase(), { useInnerText: true });
     await expect(boton).toContainText(etiqueta);
-    // Las iniciales son decorativas: el nombre accesible es «Nombre Rol».
-    await expect(boton).toHaveAccessibleName(new RegExp(`^${nombre} ${etiqueta}$`, 'i'));
+    // Lote 06 (PBI-0070): las iniciales se ven, así que también integran el nombre accesible («SD Nombre Rol»),
+    // para que quien usa control por voz pueda nombrar el botón por lo que ve (WCAG 2.5.3).
+    await expect(boton).toHaveAccessibleName(new RegExp(`^${letras} ${nombre} ${etiqueta}$`, 'i'));
   });
 }
 
@@ -195,9 +197,10 @@ test.describe('Menú de usuario en móvil (375 px)', () => {
 
     await expect(boton).toBeVisible();
     await expect(iniciales(page)).toHaveText('SD');
-    // Bajo sm: el nombre y el rol no se ven, pero siguen en el nombre accesible.
+    // Bajo sm: el nombre y el rol no se ven, pero siguen en el nombre accesible, que empieza por las iniciales que
+    // sí se ven (PBI-0070, WCAG 2.5.3).
     await expect(boton.locator('strong').locator('..')).toHaveCSS('width', '1px');
-    await expect(boton).toHaveAccessibleName(/^Superadministrador Demo Superadministrador$/i);
+    await expect(boton).toHaveAccessibleName(/^SD Superadministrador Demo Superadministrador$/i);
 
     const panel = await abrirMenuUsuario(page);
     const caja = await panel.boundingBox();

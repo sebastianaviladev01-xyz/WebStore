@@ -17,6 +17,7 @@ import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { aplanarArbolCategorias } from '../domain/categoria.rules';
+import { motivoParaNoEliminarCategoria } from '../domain/eliminacion.rules';
 import { FILTROS_CATEGORIAS_VACIOS, SIN_PADRE } from '../domain/filtro-catalogo.model';
 import {
   filtrarCategorias,
@@ -89,6 +90,11 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         </mat-select>
       </mat-form-field>
     </ws-filter-panel>
+    @if (avisoEliminar()) {
+      <p class="mt-6 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
+        {{ avisoEliminar() }}
+      </p>
+    }
     <section class="admin-card mt-6 p-4" aria-label="Lista de categorías">
       @for (entry of pagina().items; track entry.category.id) {
         <div
@@ -158,6 +164,8 @@ export class CategoriasPage {
   });
   protected readonly buscando = signal(false);
   protected readonly errorBusqueda = signal<string | null>(null);
+  /** Por qué no se puede eliminar la categoría elegida (PBI-0131): subcategorías o productos. */
+  protected readonly avisoEliminar = signal<string | null>(null);
   constructor() {
     // El borrador se iguala a los filtros aplicados cada vez que cambia la URL (también con atrás y adelante).
     effect(() => {
@@ -199,7 +207,16 @@ export class CategoriasPage {
   protected parentName(id?: string) {
     return id ? (this.admin.categories().find((c) => c.id === id)?.name ?? id) : '—';
   }
+  /** PBI-0131: una categoría con subcategorías o productos no se elimina; se dice por qué, sin pedir confirmación. */
   protected async remove(id: string) {
-    if (confirm('¿Eliminar categoría?')) await this.admin.deleteCategory(id);
+    this.avisoEliminar.set(null);
+    const categoria = this.admin.categories().find((item) => item.id === id);
+    if (!categoria) return;
+    const motivo = motivoParaNoEliminarCategoria(categoria, this.admin.categories(), this.admin.products());
+    if (motivo) {
+      this.avisoEliminar.set(motivo);
+      return;
+    }
+    if (confirm('¿Eliminar categoría?')) await this.admin.eliminarCategoria(id);
   }
 }

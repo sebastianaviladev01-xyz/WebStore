@@ -26,3 +26,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Dado** que hay más de tres banners vigentes para el hero
 - **Cuando** el comprador abre el inicio
 - **Entonces** el hero muestra como máximo tres.
+
+### Escenario 03 – Vigencia y enlaces
+
+- **Dado** que el administrador registra un banner con fechas y un enlace
+- **Cuando** lo guarda
+- **Entonces** las fechas son días de Lima; un fin anterior al inicio se rechaza en el campo «Fin»; el tope de tres principales activos cuenta solo los que coinciden en fechas; y un enlace externo (`https://…`) lleva a esa dirección en la tienda.
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0128; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts` y `frontend/tests/e2e/storefront-banners.spec.ts`.

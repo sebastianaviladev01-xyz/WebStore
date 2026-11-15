@@ -5,6 +5,9 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { BYTES_MAXIMOS_FOTO } from '../domain/foto.rules';
+import { ConfiguracionTienda } from '../domain/tienda.model';
+import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
 
 @Component({
   selector: 'ws-content-page',
@@ -60,6 +63,9 @@ import { TiendaFacade } from '../application/tienda.facade';
               </button>
             }
           </div>
+          @if (logoError()) {
+            <p class="mt-3 text-xs font-semibold text-danger" role="alert">{{ logoError() }}</p>
+          }
         </div>
       </div>
 
@@ -137,12 +143,21 @@ import { TiendaFacade } from '../application/tienda.facade';
         <mat-checkbox formControlName="termsPageEnabled">Términos y condiciones</mat-checkbox>
       </div>
 
+      @if (saveError()) {
+        <p
+          class="mt-6 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+          role="alert"
+        >
+          {{ saveError() }}
+        </p>
+      }
       <div class="mt-6 flex flex-wrap items-center gap-4">
         <button
-          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
           type="submit"
+          [disabled]="admin.saving()"
         >
-          Guardar configuración
+          {{ admin.saving() ? 'Guardando…' : 'Guardar configuración' }}
         </button>
         @if (saved()) {
           <p class="text-sm text-on-primary-soft" role="status">Configuración publicada en la tienda.</p>
@@ -180,37 +195,89 @@ export class ContenidoPage {
     termsPageEnabled: new FormControl(true, { nonNullable: true }),
   });
 
+  /** La configuración tal como se cargó en el formulario: lo que cambió se calcula contra ella (PBI-0120). */
+  private base: ConfiguracionTienda | null = null;
+  /** Motivo del último guardado rechazado, junto al botón; el formulario conserva lo escrito (PBI-0125). */
+  protected readonly saveError = signal<string | null>(null);
+  /** Motivo por el que no se pudo usar el logo elegido. */
+  protected readonly logoError = signal<string | null>(null);
+
   constructor() {
+    // PBI-0125: los datos del BFF solo rellenan el formulario mientras la persona no lo editó; «Actualizar» o un
+    // guardado fallido no reescriben lo escrito.
     effect(() => {
       const config = this.admin.config();
-      if (config) this.form.setValue(config, { emitEvent: false });
+      if (!config || this.form.dirty) return;
+      this.base = config;
+      this.form.setValue(config, { emitEvent: false });
     });
   }
 
+  /**
+   * Carga el logo como Data URL. Una imagen de mapa de bits se reduce y se comprime como las fotos de los productos
+   * (PBI-0119); un SVG se usa tal cual si no pesa más que una foto. Lo que no cabe se rechaza con un motivo.
+   */
   protected onLogoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    this.logoError.set(null);
     if (!file) return;
-    if (!file.type.startsWith('image/') && !file.name.toLocaleLowerCase().endsWith('.svg')) {
+    const svg = file.type === 'image/svg+xml' || file.name.toLocaleLowerCase().endsWith('.svg');
+    if (!file.type.startsWith('image/') && !svg) {
       input.value = '';
+      return;
+    }
+    if (file.size > BYTES_MAXIMOS_ARCHIVO) {
+      input.value = '';
+      this.logoError.set('El logo pesa más de 15 MB. Usa uno más liviano.');
+      return;
+    }
+    if (!svg) {
+      input.value = '';
+      void reducirFoto(file).then((url) => this.usarLogo(url, MENSAJE_FOTO_NO_CABE));
       return;
     }
     const reader = new FileReader();
     reader.addEventListener('load', () => {
-      this.form.controls.logoUrl.setValue(typeof reader.result === 'string' ? reader.result : '');
+      const url = typeof reader.result === 'string' ? reader.result : '';
+      this.usarLogo(
+        url.length <= BYTES_MAXIMOS_FOTO ? url : null,
+        `El SVG pesa más de ${Math.round(BYTES_MAXIMOS_FOTO / 1024)} KB. Simplifícalo o usa una URL.`,
+      );
       input.value = '';
     });
     reader.readAsDataURL(file);
   }
 
+  private usarLogo(url: string | null, motivo: string): void {
+    if (!url) {
+      this.logoError.set(motivo);
+      return;
+    }
+    this.form.controls.logoUrl.setValue(url);
+    this.form.markAsDirty();
+  }
+
   protected removeLogo(): void {
     this.form.controls.logoUrl.setValue('');
+    this.form.markAsDirty();
   }
 
   protected readonly saved = signal(false);
 
+  /** Guarda solo lo que cambió (PBI-0120); si falla, lo escrito se queda y el motivo sale junto al botón (PBI-0125). */
   protected async save(): Promise<void> {
     this.saved.set(false);
-    if (this.form.valid) this.saved.set(await this.admin.updateConfig(this.form.getRawValue()));
+    this.saveError.set(null);
+    const base = this.base;
+    if (this.form.invalid || !base || this.admin.saving()) return;
+    const editado = this.form.getRawValue();
+    if (!(await this.admin.guardarConfiguracion(base, editado))) {
+      this.saveError.set(this.admin.error() ?? 'No pudimos guardar la configuración. Inténtalo de nuevo.');
+      return;
+    }
+    this.base = this.admin.config() ?? editado;
+    this.form.markAsPristine();
+    this.saved.set(true);
   }
 }

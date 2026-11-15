@@ -27,15 +27,25 @@ const asignarPrecioTarifa = () => { throw new Error('no se usa en esta prueba');
 export const dependencias = new Map();
 const inject = (token) => dependencias.get(token);
 `;
-const fuente = [dobles, await leer('../domain/tienda.gateway.ts'), await leer('./tienda.facade.ts')].join(
-  '\n',
-);
+const fuente = [
+  dobles,
+  await leer('../../sesion/domain/sesion.gateway.ts'),
+  await leer('../domain/cambio-registro.rules.ts'),
+  await leer('../domain/tienda.gateway.ts'),
+  await leer('./tienda.facade.ts'),
+].join('\n');
 const salida = ts.transpileModule(fuente, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { dependencias, SesionFacade, TiendaFacade, TiendaGateway } = await import(
-  `data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`
-);
+const {
+  dependencias,
+  SesionFacade,
+  TiendaFacade,
+  TiendaGateway,
+  SnapshotDesactualizadoError,
+  ReglaTiendaError,
+  SesionVencidaError,
+} = await import(`data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`);
 
 const snapshot = (revision, nombres) => ({
   revision,
@@ -125,4 +135,176 @@ test('TEST-08: refresh() sin sesión devuelve false y conserva el estado', async
   assert.equal(await facade.refresh(), false);
   assert.equal(facade.snapshot(), INICIAL);
   assert.equal(facade.error(), null);
+});
+
+// Lote 06 (ADR-0017): guardado por registro. El gateway falso guarda cada envío y responde, por número de llamada
+// a `save`, el snapshot o el error indicado.
+const producto = (id, cambios = {}) => ({
+  id,
+  sku: `SKU-${id}`,
+  name: `Producto ${id}`,
+  price: 100,
+  stock: 9,
+  gallery: ['foto.jpg'],
+  ...cambios,
+});
+const snapshotCompleto = (revision, productos, cambios = {}) => ({
+  revision,
+  products: productos,
+  categories: [],
+  brands: [],
+  customers: [],
+  users: [],
+  banners: [],
+  rates: [],
+  orders: [],
+  complaints: [],
+  config: { storeName: 'Tienda', footerText: 'Pie' },
+  ...cambios,
+});
+
+function montarGuardado({ cargas, guardados }) {
+  const envios = [];
+  let cargasHechas = 0;
+  const sesion = {
+    requireToken: () => 'token',
+    expiradas: 0,
+    expirar() {
+      this.expiradas += 1;
+    },
+  };
+  const gateway = {
+    load: async () => {
+      const respuesta = cargas[cargasHechas++];
+      if (respuesta instanceof Error) throw respuesta;
+      return respuesta;
+    },
+    save: async (cambios) => {
+      envios.push(structuredClone(cambios));
+      const respuesta = guardados[envios.length - 1];
+      if (respuesta instanceof Error) throw respuesta;
+      return typeof respuesta === 'function' ? respuesta(cambios) : respuesta;
+    },
+  };
+  dependencias.clear();
+  dependencias.set(TiendaGateway, gateway);
+  dependencias.set(SesionFacade, sesion);
+  return { facade: new TiendaFacade(), envios, sesion };
+}
+
+const P1 = producto('p1');
+const INICIO = snapshotCompleto(1, [P1, producto('p2')]);
+
+test('PBI-0119 y PBI-0120: guardar un producto envía solo el registro y el campo cambiados', async () => {
+  const respuesta = snapshotCompleto(2, [{ ...P1, price: 90 }, producto('p2')]);
+  const { facade, envios } = montarGuardado({ cargas: [INICIO], guardados: [respuesta] });
+  await facade.load();
+  assert.equal(await facade.guardarProducto(P1, { ...P1, price: 90 }), true);
+  assert.deepEqual(envios, [{ revision: 1, products: { upsert: [{ id: 'p1', price: 90 }] } }]);
+  assert.equal(facade.snapshot(), respuesta);
+  assert.deepEqual(facade.saving.historial, [true, false]);
+});
+
+test('PBI-0120: tras 409 recarga y reenvía el mismo cambio sobre la revisión nueva, sin pisar el stock vendido', async () => {
+  const vendido = snapshotCompleto(5, [{ ...P1, stock: 7 }, producto('p2')]);
+  const { facade, envios } = montarGuardado({
+    cargas: [INICIO, vendido],
+    guardados: [new SnapshotDesactualizadoError(), (cambios) => cambios],
+  });
+  await facade.load();
+  assert.equal(await facade.guardarProducto(P1, { ...P1, price: 90 }), true);
+  assert.deepEqual(envios[1], { revision: 5, products: { upsert: [{ id: 'p1', price: 90 }] } });
+});
+
+test('PBI-0120: tras 409, si el stock se vendió y la persona también lo cambió, no guarda y pide revisar', async () => {
+  const vendido = snapshotCompleto(5, [{ ...P1, stock: 7 }, producto('p2')]);
+  const { facade, envios } = montarGuardado({
+    cargas: [INICIO, vendido],
+    guardados: [new SnapshotDesactualizadoError()],
+  });
+  await facade.load();
+  assert.equal(await facade.guardarProducto(P1, { ...P1, stock: 12 }), false);
+  assert.equal(envios.length, 1, 'no reenvía');
+  assert.match(facade.error(), /otra persona cambió el stock/);
+  assert.equal(facade.snapshot(), vendido, 'la vista queda con los datos vigentes');
+});
+
+test('PBI-0142: tras 409, si otra persona eliminó el registro, no lo vuelve a crear', async () => {
+  const sinP1 = snapshotCompleto(5, [producto('p2')]);
+  const { facade, envios } = montarGuardado({
+    cargas: [INICIO, sinP1],
+    guardados: [new SnapshotDesactualizadoError()],
+  });
+  await facade.load();
+  assert.equal(await facade.guardarProducto(P1, { ...P1, name: 'Nuevo nombre' }), false);
+  assert.equal(envios.length, 1);
+  assert.match(facade.error(), /ya no existe/);
+});
+
+test('PBI-0122: editar un registro que ya no está en los datos cargados no lo envía', async () => {
+  const { facade, envios } = montarGuardado({
+    cargas: [snapshotCompleto(1, [producto('p2')])],
+    guardados: [],
+  });
+  await facade.load();
+  assert.equal(await facade.guardarProducto(P1, { ...P1, price: 1 }), false);
+  assert.equal(envios.length, 0);
+  assert.match(facade.error(), /ya no existe/);
+});
+
+test('PBI-0121: mientras hay un guardado en curso, otro no se envía', async () => {
+  let responder;
+  const { facade, envios } = montarGuardado({
+    cargas: [INICIO],
+    guardados: [() => new Promise((resolve) => (responder = resolve))],
+  });
+  await facade.load();
+  const primero = facade.guardarMarca(null, { id: 'b-1', name: 'Nueva', active: true });
+  assert.equal(facade.saving(), true);
+  assert.equal(await facade.guardarMarca(null, { id: 'b-2', name: 'Nueva', active: true }), false);
+  responder(INICIO);
+  assert.equal(await primero, true);
+  assert.equal(envios.length, 1);
+  assert.equal(facade.saving(), false);
+});
+
+test('PBI-0124: un 401 al guardar cierra la sesión del navegador', async () => {
+  const { facade, sesion } = montarGuardado({ cargas: [INICIO], guardados: [new SesionVencidaError()] });
+  await facade.load();
+  assert.equal(await facade.eliminarProducto('p2'), false);
+  assert.equal(sesion.expiradas, 1);
+});
+
+test('PBI-0125: un guardado rechazado no cambia el estado y deja el motivo', async () => {
+  const { facade } = montarGuardado({
+    cargas: [INICIO],
+    guardados: [new ReglaTiendaError('Pesa demasiado.')],
+  });
+  await facade.load();
+  const config = INICIO.config;
+  assert.equal(await facade.guardarConfiguracion(config, { ...config, storeName: 'Otra' }), false);
+  assert.equal(facade.snapshot(), INICIO, 'sin cambio optimista que deshacer');
+  assert.equal(facade.config(), INICIO.config);
+  assert.equal(facade.error(), 'Pesa demasiado.');
+});
+
+test('PBI-0125: la configuración envía solo las claves cambiadas', async () => {
+  const { facade, envios } = montarGuardado({ cargas: [INICIO], guardados: [INICIO] });
+  await facade.load();
+  await facade.guardarConfiguracion(INICIO.config, { ...INICIO.config, footerText: 'Nuevo pie' });
+  assert.deepEqual(envios, [{ revision: 1, config: { footerText: 'Nuevo pie' } }]);
+});
+
+test('PBI-0120: el estado de un pedido viaja solo como { id, status } y no pisa el de otra persona', async () => {
+  const pedido = { id: 'WS-1', status: 'confirmed', total: 10 };
+  const conPedido = snapshotCompleto(1, [], { orders: [pedido] });
+  const otro = snapshotCompleto(2, [], { orders: [{ ...pedido, status: 'shipped' }] });
+  const { facade, envios } = montarGuardado({
+    cargas: [conPedido, otro],
+    guardados: [new SnapshotDesactualizadoError()],
+  });
+  await facade.load();
+  assert.equal(await facade.cambiarEstadoPedido(pedido, 'cancelled'), false);
+  assert.deepEqual(envios, [{ revision: 1, orders: { upsert: [{ id: 'WS-1', status: 'cancelled' }] } }]);
+  assert.match(facade.error(), /otra persona cambió el estado/);
 });

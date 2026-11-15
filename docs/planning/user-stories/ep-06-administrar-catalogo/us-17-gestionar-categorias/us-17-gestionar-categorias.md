@@ -32,3 +32,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Dado** que el administrador definió un orden para las categorías
 - **Cuando** la tienda las muestra
 - **Entonces** respeta ese orden y, sin orden explícito, las ordena alfabéticamente.
+
+### Escenario 04 – Categoría en uso
+
+- **Dado** que una categoría tiene subcategorías o productos
+- **Cuando** el administrador la elimina
+- **Entonces** no se elimina: el Admin dice por qué y cuántas subcategorías o productos la usan, y el BFF lo rechaza.
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0131; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.

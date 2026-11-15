@@ -27,6 +27,7 @@ const inject = (token) => dependencias.get(token);
 const fuente = [
   dobles,
   await leer('../domain/tema-visible.rules.ts'),
+  await leer('../../sesion/domain/sesion.gateway.ts'),
   await leer('../domain/temas.gateway.ts'),
   await leer('./temas.facade.ts'),
 ].join('\n');

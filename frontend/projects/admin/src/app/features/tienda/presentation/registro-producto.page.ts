@@ -16,11 +16,12 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules';
 import { Producto } from '../domain/tienda.model';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
+import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
 
 const MAX_GALLERY_PHOTOS = 6;
-const MAX_PHOTO_BYTES = 400 * 1024;
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -67,13 +68,21 @@ const MAX_PHOTO_BYTES = 400 * 1024;
         aria-labelledby="titulo-formulario-producto"
       >
         <div class="grid gap-3">
-          <mat-form-field>
+          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+          <mat-form-field [subscriptSizing]="form.controls.name.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>Nombre</mat-label>
             <input matInput formControlName="name" />
+            @if (form.controls.name.hasError('repetido')) {
+              <mat-error>{{ form.controls.name.getError('repetido') }}</mat-error>
+            }
           </mat-form-field>
-          <mat-form-field>
+          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+          <mat-form-field [subscriptSizing]="form.controls.sku.hasError('repetido') ? 'dynamic' : 'fixed'">
             <mat-label>SKU</mat-label>
             <input matInput formControlName="sku" [readonly]="!session.can('products.manage')" />
+            @if (form.controls.sku.hasError('repetido')) {
+              <mat-error>{{ form.controls.sku.getError('repetido') }}</mat-error>
+            }
           </mat-form-field>
           <mat-form-field>
             <mat-label>Descripción</mat-label>
@@ -184,7 +193,7 @@ const MAX_PHOTO_BYTES = 400 * 1024;
           <mat-form-field>
             <mat-label>Marca</mat-label>
             <mat-select formControlName="brandId">
-              @for (b of admin.brands(); track b.id) {
+              @for (b of marcasElegibles(); track b.id) {
                 <mat-option [value]="b.id">{{ b.name }}</mat-option>
               }
             </mat-select>
@@ -201,10 +210,11 @@ const MAX_PHOTO_BYTES = 400 * 1024;
         }
         <div class="mt-5 flex flex-wrap gap-3">
           <button
-            class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
+            [disabled]="admin.saving()"
           >
-            Guardar producto
+            {{ admin.saving() ? 'Guardando…' : 'Guardar producto' }}
           </button>
           <a
             class="inline-flex min-h-11 items-center rounded-xl border border-line px-5 py-2.5 text-sm font-semibold"
@@ -226,6 +236,8 @@ export class RegistroProductoPage {
   /** `:id` de `/productos/:id` (`withComponentInputBinding`); no llega en `/productos/nuevo`. */
   readonly id = input<string>();
   protected readonly editingId = computed(() => this.id() ?? null);
+  /** Id del producto nuevo, fijo mientras la página está abierta: un segundo envío no crea otro (PBI-0121). */
+  private readonly idNuevo = crypto.randomUUID();
   /** Mientras la edición trae los datos actuales: «Cargando…» en lugar del formulario. */
   protected readonly loadingProduct = signal(false);
   /** El producto en edición ya no está en el snapshot actual: otra persona lo eliminó. */
@@ -234,6 +246,17 @@ export class RegistroProductoPage {
   protected readonly staleNotice = signal<string | null>(null);
   /** Motivo del último guardado rechazado, junto al botón; el formulario conserva lo escrito. */
   protected readonly saveError = signal<string | null>(null);
+  /** El producto tal como se cargó al abrir la edición: lo que cambió la persona se calcula contra él (PBI-0120). */
+  private base: Producto | null = null;
+  /** Marca del producto al abrirlo: sigue en la lista aunque esté inactiva. */
+  private readonly marcaActual = signal<string | null>(null);
+  /**
+   * PBI-0131 (decisión provisional): una marca inactiva no se ofrece para los productos; solo sigue en la lista la
+   * que ya tenía el producto en edición.
+   */
+  protected readonly marcasElegibles = computed(() =>
+    this.admin.brands().filter((marca) => marca.active || marca.id === this.marcaActual()),
+  );
   protected readonly form = new FormGroup({
     name: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     sku: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -281,20 +304,19 @@ export class RegistroProductoPage {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    // En la demo la foto viaja como Data URL dentro del snapshot (límite del BFF: 2 MB por guardado).
     if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
       this.photoError.set('Usa una imagen PNG, JPG o WebP.');
       return;
     }
-    if (file.size > MAX_PHOTO_BYTES) {
-      this.photoError.set('La foto supera 400 KB. Optimízala o usa una URL.');
+    if (file.size > BYTES_MAXIMOS_ARCHIVO) {
+      this.photoError.set('La foto pesa más de 15 MB. Usa una más liviana o una URL.');
       return;
     }
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      if (typeof reader.result === 'string') this.addPhoto(reader.result);
+    // PBI-0119: la foto viaja como Data URL dentro del producto; se reduce y se comprime antes de agregarla.
+    void reducirFoto(file).then((url) => {
+      if (url) this.addPhoto(url);
+      else this.photoError.set(MENSAJE_FOTO_NO_CABE);
     });
-    reader.readAsDataURL(file);
   }
   private addPhoto(url: string) {
     this.photoError.set(null);
@@ -320,11 +342,13 @@ export class RegistroProductoPage {
       );
     }
     const p = this.admin.products().find((item) => item.id === id);
+    this.base = p ?? null;
     if (p) this.fill(p);
     else this.missing.set(true);
     this.loadingProduct.set(false);
   }
   private fill(p: Producto) {
+    this.marcaActual.set(p.brandId);
     this.gallery.set(p.gallery ?? []);
     this.photoError.set(null);
     this.form.setValue({
@@ -342,6 +366,7 @@ export class RegistroProductoPage {
     });
   }
   protected async save() {
+    if (this.admin.saving()) return;
     if (this.form.invalid || (!this.session.can('products.manage') && !this.editingId())) {
       this.form.markAllAsTouched();
       return;
@@ -368,8 +393,24 @@ export class RegistroProductoPage {
             active: old.active,
           }
         : parsed;
+    const editado: Producto = { id: this.editingId() ?? this.idNuevo, ...safe };
+    // PBI-0129: SKU y dirección de ficha únicos, comprobados antes de enviar (el BFF los vuelve a comprobar).
+    // Un choque que ya existía antes de editar (datos anteriores) no bloquea: solo se revisa lo que cambió.
+    const repetido = motivoDeProductoRepetido(this.admin.products(), editado);
+    const base = this.base;
+    const yaChocaba =
+      base &&
+      (repetido?.campo === 'sku'
+        ? base.sku.trim().toLowerCase() === editado.sku.trim().toLowerCase()
+        : slugDe(base.name) === slugDe(editado.name));
+    if (repetido && !yaChocaba) {
+      const campo = this.form.controls[repetido.campo];
+      campo.setErrors({ repetido: repetido.mensaje });
+      campo.markAsTouched();
+      return;
+    }
     this.saveError.set(null);
-    const saved = await this.admin.upsertProduct({ id: this.editingId() ?? crypto.randomUUID(), ...safe });
+    const saved = await this.admin.guardarProducto(this.base, editado);
     if (saved) {
       await this.router.navigate(['/productos'], { queryParamsHandling: 'preserve' });
       return;

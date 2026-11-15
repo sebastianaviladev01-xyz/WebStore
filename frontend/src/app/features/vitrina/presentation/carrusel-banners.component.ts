@@ -10,6 +10,7 @@ import {
 import { Router, RouterLink, UrlTree } from '@angular/router';
 
 import { VarianteInicio, Banner } from '../../contenido/domain/contenido.model';
+import { esEnlaceExterno } from '../../contenido/domain/enlace.rules';
 
 @Component({
   selector: 'ws-hero-carousel',
@@ -45,7 +46,14 @@ import { VarianteInicio, Banner } from '../../contenido/domain/contenido.model';
                   <h1>{{ banner.title }}</h1>
                   <p class="ws-hero-description">{{ banner.description }}</p>
                   <div class="ws-hero-action-row">
-                    <a [routerLink]="linkFor(banner.ctaUrl)" class="ws-btn-primary">{{ banner.ctaLabel }}</a>
+                    <!-- PBI-0128: un enlace externo va en un href; el router lo convertiría en una ruta rota. -->
+                    @if (esEnlaceExterno(banner.ctaUrl)) {
+                      <a [href]="banner.ctaUrl" class="ws-btn-primary">{{ banner.ctaLabel }}</a>
+                    } @else {
+                      <a [routerLink]="linkFor(banner.ctaUrl)" class="ws-btn-primary">
+                        {{ banner.ctaLabel }}
+                      </a>
+                    }
                     @if (variant() === 'anterior') {
                       <span>{{ banner.eyebrow }}</span>
                     } @else {
@@ -211,6 +219,8 @@ export class CarruselBannersComponent {
       this.focusWithin.set(false);
     }
   }
+
+  protected readonly esEnlaceExterno = esEnlaceExterno;
 
   protected linkFor(url: string): UrlTree {
     return this.router.parseUrl(url);

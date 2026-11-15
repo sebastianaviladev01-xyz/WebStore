@@ -39,6 +39,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** edita el texto de Contacto, Envíos, Privacidad o Términos, o activa o desactiva una de ellas
 - **Entonces** la tienda publica el texto nuevo y respeta la activación.
 
+### Escenario 05 – Guardado que falla
+
+- **Dado** que el administrador editó el contenido y el guardado falla (por ejemplo, un logo demasiado pesado)
+- **Cuando** mira el formulario
+- **Entonces** lo escrito se conserva, el motivo sale junto a «Guardar configuración» y «Actualizar» no lo reescribe. El logo se reduce antes de guardarse.
+
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0119 y PBI-0125), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - Está pendiente revisar si Contenido equivale a la configuración de OpenCart (PBI-0015 del [backlog](../../../backlog.md)).

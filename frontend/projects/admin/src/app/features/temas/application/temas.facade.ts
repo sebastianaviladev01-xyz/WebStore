@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
+import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { temaVisible as resolverTemaVisible, TemaVisible } from '../domain/tema-visible.rules';
 import { Apariencia, Tema, TemasAdmin } from '../domain/tema.model';
 import {
@@ -84,7 +85,8 @@ export class TemasFacade {
     this.error.set(null);
     try {
       this.temasAdminState.set(await this.gateway.temasAdmin(this.sesion.requireToken()));
-    } catch {
+    } catch (error) {
+      if (error instanceof SesionVencidaError) this.sesion.expirar();
       this.error.set('No pudimos cargar los temas. Actualiza la página o vuelve a iniciar sesión.');
     } finally {
       this.cargando.set(false);
@@ -124,7 +126,9 @@ export class TemasFacade {
       this.sincronizarApariencia(respuesta);
       return true;
     } catch (error) {
-      if (error instanceof TemasDesactualizadosError) {
+      if (error instanceof SesionVencidaError) {
+        this.sesion.expirar();
+      } else if (error instanceof TemasDesactualizadosError) {
         this.aviso.set(AVISO_TEMAS_DESACTUALIZADOS);
         await this.cargarTemas();
       } else if (error instanceof ReglaTemaError) {

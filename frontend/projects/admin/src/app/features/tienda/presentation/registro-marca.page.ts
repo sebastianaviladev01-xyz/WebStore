@@ -15,6 +15,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { Marca } from '../domain/tienda.model';
 
 /**
  * Interfaz de registro de una marca (feature 008): `/marcas/nueva` y `/marcas/:id`. Es el formulario que antes
@@ -65,10 +66,11 @@ import { TiendaFacade } from '../application/tienda.facade';
         }
         <div class="mt-5 flex gap-3">
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
+            [disabled]="admin.saving()"
           >
-            Guardar
+            {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
           <a
             class="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
@@ -89,6 +91,10 @@ export class RegistroMarcaPage {
   /** `:id` de `/marcas/:id` (`withComponentInputBinding`); no llega en `/marcas/nueva`. */
   readonly id = input<string>();
   protected readonly editing = computed(() => this.id() ?? null);
+  /** Id de la marca nueva, fijo mientras la página está abierta: un segundo envío no crea otra (PBI-0121). */
+  private readonly idNuevo = crypto.randomUUID();
+  /** La marca tal como se cargó al abrir la edición: lo que cambió la persona se calcula contra ella (PBI-0120). */
+  private base: Marca | null = null;
   /** Mientras la edición trae los datos actuales: «Cargando…» en lugar del formulario. */
   protected readonly loadingBrand = signal(false);
   /** La marca en edición ya no está en el snapshot actual: otra persona la eliminó. */
@@ -121,15 +127,16 @@ export class RegistroMarcaPage {
       );
     }
     const b = this.admin.brands().find((x) => x.id === id);
+    this.base = b ?? null;
     if (b) this.form.setValue({ name: b.name, active: b.active });
     else this.missing.set(true);
     this.loadingBrand.set(false);
   }
   protected async save() {
-    if (this.form.invalid) return;
+    if (this.form.invalid || this.admin.saving()) return;
     this.error.set(null);
-    const saved = await this.admin.upsertBrand({
-      id: this.editing() ?? crypto.randomUUID(),
+    const saved = await this.admin.guardarMarca(this.base, {
+      id: this.editing() ?? this.idNuevo,
       ...this.form.getRawValue(),
     });
     if (saved) {

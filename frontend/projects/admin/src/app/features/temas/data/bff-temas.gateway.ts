@@ -10,6 +10,7 @@ import {
   TemasGateway,
 } from '../domain/temas.gateway';
 import { bearer } from '../../../core/bff-http';
+import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 
 const APARIENCIA_URL = '/bff/appearance';
 const TEMAS_URL = '/bff/admin/themes';
@@ -17,7 +18,7 @@ const TEMA_ACTIVO_URL = '/bff/admin/active-theme';
 
 /**
  * Adaptador de los temas contra el BFF (`backend/docs/BFF-CONTRACT.md`, «Apariencia y temas»). Traduce
- * `409 STALE_THEMES` a `TemasDesactualizadosError` y el resto de los 4xx con código del contrato a
+ * `409 STALE_THEMES` a `TemasDesactualizadosError`, un `401` a `SesionVencidaError` (PBI-0124) y el resto de los 4xx con código del contrato a
  * `ReglaTemaError`, con su `code` y sus `details` para marcar el campo del formulario.
  */
 @Injectable()
@@ -70,6 +71,8 @@ export class BffTemasGateway implements TemasGateway {
       if (!(error instanceof HttpErrorResponse)) throw error;
       const problema = error.error?.error;
       if (problema?.code === 'STALE_THEMES') throw new TemasDesactualizadosError();
+      // PBI-0124: la sesión venció o se cerró a mitad de la operación.
+      if (error.status === 401) throw new SesionVencidaError();
       if (error.status >= 400 && error.status < 500 && problema?.code && problema?.message)
         throw new ReglaTemaError(problema.message, problema.code, problema.details);
       throw error;

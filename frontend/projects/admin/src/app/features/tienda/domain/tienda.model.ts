@@ -106,6 +106,8 @@ export interface Pedido {
   readonly deliveryDate: string;
   readonly shippingOrigin: string;
   readonly paymentMethod: string;
+  /** Cuándo aceptó el comprador los términos (lote 04); null en pedidos anteriores a esa casilla (PBI-0145). */
+  readonly termsAcceptedAt: string | null;
   readonly subtotal: number;
   readonly shippingCost: number;
   readonly total: number;

@@ -16,7 +16,8 @@ import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rule
   selector: 'ws-admin-menu-usuario',
   imports: [MatMenuModule, RouterLink],
   template: `
-    <!-- Bajo sm: solo las iniciales; el nombre y el rol siguen en el nombre accesible del botón (AC-13). -->
+    <!-- Bajo sm: solo las iniciales; el nombre y el rol siguen en el nombre accesible del botón (AC-13). Las
+         iniciales también lo integran, porque son lo que se ve: quien usa control por voz las nombra (PBI-0070). -->
     <button
       type="button"
       class="flex min-h-10 max-w-full cursor-pointer items-center gap-2.5 rounded-lg pr-2 pl-1 text-left hover:bg-subtle"
@@ -24,7 +25,6 @@ import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rule
     >
       <span
         class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-primary text-xs font-semibold text-on-primary"
-        aria-hidden="true"
       >
         {{ iniciales() }}
       </span>

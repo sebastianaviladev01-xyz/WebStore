@@ -8,9 +8,10 @@ import {
   linkedSignal,
   signal,
 } from '@angular/core';
-import { MatSelectModule } from '@angular/material/select';
+import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { fechaDeEntrega, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido, EstadoPedido } from '../domain/tienda.model';
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -29,9 +30,10 @@ const PAYMENT_LABELS: Record<string, string> = {
         <p class="mt-2 text-sm text-muted">{{ filtered().length }} de {{ admin.orders().length }} pedidos</p>
       </div>
       <label class="grid gap-1 text-sm">
-        <span class="text-muted">Estado</span>
+        <span id="pedidos-filtro-estado" class="text-muted">Estado</span>
         <mat-select
           class="admin-filter"
+          aria-labelledby="pedidos-filtro-estado"
           [value]="statusFilter()"
           (selectionChange)="statusFilter.set($event.value)"
         >
@@ -66,7 +68,9 @@ const PAYMENT_LABELS: Record<string, string> = {
                   <button type="button" class="font-semibold text-link" (click)="selectedId.set(order.id)">
                     {{ order.id }}
                   </button>
-                  <p class="text-xs text-muted">{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</p>
+                  <p class="text-xs text-muted">
+                    {{ order.createdAt | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+                  </p>
                 </td>
                 <td class="px-4 py-3">{{ order.customer }}</td>
                 <td class="px-4 py-3">{{ order.district || '—' }}</td>
@@ -93,7 +97,7 @@ const PAYMENT_LABELS: Record<string, string> = {
           <div class="flex items-start justify-between gap-3">
             <div>
               <h2 class="text-xl font-semibold">{{ order.id }}</h2>
-              <p class="text-sm text-muted">{{ order.createdAt | date: "d 'de' MMMM, HH:mm" }}</p>
+              <p class="text-sm text-muted">{{ order.createdAt | date: "d 'de' MMMM, HH:mm" : zonaLima }}</p>
             </div>
             <span class="rounded-full px-2.5 py-1 text-xs font-medium" [class]="badge(order.status)">
               {{ label(order.status) }}
@@ -113,10 +117,18 @@ const PAYMENT_LABELS: Record<string, string> = {
             <dd>{{ order.address || '—' }}, {{ order.district }}</dd>
             <dt class="text-muted">Despacho</dt>
             <dd>
-              Desde {{ order.shippingOrigin || '—' }} · entrega {{ order.deliveryDate | date: 'dd/MM/yyyy' }}
+              Desde {{ order.shippingOrigin || '—' }} · entrega {{ fechaDeEntrega(order.deliveryDate) }}
             </dd>
             <dt class="text-muted">Pago</dt>
             <dd>{{ payment(order.paymentMethod) }}</dd>
+            <dt class="text-muted">Términos</dt>
+            <dd>
+              @if (order.termsAcceptedAt) {
+                Aceptados el {{ order.termsAcceptedAt | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+              } @else {
+                Sin registro
+              }
+            </dd>
           </dl>
 
           <h3 class="mt-6 text-sm font-semibold">Productos</h3>
@@ -140,8 +152,13 @@ const PAYMENT_LABELS: Record<string, string> = {
           </dl>
 
           <label class="mt-6 grid gap-1 text-sm">
-            <span class="font-medium">Cambiar estado</span>
-            <mat-select [value]="order.status" (selectionChange)="setStatus(order, $event.value)">
+            <span id="pedido-cambiar-estado" class="font-medium">Cambiar estado</span>
+            <mat-select
+              aria-labelledby="pedido-cambiar-estado"
+              [value]="order.status"
+              [disabled]="admin.saving()"
+              (selectionChange)="setStatus(order, $event)"
+            >
               @for (status of statuses; track status) {
                 <mat-option [value]="status">{{ label(status) }}</mat-option>
               }
@@ -162,15 +179,19 @@ export class PedidosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_PEDIDO) as EstadoPedido[];
   protected readonly statusFilter = signal<EstadoPedido | ''>('');
-  /** Id del pedido que pide la URL (`?pedido=<id>`); si no existe, el detalle es el más reciente. */
+  /** Fechas en la hora de Lima, como el Resumen (PBI-0067). */
+  protected readonly zonaLima = ZONA_HORARIA_LIMA;
+  protected readonly fechaDeEntrega = fechaDeEntrega;
+  /** Id del pedido que pide la URL (`?pedido=<id>`); si no está en la lista filtrada, el detalle es el primero de ella. */
   readonly pedido = input<string>();
   protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);
   protected readonly filtered = computed(() => {
     const status = this.statusFilter();
     return status ? this.admin.orders().filter((order) => order.status === status) : this.admin.orders();
   });
+  /** El detalle sigue al filtro (PBI-0066): un pedido que no está en la lista filtrada no se muestra. */
   protected readonly selected = computed<Pedido | null>(
-    () => this.admin.orders().find((order) => order.id === this.selectedId()) ?? this.filtered()[0] ?? null,
+    () => this.filtered().find((order) => order.id === this.selectedId()) ?? this.filtered()[0] ?? null,
   );
 
   protected label(status: EstadoPedido): string {
@@ -187,13 +208,21 @@ export class PedidosPage {
     return 'bg-primary-soft text-on-primary-soft';
   }
 
-  protected async setStatus(order: Pedido, status: EstadoPedido): Promise<void> {
+  /**
+   * Cambia el estado. Si la persona responde «Cancelar» a la confirmación o el guardado no se hace, el selector
+   * vuelve a mostrar el estado del pedido (PBI-0126).
+   */
+  protected async setStatus(order: Pedido, cambio: MatSelectChange<EstadoPedido>): Promise<void> {
+    const status = cambio.value;
+    const volver = (select: MatSelect) => (select.value = order.status);
     if (status === order.status) return;
     if (
       status === 'cancelled' &&
       !confirm(`¿Cancelar el pedido ${order.id}? El stock se devolverá al inventario.`)
-    )
+    ) {
+      volver(cambio.source);
       return;
-    await this.admin.updateOrder({ ...order, status });
+    }
+    if (!(await this.admin.cambiarEstadoPedido(order, status))) volver(cambio.source);
   }
 }
