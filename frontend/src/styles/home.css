@@ -1046,10 +1046,12 @@
   /*
    * Banner con foto oscura (Tono de la foto: Oscura en el admin): la cápsula pasa a vidrio oscuro con
    * íconos blancos, como en LG. Solo en escritorio: en celular los controles van sobre el fondo claro
-   * del texto, no sobre la foto.
+   * del texto, no sobre la foto. El 62 % es lo justo para que el contador (14 px) llegue a 4,5:1 sobre una foto
+   * blanca, el peor caso, con el `--ws-ink` más claro de los temas predefinidos (C); lo comprueba
+   * `controles-sobre-fotos.spec.mjs`, que lee este valor.
    */
   .ws-hero.is-wide.is-dark-tone .ws-hero-controls {
-    background: color-mix(in srgb, var(--ws-ink) 50%, transparent);
+    background: color-mix(in srgb, var(--ws-ink) 62%, transparent);
   }
   .ws-hero.is-wide.is-dark-tone .ws-hero-controls .ws-carousel-control,
   .ws-hero.is-wide.is-dark-tone .ws-hero-count,

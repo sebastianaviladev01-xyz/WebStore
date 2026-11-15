@@ -1,9 +1,9 @@
-// Escenarios del lote 10 (PBI-0166): el velo `--ws-scrim` sube del 45 % al 55 %. Cubre las páginas con texto sobre
-// fotos (inicio con banners y /inicio-anterior) y las dos pantallas que usan el velo (`bg-scrim`: el cajón de
-// navegación de la tienda y el del Admin, solo en celular), con A, B y C.
-import { pulsar } from '../lib/qa.mjs';
+// Escenarios del lote 10 (PBI-0167): el vidrio oscuro de los controles del carrusel (con «Tono de la foto: Oscura») sube
+// de opacidad para que el contador llegue a 4,5:1 sobre una foto blanca. Cubre el inicio con A, B y C. El seed no tiene
+// un banner de tono oscuro: la toma mantiene la clase `is-dark-tone` en el carrusel, como la pondría el banner. Solo se
+// ve a 1440 px; a 375 los controles no usan el vidrio oscuro y la toma debe salir igual.
 
-/** El carrusel del inicio cambia de banner cada 8 s: se anula ese temporizador para que las dos tomas vean el primero. */
+/** El carrusel cambia de banner cada 8 s: se anula ese temporizador para que las dos tomas vean el primero. */
 const sinRotar = (page) =>
   page.addInitScript(() => {
     const original = window.setInterval.bind(window);
@@ -11,29 +11,40 @@ const sinRotar = (page) =>
       plazo === 8000 ? 0 : original(manejador, plazo, ...resto);
   });
 
-const TEMAS = ['a', 'b', 'c'];
-export const escenarios = {};
+/**
+ * Mantiene la clase `is-dark-tone` en el carrusel aunque Angular lo vuelva a pintar, como la tendría un banner de tono
+ * oscuro. La toma de página completa cambia el tamaño de la ventana y eso vuelve a pintar el carrusel: sin transición,
+ * el vidrio no se captura a medio cambiar de color.
+ */
+const conFotoOscura = (page) =>
+  page.addInitScript(() => {
+    document.addEventListener('DOMContentLoaded', () => {
+      const estilo = document.createElement('style');
+      estilo.textContent = '.ws-hero-controls { transition: none !important; }';
+      document.head.appendChild(estilo);
+    });
+    // Solo si falta: `classList.add` de una clase presente también cuenta como cambio y el observador no pararía.
+    const poner = () => {
+      const carrusel = document.querySelector('.ws-hero');
+      if (carrusel && !carrusel.classList.contains('is-dark-tone')) carrusel.classList.add('is-dark-tone');
+    };
+    new MutationObserver(poner).observe(document, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+  });
 
-for (const tema of TEMAS) {
-  escenarios[`tienda-inicio-${tema}`] = { tienda: true, ruta: '/', tema, antes: sinRotar };
-  escenarios[`tienda-inicio-anterior-${tema}`] = {
-    tienda: true,
-    ruta: '/inicio-anterior',
-    tema,
-    antes: sinRotar,
-  };
-  escenarios[`tienda-menu-${tema}`] = {
+export const escenarios = {};
+for (const tema of ['a', 'b', 'c']) {
+  escenarios[`tienda-inicio-foto-oscura-${tema}`] = {
     tienda: true,
     ruta: '/',
     tema,
-    accion: pulsar('Abrir menú de navegación'),
-    soloMovil: true,
-  };
-  escenarios[`admin-menu-${tema}`] = {
-    ruta: '/',
-    rol: 'superadmin',
-    tema,
-    accion: pulsar('Abrir el menú'),
-    soloMovil: true,
+    antes: async (page) => {
+      await sinRotar(page);
+      await conFotoOscura(page);
+    },
   };
 }

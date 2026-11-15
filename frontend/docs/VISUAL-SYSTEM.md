@@ -220,6 +220,10 @@ Feature 005, entregada con el [PR #35](https://github.com/sebastianaviladev01-xy
 
   Los enlaces sin utilidades, como «Olvidé mi contraseña», siguen heredando el color y sin subrayado. Las clases `ws-*` y el foco (`a:focus-visible`) siguen fuera de capa y no cambian.
 
+### Controles del carrusel sobre fotos
+
+Con «Tono de la foto: Oscura» en el banner (Admin, solo en escritorio), los controles del carrusel del inicio (contador «1 / N», barra de progreso y flechas) pasan a una cápsula de vidrio: `--ws-ink` al **62 %** sobre la foto, con el texto y los íconos en `--ws-surface`. Desde el lote 10 (PBI-0167) la opacidad es el 62 % y no el 50 %: es lo justo para que el contador, de 14 px, llegue a 4,5:1 (WCAG 1.4.3) sobre una foto blanca, el peor caso, con el `--ws-ink` más claro de los temas predefinidos (el de C: 3,16:1 con el 50 % y 4,52:1 con el 62 %; A pasa de 3,43:1 a 5,06:1 y B de 3,41:1 a 5,02:1). Lo comprueba `src/styles/controles-sobre-fotos.spec.mjs`, que lee la opacidad de `home.css` y el `--ws-ink` y el `--ws-surface` de los tres temas, y falla si el vidrio se aclara. Un tema propio con `--ws-ink` más claro que el de C no está cubierto por esa prueba.
+
 ## Movimiento
 
 **Criterio del equipo (reunión, notas del 2026-11-11):** la rapidez va antes que el efecto. Daniel advirtió que las animaciones y cargas lentas frustran al cliente, que "quiere comprar rápido", aunque se vean bonitas. Las animaciones deben ser cortas y limpias, y en el camino de compra (agregar al carrito, carrito y checkout) no deben hacer esperar.
