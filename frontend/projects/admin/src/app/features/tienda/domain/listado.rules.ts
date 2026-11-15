@@ -1,10 +1,7 @@
 /** Elementos por página de los listados del Admin con paginación (feature 008, D2). */
 export const ELEMENTOS_POR_PAGINA = 25;
 
-/**
- * Una página de un listado. Tiene los mismos campos que `PaginaTarifas`, para que Tarifas de envío pueda
- * adoptarla (PBI-0139).
- */
+/** Una página de un listado. Tarifas de envío la usa desde el lote 07b (PBI-0155). */
 export interface Pagina<T> {
   readonly items: readonly T[];
   /** Página actual, de 1 a `pages` (se ajusta si la pedida ya no existe tras filtrar o eliminar). */

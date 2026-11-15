@@ -1,19 +1,21 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  linkedSignal,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { clasesDeEstadoPedido } from './estado-pedido';
 import { fechaDeEntrega, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido, EstadoPedido } from '../domain/tienda.model';
+import {
+  FILTROS_PEDIDOS_VACIOS,
+  filtrarPedidos,
+  leerFiltrosPedidos,
+  parametrosDeFiltrosPedidos,
+} from '../domain/filtro-listado.rules';
+import { filtrosDeListado } from './filtros-de-listado';
+import { PanelFiltrosComponent } from './panel-filtros.component';
 
 const PAYMENT_LABELS: Record<string, string> = {
   card: 'Tarjeta',
@@ -23,28 +25,38 @@ const PAYMENT_LABELS: Record<string, string> = {
 
 @Component({
   selector: 'ws-admin-orders-page',
-  imports: [CurrencyPipe, DatePipe, MatSelectModule],
+  imports: [
+    CurrencyPipe,
+    DatePipe,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    PanelFiltrosComponent,
+  ],
   template: `
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 class="text-3xl font-semibold tracking-tight text-ink">Pedidos</h1>
-        <p class="mt-2 text-sm text-muted">{{ filtered().length }} de {{ admin.orders().length }} pedidos</p>
-      </div>
-      <label class="grid gap-1 text-sm">
-        <span id="pedidos-filtro-estado" class="text-muted">Estado</span>
-        <mat-select
-          class="admin-filter"
-          aria-labelledby="pedidos-filtro-estado"
-          [value]="statusFilter()"
-          (selectionChange)="statusFilter.set($event.value)"
-        >
+    <h1 class="text-3xl font-semibold tracking-tight text-ink">Pedidos</h1>
+    <p class="mt-2 text-sm text-muted">{{ filtered().length }} de {{ admin.orders().length }} pedidos</p>
+
+    <!-- PBI-0155: el filtro de estado va en el panel estándar de la feature 008, con el estado en la URL. -->
+    <ws-filter-panel
+      class="mt-7"
+      etiqueta="Filtros de pedidos"
+      [formGroup]="filtros.borrador"
+      [buscando]="filtros.buscando()"
+      [error]="filtros.error()"
+      (buscar)="filtros.buscar()"
+      (limpiar)="filtros.limpiar()"
+    >
+      <mat-form-field>
+        <mat-label>Filtrar por estado</mat-label>
+        <mat-select formControlName="estado">
           <mat-option value="">Todos</mat-option>
           @for (status of statuses; track status) {
             <mat-option [value]="status">{{ label(status) }}</mat-option>
           }
         </mat-select>
-      </label>
-    </div>
+      </mat-form-field>
+    </ws-filter-panel>
 
     <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <section class="admin-card overflow-x-auto" aria-label="Lista de pedidos">
@@ -86,7 +98,11 @@ const PAYMENT_LABELS: Record<string, string> = {
               </tr>
             } @empty {
               <tr>
-                <td colspan="5" class="px-4 py-10 text-center text-muted">No hay pedidos con este estado.</td>
+                <td colspan="5" class="px-4 py-10 text-center text-muted">
+                  {{
+                    admin.orders().length ? 'Ningún pedido cumple los filtros.' : 'Todavía no hay pedidos.'
+                  }}
+                </td>
               </tr>
             }
           </tbody>
@@ -179,17 +195,19 @@ const PAYMENT_LABELS: Record<string, string> = {
 export class PedidosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_PEDIDO) as EstadoPedido[];
-  protected readonly statusFilter = signal<EstadoPedido | ''>('');
+  protected readonly filtros = filtrosDeListado({
+    leer: leerFiltrosPedidos,
+    escribir: parametrosDeFiltrosPedidos,
+    vacios: FILTROS_PEDIDOS_VACIOS,
+    que: 'los pedidos',
+  });
   /** Fechas en la hora de Lima, como el Resumen (PBI-0067). */
   protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly fechaDeEntrega = fechaDeEntrega;
   /** Id del pedido que pide la URL (`?pedido=<id>`); si no está en la lista filtrada, el detalle es el primero de ella. */
   readonly pedido = input<string>();
   protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);
-  protected readonly filtered = computed(() => {
-    const status = this.statusFilter();
-    return status ? this.admin.orders().filter((order) => order.status === status) : this.admin.orders();
-  });
+  protected readonly filtered = computed(() => filtrarPedidos(this.admin.orders(), this.filtros.aplicados()));
   /** El detalle sigue al filtro (PBI-0066): un pedido que no está en la lista filtrada no se muestra. */
   protected readonly selected = computed<Pedido | null>(
     () => this.filtered().find((order) => order.id === this.selectedId()) ?? this.filtered()[0] ?? null,

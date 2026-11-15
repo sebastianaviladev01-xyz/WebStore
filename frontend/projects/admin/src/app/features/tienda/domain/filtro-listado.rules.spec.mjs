@@ -14,6 +14,7 @@ const fuente = [
   await leer('./filtro-catalogo.model.ts'),
   await leer('./filtro-catalogo.rules.ts'),
   await leer('./inventario.rules.ts'),
+  await leer('./tarifa-envio.rules.ts'),
   await leer('./filtro-listado.rules.ts'),
 ].join('\n');
 const salida = ts.transpileModule(fuente, {
@@ -37,6 +38,12 @@ const {
   parametrosDeFiltrosUsuarios,
   parametrosDeFiltrosBanners,
   parametrosDeFiltrosReclamos,
+  filtrarPedidos,
+  leerFiltrosPedidos,
+  parametrosDeFiltrosPedidos,
+  filtrarTarifasDeEnvio,
+  leerFiltrosTarifas,
+  parametrosDeFiltrosTarifas,
 } = regla;
 
 const ids = (lista) => lista.map((item) => item.id);
@@ -156,4 +163,48 @@ test('PBI-0139: al escribir la URL se omiten los valores por defecto y los espac
     [leerFiltrosReclamos, parametrosDeFiltrosReclamos, { texto: 'y', estado: 'received' }],
   ])
     assert.deepEqual(leerFiltros(escribir(filtros)), filtros, 'ida y vuelta');
+});
+
+// Lote 07b (ADR-0017), PBI-0155: Pedidos (estado) y Tarifas de envío (distrito u origen, y origen) con el mismo panel.
+const pedidos = [
+  { id: 'WS-1', status: 'confirmed' },
+  { id: 'WS-2', status: 'delivered' },
+  { id: 'WS-3', status: 'confirmed' },
+];
+
+test('PBI-0155: Pedidos filtra por estado; sin estado, todos', () => {
+  assert.deepEqual(ids(filtrarPedidos(pedidos, { estado: '' })), ['WS-1', 'WS-2', 'WS-3']);
+  assert.deepEqual(ids(filtrarPedidos(pedidos, { estado: 'confirmed' })), ['WS-1', 'WS-3']);
+  assert.deepEqual(ids(filtrarPedidos(pedidos, { estado: 'cancelled' })), []);
+});
+
+const tarifas = [
+  { id: 't1', origin: 'San Isidro', destination: 'Jesús María', price: 10 },
+  { id: 't2', origin: 'Callao', destination: 'Comas 10', price: 12 },
+  { id: 't3', origin: 'Callao', destination: 'Comas 2', price: 11 },
+];
+
+test('PBI-0155: Tarifas de envío filtra por distrito u origen y por origen, en orden de origen y distrito', () => {
+  assert.deepEqual(ids(filtrarTarifasDeEnvio(tarifas, { texto: '', origen: '' })), ['t3', 't2', 't1']);
+  assert.deepEqual(ids(filtrarTarifasDeEnvio(tarifas, { texto: 'jesus', origen: '' })), ['t1']);
+  assert.deepEqual(ids(filtrarTarifasDeEnvio(tarifas, { texto: 'comas', origen: 'Callao' })), ['t3', 't2']);
+  assert.deepEqual(ids(filtrarTarifasDeEnvio(tarifas, { texto: '', origen: 'San Isidro' })), ['t1']);
+});
+
+test('PBI-0155: Pedidos y Tarifas leen sus filtros de la URL; un estado desconocido es «todos»', () => {
+  assert.deepEqual(leerFiltrosPedidos({}), { estado: '' });
+  assert.deepEqual(leerFiltrosPedidos({ estado: 'shipped' }), { estado: 'shipped' });
+  assert.deepEqual(leerFiltrosPedidos({ estado: 'perdido' }), { estado: '' });
+  assert.deepEqual(leerFiltrosTarifas({}), { texto: '', origen: '' });
+  assert.deepEqual(leerFiltrosTarifas({ texto: 'comas', origen: 'Callao' }), {
+    texto: 'comas',
+    origen: 'Callao',
+  });
+});
+
+test('PBI-0155: al escribir la URL de Pedidos y Tarifas se omiten los valores por defecto', () => {
+  assert.deepEqual(parametrosDeFiltrosPedidos({ estado: '' }), {});
+  assert.deepEqual(parametrosDeFiltrosPedidos({ estado: 'delivered' }), { estado: 'delivered' });
+  assert.deepEqual(parametrosDeFiltrosTarifas({ texto: '  comas ', origen: '' }), { texto: 'comas' });
+  assert.deepEqual(parametrosDeFiltrosTarifas({ texto: '', origen: 'Callao' }), { origen: 'Callao' });
 });

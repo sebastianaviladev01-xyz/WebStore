@@ -7,8 +7,13 @@ const source = await readFile(new URL('./tarifa-envio.rules.ts', import.meta.url
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { leerDistritos, asignarPrecioTarifa, ajustarPreciosTarifas, filtrarTarifas, paginarTarifas } =
-  await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+const {
+  leerDistritos,
+  asignarPrecioTarifa,
+  ajustarPreciosTarifas,
+  filtrarTarifas,
+  borradorDeTarifasVigente,
+} = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 const rate = (id, origin, destination, price) => ({ id, origin, destination, price });
 let sequence = 0;
@@ -73,16 +78,44 @@ test('la búsqueda ignora tildes y mayúsculas, combina con el origen y ordena',
   );
 });
 
-test('la paginación corta en páginas, ajusta la página fuera de rango y cuenta bien', () => {
-  const rates = Array.from({ length: 1600 }, (_, index) => rate(`r${index}`, 'Origen', `D${index}`, 5));
-  const first = paginarTarifas(rates, 1, 25);
-  assert.deepEqual([first.page, first.pages, first.from, first.to, first.items.length], [1, 64, 1, 25, 25]);
-  const last = paginarTarifas(rates, 999, 25);
+// Lote 07b (ADR-0017), PBI-0157: lo escrito en Tarifas de envío cuando vence la sesión, con sus modos.
+const VACIO = { origin: '', destinations: '', price: 0 };
+const SIN_AJUSTE = { percent: 0, origin: '' };
+
+test('PBI-0157: el borrador de una tarifa en edición vuelve a esa edición si la tarifa sigue existiendo', () => {
+  const base = rate('r1', 'San Isidro', 'Miraflores', 10);
+  const borrador = {
+    editando: base,
+    tarifa: { origin: 'San Isidro', destinations: 'Miraflores', price: 14 },
+    ajuste: SIN_AJUSTE,
+  };
   assert.deepEqual(
-    [last.page, last.from, last.to],
-    [64, 1576, 1600],
-    'una página que ya no existe va a la última',
+    borradorDeTarifasVigente(borrador, [rate('r1', 'San Isidro', 'Miraflores', 11)]),
+    borrador,
   );
-  const empty = paginarTarifas([], 3, 25);
-  assert.deepEqual([empty.page, empty.pages, empty.from, empty.to, empty.total], [1, 1, 0, 0, 0]);
+});
+
+test('PBI-0157: si la tarifa en edición ya no existe, no se restaura esa edición (no se vuelve a crear)', () => {
+  const borrador = {
+    editando: rate('r9', 'Callao', 'Comas', 8),
+    tarifa: { origin: 'Callao', destinations: 'Comas', price: 9 },
+    ajuste: SIN_AJUSTE,
+  };
+  assert.equal(borradorDeTarifasVigente(borrador, [rate('r1', 'San Isidro', 'Miraflores', 10)]), null);
+  const conAjuste = { ...borrador, ajuste: { percent: 5, origin: 'Callao' } };
+  assert.deepEqual(borradorDeTarifasVigente(conAjuste, []), {
+    editando: null,
+    tarifa: VACIO,
+    ajuste: { percent: 5, origin: 'Callao' },
+  });
+});
+
+test('PBI-0157: el precio para varios distritos y el ajuste porcentual se restauran tal como estaban', () => {
+  const borrador = {
+    editando: null,
+    tarifa: { origin: 'Callao', destinations: 'Comas, Ate', price: 12 },
+    ajuste: { percent: -3, origin: '' },
+  };
+  assert.deepEqual(borradorDeTarifasVigente(borrador, []), borrador);
+  assert.equal(borradorDeTarifasVigente({ editando: null, tarifa: VACIO, ajuste: SIN_AJUSTE }, []), null);
 });

@@ -360,7 +360,8 @@ test.describe('Pedidos', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto(`/pedidos?pedido=${id}`);
 
-    const filtro = page.getByRole('combobox', { name: 'Estado', exact: true });
+    // Lote 07b (PBI-0155): el filtro de estado va en el panel estándar y se aplica con «Buscar».
+    const filtro = page.getByRole('combobox', { name: 'Filtrar por estado' });
     const cambiar = page.getByRole('combobox', { name: 'Cambiar estado' });
     await expect(filtro).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: id })).toBeVisible();
@@ -376,7 +377,11 @@ test.describe('Pedidos', () => {
     // PBI-0066: con un filtro que no incluye el pedido, el detalle no lo muestra.
     await filtro.click();
     await page.getByRole('option', { name: 'Entregado' }).click();
-    await expect(page.getByText('No hay pedidos con este estado.')).toBeVisible();
+    await page
+      .getByRole('search', { name: 'Filtros de pedidos' })
+      .getByRole('button', { name: 'Buscar' })
+      .click();
+    await expect(page.getByText('Ningún pedido cumple los filtros.')).toBeVisible();
     await expect(page.getByText('Selecciona un pedido para ver su detalle.')).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: id })).toHaveCount(0);
   });
