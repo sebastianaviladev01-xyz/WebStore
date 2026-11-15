@@ -31,13 +31,33 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el comprador confirma la compra
 - **Cuando** el BFF registra el pedido
-- **Entonces** los precios, el IGV, el envío y el total se recalculan en el servidor; no se usan los montos que envía el navegador.
+- **Entonces** los precios, el IGV, el envío y el total se recalculan en el servidor; no se usan los montos que envía el navegador. Si el total que vio el comprador ya no es el vigente, el pedido no se registra: la tienda avisa qué cambió y muestra el total actualizado antes de cobrar (lote 04, PBI-0106).
 
 ### Escenario 04 – Stock insuficiente
 
 - **Dado** que un producto del carrito ya no tiene stock suficiente
 - **Cuando** el comprador confirma la compra
-- **Entonces** el pedido no se registra y el stock no cambia.
+- **Entonces** el pedido no se registra y el stock no cambia. La tienda vuelve a pedir el catálogo y, al volver a entrar al checkout, ya no muestra el error anterior (lote 04, PBI-0064).
+
+### Escenario 05 – Términos y condiciones
+
+- **Dado** que el comprador está en el checkout
+- **Cuando** intenta finalizar la compra sin marcar «Acepto los términos y condiciones»
+- **Entonces** el pedido no se envía y la tienda pide aceptarlos; al aceptarlos, el pedido guarda la fecha y hora de la aceptación.
+
+### Escenario 06 – Doble envío
+
+- **Dado** que el comprador pulsa dos veces «Finalizar compra», o la petición se repite
+- **Cuando** la tienda envía el pedido
+- **Entonces** se registra un solo pedido y el stock baja una sola vez.
+
+### Escenario 07 – Datos de entrega
+
+- **Dado** que el comprador deja vacíos la provincia, el departamento o la fecha, o elige una fecha anterior a hoy en Lima
+- **Cuando** intenta finalizar la compra
+- **Entonces** cada campo muestra su mensaje y el pedido no se envía. La fecha propuesta es dos días después de hoy, contados con la fecha de Lima.
+
+> Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0040, PBI-0063, PBI-0086 y PBI-0096; los términos son una decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.
 
 ## Fuera de alcance y pendientes
 

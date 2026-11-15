@@ -25,4 +25,12 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el comprador dejó productos en el carrito de su dispositivo
 - **Cuando** vuelve a abrir el carrito después de un cambio de precio o de stock en el catálogo
-- **Entonces** el carrito usa el precio y el stock vigentes del catálogo.
+- **Entonces** el carrito usa el precio y el stock vigentes del catálogo. Al entrar al checkout, la tienda vuelve a pedir el catálogo y avisa lo que cambió (precio, stock o producto retirado) con el total actualizado; las líneas guardadas del mismo producto se unen en una.
+
+### Escenario 03 – Carrito guardado mientras carga o sin conexión
+
+- **Dado** que el comprador dejó productos en el carrito de su dispositivo
+- **Cuando** abre el carrito o el checkout y el catálogo todavía no responde, o falla
+- **Entonces** la tienda dice «Cargando tu carrito…» o que no pudo cargarlo, con «Reintentar»; no dice que el carrito está vacío.
+
+> Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0092, PBI-0106 y PBI-0110), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.
