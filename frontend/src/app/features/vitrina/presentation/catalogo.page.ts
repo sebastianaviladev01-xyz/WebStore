@@ -1,12 +1,28 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
-import { descendientesDeCategoria } from '../../catalogo/domain/categoria.rules';
+import {
+  FiltrosCatalogo,
+  TOPES_DE_PRECIO,
+  filtrarProductos,
+  hayFiltrosCatalogo,
+  leerFiltrosCatalogo,
+  parametrosDeFiltrosCatalogo,
+} from '../../catalogo/domain/filtro-catalogo.rules';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
 @Component({
@@ -33,6 +49,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
       <div class="ws-catalog-mobile-toolbar">
         <button
+          #botonFiltros
           type="button"
           class="ws-filter-toggle"
           [attr.aria-expanded]="filtersOpen()"
@@ -57,20 +74,21 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
           type="button"
           class="ws-filter-backdrop"
           aria-label="Cerrar filtros"
-          (click)="filtersOpen.set(false)"
+          (click)="cerrarFiltros()"
         ></button>
       }
 
       <div class="ws-catalog-layout">
+        <!-- El foco solo queda retenido con el panel móvil abierto; en escritorio es una barra lateral (PBI-0105). -->
         <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- Escape llega desde los controles enfocables del panel. -->
         <aside
           id="catalog-filters"
           class="ws-catalog-filters"
           [class.is-open]="filtersOpen()"
-          cdkTrapFocus
+          [cdkTrapFocus]="filtersOpen()"
           [cdkTrapFocusAutoCapture]="filtersOpen()"
           aria-label="Filtros de catálogo"
-          (keydown.escape)="filtersOpen.set(false)"
+          (keydown.escape)="cerrarFiltros()"
         >
           <div class="ws-catalog-filter-header">
             <h2>Filtrar productos</h2>
@@ -78,7 +96,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
               type="button"
               class="ws-filter-close"
               aria-label="Cerrar filtros"
-              (click)="filtersOpen.set(false)"
+              (click)="cerrarFiltros()"
             >
               ×
             </button>
@@ -90,14 +108,17 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
                 matInput
                 type="search"
                 placeholder="Ej. OLED, lavadora..."
-                [value]="effectiveSearch()"
+                [value]="filtros().buscar"
                 (input)="onSearch($event)"
               />
             </mat-form-field>
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Categoría</mat-label>
-              <mat-select [value]="effectiveCategory()" (selectionChange)="category.set($event.value)">
+              <mat-select
+                [value]="filtros().categoria"
+                (selectionChange)="aplicar({ categoria: $event.value })"
+              >
                 <mat-option value="">Todas</mat-option>
                 @for (item of catalog.categories(); track item.id) {
                   <mat-option [value]="item.id">{{ item.name }}</mat-option>
@@ -107,11 +128,15 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <mat-label>Precio máximo</mat-label>
-              <mat-select [value]="maxPrice()" (selectionChange)="maxPrice.set($event.value)">
-                <mat-option [value]="1000">S/ 1,000</mat-option>
-                <mat-option [value]="2000">S/ 2,000</mat-option>
-                <mat-option [value]="3000">S/ 3,000</mat-option>
-                <mat-option [value]="5000">S/ 5,000</mat-option>
+              <mat-select
+                canSelectNullableOptions
+                [value]="filtros().precioMaximo"
+                (selectionChange)="aplicar({ precioMaximo: $event.value })"
+              >
+                <mat-option [value]="null">Todos los precios</mat-option>
+                @for (tope of topes; track tope) {
+                  <mat-option [value]="tope">S/ {{ tope.toLocaleString('en-US') }}</mat-option>
+                }
               </mat-select>
             </mat-form-field>
           </div>
@@ -120,7 +145,7 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
               Limpiar filtros
             </button>
           }
-          <button type="button" class="ws-filter-apply ws-btn-primary" (click)="filtersOpen.set(false)">
+          <button type="button" class="ws-filter-apply ws-btn-primary" (click)="cerrarFiltros()">
             Ver {{ filteredProducts().length }}
             {{ filteredProducts().length === 1 ? 'producto' : 'productos' }}
           </button>
@@ -177,49 +202,49 @@ import { TarjetaProductoComponent } from './tarjeta-producto.component';
 export class CatalogoPage {
   readonly categoria = input<string | undefined>();
   readonly buscar = input<string | undefined>();
+  readonly precio = input<string | undefined>();
 
   protected readonly catalog = inject(CatalogoFacade);
-  protected readonly search = signal<string | null>(null);
-  protected readonly category = signal<string | null>(null);
-  protected readonly maxPrice = signal(5000);
+  private readonly router = inject(Router);
   protected readonly filtersOpen = signal(false);
+  protected readonly topes = TOPES_DE_PRECIO;
+  private readonly botonFiltros = viewChild<ElementRef<HTMLButtonElement>>('botonFiltros');
 
-  protected readonly effectiveCategory = computed(() => this.category() ?? this.categoria() ?? '');
-  protected readonly effectiveSearch = computed(() => this.search() ?? this.buscar() ?? '');
+  /** Los filtros son los parámetros de la URL: el panel, la cabecera y los enlaces de categoría los cambian (PBI-0108). */
+  protected readonly filtros = computed(() =>
+    leerFiltrosCatalogo({ buscar: this.buscar(), categoria: this.categoria(), precio: this.precio() }),
+  );
   protected readonly categoryTitle = computed(
     () =>
-      this.catalog.categories().find((category) => category.id === this.effectiveCategory())?.name ??
+      this.catalog.categories().find((category) => category.id === this.filtros().categoria)?.name ??
       'Todos los productos',
   );
-
-  protected readonly filteredProducts = computed(() => {
-    const term = this.effectiveSearch().trim().toLocaleLowerCase('es-PE');
-    const category = this.effectiveCategory();
-    const categoryIds = new Set([
-      category,
-      ...descendientesDeCategoria(this.catalog.categories(), category).map((entry) => entry.category.id),
-    ]);
-    const maxPrice = this.maxPrice();
-
-    return this.catalog.products().filter((product) => {
-      const matchesTerm = !term || product.name.toLocaleLowerCase('es-PE').includes(term);
-      const matchesCategory = !category || categoryIds.has(product.categoryId);
-      const matchesPrice = product.price <= maxPrice;
-      return matchesTerm && matchesCategory && matchesPrice;
-    });
-  });
-
-  protected readonly hasFilters = computed(
-    () => Boolean(this.effectiveSearch()) || Boolean(this.effectiveCategory()) || this.maxPrice() !== 5000,
+  protected readonly filteredProducts = computed(() =>
+    filtrarProductos(this.catalog.products(), this.catalog.categories(), this.filtros()),
   );
+  protected readonly hasFilters = computed(() => hayFiltrosCatalogo(this.filtros()));
 
   protected onSearch(event: Event): void {
-    this.search.set((event.target as HTMLInputElement).value);
+    // Cada letra reemplaza la entrada del historial, para que «Atrás» no las recorra una por una.
+    this.aplicar({ buscar: (event.target as HTMLInputElement).value }, true);
   }
 
   protected clearFilters(): void {
-    this.search.set('');
-    this.category.set('');
-    this.maxPrice.set(5000);
+    void this.router.navigate(['/catalogo']);
+  }
+
+  protected aplicar(cambio: Partial<FiltrosCatalogo>, reemplazar = false): void {
+    void this.router.navigate(['/catalogo'], {
+      queryParams: parametrosDeFiltrosCatalogo({ ...this.filtros(), ...cambio }),
+      replaceUrl: reemplazar,
+    });
+  }
+
+  /** Cierra el panel móvil y devuelve el foco al botón «Filtros», si está a la vista (PBI-0105). */
+  protected cerrarFiltros(): void {
+    if (!this.filtersOpen()) return;
+    this.filtersOpen.set(false);
+    const boton = this.botonFiltros()?.nativeElement;
+    if (boton?.checkVisibility()) boton.focus();
   }
 }
