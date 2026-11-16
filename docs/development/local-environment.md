@@ -186,6 +186,16 @@ En Bash: `PORT=3400 WEBSTORE_DATA_FILE="$PWD/backend/data-capturas-trabajo.json"
 - `WEBSTORE_DATA_FILE` lleva una ruta absoluta a una copia de trabajo, nunca `backend/data.json` ([trabajar sobre una copia](#trabajar-sobre-una-copia)). El BFF migra y reescribe el archivo con el que arranca, así que la copia de referencia no se abre directamente.
 - Nunca a la vez que `npm run test:e2e`, que levanta sus propios servidores en esos puertos: detenlos antes de la suite.
 
+## Demo publicada
+
+La demo del equipo se publica en Render, plan gratuito, como un solo servicio ([ADR-0020](../adrs/0020-publicar-la-demo-en-render.md)): la tienda en `/`, el Admin en `/admin/` y el BFF en `/bff/`, en modo demo. Se publica sola desde `dev` cada vez que el CI pasa.
+
+- **Configuración:** [`render.yaml`](../../render.yaml) y [`tools/demo/servidor-demo.mjs`](../../tools/demo/servidor-demo.mjs).
+- **Primera vez:** quien administra la cuenta de Render elige «New» → «Blueprint», conecta el repositorio de GitHub y acepta el servicio `webstore-demo` que propone `render.yaml`. Render da una dirección fija del tipo `https://webstore-demo-xxxx.onrender.com`.
+- **Esperas:** tras 15 minutos sin visitas el servicio se duerme; la primera visita tarda alrededor de un minuto.
+- **Datos:** son los de ejemplo y vuelven a ellos al dormirse o al publicar una versión nueva.
+- **Probarla en local como en Render:** compila con `npm run build:storefront --prefix frontend` y `npm run build:admin --prefix frontend -- --base-href /admin/` (en Git Bash, con `MSYS_NO_PATHCONV=1` delante, para que no convierta `/admin/` en una ruta de Windows) y arranca `node tools/demo/servidor-demo.mjs` con `PORT` (por omisión 8080), `WEBSTORE_DEMO_MODE=true` y una copia de datos en `WEBSTORE_DATA_FILE`.
+
 ## Accesibilidad con lector de pantalla
 
 Las e2e comprueban el rol, el nombre accesible, la descripción y el orden de foco, pero no cómo los anuncia un lector de pantalla real ([PBI-0165](../planning/backlog.md)). Esta lista la ejecuta una persona antes de una entrega a clientes o cuando un cambio toca estos recorridos, con NVDA en Windows (Chrome) y VoiceOver en iPhone (Safari), sobre una copia de datos y en modo demo:

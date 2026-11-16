@@ -3,6 +3,8 @@
 - Estado: Aceptada
 - Fecha: 2026-11-06
 
+Nota posterior (2026-11-16): la demo del equipo sí tiene despliegue, en Render, desde [ADR-0020](0020-publicar-la-demo-en-render.md). La instalación de un cliente sigue sin despliegue en el repositorio.
+
 ## Contexto
 
 ### Por qué había que decidir
