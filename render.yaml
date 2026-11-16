@@ -1,0 +1,23 @@
+# Demo publicada de WebStore en Render, plan gratuito (ADR-0020).
+# Un solo servicio: tools/demo/servidor-demo.mjs sirve la tienda en /, el Admin en /admin/ y el BFF en /bff/.
+# Se publica sola desde dev cuando pasa el CI. Los datos son los de ejemplo y vuelven a ellos cada vez que el
+# servicio se duerme (15 minutos sin visitas) o se publica una versión nueva.
+services:
+  - type: web
+    name: webstore-demo
+    runtime: node
+    plan: free
+    region: oregon
+    branch: dev
+    autoDeployTrigger: checksPass
+    buildCommand: >-
+      npm ci --prefix frontend &&
+      npm run build:storefront --prefix frontend &&
+      npm run build:admin --prefix frontend -- --base-href /admin/
+    startCommand: node tools/demo/servidor-demo.mjs
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: '24'
+      - key: WEBSTORE_DEMO_MODE
+        value: 'true'
