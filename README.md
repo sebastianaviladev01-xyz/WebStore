@@ -43,6 +43,10 @@ Los dos frontends llegan al BFF por `/bff` con el proxy de [`frontend/proxy.conf
 
 Rutas útiles del Storefront: `/` (inicio), `/inicio-anterior` (inicio previo, para comparar; no está en el menú), `/catalogo`, `/carrito`, `/checkout`, `/cuenta/login`, `/pedidos` y `/libro-reclamaciones`.
 
+### Demo publicada
+
+La última versión de `dev` está publicada en <https://webstore-demo.onrender.com> (tienda) y <https://webstore-demo.onrender.com/admin/> (Admin), en modo demo y con datos de ejemplo ([ADR-0020](docs/adrs/0020-publicar-la-demo-en-render.md)). Tras 15 minutos sin visitas se duerme y la primera visita tarda alrededor de un minuto.
+
 ### Accesos de demostración
 
 Usuarios del Admin sembrados por el BFF de prueba, solo para uso local:
