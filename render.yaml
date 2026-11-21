@@ -1,7 +1,7 @@
 # Demo publicada de WebStore en Render, plan gratuito (ADR-0020).
 # Un solo servicio: tools/demo/servidor-demo.mjs sirve la tienda en /, el Admin en /admin/ y el BFF en /bff/.
 # Se publica sola desde dev cuando pasa el CI. Los datos son los de ejemplo y vuelven a ellos cada vez que el
-# servicio se duerme (15 minutos sin visitas) o se publica una versión nueva.
+# servicio se duerme (15 minutos sin visitas) o se publica una versión nueva. Funciona como en local (2026-11-20).
 services:
   - type: web
     name: webstore-demo
@@ -19,5 +19,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: '24'
+      # Igual que en local: sin modo demo (sin tuerca de temas ni credenciales en el acceso del Admin) y con los
+      # códigos de verificación en la respuesta, porque no hay correo real. Se deja en 'false' en lugar de quitar la
+      # variable para que Render no conserve el valor anterior.
       - key: WEBSTORE_DEMO_MODE
+        value: 'false'
+      - key: WEBSTORE_EXPOSE_TEST_CODES
         value: 'true'
