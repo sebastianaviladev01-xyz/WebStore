@@ -45,7 +45,7 @@ Rutas útiles del Storefront: `/` (inicio), `/inicio-anterior` (inicio previo, p
 
 ### Demo publicada
 
-La última versión de `dev` está publicada en <https://webstore-demo.onrender.com> (tienda) y <https://webstore-demo.onrender.com/admin/> (Admin), con datos de ejemplo y funcionando igual que en local ([ADR-0020](docs/adrs/0020-publicar-la-demo-en-render.md)). El Admin se abre con los accesos de demostración de abajo. Tras 15 minutos sin visitas se duerme y la primera visita tarda alrededor de un minuto.
+La última versión de `dev` está publicada en <https://webstore-demo.onrender.com> (tienda) y <https://webstore-demo.onrender.com/admin/> (Admin), con datos de ejemplo y sin la tuerca de temas, como en local ([ADR-0020](docs/adrs/0020-publicar-la-demo-en-render.md)). El acceso del Admin muestra las credenciales de prueba. Tras 15 minutos sin visitas se duerme y la primera visita tarda alrededor de un minuto.
 
 ### Accesos de demostración
 

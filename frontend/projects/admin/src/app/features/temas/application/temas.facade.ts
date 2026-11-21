@@ -37,6 +37,11 @@ export class TemasFacade {
   private loadPromise: Promise<void> | null = null;
 
   readonly modoDemo = computed(() => this.aparienciaState()?.demoMode ?? false);
+  /** Si el acceso muestra las credenciales de prueba: en modo demo o si el BFF las pide sin él (PBI-0071). */
+  readonly credencialesDePrueba = computed(() => {
+    const apariencia = this.aparienciaState();
+    return apariencia?.testCredentials ?? apariencia?.demoMode ?? false;
+  });
   readonly temas = computed<readonly Tema[]>(() => this.aparienciaState()?.themes ?? []);
   readonly temaActivo = computed<Tema | null>(() => {
     const apariencia = this.aparienciaState();
@@ -145,6 +150,7 @@ export class TemasFacade {
     const activo = temasAdmin.themes.find((tema) => tema.id === temasAdmin.activeThemeId);
     this.aparienciaState.set({
       demoMode: modoDemo,
+      testCredentials: this.credencialesDePrueba(),
       activeThemeId: temasAdmin.activeThemeId,
       themes: modoDemo || !activo ? temasAdmin.themes : [activo],
     });

@@ -111,4 +111,4 @@ Los reclamos ya registrados conservan su fecha de vencimiento (`dueAt`): cambiar
 - [ ] El logo de la tienda está cargado en Contenido.
 - [ ] El tema activo es el de la tienda: C para Ecom.
 - [ ] `WEBSTORE_NON_WORKING_DATES` trae los feriados del año en curso y el log del BFF no avisa de que faltan.
-- [ ] `WEBSTORE_EXPOSE_TEST_CODES` y `WEBSTORE_ALLOW_STORE_RESET` no están definidas, y `WEBSTORE_ALLOWED_ORIGINS` lleva los orígenes de la instalación.
+- [ ] `WEBSTORE_EXPOSE_TEST_CODES`, `WEBSTORE_ALLOW_STORE_RESET` y `WEBSTORE_SHOW_TEST_CREDENTIALS` no están definidas, y `WEBSTORE_ALLOWED_ORIGINS` lleva los orígenes de la instalación.

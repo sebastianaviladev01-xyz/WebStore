@@ -188,13 +188,13 @@ En Bash: `PORT=3400 WEBSTORE_DATA_FILE="$PWD/backend/data-capturas-trabajo.json"
 
 ## Demo publicada
 
-La demo del equipo se publica en Render, plan gratuito, como un solo servicio ([ADR-0020](../adrs/0020-publicar-la-demo-en-render.md)): la tienda en `/`, el Admin en `/admin/` y el BFF en `/bff/`. Funciona igual que en local: sin modo demo (sin tuerca de temas ni credenciales en el acceso del Admin; usa las del [README](../../README.md#accesos-de-demostración)) y con los códigos de verificación en la respuesta. Se publica sola desde `dev` cada vez que el CI pasa.
+La demo del equipo se publica en Render, plan gratuito, como un solo servicio ([ADR-0020](../adrs/0020-publicar-la-demo-en-render.md)): la tienda en `/`, el Admin en `/admin/` y el BFF en `/bff/`. Sin modo demo, así que sin tuerca de temas, como en local; con las credenciales de prueba en el acceso del Admin (`WEBSTORE_SHOW_TEST_CREDENTIALS=true`) y los códigos de verificación en la respuesta. Se publica sola desde `dev` cada vez que el CI pasa.
 
 - **Configuración:** [`render.yaml`](../../render.yaml) y [`tools/demo/servidor-demo.mjs`](../../tools/demo/servidor-demo.mjs).
 - **Primera vez:** quien administra la cuenta de Render elige «New» → «Blueprint», conecta el repositorio de GitHub y acepta el servicio `webstore-demo` que propone `render.yaml`. Render da una dirección fija: la demo del equipo está en <https://webstore-demo.onrender.com> (tienda) y <https://webstore-demo.onrender.com/admin/> (Admin).
 - **Esperas:** tras 15 minutos sin visitas el servicio se duerme; la primera visita tarda alrededor de un minuto.
 - **Datos:** son los de ejemplo y vuelven a ellos al dormirse o al publicar una versión nueva.
-- **Probarla en local como en Render:** compila con `npm run build:storefront --prefix frontend` y `npm run build:admin --prefix frontend -- --base-href /admin/` (en Git Bash, con `MSYS_NO_PATHCONV=1` delante, para que no convierta `/admin/` en una ruta de Windows) y arranca `node tools/demo/servidor-demo.mjs` con `PORT` (por omisión 8080), `WEBSTORE_EXPOSE_TEST_CODES=true` y una copia de datos en `WEBSTORE_DATA_FILE`.
+- **Probarla en local como en Render:** compila con `npm run build:storefront --prefix frontend` y `npm run build:admin --prefix frontend -- --base-href /admin/` (en Git Bash, con `MSYS_NO_PATHCONV=1` delante, para que no convierta `/admin/` en una ruta de Windows) y arranca `node tools/demo/servidor-demo.mjs` con `PORT` (por omisión 8080), `WEBSTORE_SHOW_TEST_CREDENTIALS=true`, `WEBSTORE_EXPOSE_TEST_CODES=true` y una copia de datos en `WEBSTORE_DATA_FILE`.
 
 ## Accesibilidad con lector de pantalla
 

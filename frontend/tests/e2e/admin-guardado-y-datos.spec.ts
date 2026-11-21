@@ -413,14 +413,24 @@ test.describe('Pedidos', () => {
 });
 
 test.describe('Acceso, sesión y Contenido', () => {
-  test('PBI-0071: las credenciales de prueba solo se muestran en modo demo', async ({ page }) => {
+  test('PBI-0071: las credenciales de prueba solo se muestran en modo demo o si el BFF las pide', async ({
+    page,
+  }) => {
     await page.goto('/login');
     await expect(page.getByText('Credenciales del entorno local')).toBeVisible();
 
+    // La demo publicada (ADR-0020): sin modo demo, sin tuerca, pero con las credenciales a la vista.
+    let banderas = { demoMode: false, testCredentials: true };
     await page.route('**/bff/appearance', async (ruta) => {
       const respuesta = await ruta.fetch();
-      await ruta.fulfill({ response: respuesta, json: { ...(await respuesta.json()), demoMode: false } });
+      await ruta.fulfill({ response: respuesta, json: { ...(await respuesta.json()), ...banderas } });
     });
+    await page.reload();
+    await expect(page.getByText('Credenciales del entorno local')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Cambiar tema' })).toHaveCount(0);
+
+    // La instalación de un cliente: ni modo demo ni credenciales.
+    banderas = { demoMode: false, testCredentials: false };
     await page.reload();
     await expect(page.getByRole('heading', { level: 1, name: 'Acceso administrativo' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Ingresar al panel' })).toBeVisible();

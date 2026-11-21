@@ -39,6 +39,9 @@ export function readConfig(env) {
     nonWorkingDates: csvSet(env.WEBSTORE_NON_WORKING_DATES ?? ''),
     allowedOrigins: csvSet(env.WEBSTORE_ALLOWED_ORIGINS ?? 'http://localhost:4200,http://localhost:4300'),
     demoMode,
+    // Recuadro de credenciales de prueba en el acceso del Admin (PBI-0071): en modo demo o con
+    // `WEBSTORE_SHOW_TEST_CREDENTIALS=true`, que lo muestra sin encender la tuerca de temas (ADR-0020).
+    showTestCredentials: demoMode || isTrue(env.WEBSTORE_SHOW_TEST_CREDENTIALS),
     // Contraseñas de las cuentas demo por rol, usadas al crear o migrar sus credenciales.
     demoPasswords: {
       superadmin: env.WEBSTORE_OWNER_PASSWORD ?? 'WebStore#2026',

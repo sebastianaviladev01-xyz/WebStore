@@ -118,6 +118,36 @@ for (const [metodo, ejecutar, posicionRevision] of acciones) {
   });
 }
 
+const casosCredenciales = [
+  ['sin apariencia', undefined, false],
+  ['modo demo de un BFF sin testCredentials', { demoMode: true }, true],
+  ['fuera del modo demo', { demoMode: false, testCredentials: false }, false],
+  ['credenciales pedidas sin modo demo', { demoMode: false, testCredentials: true }, true],
+];
+
+for (const [nombre, banderas, esperado] of casosCredenciales)
+  test(`credencialesDePrueba, ${nombre}: ${esperado} (PBI-0071)`, async () => {
+    const { facade } = montar({
+      apariencia: banderas && { ...banderas, activeThemeId: 'b', themes: [B] },
+    });
+    if (banderas) await facade.cargar();
+    assert.equal(facade.credencialesDePrueba(), esperado);
+    assert.equal(facade.modoDemo(), banderas?.demoMode ?? false, 'las credenciales no encienden la tuerca');
+  });
+
+test('activar conserva las credenciales de prueba de la apariencia', async () => {
+  const { facade } = montar({
+    apariencia: { demoMode: false, testCredentials: true, activeThemeId: 'b', themes: [B] },
+    temasAdmin: lista(0, 'b'),
+    activar: lista(1, 'c'),
+  });
+  await facade.cargar();
+  await facade.cargarTemas();
+  assert.equal(await facade.activar('c'), true);
+  assert.equal(facade.credencialesDePrueba(), true);
+  assert.equal(facade.modoDemo(), false);
+});
+
 test('activar aplica el tema nuevo sin recargar la página (AC-10)', async () => {
   const { facade, cuantas, propiedades } = montar({
     apariencia: { demoMode: false, activeThemeId: 'b', themes: [B] },
