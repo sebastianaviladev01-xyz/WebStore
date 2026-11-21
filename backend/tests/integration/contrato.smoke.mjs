@@ -805,6 +805,7 @@ try {
   const aparienciaPublica = await request('/bff/appearance');
   if (
     aparienciaPublica.demoMode !== false ||
+    aparienciaPublica.testCredentials !== false ||
     aparienciaPublica.activeThemeId !== 'b' ||
     aparienciaPublica.themes.map((tema) => tema.id).join() !== 'b' ||
     aparienciaPublica.themes[0].tokens['--ws-primary'].toUpperCase() !== '#1D4ED8'

@@ -25,7 +25,13 @@ function revisionDeLaConsulta(url) {
  * exigen `themes.manage` (solo `superadmin`) antes de leer el cuerpo. `theme.css` va antes que cualquier otra
  * ruta de `/bff/appearance`, y `/bff/admin/active-theme` no coincide con `/bff/admin/themes/:id`.
  */
-export const temasRoutes = ({ consultas, casosDeUso, adminSesiones, modoDemo }) => {
+export const temasRoutes = ({
+  consultas,
+  casosDeUso,
+  adminSesiones,
+  modoDemo,
+  credencialesDePrueba = false,
+}) => {
   const exigirGestor = (req) => adminSesiones.requireAdmin(bearerToken(req), 'themes.manage');
 
   return [
@@ -37,7 +43,11 @@ export const temasRoutes = ({ consultas, casosDeUso, adminSesiones, modoDemo }) 
           varyByCookie: modoDemo,
         }),
     },
-    { method: 'GET', path: '/bff/appearance', handle: () => ok(consultas.apariencia(modoDemo)) },
+    {
+      method: 'GET',
+      path: '/bff/appearance',
+      handle: () => ok(consultas.apariencia(modoDemo, credencialesDePrueba)),
+    },
     {
       method: 'GET',
       path: '/bff/admin/themes',

@@ -4,7 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { Router } from '@angular/router';
 
-import { MODO_DEMO } from '../../../core/modo-demo';
+import { CREDENCIALES_DE_PRUEBA } from '../../../core/credenciales-de-prueba';
 import { SesionFacade } from '../application/sesion.facade';
 
 @Component({
@@ -51,8 +51,8 @@ import { SesionFacade } from '../application/sesion.facade';
         >
           {{ session.pending() ? 'Verificando…' : 'Ingresar al panel' }}
         </button>
-        <!-- PBI-0071: las credenciales de prueba solo en modo demo; nunca en la instalación de un cliente. -->
-        @if (modoDemo()) {
+        <!-- PBI-0071: las credenciales de prueba solo en modo demo o si el BFF las pide; nunca en la instalación de un cliente. -->
+        @if (credencialesDePrueba()) {
           <details class="mt-6 text-xs leading-5 text-muted">
             <summary class="cursor-pointer font-semibold">Credenciales del entorno local</summary>
             <p class="mt-2">Superadministrador: owner@webstore.demo / WebStore#2026</p>
@@ -67,7 +67,7 @@ import { SesionFacade } from '../application/sesion.facade';
 })
 export class LoginPage {
   protected readonly session = inject(SesionFacade);
-  protected readonly modoDemo = inject(MODO_DEMO);
+  protected readonly credencialesDePrueba = inject(CREDENCIALES_DE_PRUEBA);
   private readonly router = inject(Router);
   protected readonly form = new FormGroup({
     email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),

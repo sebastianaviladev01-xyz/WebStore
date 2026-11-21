@@ -13,7 +13,7 @@ import { BffTemasGateway } from './features/temas/data/bff-temas.gateway';
 import { TemasFacade } from './features/temas/application/temas.facade';
 import { NotificacionesGateway } from './features/notificaciones/domain/notificaciones.gateway';
 import { BffNotificacionesGateway } from './features/notificaciones/data/bff-notificaciones.gateway';
-import { MODO_DEMO } from './core/modo-demo';
+import { CREDENCIALES_DE_PRUEBA } from './core/credenciales-de-prueba';
 
 export const adminConfig: ApplicationConfig = {
   providers: [
@@ -27,7 +27,7 @@ export const adminConfig: ApplicationConfig = {
     { provide: TiendaGateway, useClass: BffTiendaGateway },
     { provide: TemasGateway, useClass: BffTemasGateway },
     { provide: NotificacionesGateway, useClass: BffNotificacionesGateway },
-    // El acceso (feature sesion) no puede depender de temas: recibe el modo demo por la raíz (PBI-0071).
-    { provide: MODO_DEMO, useFactory: () => inject(TemasFacade).modoDemo },
+    // El acceso (feature sesion) no puede depender de temas: recibe por la raíz si muestra las credenciales (PBI-0071).
+    { provide: CREDENCIALES_DE_PRUEBA, useFactory: () => inject(TemasFacade).credencialesDePrueba },
   ],
 };

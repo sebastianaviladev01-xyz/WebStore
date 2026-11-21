@@ -1,7 +1,7 @@
 # Demo publicada de WebStore en Render, plan gratuito (ADR-0020).
 # Un solo servicio: tools/demo/servidor-demo.mjs sirve la tienda en /, el Admin en /admin/ y el BFF en /bff/.
 # Se publica sola desde dev cuando pasa el CI. Los datos son los de ejemplo y vuelven a ellos cada vez que el
-# servicio se duerme (15 minutos sin visitas) o se publica una versión nueva.
+# servicio se duerme (15 minutos sin visitas) o se publica una versión nueva. Sin tuerca de temas (2026-11-20).
 services:
   - type: web
     name: webstore-demo
@@ -19,5 +19,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: '24'
+      # Sin modo demo, así que sin tuerca de temas: los colores se cambian en el Admin, en «Temas». Se deja en
+      # 'false' en lugar de quitar la variable para que Render no conserve el valor anterior. Con las credenciales de
+      # prueba en el acceso del Admin y los códigos de verificación en la respuesta, porque no hay correo real.
       - key: WEBSTORE_DEMO_MODE
+        value: 'false'
+      - key: WEBSTORE_SHOW_TEST_CREDENTIALS
+        value: 'true'
+      - key: WEBSTORE_EXPOSE_TEST_CODES
         value: 'true'

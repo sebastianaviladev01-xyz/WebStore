@@ -62,6 +62,8 @@ export interface Tema {
 /** Apariencia pública: lo que la tienda y el Admin necesitan para pintarse (`GET /bff/appearance`). */
 export interface Apariencia {
   readonly demoMode: boolean;
+  /** Si el acceso muestra las credenciales de prueba (PBI-0071). Un BFF anterior no lo envía: vale `demoMode`. */
+  readonly testCredentials?: boolean;
   readonly activeThemeId: string;
   readonly themes: readonly Tema[];
 }

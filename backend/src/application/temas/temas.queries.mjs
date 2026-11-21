@@ -50,11 +50,12 @@ export function createTemasQueries({ store }) {
     buscar(lista, store.state.appearance.activeThemeId) ?? buscar(lista, TEMA_POR_DEFECTO);
 
   return {
-    apariencia(modoDemo) {
+    apariencia(modoDemo, credencialesDePrueba) {
       const lista = temas();
       const activo = temaActivo(lista);
       return {
         demoMode: modoDemo === true,
+        testCredentials: modoDemo === true || credencialesDePrueba === true,
         activeThemeId: activo.id,
         themes: modoDemo === true ? lista : [activo],
       };

@@ -88,6 +88,7 @@ const routes = [
     casosDeUso: createTemasUseCases({ store, security }),
     adminSesiones,
     modoDemo: config.demoMode,
+    credencialesDePrueba: config.showTestCredentials,
   }),
 ];
 

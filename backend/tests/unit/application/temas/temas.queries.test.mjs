@@ -66,6 +66,19 @@ test('apariencia(false) trae solo el tema activo y demoMode en falso', () => {
   assert.equal(consultas().apariencia(undefined).demoMode, false);
 });
 
+test('apariencia: testCredentials en modo demo o si se piden, sin cambiar demoMode ni los temas (PBI-0071)', () => {
+  assert.equal(consultas().apariencia(true).testCredentials, true, 'en modo demo');
+  assert.equal(consultas().apariencia(false).testCredentials, false, 'por defecto, no');
+  assert.equal(consultas().apariencia(undefined).testCredentials, false);
+  const pedidas = consultas('n').apariencia(false, true);
+  assert.equal(pedidas.testCredentials, true);
+  assert.equal(pedidas.demoMode, false, 'las credenciales no encienden la tuerca');
+  assert.deepEqual(
+    pedidas.themes.map(({ id }) => id),
+    ['n'],
+  );
+});
+
 test('un activeThemeId inexistente se trata como B', () => {
   const vista = consultas('fantasma').apariencia(false);
   assert.equal(vista.activeThemeId, 'b');

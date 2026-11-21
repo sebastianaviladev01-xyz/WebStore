@@ -36,3 +36,25 @@ for (const [nombre, env, codigos, reinicio] of casos)
     assert.equal(config.exposeTestCodes, codigos);
     assert.equal(config.allowStoreReset, reinicio);
   });
+
+// Recuadro de credenciales de prueba en el acceso del Admin (PBI-0071): en modo demo o con
+// `WEBSTORE_SHOW_TEST_CREDENTIALS=true`, para la demo publicada sin tuerca de temas (ADR-0020, 2026-11-20).
+const casosCredenciales = [
+  ['sin variables', {}, false],
+  ['modo demo', { WEBSTORE_DEMO_MODE: 'true' }, true],
+  ['WEBSTORE_SHOW_TEST_CREDENTIALS=true sin modo demo', { WEBSTORE_SHOW_TEST_CREDENTIALS: 'true' }, true],
+  ['WEBSTORE_SHOW_TEST_CREDENTIALS= TRUE ', { WEBSTORE_SHOW_TEST_CREDENTIALS: ' TRUE ' }, true],
+  ['WEBSTORE_SHOW_TEST_CREDENTIALS=1', { WEBSTORE_SHOW_TEST_CREDENTIALS: '1' }, false],
+  [
+    'modo demo apagado con las credenciales pedidas',
+    { WEBSTORE_DEMO_MODE: 'false', WEBSTORE_SHOW_TEST_CREDENTIALS: 'true' },
+    true,
+  ],
+];
+
+for (const [nombre, env, credenciales] of casosCredenciales)
+  test(`${nombre}: credenciales de prueba ${credenciales ? 'visibles' : 'ocultas'}`, () => {
+    const config = readConfig(env);
+    assert.equal(config.showTestCredentials, credenciales);
+    assert.equal(config.demoMode, env.WEBSTORE_DEMO_MODE === 'true');
+  });

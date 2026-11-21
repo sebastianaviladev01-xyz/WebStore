@@ -16,13 +16,18 @@ const serverEntry = fileURLToPath(new URL('../../src/main.mjs', import.meta.url)
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const COOKIE = 'ws_tema_vista_previa';
 
-/** Arranca el BFF con `modoDemo` como valor de la variable (`undefined`: sin definir) y ejecuta `alArrancar`. */
-async function conBff(port, modoDemo, alArrancar) {
+/**
+ * Arranca el BFF con `modoDemo` como valor de la variable (`undefined`: sin definir) y `extra` como variables
+ * adicionales, y ejecuta `alArrancar`.
+ */
+async function conBff(port, modoDemo, alArrancar, extra = {}) {
   const dataFile = join(tmpdir(), `webstore-modo-demo-${port}-${process.pid}.json`);
   await unlink(dataFile).catch(() => {});
   const env = { ...process.env, PORT: String(port), WEBSTORE_DATA_FILE: dataFile };
   delete env.WEBSTORE_DEMO_MODE;
+  delete env.WEBSTORE_SHOW_TEST_CREDENTIALS;
   if (modoDemo !== undefined) env.WEBSTORE_DEMO_MODE = modoDemo;
+  Object.assign(env, extra);
   const child = spawn(process.execPath, [serverEntry], { stdio: 'ignore', env });
   try {
     for (let attempt = 0; attempt < 50; attempt++) {
@@ -73,6 +78,7 @@ for (const [port, valor, nombre] of apagados) {
     await conBff(port, valor, async (base) => {
       const apariencia = await (await fetch(`${base}/bff/appearance`)).json();
       assert.equal(apariencia.demoMode, false);
+      assert.equal(apariencia.testCredentials, false);
       assert.deepEqual(
         apariencia.themes.map((tema) => tema.id),
         ['b'],
@@ -97,6 +103,7 @@ for (const [port, valor, nombre] of encendidos) {
     await conBff(port, valor, async (base) => {
       const apariencia = await (await fetch(`${base}/bff/appearance`)).json();
       assert.equal(apariencia.demoMode, true);
+      assert.equal(apariencia.testCredentials, true);
       assert.equal(apariencia.activeThemeId, 'b');
       assert.deepEqual(
         apariencia.themes.map((tema) => tema.id),
@@ -117,6 +124,27 @@ for (const [port, valor, nombre] of encendidos) {
     });
   });
 }
+
+test('WEBSTORE_SHOW_TEST_CREDENTIALS=true sin modo demo: testCredentials true, sin tuerca y theme.css ignora la cookie', async () => {
+  await conBff(
+    3118,
+    'false',
+    async (base) => {
+      const apariencia = await (await fetch(`${base}/bff/appearance`)).json();
+      assert.equal(apariencia.demoMode, false);
+      assert.equal(apariencia.testCredentials, true);
+      assert.deepEqual(
+        apariencia.themes.map((tema) => tema.id),
+        ['b'],
+      );
+      const sinCookie = await hoja(base);
+      const conCookie = await hoja(base, { cookie: `${COOKIE}=c` });
+      assert.equal(conCookie.headers.get('etag'), sinCookie.headers.get('etag'));
+      assert.equal(sinCookie.headers.get('vary'), null);
+    },
+    { WEBSTORE_SHOW_TEST_CREDENTIALS: 'true' },
+  );
+});
 
 test('theme.css: cabeceras, 304 con el mismo ETag y 200 con otro ETag tras activar otro tema', async () => {
   await conBff(3117, 'true', async (base) => {
