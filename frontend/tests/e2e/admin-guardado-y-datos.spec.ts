@@ -21,7 +21,7 @@ import { correoUnico, cuentasAdmin, fechaDeEntrega, ingresarAlAdmin, urls } from
  *   el mismo campo o eliminó el registro, no se guarda y se avisa.
  * - PBI-0119: una foto grande se reduce antes de guardarla.
  * - PBI-0123, PBI-0127, PBI-0128, PBI-0129 y PBI-0131: lo que no se puede guardar se dice junto al campo o la
- *   lista, sin enviarlo.
+ *   lista, sin enviarlo. Lote 12 (ADR-0021), PBI-0184: también un botón del banner a medias.
  * - PBI-0023, PBI-0066, PBI-0067, PBI-0126 y PBI-0145: Pedidos.
  * - PBI-0071, PBI-0124 y PBI-0125: acceso, sesión vencida y Contenido.
  * Las pruebas que cambian datos los dejan como estaban en un `finally`: las suites van en serie.
@@ -340,7 +340,8 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await page.getByRole('textbox', { name: 'Antetítulo' }).fill('Campaña');
     await page.getByRole('textbox', { name: 'Título', exact: true }).fill('Banner lote 06');
     await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
-    await page.getByRole('textbox', { name: 'Texto CTA' }).fill('Ver');
+    await page.getByRole('textbox', { name: 'Botón principal: texto' }).fill('Ver');
+    await page.getByRole('textbox', { name: 'Botón principal: enlace' }).fill('/catalogo');
     await page.getByRole('combobox', { name: 'Ubicación' }).click();
     await page.getByRole('option', { name: 'Promoción' }).click();
     await page.getByLabel('Inicio').fill('2030-12-10');
@@ -348,6 +349,30 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await fin.fill('2030-12-01');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(fin).toHaveAccessibleDescription('Debe ser el día del inicio o después.');
+    expect(guardados()).toBe(0);
+  });
+
+  // Lote 12 (ADR-0021), PBI-0184: cada botón del banner va completo (texto y enlace) o vacío, como valida el BFF.
+  test('PBI-0184: un botón del banner a medias no se envía y el campo dice qué le falta', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const guardados = contarGuardados(page);
+    await page.goto('/banners');
+    await page.getByRole('textbox', { name: 'Antetítulo' }).fill('Campaña');
+    await page.getByRole('textbox', { name: 'Título', exact: true }).fill('Banner lote 12');
+    await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
+    await page.getByRole('combobox', { name: 'Ubicación' }).click();
+    await page.getByRole('option', { name: 'Promoción' }).click();
+    await page.getByLabel('Inicio').fill('2030-12-01');
+    await page.getByLabel('Fin').fill('2030-12-10');
+    const enlacePrincipal = page.getByRole('textbox', { name: 'Botón principal: enlace' });
+    const textoSecundario = page.getByRole('textbox', { name: 'Botón secundario: texto' });
+    await page.getByRole('textbox', { name: 'Botón principal: texto' }).fill('Ver');
+    await page.getByRole('textbox', { name: 'Botón secundario: enlace' }).fill('https://example.com/ofertas');
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await expect(enlacePrincipal).toHaveAccessibleDescription('Falta el enlace del botón.');
+    await expect(textoSecundario).toHaveAccessibleDescription('Falta el texto del botón.');
     expect(guardados()).toBe(0);
   });
 });

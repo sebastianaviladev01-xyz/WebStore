@@ -52,3 +52,30 @@ test('PBI-0128: el tope de banners principales no cuenta los vencidos, los inact
     'no se cuenta a sí mismo',
   );
 });
+
+// Lote 12 (ADR-0021), PBI-0184 (provisional): cada botón del banner va completo (texto y enlace) o vacío, y el texto
+// admite hasta 40 caracteres, como valida el BFF.
+const { errorDeBoton, MAXIMO_TEXTO_DE_BOTON } = await import(
+  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+);
+
+test('PBI-0184: un botón con texto y enlace, o sin ninguno de los dos, vale', () => {
+  assert.equal(errorDeBoton('Ver ofertas', '/catalogo'), null);
+  assert.equal(errorDeBoton('Escríbenos', 'mailto:ventas@example.com'), null);
+  assert.equal(errorDeBoton('', ''), null);
+  assert.equal(errorDeBoton('  ', ' '), null, 'los espacios no cuentan');
+});
+
+test('PBI-0184: un botón a medias dice qué le falta', () => {
+  assert.equal(errorDeBoton('Ver ofertas', ''), 'sinEnlace');
+  assert.equal(errorDeBoton('Ver ofertas', '   '), 'sinEnlace');
+  assert.equal(errorDeBoton('', 'https://example.com'), 'sinTexto');
+});
+
+test('PBI-0184: el texto del botón admite los mismos 40 caracteres que el BFF', async () => {
+  const bff = await import(
+    new URL('../../../../../../../../backend/src/domain/admin/colecciones.rules.mjs', import.meta.url)
+  );
+  assert.equal(MAXIMO_TEXTO_DE_BOTON, 40);
+  assert.equal(MAXIMO_TEXTO_DE_BOTON, bff.MAXIMO_TEXTO_DE_BOTON);
+});
