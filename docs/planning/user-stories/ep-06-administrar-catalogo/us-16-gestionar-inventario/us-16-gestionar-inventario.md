@@ -47,4 +47,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** busca Inventario en el menú o escribe `/inventario`
 - **Entonces** no lo ve y la ruta lo lleva al Resumen; el stock lo cambia en la ficha del producto. El superadministrador y el administrador entran en Inventario, que tiene el panel de filtros (por nombre o SKU y por estado del stock).
 
-> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013 y PBI-0139). Provisional, por confirmar con Daniel ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-acceso.spec.ts` y `admin-listados.spec.ts`.
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013 y PBI-0139). El 2026-11-18 Daniel pidió que el vendedor también gestione Inventario (PBI-0170; [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-acceso.spec.ts` y `admin-listados.spec.ts`.

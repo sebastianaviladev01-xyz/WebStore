@@ -61,7 +61,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 
 ### Roles
 
-Roles fijos acordados el 05/11 (se asignan, no se editan), con los permisos de la reunión del 11/11 que aplicó el lote 07 (provisionales, por confirmar con Daniel: [decisiones pendientes](PENDING-DECISIONS.md), «Permisos de los roles»):
+Roles fijos acordados el 05/11 (se asignan, no se editan), con los permisos de la reunión del 11/11 que aplicó el lote 07 (Daniel los confirmó el 2026-11-18 con un cambio por construir: el vendedor también gestiona Inventario y ve Pedidos, PBI-0170; [decisiones pendientes](PENDING-DECISIONS.md), «Permisos de los roles»):
 
 - `superadmin`: todo, incluidos temas, contenido, el reinicio de la demo y la gestión de todos los usuarios.
 - `admin`: toda la operación de la tienda (catálogo, inventario, clientes, pedidos, banners, tarifas y reclamaciones), elimina productos y gestiona a los vendedores sin eliminarlos. No configura temas ni contenido.

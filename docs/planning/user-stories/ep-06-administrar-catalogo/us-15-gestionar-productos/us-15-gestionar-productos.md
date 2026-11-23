@@ -33,7 +33,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** crea un producto o modifica cualquiera de sus campos (también SKU, precio, categoría, marca, estado y stock), de cualquier producto de la tienda
 - **Entonces** el cambio se guarda; si intenta eliminar un producto, el Admin no se lo ofrece y el BFF lo rechaza (`403 CATALOG_SCOPE_VIOLATION`).
 
-> Cambiado el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con los permisos de la reunión del 11/11: antes el vendedor no creaba productos ni cambiaba SKU, precio, categoría, marca ni estado. Provisional, por confirmar con Daniel ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-catalogo-filtros.spec.ts` (TEST-17) y `admin-permisos.spec.ts`.
+> Cambiado el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con los permisos de la reunión del 11/11: antes el vendedor no creaba productos ni cambiaba SKU, precio, categoría, marca ni estado. Daniel lo confirmó el 2026-11-18 ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»); si el vendedor elimina productos se confirma con él al especificar PBI-0170. Lo prueban `admin-catalogo-filtros.spec.ts` (TEST-17) y `admin-permisos.spec.ts`.
 
 ### Escenario 04 – Fotos que no bloquean el guardado
 
@@ -51,5 +51,5 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ## Fuera de alcance y pendientes
 
-- Los permisos del vendedor son provisionales hasta que Daniel responda (PBI-0013 del [backlog](../../../backlog.md), lote 07).
-- Productos propios de cada vendedor (que solo vea los que creó): no, el vendedor trabaja sobre todos los productos de la tienda (provisional). Depende del modelo de datos (PBI-0043).
+- Daniel respondió el 2026-11-18: el vendedor modifica todos los campos de todos los productos y, además, gestiona Inventario y ve Pedidos (PBI-0170 del [backlog](../../../backlog.md)). Si el vendedor elimina productos se confirma con él al especificar PBI-0170.
+- Productos propios de cada vendedor (que solo vea los que creó): no, el vendedor trabaja sobre todos los productos de la tienda (confirmado por Daniel el 2026-11-18). Depende del modelo de datos (PBI-0043).

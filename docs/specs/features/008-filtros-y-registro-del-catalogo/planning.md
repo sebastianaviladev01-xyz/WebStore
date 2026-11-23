@@ -125,7 +125,7 @@ Los nombres que las tareas no deben repensar. Los identificadores nuevos van en 
 
 ## Decisiones
 
-- **Acordadas** (de la especificación): D1 a D7. D1 a D4, provisionales y sin bloquear, por confirmar con Daniel en las [decisiones pendientes](../../../planning/PENDING-DECISIONS.md) («Filtros y registro de los listados del Admin»).
+- **Acordadas** (de la especificación): D1 a D7. D1 a D4, provisionales y sin bloquear; Daniel respondió el 2026-11-20 en las [decisiones pendientes](../../../planning/PENDING-DECISIONS.md) («Filtros y registro de los listados del Admin») sin pedir cambios en ellas.
 - **De este plan, por aprobar en el hito:** cómo trae «Buscar» los datos actuales (pregunta 1), las rutas de registro (pregunta 2), dónde viven los filtros (pregunta 3) y la reutilización de Tarifas de envío (pregunta 4).
 - **Condicionadas:** ninguna. No hay preguntas de negocio nuevas: lo que el plan decide es técnico o de interfaz y lo responde el hito de arquitectura.
 - **ADR necesarios:** ninguno si se aprueba la alternativa A de la pregunta 1 (sigue la arquitectura vigente). Con la alternativa C, uno, y la etapa `sdd-decide` lo registraría.
