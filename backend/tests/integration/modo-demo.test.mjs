@@ -169,3 +169,56 @@ test('theme.css: cabeceras, 304 con el mismo ETag y 200 con otro ETag tras activ
     assert.notEqual(await trasActivar.text(), cuerpo);
   });
 });
+
+// Lote 14 (PBI-0188, ADR-0022): la tuerca de la demo ofrece solo A, B y C. La apariencia pública no publica los temas
+// propios (salvo el activo, para pintarlo) y `theme.css` no sirve la vista previa de un tema propio.
+test('modo demo: la apariencia trae solo A, B, C y el activo, y la cookie de un tema propio se ignora', async () => {
+  await conBff(3119, 'true', async (base) => {
+    const sesion = await (
+      await fetch(`${base}/bff/admin/sessions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'owner@webstore.demo', password: 'WebStore#2026' }),
+      })
+    ).json();
+    const authorization = `Bearer ${sesion.token}`;
+    const { revision } = await (
+      await fetch(`${base}/bff/admin/themes`, { headers: { authorization } })
+    ).json();
+    const creado = await fetch(`${base}/bff/admin/themes`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization },
+      body: JSON.stringify({
+        revision,
+        name: 'Propio de la demo',
+        colors: {
+          primary: '#0A7A5A',
+          secondary: '#FFB300',
+          background: '#F3F5F8',
+          surface: '#FFFFFF',
+          contrast: '#0F172A',
+        },
+      }),
+    });
+    assert.equal(creado.status, 201);
+    const propio = (await creado.json()).themes.find((tema) => tema.kind === 'custom');
+
+    const apariencia = await (await fetch(`${base}/bff/appearance`)).json();
+    assert.deepEqual(
+      apariencia.themes.map((tema) => tema.id),
+      ['a', 'b', 'c'],
+    );
+    const activo = await (await hoja(base)).text();
+    const conPropio = await hoja(base, { cookie: `${COOKIE}=${encodeURIComponent(propio.id)}` });
+    assert.equal(await conPropio.text(), activo);
+
+    await activarComoSuperadmin(base, propio.id);
+    const conActivoPropio = await (await fetch(`${base}/bff/appearance`)).json();
+    assert.deepEqual(
+      conActivoPropio.themes.map((tema) => tema.id),
+      ['a', 'b', 'c', propio.id],
+    );
+    const temaC = conActivoPropio.themes[2];
+    assert.ok((await (await hoja(base, { cookie: `${COOKIE}=c` })).text()).includes(tokenPrimario(temaC)));
+  });
+});
