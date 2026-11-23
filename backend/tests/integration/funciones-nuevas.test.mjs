@@ -1,6 +1,7 @@
 /**
- * Lote 07b (ADR-0017), por HTTP contra el BFF real: personas en línea (PBI-0027), actividad reciente (PBI-0028),
- * notificaciones de pedidos nuevos (PBI-0033), perfil propio (PBI-0034) e imagen de categoría (PBI-0052).
+ * Lote 07b (ADR-0017), por HTTP contra el BFF real: actividad reciente (PBI-0028), notificaciones de pedidos nuevos
+ * (PBI-0033), perfil propio (PBI-0034) e imagen de categoría (PBI-0052). Lote 13 (ADR-0021): sin personas en línea ni
+ * latido (PBI-0172) y con reclamos y errores de compra en la campana (PBI-0173).
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -12,21 +13,18 @@ const VENDEDOR = ['catalogo@webstore.demo', 'Catalogo#2026'];
 const snapshot = async (base, token) =>
   (await pedir(base, '/bff/admin/snapshot', { headers: bearer(token) })).body;
 
-test('PBI-0027: la tienda envía latidos y el Resumen completo ve cuántas pestañas hay en línea', async () => {
+test('PBI-0172: sin «Personas en línea», el BFF ya no recibe latidos ni los envía en el snapshot', async () => {
   await conBff({ port: 3170 }, async (base) => {
+    const latido = await pedir(base, '/bff/visits', {
+      method: 'POST',
+      body: { visitId: 'pestana-uno-000000001' },
+    });
+    assert.equal(latido.status, 404);
+    assert.equal(latido.body.error.code, 'ROUTE_NOT_FOUND');
     const { token } = await ingresarAlAdmin(base);
-    assert.equal((await snapshot(base, token)).onlineVisitors, 0);
-    for (const visitId of ['pestana-uno-000000001', 'pestana-dos-000000002', 'pestana-uno-000000001']) {
-      const latido = await pedir(base, '/bff/visits', { method: 'POST', body: { visitId } });
-      assert.equal(latido.status, 204);
-    }
-    assert.equal((await snapshot(base, token)).onlineVisitors, 2);
-    const malo = await pedir(base, '/bff/visits', { method: 'POST', body: { visitId: 'corto' } });
-    assert.equal(malo.status, 400);
-    assert.equal(malo.body.error.code, 'INVALID_VISIT_ID');
-    // El vendedor no ve el Resumen completo.
+    assert.equal('onlineVisitors' in (await snapshot(base, token)), false);
     const vendedor = await ingresarAlAdmin(base, ...VENDEDOR);
-    assert.equal((await snapshot(base, vendedor.token)).onlineVisitors, null);
+    assert.equal('onlineVisitors' in (await snapshot(base, vendedor.token)), false);
   });
 });
 
@@ -87,17 +85,22 @@ test('PBI-0033: la campana lista los pedidos confirmados nuevos y «visto» se r
   await conBff({ port: 3172 }, async (base) => {
     const { token } = await ingresarAlAdmin(base);
     const leer = async (t = token) => pedir(base, '/bff/admin/notifications', { headers: bearer(t) });
-    assert.deepEqual((await leer()).body, { seenAt: null, total: 0, orders: [] });
+    assert.deepEqual((await leer()).body, {
+      seenAt: null,
+      total: 0,
+      counts: { orders: 0, complaints: 0, checkoutErrors: 0 },
+      items: [],
+    });
     const pedido = await pedir(base, '/bff/checkout/orders', { method: 'POST', body: pedidoValido() });
     const vista = (await leer()).body;
     assert.equal(vista.total, 1);
-    assert.deepEqual(Object.keys(vista.orders[0]).sort(), ['createdAt', 'customer', 'id', 'total']);
-    assert.equal(vista.orders[0].id, pedido.body.id);
+    assert.deepEqual(Object.keys(vista.items[0]).sort(), ['at', 'customer', 'id', 'total', 'type']);
+    assert.equal(vista.items[0].id, pedido.body.id);
 
     const visto = await pedir(base, '/bff/admin/notifications/seen', {
       method: 'PUT',
       headers: bearer(token),
-      body: { until: vista.orders[0].createdAt },
+      body: { until: vista.items[0].at },
     });
     assert.equal(visto.status, 200);
     assert.equal(visto.body.total, 0);
@@ -118,6 +121,71 @@ test('PBI-0033: la campana lista los pedidos confirmados nuevos y «visto» se r
     assert.equal(campanaDelVendedor.status, 200);
     assert.equal(campanaDelVendedor.body.total, 1);
     assert.equal((await pedir(base, '/bff/admin/notifications')).status, 401);
+  });
+});
+
+test('PBI-0173: la campana avisa también de los reclamos y de los errores de compra, según el rol', async () => {
+  await conBff({ port: 3175 }, async (base) => {
+    const pedido = await pedir(base, '/bff/checkout/orders', { method: 'POST', body: pedidoValido() });
+    assert.equal(pedido.status, 201);
+    const fallido = await pedir(base, '/bff/checkout/orders', {
+      method: 'POST',
+      body: pedidoValido({ total: 1 }),
+    });
+    assert.equal(fallido.body.error.code, 'ORDER_TOTAL_CHANGED');
+    const reclamo = await pedir(base, '/bff/complaints', {
+      method: 'POST',
+      body: {
+        name: 'Luis Soto',
+        document: '123',
+        email: 'luis@example.com',
+        phone: '999',
+        address: 'Av. 1',
+        subject: 'Falla',
+        type: 'queja',
+        detail: 'Detalle.',
+        request: 'Cambio.',
+      },
+    });
+    assert.equal(reclamo.status, 201);
+
+    const { token } = await ingresarAlAdmin(base);
+    const vista = (await pedir(base, '/bff/admin/notifications', { headers: bearer(token) })).body;
+    assert.deepEqual(
+      vista.items.map((item) => item.type),
+      ['complaint', 'checkout-error', 'order'],
+    );
+    assert.deepEqual(vista.counts, { orders: 1, complaints: 1, checkoutErrors: 1 });
+    assert.equal(vista.total, 3);
+    assert.deepEqual(vista.items[0], {
+      type: 'complaint',
+      id: reclamo.body.id,
+      at: reclamo.body.createdAt,
+      complaintType: 'queja',
+    });
+    assert.equal(vista.items[1].code, 'ORDER_TOTAL_CHANGED');
+    assert.ok(!JSON.stringify(vista).includes('luis@example.com'));
+    // El error de compra no cambia la revisión: el Admin puede seguir guardando lo que editaba.
+    const antes = await snapshot(base, token);
+    await pedir(base, '/bff/checkout/orders', { method: 'POST', body: pedidoValido({ total: 2 }) });
+    assert.equal((await snapshot(base, token)).revision, antes.revision);
+
+    // «Visto» hasta el aviso más reciente que se mostró, sea del tipo que sea.
+    const visto = await pedir(base, '/bff/admin/notifications/seen', {
+      method: 'PUT',
+      headers: bearer(token),
+      body: { until: vista.items[0].at },
+    });
+    assert.equal(visto.body.total, 1, 'queda el segundo error, posterior a lo visto');
+
+    // El vendedor solo ve los pedidos.
+    const vendedor = await ingresarAlAdmin(base, ...VENDEDOR);
+    const delVendedor = (await pedir(base, '/bff/admin/notifications', { headers: bearer(vendedor.token) }))
+      .body;
+    assert.deepEqual(
+      delVendedor.items.map((item) => item.type),
+      ['order'],
+    );
   });
 });
 

@@ -2,7 +2,8 @@ import { bearerToken, created, noContent, ok, readJsonBody } from '../http.mjs';
 
 /**
  * Panel administrativo: sesión, snapshot por rol, guardado con control de revisión y reinicio; desde el lote 07b,
- * perfil propio (PBI-0034) y notificaciones (PBI-0033). Cada ruta valida la sesión y el permiso antes de leer el cuerpo.
+ * perfil propio (PBI-0034) y notificaciones (PBI-0033; desde el lote 13, PBI-0173, el caso de uso decide qué avisos ve
+ * cada rol). Cada ruta valida la sesión y el permiso antes de leer el cuerpo.
  */
 export const adminRoutes = (adminSesiones, snapshot, perfil, notificaciones) => [
   {
@@ -59,14 +60,13 @@ export const adminRoutes = (adminSesiones, snapshot, perfil, notificaciones) => 
   {
     method: 'GET',
     path: '/bff/admin/notifications',
-    handle: ({ req }) =>
-      ok(notificaciones.get(adminSesiones.requireAdmin(bearerToken(req), 'orders.view').user)),
+    handle: ({ req }) => ok(notificaciones.get(adminSesiones.requireAdmin(bearerToken(req)).user)),
   },
   {
     method: 'PUT',
     path: '/bff/admin/notifications/seen',
     handle: async ({ req }) => {
-      const { user } = adminSesiones.requireAdmin(bearerToken(req), 'orders.view');
+      const { user } = adminSesiones.requireAdmin(bearerToken(req));
       return ok(notificaciones.marcarVisto(user, await readJsonBody(req)));
     },
   },

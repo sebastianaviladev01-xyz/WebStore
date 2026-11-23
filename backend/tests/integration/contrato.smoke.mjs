@@ -1214,34 +1214,45 @@ try {
     }),
   });
 
-  // Lote 07b (ADR-0017): latido de la tienda, actividad, notificaciones, perfil e imagen de categoría.
+  // Lote 07b (ADR-0017): actividad, notificaciones, perfil e imagen de categoría. Lote 13 (ADR-0021): sin latido ni
+  // personas en línea (PBI-0172); la campana trae pedidos, reclamos y errores de compra (PBI-0173).
   await esperarError(
-    await raw('/bff/visits', { method: 'POST', body: JSON.stringify({ visitId: 'corto' }) }),
-    400,
-    'INVALID_VISIT_ID',
-    'Latido con un identificador inválido',
+    await raw('/bff/visits', { method: 'POST', body: JSON.stringify({ visitId: 'smoke-pestana-0000001' }) }),
+    404,
+    'ROUTE_NOT_FOUND',
+    'El latido de la tienda ya no existe (PBI-0172)',
   );
-  await request('/bff/visits', {
-    method: 'POST',
-    body: JSON.stringify({ visitId: 'smoke-pestana-0000001' }),
-  });
   owner = await adminLogin();
   const resumen07b = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
-  if (resumen07b.onlineVisitors < 1 || !Array.isArray(resumen07b.activity) || !resumen07b.activity.length)
-    throw new Error('El snapshot del superadmin no trae onlineVisitors ni activity');
+  if ('onlineVisitors' in resumen07b || !Array.isArray(resumen07b.activity) || !resumen07b.activity.length)
+    throw new Error('El snapshot del superadmin debe traer activity y no onlineVisitors');
   const vendedor07b = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
   const resumenVendedor = await request('/bff/admin/snapshot', { headers: authorization(vendedor07b.token) });
-  if (resumenVendedor.onlineVisitors !== null || resumenVendedor.activity.length)
+  if ('onlineVisitors' in resumenVendedor || resumenVendedor.activity.length)
     throw new Error('El vendedor no debe recibir onlineVisitors ni activity');
   const campana = await request('/bff/admin/notifications', { headers: authorization(owner.token) });
-  if (typeof campana.total !== 'number' || !Array.isArray(campana.orders))
-    throw new Error('GET /admin/notifications no tiene la forma { seenAt, total, orders }');
+  if (
+    typeof campana.total !== 'number' ||
+    !Array.isArray(campana.items) ||
+    typeof campana.counts?.orders !== 'number' ||
+    typeof campana.counts?.complaints !== 'number' ||
+    typeof campana.counts?.checkoutErrors !== 'number'
+  )
+    throw new Error('GET /admin/notifications no tiene la forma { seenAt, total, counts, items }');
+  // Los rechazos anteriores del checkout (producto inactivo, stock, total) son errores de compra del superadmin.
+  if (!campana.counts.checkoutErrors || !campana.items.some((item) => item.type === 'checkout-error'))
+    throw new Error('La campana del superadmin no trae los errores de compra');
+  if (!campana.items.every((item) => ['order', 'complaint', 'checkout-error'].includes(item.type)))
+    throw new Error('La campana trae un tipo de aviso desconocido');
   // PBI-0170: el vendedor ve los pedidos, así que también la campana de pedidos nuevos.
   const campanaVendedor = await raw('/bff/admin/notifications', {
     headers: authorization(vendedor07b.token),
   });
   if (campanaVendedor.status !== 200)
     throw new Error(`Notificaciones del vendedor: ${campanaVendedor.status}`);
+  const avisosDelVendedor = await campanaVendedor.json();
+  if (avisosDelVendedor.counts.checkoutErrors || avisosDelVendedor.counts.complaints)
+    throw new Error('El vendedor solo recibe avisos de pedidos');
   await esperarError(
     await raw('/bff/admin/notifications/seen', {
       method: 'PUT',
@@ -1252,13 +1263,13 @@ try {
     'INVALID_SEEN_AT',
     'Visto con una fecha inválida',
   );
-  if (campana.orders.length) {
+  if (campana.items.length) {
     const vista = await request('/bff/admin/notifications/seen', {
       method: 'PUT',
       headers: authorization(owner.token),
-      body: JSON.stringify({ until: campana.orders[0].createdAt }),
+      body: JSON.stringify({ until: campana.items[0].at }),
     });
-    if (vista.total !== 0) throw new Error('Tras marcar «visto» no deben quedar pedidos nuevos');
+    if (vista.total !== 0) throw new Error('Tras marcar «visto» no deben quedar avisos nuevos');
   }
   const perfil07b = await request('/bff/admin/profile', {
     method: 'PATCH',

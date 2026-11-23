@@ -357,6 +357,22 @@ test('lote 07b (PBI-0028 y PBI-0033): un estado sin actividad ni «visto» carga
   assert.equal(normalizeState({ ...guardado, activity: larga }, demoPasswords).activity.length, 50);
 });
 
+test('lote 13 (PBI-0173): un estado sin errores de compra carga con la lista vacía y descarta los mal formados', () => {
+  const guardado = { ...estadoV2(), schemaVersion: SCHEMA_VERSION };
+  delete guardado.checkoutErrors;
+  assert.deepEqual(normalizeState(guardado, demoPasswords).checkoutErrors, []);
+  const bueno = {
+    id: 'e-1',
+    at: '2026-11-23T15:00:00.000Z',
+    code: 'INSUFFICIENT_STOCK',
+    productId: 'p-1',
+    attempt: null,
+  };
+  const estado = normalizeState({ ...guardado, checkoutErrors: [bueno, { id: 'x' }] }, demoPasswords);
+  assert.deepEqual(estado.checkoutErrors, [bueno]);
+  assert.equal(estado.schemaVersion, 3, 'la lista nueva no cambia la versión del esquema');
+});
+
 test('lote 12 (PBI-0184): un banner guardado sin botón secundario recibe el «Ver todos los productos» que el inicio mostraba fijo', () => {
   const guardado = estadoV2();
   guardado.schemaVersion = SCHEMA_VERSION;

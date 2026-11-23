@@ -231,6 +231,7 @@ export const seed = {
   complaints: [],
   activity: [],
   adminNotificationsSeen: [],
+  checkoutErrors: [],
   // Temas (ADR-0011): B activo, sin temas propios. Los predefinidos son constantes del dominio y no se guardan.
   appearance: { revision: 0, activeThemeId: TEMA_POR_DEFECTO, customThemes: [] },
   config: {

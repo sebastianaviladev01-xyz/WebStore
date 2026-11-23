@@ -2,6 +2,7 @@ import { reserveStock } from '../../domain/catalogo/inventario.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
 import { conEvento, eventoPedidoCreado } from '../../domain/admin/actividad.rules.mjs';
+import { conErrorDeCompra, errorDeCompraDe } from '../../domain/admin/errores-de-compra.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { requireShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
@@ -86,8 +87,37 @@ export function createCheckoutUseCases({ store, security }) {
     return { ...orderToPublic(order), accessToken };
   }
 
+  /**
+   * Error de compra (lote 13, ADR-0021, PBI-0173): si el checkout se rechaza porque la tienda cambió (total, stock,
+   * producto fuera de venta o distrito sin tarifa), lo anota para la campana del Admin sin datos del comprador. No
+   * sube la revisión: no invalida lo que el equipo está editando.
+   */
+  function registrarErrorDeCompra(error, key) {
+    const evento = errorDeCompraDe(error, {
+      id: security.newId(),
+      at: nowIso(),
+      products: store.state.products,
+      attempt: key ? security.digest(key) : null,
+    });
+    if (!evento) return;
+    const errores = store.state.checkoutErrors ?? [];
+    const siguientes = conErrorDeCompra(errores, evento);
+    if (siguientes === errores) return;
+    store.state.checkoutErrors = siguientes;
+    store.save();
+  }
+
   function placeOrder(command, bearerToken, idempotencyKey = '') {
     const key = requireIdempotencyKey(idempotencyKey);
+    try {
+      return crearPedido(command, bearerToken, key);
+    } catch (error) {
+      registrarErrorDeCompra(error, key);
+      throw error;
+    }
+  }
+
+  function crearPedido(command, bearerToken, key) {
     const { customer, shipping, deliveryDate, paymentMethod, requested } = requireOrderCommand(command);
     const rate = requireShippingRate(store.state.rates, shipping.district);
     const products = reserveStock(store.state.products, requested, { requireActive: true });
