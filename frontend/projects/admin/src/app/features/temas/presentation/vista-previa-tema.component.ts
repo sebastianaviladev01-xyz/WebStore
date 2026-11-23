@@ -35,7 +35,7 @@ import { TokensTema } from '../domain/tema.model';
           </div>
           <div class="rounded-xl border border-line bg-surface p-4">
             <span
-              class="inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-on-accent"
+              class="inline-flex rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-on-accent ring-1 ring-accent-line ring-inset"
             >
               Oferta
             </span>
@@ -46,7 +46,9 @@ import { TokensTema } from '../domain/tema.model';
               <span class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-on-primary">
                 Botón principal
               </span>
-              <span class="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-on-accent">
+              <span
+                class="rounded-lg bg-accent px-3 py-2 text-sm font-semibold text-on-accent ring-1 ring-accent-line ring-inset"
+              >
                 Botón secundario
               </span>
             </div>

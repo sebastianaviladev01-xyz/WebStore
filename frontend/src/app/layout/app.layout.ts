@@ -171,7 +171,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
               <span class="hidden xl:block">Carrito</span>
               @if (cart.itemCount() > 0) {
                 <span
-                  class="ws-cart-count absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-on-accent"
+                  class="ws-cart-count absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-semibold text-on-accent ring-1 ring-accent-line ring-inset"
                 >
                   {{ cart.itemCount() }}
                 </span>

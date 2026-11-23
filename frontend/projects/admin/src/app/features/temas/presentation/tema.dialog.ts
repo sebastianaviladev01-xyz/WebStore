@@ -36,7 +36,11 @@ const CAMPOS_DE_COLOR: readonly {
   readonly uso: string;
 }[] = [
   { campo: 'primary', etiqueta: 'Principal', uso: 'Botones, cabecera y marca.' },
-  { campo: 'secondary', etiqueta: 'Secundario', uso: 'Ofertas y acentos.' },
+  {
+    campo: 'secondary',
+    etiqueta: 'Secundario',
+    uso: 'Ofertas, contador del carrito y botón secundario de los banners.',
+  },
   { campo: 'background', etiqueta: 'Fondo principal', uso: 'Lienzo de las páginas.' },
   { campo: 'surface', etiqueta: 'Fondo secundario', uso: 'Tarjetas, formularios y cabecera.' },
   { campo: 'contrast', etiqueta: 'Contraste', uso: 'Texto, titulares y pie de página.' },

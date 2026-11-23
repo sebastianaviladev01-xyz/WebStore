@@ -891,13 +891,13 @@ try {
     throw new Error('/bff/appearance debe traer tokens["--ws-store-bg"] igual a #f9fafc con B');
   const lineaDelLienzo = declaraciones.indexOf('  --ws-store-bg: #f9fafc;');
   if (
-    declaraciones.length !== 37 ||
+    declaraciones.length !== 38 ||
     lineaDelLienzo < 0 ||
     declaraciones[lineaDelLienzo + 1] !== '  --ws-bg: #f3f5f8;' ||
     !declaraciones.includes('  --ws-border-strong: #8894a6;')
   )
     throw new Error(
-      'theme.css de B debe tener 37 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
+      'theme.css de B debe tener 38 declaraciones, --ws-store-bg: #f9fafc justo antes de --ws-bg: #f3f5f8 y --ws-border-strong: #8894a6',
     );
   // Texto sobre el enlace (ADR-0014): una clave más en Tema.tokens y una declaración más, justo después de --ws-link.
   if (aparienciaPublica.themes[0].tokens['--ws-on-link'] !== '#ffffff')
@@ -921,6 +921,17 @@ try {
     aparienciaPublica.themes[0].tokens['--ws-danger'] !== '#b42318'
   )
     throw new Error('theme.css de B debe declarar el error y la alerta de B justo después de --ws-on-topbar');
+  // Borde del acento (ADR-0023, PBI-0189): una clave más en Tema.tokens y una declaración más, justo después de
+  // --ws-on-accent; en B es el propio acento.
+  const lineaDelAcento = declaraciones.indexOf('  --ws-on-accent: #ffffff;');
+  if (
+    aparienciaPublica.themes[0].tokens['--ws-accent-line'] !== 'var(--ws-accent)' ||
+    lineaDelAcento < 0 ||
+    declaraciones[lineaDelAcento + 1] !== '  --ws-accent-line: var(--ws-accent);'
+  )
+    throw new Error(
+      'theme.css de B debe declarar --ws-accent-line: var(--ws-accent) justo después de --ws-on-accent',
+    );
   const revalidada = await hoja({ 'if-none-match': etagB });
   if (revalidada.status !== 304 || (await revalidada.text()) !== '')
     throw new Error('theme.css con If-None-Match igual al ETag debe responder 304 sin cuerpo');

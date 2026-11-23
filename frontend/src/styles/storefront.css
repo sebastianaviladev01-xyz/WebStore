@@ -372,8 +372,12 @@
   font-weight: 500;
 }
 
+/* Lote 14 (PBI-0189, ADR-0023): la oferta va con el secundario del tema, su texto y su borde. Antes llevaba el texto
+   del principal: con C, grafito sobre grafito (1:1), y con un ámbar, blanco sobre ámbar (2:1). */
 .ws-product-badge.is-offer {
   background: var(--ws-accent);
+  box-shadow: inset 0 0 0 1px var(--ws-accent-line);
+  color: var(--ws-on-accent);
 }
 
 .ws-product-more {

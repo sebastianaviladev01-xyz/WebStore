@@ -14,6 +14,8 @@ export const TOKENS_DEL_TEMA = Object.freeze([
   '--ws-accent-strong',
   '--ws-accent-soft',
   '--ws-on-accent',
+  // Borde de los componentes rellenos con el acento (ADR-0023): justo después de su texto, fuera de la escala neutra.
+  '--ws-accent-line',
   '--ws-link',
   // Texto y marcas sobre el color de los enlaces (ADR-0014): justo después de su fondo, fuera de la escala neutra.
   '--ws-on-link',
@@ -138,6 +140,20 @@ function tokensDeAviso({ background: F, surface: Sf }) {
   };
 }
 
+/**
+ * Borde del acento (ADR-0023, PBI-0189): el secundario si llega a 3:1 sobre el fondo principal y la superficie
+ * (WCAG 1.4.11); si no, su primera mezcla con el contraste, de 10 en 10 %, que llega; en último caso, el contraste,
+ * que siempre llega porque `contrast/*` bloquea a 4.5:1. Así un acento claro sobre una base clara (un ámbar sobre el
+ * blanco) se ve como tal: conserva su relleno y gana un contorno que lo separa del fondo.
+ */
+function bordeDelAcento(S, F, Sf, C) {
+  for (let peso = 100; peso > 0; peso -= 10) {
+    const color = peso === 100 ? S : mezclarSrgb(S, peso / 100, C);
+    if (legibilidadSobre(color, [F, Sf]) >= INTERFAZ_MINIMO) return peso === 100 ? S : mezcla(S, peso, C);
+  }
+  return C;
+}
+
 function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, contrast: C }) {
   // El más legible entre el blanco, el contraste y la superficie (ADR-0019): con un principal muy claro sobre una
   // base oscura, el blanco y el contraste son claros y solo la superficie se lee. A y C lo fijan con su literal.
@@ -150,6 +166,12 @@ function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, c
   const legibleSobreFondos = (minimo) =>
     relacionDeContraste(P, F) >= minimo && relacionDeContraste(P, Sf) >= minimo;
   const enlace = legibleSobreFondos(TEXTO_MINIMO) ? P : C;
+  // Como el texto sobre el principal (ADR-0019): sobre un acento claro en una base oscura, solo la superficie se lee.
+  const sobreAcento = textoMasLegible(S, [BLANCO, C, Sf]);
+  // Como el principal fuerte: si el texto sobre el acento no llega a 4.5:1 sobre la mezcla (el botón secundario con
+  // el puntero encima), el acento fuerte es el acento (ADR-0023).
+  const acentoFuerte =
+    relacionDeContraste(sobreAcento, mezclarSrgb(S, 0.78, C)) >= TEXTO_MINIMO ? mezcla(S, 78, C) : S;
   return {
     '--ws-primary': P,
     '--ws-primary-strong': principalFuerte,
@@ -158,10 +180,10 @@ function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, c
     '--ws-on-primary-soft':
       relacionDeContraste(colorFuerte, mezclarSrgb(P, 0.1, Sf)) >= TEXTO_MINIMO ? principalFuerte : C,
     '--ws-accent': S,
-    '--ws-accent-strong': mezcla(S, 78, C),
+    '--ws-accent-strong': acentoFuerte,
     '--ws-accent-soft': mezcla(S, 9, Sf),
-    // Como el texto sobre el principal (ADR-0019): sobre un acento claro en una base oscura, solo la superficie se lee.
-    '--ws-on-accent': textoMasLegible(S, [BLANCO, C, Sf]),
+    '--ws-on-accent': sobreAcento,
+    '--ws-accent-line': bordeDelAcento(S, F, Sf, C),
     '--ws-link': enlace,
     // A diferencia de `--ws-on-primary`, la superficie también es candidata: en un tema oscuro el contraste es
     // claro y solo la superficie se lee sobre un enlace claro (ADR-0014).

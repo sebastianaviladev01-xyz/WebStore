@@ -64,6 +64,7 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-accent-strong': 'color-mix(in srgb, var(--ws-accent) 78%, #0f172a)',
     '--ws-accent-soft': 'color-mix(in srgb, var(--ws-accent) 9%, #ffffff)',
     '--ws-on-accent': '#ffffff',
+    '--ws-accent-line': 'var(--ws-accent)',
     '--ws-link': 'var(--ws-primary)',
     '--ws-on-link': '#ffffff',
     '--ws-focus-ring': 'var(--ws-primary)',
