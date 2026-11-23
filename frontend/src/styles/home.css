@@ -1002,6 +1002,17 @@
   .ws-quick-access.is-current .ws-category-access-arrow {
     display: none;
   }
+  /* PBI-0162: en dos columnas, la imagen va encima del texto para no estrecharlo. */
+  .ws-quick-access.is-current .ws-category-access:has(> .ws-category-access-image) {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+  .ws-category-access-image {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+  }
 }
 
 /* Inicio actual: contador "1 / N" y barra de progreso única en lugar de un punto por banner. */
