@@ -32,3 +32,21 @@ export function heroesQueCoinciden(
       Date.parse(banner.endAt) >= inicio,
   ).length;
 }
+
+/** Largo máximo del texto de cada botón del banner: el mismo que valida el BFF (lote 12, PBI-0184). */
+export const MAXIMO_TEXTO_DE_BOTON = 40;
+
+/** Lo que le falta a un botón del banner que está a medias. */
+export type ErrorDeBoton = 'sinTexto' | 'sinEnlace';
+
+/**
+ * Cada botón del banner, el principal o el secundario, va completo (texto y enlace) o vacío (lote 12, ADR-0021,
+ * PBI-0184). Los espacios no cuentan.
+ */
+export function errorDeBoton(texto: string, enlace: string): ErrorDeBoton | null {
+  const conTexto = texto.trim().length > 0;
+  const conEnlace = enlace.trim().length > 0;
+  if (conTexto && !conEnlace) return 'sinEnlace';
+  if (conEnlace && !conTexto) return 'sinTexto';
+  return null;
+}

@@ -128,6 +128,7 @@ img {
 
 .ws-btn-primary,
 .ws-btn-secondary,
+.ws-btn-accent,
 .ws-btn-on-soft,
 .ws-btn-ghost,
 .ws-btn-light {
@@ -189,6 +190,20 @@ img {
   transform: translateY(-1px);
 }
 
+/* Lote 12 (PBI-0184): el botón secundario de los banners, con la paleta secundaria del tema (el acento) y su texto. */
+.ws-btn-accent {
+  border: 1px solid var(--ws-accent);
+  background: var(--ws-accent);
+  color: var(--ws-on-accent);
+}
+
+.ws-btn-accent:hover {
+  border-color: var(--ws-accent-strong);
+  background: var(--ws-accent-strong);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ws-accent) 22%, transparent);
+  transform: translateY(-1px);
+}
+
 .ws-btn-on-soft {
   border: 1px solid var(--ws-surface);
   background: var(--ws-surface);
@@ -224,6 +239,7 @@ img {
 
 .ws-btn-primary:active,
 .ws-btn-secondary:active,
+.ws-btn-accent:active,
 .ws-btn-on-soft:active,
 .ws-btn-ghost:active,
 .ws-btn-light:active {
@@ -239,6 +255,7 @@ img {
 
 .ws-btn-primary:focus-visible,
 .ws-btn-secondary:focus-visible,
+.ws-btn-accent:focus-visible,
 .ws-btn-on-soft:focus-visible,
 .ws-btn-ghost:focus-visible,
 .ws-btn-light:focus-visible,

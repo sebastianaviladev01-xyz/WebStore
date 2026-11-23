@@ -16,7 +16,7 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 | Excepción | Ámbito | Vigencia |
 |---|---|---|
-| [ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md): aplicar por lotes los cambios que pidió Daniel, sin las etapas SDD por elemento | PBI-0168 a PBI-0193, salvo PBI-0173, 0179 y 0191, y los hallazgos de sus lotes, en el Storefront, el Admin y el BFF | Hasta fusionar el lote 18 o hasta que la retire Sebastián Avila. Aprobada por Sebastián Avila el 2026-11-23 |
+| [ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md): aplicar por lotes los cambios que pidió Daniel, sin las etapas SDD por elemento | PBI-0168 a PBI-0194 y el resto del backlog que no depende de terceros (ampliación del 2026-11-23), y los hallazgos de sus lotes, en el Storefront, el Admin y el BFF | Hasta fusionar el lote 18 o hasta que la retire Sebastián Avila. Aprobada por Sebastián Avila el 2026-11-23 |
 
 ## Excepciones cerradas
 

@@ -9,7 +9,7 @@ const source = await readFile(new URL('./enlace.rules.ts', import.meta.url), 'ut
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { esEnlaceExterno } = await import(
+const { esEnlaceExterno, abreEnOtraPestana } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -34,4 +34,28 @@ test('PBI-0128: las rutas de la tienda no son externas', () => {
     'javascript:alert(1)',
   ])
     assert.equal(esEnlaceExterno(url), false, url);
+});
+
+// Lote 12 (ADR-0021), PBI-0174: Daniel pidió que los enlaces externos de los banners se abran en otra pestaña. Un
+// `mailto:` abre el correo, no una página: sigue en la misma.
+test('PBI-0174: https y http se abren en otra pestaña, sin distinguir mayúsculas', () => {
+  for (const url of [
+    'https://example.com/promo',
+    'http://example.com',
+    'HTTPS://Example.com',
+    ' https://x.pe ',
+  ])
+    assert.equal(abreEnOtraPestana(url), true, url);
+});
+
+test('PBI-0174: mailto y las rutas de la tienda siguen en la misma pestaña', () => {
+  for (const url of [
+    'mailto:ventas@example.com',
+    '/catalogo',
+    'catalogo',
+    '',
+    '//example.com',
+    'javascript:alert(1)',
+  ])
+    assert.equal(abreEnOtraPestana(url), false, url);
 });

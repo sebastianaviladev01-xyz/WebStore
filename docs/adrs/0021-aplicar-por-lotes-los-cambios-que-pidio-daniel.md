@@ -59,6 +59,20 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros (backlog,
 
 El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un hallazgo fuera del alcance de un lote se anota con su PBI y se asigna al lote de su área.
 
+### Ampliación del 2026-11-23
+
+Ese mismo día, con el lote 11 en marcha, Sebastián Avila pidió cerrar todo, salvo lo que depende de terceros: «no dejar ningun pendiente excepto los terceros», y aplicar «la mejor solucion a cualquier pregunta que surja», sin dejarla pendiente. Eso sustituye el punto 4 de la decisión. Entran también los elementos que Daniel había dejado para más adelante y el resto del backlog que no depende de terceros:
+
+| Lote | Se añade |
+|---|---|
+| 11 | PBI-0162: la imagen de la categoría también en la lista del Admin y en las vistas de la tienda que listan categorías. Daniel había respondido «no por ahora» |
+| 13 | PBI-0173: la campana avisa también de los reclamos y los errores de compra. Daniel lo había dejado para después |
+| 16 | PBI-0191: se decide el fondo del buscador enfocado. PBI-0179: el panel lateral de sugeridos, como opción de la configuración de la tienda; por defecto sigue el diálogo, que Daniel dijo que basta |
+| 19 (nuevo) | Comparador y direcciones: PBI-0001 (comparador de productos) y PBI-0006 (la configuración de la tienda elige una dirección por pedido o una por producto) |
+| 18 | PBI-0015 y PBI-0021 se cierran con las respuestas de Daniel; PBI-0022 se decide con un ADR; PBI-0194 y las preguntas sueltas que siguen abiertas en las decisiones pendientes se cierran como están construidas, como provisionales |
+
+Siguen fuera, por depender de terceros, de Daniel o de una persona: PBI-0002 a PBI-0005, PBI-0007 a PBI-0009, PBI-0011, PBI-0012, PBI-0041, PBI-0043, PBI-0058, PBI-0161, PBI-0165 y el nombre del producto. El lote 19 se ejecuta antes que el 18.
+
 ### Decisiones provisionales de partida
 
 Daniel no dio estos detalles. Cada una queda «Provisional, por confirmar con Daniel» y su lote puede afinarla, anotándolo en el PR:

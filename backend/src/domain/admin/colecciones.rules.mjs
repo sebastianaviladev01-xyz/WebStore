@@ -155,13 +155,49 @@ export function requireValidCustomers(customers) {
 
 export const BANNER_PLACEMENTS = ['hero', 'promotion', 'secondary'];
 
-export function requireValidBanners(banners) {
+/** Largo máximo del texto de cada botón del banner (lote 12, PBI-0184). */
+export const MAXIMO_TEXTO_DE_BOTON = 40;
+
+/** Los dos botones opcionales del banner (lote 12, PBI-0184): el principal y el secundario, con su texto y su enlace. */
+const BOTONES_DE_BANNER = [
+  { texto: 'cta', enlace: 'ctaUrl', nombre: 'botón principal' },
+  { texto: 'secondaryCta', enlace: 'secondaryCtaUrl', nombre: 'botón secundario' },
+];
+
+const recortado = (value) => (isText(value) ? value.trim() : '');
+
+/**
+ * PBI-0184: un botón con texto necesita su enlace y uno con enlace, su texto; el texto tiene un largo máximo. Un botón
+ * que el banner ya tenía guardado así se acepta sin volver a validarlo mientras no cambie, para no bloquear otros
+ * guardados con datos de antes.
+ */
+function requireValidBannerButtons(banner, previous) {
+  const anterior = previous.find((item) => item?.id === banner.id);
+  for (const { texto, enlace, nombre } of BOTONES_DE_BANNER) {
+    if (anterior && anterior[texto] === banner[texto] && anterior[enlace] === banner[enlace]) continue;
+    const etiqueta = recortado(banner[texto]);
+    const destino = recortado(banner[enlace]);
+    if (etiqueta.length > MAXIMO_TEXTO_DE_BOTON)
+      throw invalid(
+        'banners',
+        texto,
+        `el texto del ${nombre} admite hasta ${MAXIMO_TEXTO_DE_BOTON} caracteres`,
+        banner.id,
+      );
+    if (etiqueta && !destino) throw invalid('banners', enlace, `el ${nombre} necesita un enlace`, banner.id);
+    if (destino && !etiqueta) throw invalid('banners', texto, `el ${nombre} necesita un texto`, banner.id);
+  }
+}
+
+export function requireValidBanners(banners, previous = []) {
   requireItems(banners, 'banners');
   const textos = [
     'eyebrow',
     'description',
     'cta',
     'ctaUrl',
+    'secondaryCta',
+    'secondaryCtaUrl',
     'imageUrl',
     'mobileImageUrl',
     'startAt',
@@ -187,6 +223,7 @@ export function requireValidBanners(banners) {
         { optional: true },
       ]),
     ]);
+  for (const banner of banners) requireValidBannerButtons(banner, previous);
   // PBI-0128: la vigencia termina el mismo día de inicio o después.
   for (const banner of banners) {
     const inicio = Date.parse(banner.startAt);

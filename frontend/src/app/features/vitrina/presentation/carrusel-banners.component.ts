@@ -7,14 +7,13 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { Router, RouterLink, UrlTree } from '@angular/router';
 
 import { VarianteInicio, Banner } from '../../contenido/domain/contenido.model';
-import { esEnlaceExterno } from '../../contenido/domain/enlace.rules';
+import { BotonesBannerComponent } from './botones-banner.component';
 
 @Component({
   selector: 'ws-hero-carousel',
-  imports: [RouterLink],
+  imports: [BotonesBannerComponent],
   template: `
     @if (banners().length) {
       <section
@@ -46,18 +45,10 @@ import { esEnlaceExterno } from '../../contenido/domain/enlace.rules';
                   <h1>{{ banner.title }}</h1>
                   <p class="ws-hero-description">{{ banner.description }}</p>
                   <div class="ws-hero-action-row">
-                    <!-- PBI-0128: un enlace externo va en un href; el router lo convertiría en una ruta rota. -->
-                    @if (esEnlaceExterno(banner.ctaUrl)) {
-                      <a [href]="banner.ctaUrl" class="ws-btn-primary">{{ banner.ctaLabel }}</a>
-                    } @else {
-                      <a [routerLink]="linkFor(banner.ctaUrl)" class="ws-btn-primary">
-                        {{ banner.ctaLabel }}
-                      </a>
-                    }
+                    <!-- PBI-0184: los dos botones configurables; el secundario reemplaza al fijo «Ver todos los productos». -->
+                    <ws-banner-buttons [banner]="banner" [soloPrincipal]="variant() === 'anterior'" />
                     @if (variant() === 'anterior') {
                       <span>{{ banner.eyebrow }}</span>
-                    } @else {
-                      <a routerLink="/catalogo" class="ws-btn-on-soft">Ver todos los productos</a>
                     }
                   </div>
                   @if (variant() === 'actual' && highlights().length) {
@@ -182,7 +173,6 @@ export class CarruselBannersComponent {
   /** Beneficios cortos del CMS que acompañan al banner (solo en la versión actual). */
   readonly highlights = input<readonly string[]>([]);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly router = inject(Router);
   protected readonly currentIndex = signal(0);
   protected readonly paused = signal(false);
   protected readonly hovered = signal(false);
@@ -218,12 +208,6 @@ export class CarruselBannersComponent {
     if (!(event.currentTarget as HTMLElement).contains(event.relatedTarget as Node | null)) {
       this.focusWithin.set(false);
     }
-  }
-
-  protected readonly esEnlaceExterno = esEnlaceExterno;
-
-  protected linkFor(url: string): UrlTree {
-    return this.router.parseUrl(url);
   }
 
   protected togglePause(): void {

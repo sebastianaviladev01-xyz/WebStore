@@ -16,11 +16,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
+  errorDeBoton,
   finAntesDelInicio,
   finDelDiaEnLima,
   heroesQueCoinciden,
   inicioDelDiaEnLima,
   MAXIMO_HEROES_ACTIVOS,
+  MAXIMO_TEXTO_DE_BOTON,
 } from '../domain/banner.rules';
 import { Banner, UbicacionBanner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
 import {
@@ -168,18 +170,24 @@ import { enfocarPrimerCampo } from './enfocar-registro';
             <textarea matInput rows="3" formControlName="description"></textarea>
             <mat-error>{{ mensaje(form.controls.description.errors) }}</mat-error>
           </mat-form-field>
-          <div class="grid grid-cols-2 gap-3">
-            <mat-form-field>
-              <mat-label>Texto CTA</mat-label>
-              <input matInput formControlName="cta" />
-              <mat-error>{{ mensaje(form.controls.cta.errors) }}</mat-error>
-            </mat-form-field>
-            <mat-form-field>
-              <mat-label>Enlace CTA</mat-label>
-              <input matInput formControlName="ctaUrl" />
-              <mat-error>{{ mensaje(form.controls.ctaUrl.errors) }}</mat-error>
-            </mat-form-field>
-          </div>
+          <!-- PBI-0184: dos botones opcionales, cada uno con su texto y su enlace (los dos o ninguno). -->
+          @for (boton of botones; track boton.texto) {
+            <!-- En el celular, uno debajo del otro: en dos columnas, la etiqueta del campo no cabe. -->
+            <div class="grid items-start gap-3 sm:grid-cols-2">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ boton.nombre }}: texto</mat-label>
+                <input matInput [formControlName]="boton.texto" [maxlength]="maximoTextoDeBoton" />
+                <mat-hint>{{ boton.paleta }}</mat-hint>
+                <mat-error>{{ mensajeDeBoton(form.controls[boton.texto].errors) }}</mat-error>
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>{{ boton.nombre }}: enlace</mat-label>
+                <input matInput [formControlName]="boton.enlace" />
+                <mat-hint>/catalogo o https://…</mat-hint>
+                <mat-error>{{ mensajeDeBoton(form.controls[boton.enlace].errors) }}</mat-error>
+              </mat-form-field>
+            </div>
+          }
           <mat-form-field>
             <mat-label>Imagen desktop</mat-label>
             <input matInput formControlName="imageUrl" />
@@ -278,6 +286,22 @@ export class BannersPage {
   private idNuevo = crypto.randomUUID();
   protected readonly error = signal<string | null>(null);
   protected readonly mensaje = mensajeDeError;
+  protected readonly maximoTextoDeBoton = MAXIMO_TEXTO_DE_BOTON;
+  /** Los dos botones del banner (PBI-0184): el principal con la paleta primaria y el secundario con la secundaria. */
+  protected readonly botones = [
+    {
+      nombre: 'Botón principal',
+      paleta: 'Opcional. Color principal del tema.',
+      texto: 'cta',
+      enlace: 'ctaUrl',
+    },
+    {
+      nombre: 'Botón secundario',
+      paleta: 'Opcional. Color secundario del tema.',
+      texto: 'secondaryCta',
+      enlace: 'secondaryCtaUrl',
+    },
+  ] as const;
   protected readonly filtros = filtrosDeListado({
     leer: leerFiltrosBanners,
     escribir: parametrosDeFiltrosBanners,
@@ -291,8 +315,16 @@ export class BannersPage {
     eyebrow: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     description: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    cta: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    ctaUrl: new FormControl('/catalogo', { nonNullable: true, validators: [Validators.required] }),
+    cta: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAXIMO_TEXTO_DE_BOTON)],
+    }),
+    ctaUrl: new FormControl('', { nonNullable: true }),
+    secondaryCta: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(MAXIMO_TEXTO_DE_BOTON)],
+    }),
+    secondaryCtaUrl: new FormControl('', { nonNullable: true }),
     imageUrl: new FormControl('assets/brand/hero.svg', {
       nonNullable: true,
       validators: [Validators.required],
@@ -321,6 +353,13 @@ export class BannersPage {
     },
   });
 
+  /** El error de un campo de botón: lo que le falta o, si no, el mensaje general del campo. */
+  protected mensajeDeBoton(errores: Readonly<Record<string, unknown>> | null): string | null {
+    if (errores?.['sinEnlace']) return 'Falta el enlace del botón.';
+    if (errores?.['sinTexto']) return 'Falta el texto del botón.';
+    return mensajeDeError(errores);
+  }
+
   protected edit(id: string): void {
     const banner = this.admin.banners().find((item) => item.id === id);
     if (!banner) return;
@@ -331,8 +370,10 @@ export class BannersPage {
       eyebrow: banner.eyebrow,
       title: banner.title,
       description: banner.description,
-      cta: banner.cta,
-      ctaUrl: banner.ctaUrl,
+      cta: banner.cta ?? '',
+      ctaUrl: banner.ctaUrl ?? '',
+      secondaryCta: banner.secondaryCta ?? '',
+      secondaryCtaUrl: banner.secondaryCtaUrl ?? '',
       imageUrl: banner.imageUrl,
       imageFit: banner.imageFit ?? 'contain',
       imageTone: banner.imageTone ?? 'light',
@@ -355,6 +396,17 @@ export class BannersPage {
       this.form.controls.endAt.setErrors({ antesDelInicio: true });
       this.form.controls.endAt.markAsTouched();
     }
+    // PBI-0184: cada botón va completo o vacío; el error queda en el campo que falta.
+    for (const { texto, enlace } of this.botones) {
+      this.form.controls[texto].updateValueAndValidity();
+      this.form.controls[enlace].updateValueAndValidity();
+      const falta = errorDeBoton(value[texto], value[enlace]);
+      const campo = this.form.controls[falta === 'sinTexto' ? texto : enlace];
+      if (falta) {
+        campo.setErrors({ ...campo.errors, [falta]: true });
+        campo.markAsTouched();
+      }
+    }
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -375,6 +427,10 @@ export class BannersPage {
     const saved = await this.admin.guardarBanner(base, {
       id: base?.id ?? this.idNuevo,
       ...value,
+      cta: value.cta.trim(),
+      ctaUrl: value.ctaUrl.trim(),
+      secondaryCta: value.secondaryCta.trim(),
+      secondaryCtaUrl: value.secondaryCtaUrl.trim(),
       startAt:
         mismaFecha(base?.startAt, value.startAt) && base ? base.startAt : inicioDelDiaEnLima(value.startAt),
       endAt: mismaFecha(base?.endAt, value.endAt) && base ? base.endAt : finDelDiaEnLima(value.endAt),
@@ -398,7 +454,9 @@ export class BannersPage {
       title: '',
       description: '',
       cta: '',
-      ctaUrl: '/catalogo',
+      ctaUrl: '',
+      secondaryCta: '',
+      secondaryCtaUrl: '',
       imageUrl: 'assets/brand/hero.svg',
       imageFit: 'contain',
       imageTone: 'light',
