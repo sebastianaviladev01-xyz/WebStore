@@ -5,7 +5,7 @@ import { correoUnico, cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorn
 
 /**
  * Permisos de los roles en el Admin (lote 07, ADR-0017, PBI-0013; provisional, por confirmar con Daniel). El menú y
- * las rutas por rol están en `admin-acceso`, `admin-menu-lateral` y `admin-resumen`; el vendedor que crea y modifica
+ * las rutas por rol están en `admin-acceso`, `admin-menu-lateral` y `admin-resumen` (el Dashboard); el vendedor que crea y modifica
  * productos, en `admin-catalogo-filtros` (TEST-17). Aquí, Usuarios con el administrador y con el superadministrador,
  * y que el BFF rechaza lo que el Admin oculta.
  */

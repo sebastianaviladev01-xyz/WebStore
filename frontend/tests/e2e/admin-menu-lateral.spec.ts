@@ -17,7 +17,7 @@ import {
  * (AC-01); al entrar solo está desplegado el grupo de la página actual y al navegar se despliega el de la nueva
  * (AC-02); el vendedor solo ve sus grupos (AC-03); teclado y `aria-controls` (AC-05); el plegado dura al
  * navegar y no al recargar ni al volver a entrar (AC-07); en móvil la tira queda igual (AC-13). TEST-07, del menú
- * y de los bloques del Resumen: sin animación con `prefers-reduced-motion` y entre 180 y 260 ms sin esa
+ * y de los bloques del Dashboard: sin animación con `prefers-reduced-motion` y entre 180 y 260 ms sin esa
  * preferencia (AC-06).
  */
 const titulo = (page: Page, grupo: string) =>
@@ -50,7 +50,7 @@ test.describe('Menú lateral en escritorio', () => {
 
     await titulosDeLosGrupos(page, GRUPOS_SUPERADMIN);
     await esperarGrupos(page, ['General'], ['Catálogo', 'Ventas', 'Tienda', 'Accesos']);
-    await expect(enlace(page, 'Resumen')).toBeVisible();
+    await expect(enlace(page, 'Dashboard')).toBeVisible();
     for (const oculto of ['Productos', 'Pedidos', 'Banners', 'Usuarios y roles']) {
       await expect(enlace(page, oculto)).toBeHidden();
     }
@@ -76,10 +76,10 @@ test.describe('Menú lateral en escritorio', () => {
     await expect(region.getByRole('link')).toHaveText(enlaces);
   });
 
-  test('llegar a /pedidos desde «Ver» del Resumen despliega «Ventas» y conserva los demás', async ({
+  test('llegar a /pedidos desde «Ver» del Dashboard despliega «Ventas» y conserva los demás', async ({
     page,
   }) => {
-    // El BFF de las e2e arranca sin pedidos: la prueba crea el suyo para tener un «Ver» en el Resumen.
+    // El BFF de las e2e arranca sin pedidos: la prueba crea el suyo para tener un «Ver» en el Dashboard.
     const respuesta = await page.request.post(`${urls.bff}/bff/checkout/orders`, {
       data: {
         customer: {
@@ -180,7 +180,7 @@ test.describe('Menú lateral en escritorio', () => {
 
     await desplegarTodos(page);
     const esperado = {
-      General: ['Resumen'],
+      General: ['Dashboard'],
       Catálogo: ['Productos', 'Inventario'],
       Ventas: ['Pedidos'],
     };
@@ -251,7 +251,7 @@ test.describe('Animación del plegado (AC-06)', () => {
   };
   const duracion = async (page: Page) => duracionDe(await regionDe(page, 'Catálogo'));
 
-  /** Botón de «Pedidos por distrito» en el Resumen y duración de su región (TEST-07, parte del Resumen). */
+  /** Botón de «Pedidos por distrito» en el Dashboard y duración de su región (TEST-07, parte del Resumen, hoy el Dashboard). */
   const distritos = (page: Page) =>
     page
       .getByRole('main')
@@ -283,7 +283,7 @@ test.describe('Animación del plegado (AC-06)', () => {
     expect(desplegado).toBeLessThanOrEqual(260);
   });
 
-  test('con movimiento reducido, los bloques del Resumen tampoco se animan', async ({ page }) => {
+  test('con movimiento reducido, los bloques del Dashboard tampoco se animan', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     expect(await duracionDelBloque(page)).toBe(0);
@@ -292,7 +292,7 @@ test.describe('Animación del plegado (AC-06)', () => {
     expect(await duracionDelBloque(page)).toBe(0);
   });
 
-  test('sin esa preferencia, los bloques del Resumen se animan entre 180 y 260 ms', async ({ page }) => {
+  test('sin esa preferencia, los bloques del Dashboard se animan entre 180 y 260 ms', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const desplegado = await duracionDelBloque(page);

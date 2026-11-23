@@ -127,7 +127,7 @@ test('PBI-0170: la actividad reciente sigue siendo del Resumen completo (`orders
   ];
   const { casos } = casosCon(store);
   assert.deepEqual(casos.get(vendedor).activity, []);
-  assert.equal(casos.get(vendedor).onlineVisitors, null);
+  assert.equal('onlineVisitors' in casos.get(admin), false, 'PBI-0172: sin personas en línea');
   assert.equal(casos.get(admin).activity.length, 1);
 });
 

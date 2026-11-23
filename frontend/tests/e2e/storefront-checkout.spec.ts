@@ -92,7 +92,7 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await expect(page.getByRole('main').getByRole('heading', { level: 2, name: pedido })).toBeVisible();
   await expect(page.getByRole('main').getByRole('complementary')).toContainText(correo);
 
-  // El Resumen lo muestra al frente de «Últimos pedidos» y su «Ver» abre ese pedido en Pedidos.
+  // El Dashboard lo muestra al frente de «Últimos pedidos» y su «Ver» abre ese pedido en Pedidos.
   await page.goto(`${urls.admin}/`);
   const ultimos = page.getByRole('region', { name: 'Últimos pedidos' });
   const primeraFila = ultimos.getByRole('row').nth(1);

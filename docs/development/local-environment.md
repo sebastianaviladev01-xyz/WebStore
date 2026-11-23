@@ -205,8 +205,9 @@ Las e2e comprueban el rol, el nombre accesible, la descripción y el orden de fo
 | Tienda: agregar al carrito desde la ficha | El diálogo «Producto agregado» con su título, el foco en «Ver carrito» y, si las hay, las sugerencias como lista de enlaces |
 | Tienda: checkout con un campo vacío y sin aceptar los términos | Cada mensaje de error junto a su campo y el de la casilla de términos al intentar finalizar |
 | Tienda: «Recuperar contraseña» y «Verificar cuenta» | El resultado de pedir el código, sin prometer un correo |
+| Admin: ayuda de «Total de ventas» | El botón «Qué incluye: Total de ventas» y su texto como descripción, que se abre con el foco y se cierra con Escape |
 | Admin: menú de usuario | Botón con el nombre y las iniciales, menú abierto con sus opciones y el bloque de la cuenta como descripción |
-| Admin: campana | El número de pedidos nuevos en el nombre del botón y cada pedido del menú como enlace |
+| Admin: campana | Los avisos nuevos de cada tipo (pedidos, reclamos y errores de compra) en el nombre del botón y cada aviso del menú como enlace |
 | Admin: guardado fallido de un formulario | El motivo una sola vez, junto al botón |
 
 El resultado se anota en el PR de la entrega con la fecha, el lector y el navegador. Un fallo se registra como PBI.

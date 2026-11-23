@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
+import { AyudaComponent } from '../../../shared/ui/ayuda.component';
 import {
   lecturaDeTendencia,
   Tendencia,
@@ -9,17 +10,28 @@ import {
 } from '../domain/resumen.rules';
 
 /**
- * Tarjeta de un indicador del Resumen: título, cifra, variación del mes (opcional) y enlace «Ver más».
- * La cifra llega ya formateada por la página.
+ * Tarjeta de un indicador del Dashboard: título, cifra, variación del mes (opcional), ayuda (opcional) y enlace
+ * «Ver más». La cifra llega ya formateada por la página.
  */
 @Component({
   selector: 'ws-admin-tarjeta-indicador',
-  imports: [RouterLink],
+  imports: [AyudaComponent, RouterLink],
   host: { class: 'block' },
   template: `
     <article class="admin-card flex h-full flex-col p-5">
       <div class="flex-1">
-        <h2 class="text-sm font-medium text-muted">{{ titulo() }}</h2>
+        @if (ayuda(); as ayuda) {
+          <!--
+            Lote 13: el título es h3, bajo el h2 «Cifras» que pliega la fila (PBI-0187); la ayuda va junto a él y su
+            texto cae dentro de la tarjeta (PBI-0186).
+          -->
+          <div class="flex items-center gap-1.5">
+            <h3 class="text-sm font-medium text-muted">{{ titulo() }}</h3>
+            <ws-admin-ayuda [texto]="ayuda" [etiqueta]="'Qué incluye: ' + titulo()" />
+          </div>
+        } @else {
+          <h3 class="text-sm font-medium text-muted">{{ titulo() }}</h3>
+        }
         <p
           class="mt-2 text-3xl font-semibold tabular-nums"
           [class.text-ink]="!alerta()"
@@ -63,6 +75,8 @@ export class TarjetaIndicadorComponent {
   readonly variacion = input<number | null>();
   /** Texto bajo la cifra cuando la tarjeta no lleva variación. */
   readonly nota = input<string>();
+  /** Texto de la ayuda junto al título (lote 13, PBI-0186: qué suman las ventas). */
+  readonly ayuda = input<string>();
   /** Muestra la cifra en el color de alerta (stock bajo). */
   readonly alerta = input(false);
 

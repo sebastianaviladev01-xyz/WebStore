@@ -37,7 +37,12 @@ const {
   ServicioNoDisponibleError,
 } = await import(`data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`);
 
-const NOTIFICACIONES = { seenAt: null, total: 2, orders: [] };
+const NOTIFICACIONES = {
+  seenAt: null,
+  total: 2,
+  counts: { orders: 1, complaints: 1, checkoutErrors: 0 },
+  items: [],
+};
 const falla = (status) => Promise.reject(new HttpErrorResponse({ status }));
 function montar(respuesta) {
   const llamadas = [];

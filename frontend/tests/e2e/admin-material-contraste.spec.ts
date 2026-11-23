@@ -38,7 +38,7 @@ test.describe('Componentes de Material del Admin con los temas', () => {
       await correo.fill(cuentasAdmin.superadmin.email);
       await page.getByRole('textbox', { name: 'Contraseña' }).fill(cuentasAdmin.superadmin.password);
       await page.getByRole('button', { name: 'Ingresar al panel' }).click();
-      await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 
       // Menú de usuario: el texto de una opción sobre el panel.
       const menu = await abrirMenuUsuario(page);

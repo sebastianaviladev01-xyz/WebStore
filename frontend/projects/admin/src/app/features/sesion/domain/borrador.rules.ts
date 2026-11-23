@@ -36,7 +36,7 @@ export function borradoresAlIngresar(
   return borradores.filter((borrador) => borrador.usuarioId === usuarioId);
 }
 
-/** Página a la que volver tras ingresar: la del panel donde venció la sesión; si no sirve, el Resumen. */
+/** Página a la que volver tras ingresar: la del panel donde venció la sesión; si no sirve, el Dashboard. */
 export function rutaDeRetorno(ruta: string | null | undefined): string {
   if (!ruta || !ruta.startsWith('/') || ruta.startsWith('//')) return '/';
   return /^\/login(?:[/?#]|$)/.test(ruta) ? '/' : ruta;

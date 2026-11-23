@@ -1,6 +1,6 @@
 /**
  * Fechas de los pedidos en el Admin (lote 06, ADR-0017; PBI-0067). Se muestran en la hora de Lima, como cuentan el
- * gráfico y las reglas del Resumen, y no en la zona del navegador.
+ * gráfico y las reglas del Dashboard, y no en la zona del navegador.
  */
 
 /** Zona de Lima para el pipe `date` de Angular (UTC-5; Perú no tiene horario de verano). */

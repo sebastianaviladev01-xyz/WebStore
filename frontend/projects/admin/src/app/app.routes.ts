@@ -23,7 +23,7 @@ export const adminRoutes: Routes = [
         pathMatch: 'full',
         resolve: conDatos,
         loadComponent: () => import('./features/tienda/presentation/resumen.page').then((m) => m.ResumenPage),
-        title: 'WebStore Admin | Resumen',
+        title: 'WebStore Admin | Dashboard',
       },
       {
         path: 'productos',
@@ -34,7 +34,7 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Productos',
       },
       {
-        // Antes que `productos/:id`: sin `products.manage`, `permisoGuard` redirige al Resumen y el router no
+        // Antes que `productos/:id`: sin `products.manage`, `permisoGuard` redirige al Dashboard y el router no
         // prueba la ruta siguiente, así que «nuevo» nunca llega como identificador (AC-11).
         path: 'productos/nuevo',
         resolve: conDatos,

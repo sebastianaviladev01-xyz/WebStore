@@ -139,8 +139,8 @@ function applyAdminChanges(state, next, user, security) {
 }
 
 /** Snapshot del Admin: lectura filtrada por rol, guardado parcial con control de revisión y reinicio. */
-export function createSnapshotUseCases({ store, security, resetEnabled = false, personasEnLinea = () => 0 }) {
-  const vista = (user) => buildAdminSnapshot(store.state, user.role, personasEnLinea);
+export function createSnapshotUseCases({ store, security, resetEnabled = false }) {
+  const vista = (user) => buildAdminSnapshot(store.state, user.role);
   function save(user, next) {
     // El Admin envía solo las colecciones que cambió, junto con la revisión sobre la que trabajó.
     if (next.revision !== store.state.revision)

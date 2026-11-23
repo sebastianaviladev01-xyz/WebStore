@@ -7,7 +7,7 @@ import { cerrarSesionAdmin, cuentasAdmin, desplegarTodos, ingresarAlAdmin } from
  * solo ve sus módulos y no llega a Usuarios ni escribiendo la URL.
  */
 const modulos = [
-  { enlace: 'Resumen', titulo: 'WebStore Admin | Resumen', encabezado: 'Resumen' },
+  { enlace: 'Dashboard', titulo: 'WebStore Admin | Dashboard', encabezado: 'Dashboard' },
   { enlace: 'Productos', titulo: 'WebStore Admin | Productos', encabezado: 'Productos' },
   { enlace: 'Inventario', titulo: 'WebStore Admin | Inventario', encabezado: 'Inventario' },
   { enlace: 'Categorías', titulo: 'WebStore Admin | Categorías', encabezado: 'Categorías' },
@@ -58,12 +58,14 @@ test('el superadministrador recorre todos los módulos del panel', async ({ page
   await cerrarSesionAdmin(page);
 });
 
-test('el vendedor ve el Resumen, Productos, Inventario y Pedidos (PBI-0013, PBI-0170)', async ({ page }) => {
+test('el vendedor ve el Dashboard, Productos, Inventario y Pedidos (PBI-0013, PBI-0170)', async ({
+  page,
+}) => {
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
   // Las ausencias se comprueban con todo desplegado: con un grupo plegado pasarían siempre.
   await desplegarTodos(page);
 
-  await expect(menu(page).getByRole('link')).toHaveText(['Resumen', 'Productos', 'Inventario', 'Pedidos']);
+  await expect(menu(page).getByRole('link')).toHaveText(['Dashboard', 'Productos', 'Inventario', 'Pedidos']);
 
   // PBI-0170 (lote 11, provisional): gestiona el inventario y ve los pedidos, sin cambiar su estado.
   await page.goto('/inventario');
@@ -74,8 +76,8 @@ test('el vendedor ve el Resumen, Productos, Inventario y Pedidos (PBI-0013, PBI-
 
   for (const ruta of ['/usuarios', '/clientes', '/contenido', '/categorias']) {
     await page.goto(ruta);
-    await expect(page).toHaveTitle('WebStore Admin | Resumen');
-    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+    await expect(page).toHaveTitle('WebStore Admin | Dashboard');
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
   }
   await page.goto('/productos/nuevo');
   await expect(page.getByRole('heading', { level: 1, name: 'Nuevo producto' })).toBeVisible();
@@ -100,5 +102,5 @@ test('el administrador gestiona Usuarios y no ve Contenido ni Temas (PBI-0013)',
     await expect(menu(page).getByRole('link', { name: visible, exact: true })).toBeVisible();
   }
   await page.goto('/contenido');
-  await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 });

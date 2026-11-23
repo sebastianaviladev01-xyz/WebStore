@@ -5,11 +5,18 @@ import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { Notificaciones } from '../domain/notificacion.model';
 import { NotificacionesGateway } from '../domain/notificaciones.gateway';
-import { hastaDelMasReciente, INTERVALO_DE_ACTUALIZACION_MS } from '../domain/notificacion.rules';
+import {
+  hastaDelMasReciente,
+  INTERVALO_DE_ACTUALIZACION_MS,
+  puedeVerLaCampana,
+  tituloDelMenu,
+} from '../domain/notificacion.rules';
 
 /**
- * Campana del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel): los pedidos nuevos (estado
- * «confirmado») desde la última vez que la persona abrió el menú. Solo para los roles que ven los pedidos (`orders.view`; también el vendedor desde el lote 11, PBI-0170).
+ * Campana del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel): los avisos nuevos desde la
+ * última vez que la persona abrió el menú. Pedidos nuevos para quien los ve (`orders.view`; también el vendedor desde
+ * el lote 11, PBI-0170) y, desde el lote 13 (ADR-0021, PBI-0173), reclamos nuevos y errores de compra para quien los
+ * gestiona; el BFF decide qué avisos recibe cada rol.
  * Un fallo al consultar conserva lo que había: la campana no avisa errores (el panel ya tiene sus avisos).
  */
 @Injectable({ providedIn: 'root' })
@@ -21,9 +28,11 @@ export class NotificacionesFacade {
   /** Con el menú abierto la lista no cambia bajo la persona: la actualización automática espera a que se cierre. */
   private menuAbierto = false;
 
-  readonly disponible = computed(() => this.session.can('orders.view'));
+  readonly disponible = computed(() => puedeVerLaCampana((permiso) => this.session.can(permiso)));
+  readonly menu = computed(() => tituloDelMenu((permiso) => this.session.can(permiso)));
   readonly total = computed(() => this.estado()?.total ?? 0);
-  readonly pedidos = computed(() => this.estado()?.orders ?? []);
+  readonly conteo = computed(() => this.estado()?.counts ?? { orders: 0, complaints: 0, checkoutErrors: 0 });
+  readonly avisos = computed(() => this.estado()?.items ?? []);
 
   /** Vuelve a consultar (al entrar a cada página del panel). */
   async consultar(): Promise<void> {
@@ -57,17 +66,17 @@ export class NotificacionesFacade {
   }
 
   /**
-   * Al abrir el menú: marca como vistos los pedidos que se muestran (hasta el más reciente). La lista que se ve no
+   * Al abrir el menú: marca como vistos los avisos que se muestran (hasta el más reciente). La lista que se ve no
    * cambia mientras el menú sigue abierto; el número de la campana pasa a lo que quede sin ver.
    */
   async marcarVisto(): Promise<void> {
     this.menuAbierto = true;
-    const hasta = hastaDelMasReciente(this.pedidos());
+    const hasta = hastaDelMasReciente(this.avisos());
     if (!hasta || !this.disponible()) return;
     try {
       const vista = await this.gateway.marcarVisto(hasta, this.session.requireToken());
       this.estado.update((actual) =>
-        actual ? { ...actual, seenAt: vista.seenAt, total: vista.total } : vista,
+        actual ? { ...actual, seenAt: vista.seenAt, total: vista.total, counts: vista.counts } : vista,
       );
     } catch (error) {
       if (error instanceof SesionVencidaError) this.session.expirar();

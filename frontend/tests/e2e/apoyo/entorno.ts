@@ -30,7 +30,7 @@ export async function ingresarAlAdmin(
   await page.getByRole('textbox', { name: 'Correo' }).fill(cuenta.email);
   await page.getByRole('textbox', { name: 'Contraseña' }).fill(cuenta.password);
   await page.getByRole('button', { name: 'Ingresar al panel' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
 }
 
 /** Menú lateral del Admin. */

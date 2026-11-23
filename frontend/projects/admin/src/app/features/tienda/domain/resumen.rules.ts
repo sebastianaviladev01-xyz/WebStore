@@ -5,7 +5,7 @@ import type { Cliente, EstadoPedido, EventoActividad, Pedido } from './tienda.mo
 import { ETIQUETAS_ESTADO_PEDIDO } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
 
-/** Zona horaria de la tienda: las fechas del Resumen son las de Lima (PBI-0080: una sola vez en el Admin). */
+/** Zona horaria de la tienda: las fechas del Dashboard son las de Lima (PBI-0080: una sola vez en el Admin). */
 export const ZONA_IANA_LIMA = 'America/Lima';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
@@ -62,9 +62,12 @@ export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, 
 
 const redondearMonto = (valor: number) => Math.round(valor * 100) / 100;
 
-/** Ventas: suma del `total` (productos y envío) de los pedidos no cancelados, a céntimos. */
+/**
+ * Ventas: suma del valor de los productos (`subtotal`, IGV incluido) de los pedidos no cancelados, sin el costo del
+ * envío, a céntimos (lote 13, ADR-0021, PBI-0186).
+ */
 const sumarVentas = (pedidos: readonly Pedido[]) =>
-  redondearMonto(pedidos.filter((p) => p.status !== 'cancelled').reduce((suma, p) => suma + p.total, 0));
+  redondearMonto(pedidos.filter((p) => p.status !== 'cancelled').reduce((suma, p) => suma + p.subtotal, 0));
 
 const estaEnTramo = (fecha: FechaLima, tramo: TramoMes) =>
   fecha.anio === tramo.anio &&
@@ -95,7 +98,7 @@ function cifrasDelTramo(
 }
 
 /**
- * Cifras de las tarjetas del Resumen. El total es histórico (pedidos con cancelados, ventas con el `total` de los
+ * Cifras de las tarjetas del Dashboard. El total es histórico (pedidos con cancelados, ventas con el `subtotal` de los
  * no cancelados, todos los clientes); la variación compara el mes en curso con el mismo tramo del mes anterior.
  */
 export function calcularIndicadores(
@@ -167,7 +170,7 @@ export function ultimosPedidos(pedidos: readonly Pedido[], limite = 5): Pedido[]
     .slice(0, limite);
 }
 
-/** Grupos de estado del Resumen (D8), en el orden de las barras. */
+/** Grupos de estado del Dashboard (D8), en el orden de las barras. */
 export type GrupoDeEstado = keyof DistribucionEstados;
 
 const GRUPOS_DE_ESTADO: readonly {
@@ -214,7 +217,7 @@ export function distribucionPorEstado(pedidos: readonly Pedido[]): DistribucionE
 }
 
 /**
- * Actividad reciente del Resumen (lote 07b, ADR-0017, PBI-0028): los `limite` eventos más recientes, del último al
+ * Actividad reciente del Dashboard (lote 07b, ADR-0017, PBI-0028): los `limite` eventos más recientes, del último al
  * primero. El BFF guarda los últimos 50.
  */
 export function actividadReciente(eventos: readonly EventoActividad[], limite = 10): EventoActividad[] {

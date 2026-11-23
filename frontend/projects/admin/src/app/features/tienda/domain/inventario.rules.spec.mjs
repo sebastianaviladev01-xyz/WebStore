@@ -26,13 +26,13 @@ test('PBI-0127: vacío, decimales, negativos o texto no se guardan', () => {
   }
 });
 
-// Lote 08 (ADR-0017), PBI-0079: el umbral de stock bajo está en un solo lugar. El Resumen («Stock bajo») y Inventario
+// Lote 08 (ADR-0017), PBI-0079: el umbral de stock bajo está en un solo lugar. El Dashboard («Stock bajo») y Inventario
 // (el estado de cada producto) no pueden discrepar: antes, uno comparaba con 5 y el otro con su propia copia.
 const { conPocoStock, estadoDeStock, STOCK_BAJO, NOTA_STOCK_BAJO } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
-test('PBI-0079: con poco stock es el agotado y el que llega al umbral, y el Resumen y Inventario coinciden', () => {
+test('PBI-0079: con poco stock es el agotado y el que llega al umbral, y el Dashboard y Inventario coinciden', () => {
   assert.equal(conPocoStock(0), true, 'agotado');
   assert.equal(conPocoStock(STOCK_BAJO), true, 'justo en el umbral');
   assert.equal(conPocoStock(STOCK_BAJO + 1), false, 'un producto por encima del umbral');
@@ -41,7 +41,7 @@ test('PBI-0079: con poco stock es el agotado y el que llega al umbral, y el Resu
   }
 });
 
-test('PBI-0079: el texto del Resumen dice el umbral que se usa', () => {
+test('PBI-0079: el texto del Dashboard dice el umbral que se usa', () => {
   assert.equal(STOCK_BAJO, 5);
   assert.equal(NOTA_STOCK_BAJO, 'Productos con 5 unidades o menos');
 });

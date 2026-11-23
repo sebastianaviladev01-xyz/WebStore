@@ -7,8 +7,8 @@ import { correoUnico, cuentasAdmin, fechaDeEntrega, ingresarAlAdmin, menuAdmin, 
  * Lote 07b, Admin: funciones nuevas y lo que dejó el lote 07 (ADR-0017). Recorridos contra el BFF de prueba real:
  * - PBI-0155: Pedidos y Tarifas de envío con el panel de filtros estándar de la feature 008.
  * - PBI-0157: lo escrito en Tarifas de envío vuelve tras vencer la sesión, con su modo.
- * - PBI-0027 y PBI-0028: «Personas en línea» y «Actividad reciente» en el Resumen completo.
- * - PBI-0033: la campana de pedidos nuevos.
+ * - PBI-0028: «Actividad reciente» en el Dashboard completo (lote 13, PBI-0172: sin «Personas en línea»).
+ * - PBI-0033: la campana de pedidos nuevos; desde el lote 13 (PBI-0173), también reclamos y errores de compra.
  * - PBI-0034: el perfil propio editable (datos y contraseña).
  * - PBI-0044: el menú lateral reducido a íconos y el panel lateral del celular.
  * - PBI-0052: la imagen pequeña de la categoría.
@@ -156,19 +156,66 @@ async function crearPedido(nombre: string): Promise<string> {
   }
 }
 
-async function latido(visitId: string): Promise<void> {
+/** Registra un reclamo por la API pública, como el libro de reclamaciones; devuelve su código. */
+async function crearReclamo(): Promise<string> {
   const api = await nuevoRequest.newContext({ baseURL: urls.bff });
   try {
-    expect((await api.post('/bff/visits', { data: { visitId } })).status()).toBe(204);
+    const respuesta = await api.post('/bff/complaints', {
+      data: {
+        name: 'Reclamo Lote 13',
+        document: '45678912',
+        email: correoUnico('lote13'),
+        phone: '987654321',
+        address: 'Av. Lote 13 1',
+        subject: 'Campana',
+        type: 'reclamo',
+        detail: 'Detalle del reclamo.',
+        request: 'Respuesta.',
+      },
+    });
+    expect(respuesta.status()).toBe(201);
+    return ((await respuesta.json()) as { id: string }).id;
   } finally {
     await api.dispose();
   }
 }
 
-test.describe('PBI-0027 y PBI-0028: «Personas en línea» y «Actividad reciente» del Resumen', () => {
-  test('el superadministrador ve el pedido nuevo en la actividad y la pestaña en línea', async ({ page }) => {
+/** Un checkout con un total que no es el vigente: el BFF lo rechaza y lo anota como error de compra. */
+async function intentarCompraConTotalViejo(): Promise<void> {
+  const api = await nuevoRequest.newContext({ baseURL: urls.bff });
+  try {
+    const respuesta = await api.post('/bff/checkout/orders', {
+      data: {
+        customer: {
+          fullName: 'Error Lote 13',
+          email: correoUnico('lote13'),
+          phone: '987654321',
+          document: '45678912',
+        },
+        shipping: {
+          addressLine: 'Av. Lote 13 2',
+          district: 'Miraflores',
+          province: 'Lima',
+          department: 'Lima',
+        },
+        items: [{ productId: 'p-004', quantity: 1 }],
+        paymentMethod: 'yape-plin',
+        deliveryDate: fechaDeEntrega(),
+        termsAccepted: true,
+        total: 1,
+      },
+    });
+    expect(respuesta.status()).toBe(409);
+  } finally {
+    await api.dispose();
+  }
+}
+
+test.describe('PBI-0028: «Actividad reciente» del Dashboard (PBI-0172: sin «Personas en línea»)', () => {
+  test('el superadministrador ve el pedido nuevo en la actividad y ya no ve las personas en línea', async ({
+    page,
+  }) => {
     const pedido = await crearPedido('Actividad Lote 07b');
-    await latido(`e2e-lote07b-${Date.now()}`);
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const main = page.getByRole('main');
     const actividad = main.locator('section', {
@@ -178,17 +225,13 @@ test.describe('PBI-0027 y PBI-0028: «Personas en línea» y «Actividad recient
       `Nuevo pedido ${pedido} de Actividad Lote 07b`,
     );
     expect(await actividad.getByRole('listitem').count()).toBeLessThanOrEqual(10);
-    const enLinea = main.locator('section', {
-      has: page.getByRole('heading', { level: 2, name: 'Personas en línea' }),
-    });
-    // La cifra es el primer párrafo de la tarjeta; el latido de esta prueba cuenta, así que no es 0.
-    await expect(enLinea.getByRole('paragraph').first()).toHaveText(/^\s*[1-9]\d*\s*$/);
+    await expect(main.getByRole('heading', { name: 'Personas en línea' })).toHaveCount(0);
   });
 
   test('el vendedor no ve la actividad ni las personas en línea', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     const main = page.getByRole('main');
-    await expect(main.getByRole('heading', { level: 2, name: 'Stock bajo' })).toBeVisible();
+    await expect(main.getByRole('heading', { level: 3, name: 'Stock bajo' })).toBeVisible();
     await expect(main.getByRole('heading', { level: 2, name: 'Actividad reciente' })).toHaveCount(0);
     await expect(main.getByRole('heading', { level: 2, name: 'Personas en línea' })).toHaveCount(0);
   });
@@ -203,7 +246,7 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
     const campana = page.getByRole('button', { name: /^Notificaciones/ });
     await campana.click();
     await page.keyboard.press('Escape');
-    await expect(campana).toHaveAccessibleName('Notificaciones: no hay pedidos nuevos');
+    await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
 
     const pedido = await crearPedido('Campana Lote 07b');
     await page.goto('/productos');
@@ -216,7 +259,7 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
     await menu.getByRole('menuitem', { name: new RegExp(pedido) }).click();
     await expect(page).toHaveURL(new RegExp(`/pedidos\\?pedido=${pedido}$`));
     await expect(page.getByRole('heading', { level: 2, name: pedido })).toBeVisible();
-    await expect(campana).toHaveAccessibleName('Notificaciones: no hay pedidos nuevos');
+    await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
 
     // «Visto» es de cada persona: el superadministrador todavía lo tiene como nuevo.
     const otra = await page.context().browser()!.newContext({ baseURL: urls.admin, locale: 'es-PE' });
@@ -224,7 +267,7 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
     try {
       await ingresarAlAdmin(otraPagina, cuentasAdmin.superadmin);
       await expect(otraPagina.getByRole('button', { name: /^Notificaciones/ })).not.toHaveAccessibleName(
-        'Notificaciones: no hay pedidos nuevos',
+        'Notificaciones: no hay avisos nuevos',
       );
     } finally {
       await otra.close();
@@ -242,7 +285,7 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
       const campana = page.getByRole('button', { name: /^Notificaciones/ });
       await campana.click();
       await page.keyboard.press('Escape');
-      await expect(campana).toHaveAccessibleName('Notificaciones: no hay pedidos nuevos');
+      await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
 
       // Al volver a la pestaña: el navegador avisa con `visibilitychange`.
       await crearPedido('Vuelta Lote 08');
@@ -280,6 +323,52 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
   test('el vendedor también tiene campana, porque ve los pedidos (PBI-0170)', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     await expect(page.getByRole('button', { name: /^Notificaciones/ })).toBeVisible();
+  });
+});
+
+test.describe('PBI-0173: la campana avisa de reclamos nuevos y errores de compra', () => {
+  test('el administrador ve el reclamo y el error de compra, y cada aviso lleva a su página', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.admin);
+    const campana = page.getByRole('button', { name: /^Notificaciones/ });
+    await campana.click();
+    await page.keyboard.press('Escape');
+    await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
+
+    await intentarCompraConTotalViejo();
+    const reclamo = await crearReclamo();
+    await page.goto('/productos');
+    await expect(campana).toHaveAccessibleName('Notificaciones: 1 reclamo nuevo y 1 error de compra');
+    await campana.click();
+    const menu = page.getByRole('menu', { name: 'Notificaciones' });
+    await expect(menu.getByText('Avisos nuevos', { exact: true })).toBeVisible();
+    await expect(menu.getByRole('menuitem')).toHaveText([
+      new RegExp(`Reclamo ${reclamo}`),
+      /Compra no completada: el total cambió/,
+      'Ver todos los pedidos',
+    ]);
+    await menu.getByRole('menuitem', { name: new RegExp(reclamo) }).click();
+    await expect(page).toHaveURL(new RegExp(`/reclamaciones\\?texto=${reclamo}$`));
+    await expect(page.getByRole('heading', { level: 1, name: 'Reclamaciones' })).toBeVisible();
+    await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
+  });
+
+  test('el vendedor no recibe reclamos ni errores de compra: su menú es de pedidos nuevos', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.vendedor);
+    const campana = page.getByRole('button', { name: /^Notificaciones/ });
+    await campana.click();
+    await page.keyboard.press('Escape');
+    await intentarCompraConTotalViejo();
+    await crearReclamo();
+    await page.goto('/productos');
+    await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
+    await campana.click();
+    const menu = page.getByRole('menu', { name: 'Notificaciones' });
+    await expect(menu.getByText('Pedidos nuevos', { exact: true })).toBeVisible();
+    await expect(menu.getByText('No hay pedidos nuevos.')).toBeVisible();
   });
 });
 
@@ -333,7 +422,7 @@ test.describe('PBI-0034: perfil propio', () => {
       expect(vigente.status()).toBe(401);
       // Esta sesión sigue: el panel responde.
       await page.goto('/');
-      await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
     } finally {
       // Deja la contraseña de la demo como estaba, para las demás pruebas.
       const sesion = await api.post('/bff/admin/sessions', {

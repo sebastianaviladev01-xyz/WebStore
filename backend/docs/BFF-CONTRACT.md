@@ -39,15 +39,7 @@ Errores comunes a todas las rutas:
 
 ## Visitas de la tienda
 
-Personas en línea (lote 07b, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0027; el 2026-11-20 Daniel pidió quitarla del Dashboard, PBI-0172):
-
-| Método | Ruta | Petición | Respuesta | Errores (`code`) |
-| --- | --- | --- | --- | --- |
-| `POST` | `/visits` | `{ visitId }`: identificador aleatorio de la pestaña, de 16 a 128 caracteres `A-Z`, `a-z`, `0-9`, `-` o `_` | `204` | `400 INVALID_VISIT_ID` |
-
-- La tienda envía un latido al abrirse y cada minuto mientras la pestaña está visible. No hay cookie: el identificador vive en `sessionStorage` de esa pestaña y se pierde al cerrarla.
-- El BFF guarda solo el identificador y la hora del último latido, **en memoria** (nunca en el estado ni en disco; al reiniciar, la cuenta vuelve a cero), sin IP, agente de usuario ni otro dato del visitante. Cuenta las pestañas con un latido en los últimos 5 minutos y recuerda como mucho 10 000: con la memoria llena, una pestaña nueva no se cuenta hasta que vencen otras.
-- La cifra llega al Admin como `onlineVisitors` del snapshot.
+Sin rutas desde el lote 13 ([ADR-0021](../../docs/adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), PBI-0172): Daniel pidió el 2026-11-20 quitar «Personas en línea» del Dashboard, y con ella se quitaron el latido de la tienda y `POST /visits` (lote 07b, PBI-0027), que hoy responde `404 ROUTE_NOT_FOUND`. El snapshot ya no trae `onlineVisitors`.
 
 ## Contenido
 
@@ -91,7 +83,15 @@ Reglas del checkout (lote 04, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-
 
 - `termsAccepted`: el booleano `true` (PBI-0040). Ausente, `false` o de otro tipo, `400 TERMS_NOT_ACCEPTED` («Acepta los términos y condiciones para finalizar la compra.»), que se comprueba después del resto de los campos. El pedido guarda `termsAcceptedAt`, la fecha y hora de la aceptación (igual a `createdAt`), y la vista pública lo incluye. El 2026-11-20 Daniel pidió guardar también la versión de los términos aceptada (PBI-0177; [decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)); los pedidos anteriores no lo tienen.
 - `total`: el total que vio el comprador (PBI-0106). Si llega como número y difiere en medio céntimo o más del que calcula el BFF con los precios y la tarifa vigentes, responde `409 ORDER_TOTAL_CHANGED` con `details: { subtotal, shippingCost, total }` vigentes, sin crear el pedido ni tocar el stock. Sin `total` no se compara. `INSUFFICIENT_STOCK` y `PRODUCT_UNAVAILABLE` se comprueban antes. La tienda siempre lo envía.
+- Errores de compra (lote 13, PBI-0173, provisional): ver [Errores de compra](#errores-de-compra).
 - `Idempotency-Key` (PBI-0086): clave del intento de compra que genera la tienda (de 16 a 128 caracteres `A-Z`, `a-z`, `0-9`, `-` o `_`; si no, `400 INVALID_IDEMPOTENCY_KEY`). El pedido guarda su digest, que no sale en ninguna vista. Si la clave ya creó un pedido, responde `200` con ese pedido, sin validar el cuerpo, sin crear otro y sin descontar stock; como el BFF solo guarda el digest del `accessToken`, emite uno nuevo que sustituye al anterior. Sin cabecera, cada `POST` es un pedido nuevo. La búsqueda y la creación ocurren sin esperas entre medio: dos envíos con la misma clave no crean dos pedidos. La cabecera está en `access-control-allow-headers`.
+
+### Errores de compra
+
+Lote 13 ([ADR-0021](../../docs/adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), PBI-0173; provisional, por confirmar con Daniel). Un checkout rechazado porque la tienda cambió bajo el comprador, algo que el equipo puede resolver, queda como error de compra para la campana del Admin: `ORDER_TOTAL_CHANGED`, `INSUFFICIENT_STOCK`, `PRODUCT_UNAVAILABLE` y `SHIPPING_UNAVAILABLE`. Los errores del formulario (`VALIDATION_ERROR`, `INVALID_*`, `EMPTY_ORDER`, `TERMS_NOT_ACCEPTED`) no lo son: los corrige el comprador. El BFF de prueba no rechaza pagos, así que no hay «pago rechazado».
+
+- El estado guarda `checkoutErrors`, los 50 más recientes, cada uno `{ id, at, code, productId, attempt }`: `productId` solo si el producto existe en el catálogo (si no, `null`) y `attempt`, el digest de la `Idempotency-Key` (o `null`). Ningún dato del comprador, de la dirección ni del pago. El mismo intento con el mismo código se anota una vez.
+- Anotarlo no cambia la `revision` del snapshot ni la respuesta del checkout. `POST /admin/reset` los borra.
 
 Acceso y cambios del pedido:
 
@@ -147,20 +147,27 @@ La obligación de responder en 15 días hábiles está descrita por [Indecopi](h
 | `POST` | `/admin/reset` | Bearer | `200` snapshot de la demo | `401`, `403 INSUFFICIENT_ROLE`, `403 STORE_RESET_DISABLED` |
 | `PATCH` | `/admin/profile` | Bearer; `{ name, email }` | `200 { user }` | `401 ADMIN_AUTHENTICATION_REQUIRED`, `400 VALIDATION_ERROR`, `400 INVALID_EMAIL`, `409 ADMIN_EMAIL_TAKEN` |
 | `PUT` | `/admin/profile/password` | Bearer; `{ currentPassword, newPassword }` | `204`; cierra las demás sesiones de esa persona | `401 ADMIN_AUTHENTICATION_REQUIRED`, `400 VALIDATION_ERROR`, `400 INVALID_CURRENT_PASSWORD`, `400 WEAK_PASSWORD` |
-| `GET` | `/admin/notifications` | Bearer | `200 { seenAt, total, orders }` | `401`, `403 INSUFFICIENT_ROLE` (sin `orders.view`) |
-| `PUT` | `/admin/notifications/seen` | Bearer; `{ until }` | `200 { seenAt, total, orders }` | `401`, `403 INSUFFICIENT_ROLE`, `400 INVALID_SEEN_AT` |
+| `GET` | `/admin/notifications` | Bearer | `200 { seenAt, total, counts, items }` | `401`, `403 INSUFFICIENT_ROLE` (sin `orders.view`, `complaints.manage` ni `orders.manage`) |
+| `PUT` | `/admin/notifications/seen` | Bearer; `{ until }` | `200 { seenAt, total, counts, items }` | `401`, `403 INSUFFICIENT_ROLE`, `400 INVALID_SEEN_AT` |
 
 El ingreso compara la contraseña aunque el correo no exista o el usuario esté inactivo, para tardar lo mismo.
 
 Perfil propio (lote 07b, PBI-0034; el 2026-11-18 Daniel pidió que el correo nuevo se verifique, PBI-0161): los tres roles editan su nombre y su correo y cambian su contraseña, con una ruta propia que no pasa por el snapshot. Las rutas validan la sesión antes de leer el cuerpo. El nombre se recorta; el correo se guarda en minúsculas y no puede ser el de otro usuario del panel (`ADMIN_EMAIL_TAKEN`, «Ese correo ya lo usa otro usuario del panel.»). Cambiar los datos avanza la `revision` del snapshot (los usuarios viajan en él). La contraseña nueva sigue la política de las cuentas (10 caracteres, una letra y un número: `WEAK_PASSWORD`); la actual equivocada responde `INVALID_CURRENT_PASSWORD` («La contraseña actual no es correcta.») sin cerrar nada. Al cambiarla se cierran las demás sesiones de esa persona y se conserva la que hizo el cambio.
 
-Notificaciones (lote 07b, PBI-0033; confirmadas por Daniel el 2026-11-18), para los roles que ven los pedidos (`orders.view`: los tres desde el lote 11, PBI-0170; provisional): `orders` son los pedidos en estado `confirmed` creados después de `seenAt` (todos si es `null`), del más reciente al más antiguo, como mucho 20, cada uno con `{ id, customer, total, createdAt }` (sin datos de contacto); `total` los cuenta todos. `PUT /admin/notifications/seen` recibe `until`, el `createdAt` del pedido más reciente que la persona vio en el menú (fecha ISO en UTC; si no, `INVALID_SEEN_AT`): así un pedido que llegó mientras tanto sigue siendo nuevo. «Visto» se guarda por usuario en el estado (`adminNotificationsSeen`), nunca retrocede ni pasa de la hora del BFF, no cambia la `revision` y se borra si se elimina el usuario.
+Notificaciones (lote 07b, PBI-0033; confirmadas por Daniel el 2026-11-18; desde el lote 13, [ADR-0021](../../docs/adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), PBI-0173, también reclamos y errores de compra, provisional): cada rol recibe los avisos de lo que gestiona, creados después de `seenAt` (todos si es `null`):
+
+| Tipo (`type`) | Quién lo recibe | Qué es nuevo | Campos del aviso |
+| --- | --- | --- | --- |
+| `order` | `orders.view` (los tres roles desde el lote 11, PBI-0170) | Pedido en estado `confirmed` | `{ type, id, at, customer, total }`; `at` es el `createdAt` del pedido |
+| `complaint` | `complaints.manage` (superadministrador y administrador) | Reclamo en estado `received` | `{ type, id, at, complaintType }` (`reclamo` o `queja`); sin quien reclama ni su detalle |
+| `checkout-error` | `orders.manage` (superadministrador y administrador) | [Error de compra](#errores-de-compra) | `{ type, id, at, code, product }`; `product` es el nombre del producto del catálogo o `null` |
+
+`items` mezcla los tres tipos, del más reciente al más antiguo, como mucho 20 (sin datos de contacto); `total` los cuenta todos y `counts` (`{ orders, complaints, checkoutErrors }`) los cuenta por tipo, con 0 en los que el rol no recibe. `PUT /admin/notifications/seen` recibe `until`, el `at` del aviso más reciente que la persona vio en el menú (fecha ISO en UTC; si no, `INVALID_SEEN_AT`): así un aviso que llegó mientras tanto sigue siendo nuevo. Un solo «visto» por persona vale para los tres tipos. «Visto» se guarda por usuario en el estado (`adminNotificationsSeen`), nunca retrocede ni pasa de la hora del BFF, no cambia la `revision` y se borra si se elimina el usuario.
 
 El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía. Los pedidos viajan a quien los ve (`orders.view`), aunque no pueda cambiar su estado (`orders.manage`; lote 11, PBI-0170).
 
-Desde el lote 07b, para el Resumen completo (roles con `orders.manage`, no el vendedor, aunque vea los pedidos: la actividad nombra a clientes y reclamos que no ve; el 2026-11-20 Daniel pidió quitar las personas en línea, PBI-0172, y no pidió cambios en la actividad):
+Desde el lote 07b, para el Dashboard completo (roles con `orders.manage`, no el vendedor, aunque vea los pedidos: la actividad nombra a clientes y reclamos que no ve). Las personas en línea (`onlineVisitors`) se quitaron en el lote 13 (PBI-0172); Daniel no pidió cambios en la actividad:
 
-- `onlineVisitors` (PBI-0027): pestañas de la tienda con un latido en los últimos 5 minutos ([Visitas de la tienda](#visitas-de-la-tienda)); `null` para el vendedor.
 - `activity` (PBI-0028): los últimos eventos, del más reciente al más antiguo, cada uno `{ id, at, type, description }`; `[]` para el vendedor. `type` es `order-created`, `order-status-changed` (desde el Admin, «El equipo pasó el pedido … a «…».», o una cancelación del cliente desde la tienda), `account-registered` o `complaint-registered`. La descripción no lleva correo, teléfono, documento ni dirección: solo el nombre que el Admin ya muestra (el comprador en Pedidos, quien reclama en Reclamaciones); la de una cuenta no dice de quién es, porque el Admin no muestra las cuentas. El estado guarda los últimos 50 (`activity`); no se edita desde el Admin.
 
 Los pedidos del snapshot traen el detalle para despachar: cliente, correo, teléfono, dirección, distrito, tienda de origen, fecha de entrega, medio de pago, `termsAcceptedAt` (cuándo aceptó el comprador los términos; `null` en los pedidos anteriores a esa casilla, lote 06, PBI-0145), líneas (`productId`, `name`, `quantity`, `unitPrice`), subtotal, envío y total. Nunca incluyen el token de acceso del cliente.
@@ -206,7 +213,7 @@ Permisos de la reunión del 11/11 (lote 07, [ADR-0017](../../docs/adrs/0017-cerr
 | --- | --- | --- |
 | `superadmin` | Todos | La configuración de la tienda (`content.manage`, `themes.manage` y `store.reset`), eliminar usuarios (`users.delete`) y todo lo de los otros roles. Ve y gestiona a los usuarios de cualquier rol |
 | `admin` | `dashboard.view`, `products.edit`, `products.manage`, `products.delete`, `inventory.manage`, `categories.manage`, `brands.manage`, `customers.manage`, `users.manage`, `orders.view`, `orders.manage`, `banners.manage`, `shipping.manage` y `complaints.manage` | Toda la operación: catálogo (también eliminar productos), inventario, categorías, marcas, clientes, pedidos, banners, tarifas y reclamaciones. Ve y gestiona solo a los vendedores (crear, editar, activar y desactivar), sin eliminarlos ni asignar otro rol. Sin Contenido ni temas |
-| `vendedor` | `dashboard.view`, `products.edit`, `products.manage`, `inventory.manage` y `orders.view` | Resumen, Productos, Inventario y Pedidos: crea productos y modifica todos sus campos (también SKU, precio, categoría, marca, estado y stock), de cualquier producto de la tienda, sin eliminarlos; gestiona el stock en Inventario; ve los pedidos y su detalle y la campana de pedidos nuevos, sin cambiar su estado (`orders` en el guardado responde `403 INSUFFICIENT_ROLE`). Sin clientes, usuarios ni la actividad reciente del Resumen |
+| `vendedor` | `dashboard.view`, `products.edit`, `products.manage`, `inventory.manage` y `orders.view` | Dashboard, Productos, Inventario y Pedidos: crea productos y modifica todos sus campos (también SKU, precio, categoría, marca, estado y stock), de cualquier producto de la tienda, sin eliminarlos; gestiona el stock en Inventario; ve los pedidos y su detalle y la campana de pedidos nuevos, sin cambiar su estado (`orders` en el guardado responde `403 INSUFFICIENT_ROLE`). Sin clientes, usuarios ni la actividad reciente del Resumen |
 
 Reglas del servidor:
 
@@ -222,6 +229,7 @@ Migraciones de los datos guardados por versiones anteriores. Cada una se ejecuta
 - `schemaVersion: 2`: sin `schemaVersion`, los roles pasan `owner` → `superadmin` y `catalog-maintainer` → `vendedor`, y se agrega la cuenta demo `admin@webstore.demo` si no existe.
 - `schemaVersion: 3`: el estado gana `appearance` (`revision`, `activeThemeId` y `customThemes`), con B activo. Si los colores de Contenido difieren de los de B (`#1D4ED8` y `#C2410C`, sin distinguir mayúsculas), se crea con ellos el tema propio «Colores de Contenido» (con el fondo principal, el fondo secundario y el contraste de B) y queda activo; si el nombre ya existe, «Colores de Contenido (2)», «(3)»… Un color ausente, que no es `#RRGGBB` o el anterior por defecto (borgoña `#6E173C` o bronce `#8C6845`) cuenta como el de B. Después, `primaryColor` y `secondaryColor` se quitan de la configuración. Un tema activo que no existe pasa a B. `POST /admin/reset` vuelve a B, sin temas propios.
 - Lote 07b, sin migración ni cambio de `schemaVersion`: un estado sin `activity` ni `adminNotificationsSeen` las carga vacías; al cargar se descartan los elementos mal formados y `activity` se recorta a 50.
+- Lote 13 (PBI-0173), sin migración ni cambio de `schemaVersion`: un estado sin `checkoutErrors` la carga vacía; al cargar se descartan los mal formados y se recorta a 50.
 
 En cada arranque, además, cada tema propio guardado pasa por las reglas con que se crea (lote 03, PBI-0068): un nombre con caracteres invisibles los pierde y uno repetido se renombra con «(2)», «(3)»…; un tema que no es un objeto, sin `id` de texto, con un `id` repetido o de un predefinido, con un color que no es `#RRGGBB`, un nombre inválido o un contraste que impediría guardarlo se descarta. Si el descartado era el activo, queda B. Cada cambio se escribe en el log del BFF (`console.warn`), con el tema descartado completo para poder recuperarlo. Así, un tema guardado a mano o por una versión anterior ya no deja `/appearance` ni `/appearance/theme.css` respondiendo `500`.
 

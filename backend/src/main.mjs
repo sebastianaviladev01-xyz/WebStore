@@ -14,7 +14,6 @@ import { pedidosRoutes } from './api/routes/pedidos.routes.mjs';
 import { reclamosRoutes } from './api/routes/reclamos.routes.mjs';
 import { saludRoutes } from './api/routes/salud.routes.mjs';
 import { temasRoutes } from './api/routes/temas.routes.mjs';
-import { visitasRoutes } from './api/routes/visitas.routes.mjs';
 import { createRequestHandler } from './api/router.mjs';
 import { createAdminSesionesUseCases } from './application/admin/admin-sesiones.use-cases.mjs';
 import { createNotificacionesUseCases } from './application/admin/notificaciones.use-cases.mjs';
@@ -29,7 +28,6 @@ import { createPedidosUseCases } from './application/pedidos/pedidos.use-cases.m
 import { createReclamosUseCases } from './application/reclamos/reclamos.use-cases.mjs';
 import { createTemasQueries } from './application/temas/temas.queries.mjs';
 import { createTemasUseCases } from './application/temas/temas.use-cases.mjs';
-import { createVisitasUseCases } from './application/visitas/visitas.use-cases.mjs';
 import { crearVigiaDeFeriados, readConfig } from './infrastructure/config.mjs';
 import { limaDate } from './domain/comun/reloj.mjs';
 import { createJsonStateStore } from './infrastructure/persistencia/json-state-store.mjs';
@@ -58,8 +56,6 @@ const security = { hashPassword, passwordMatches, digest, createCode, createToke
 
 const cuentas = createCuentasUseCases({ store, security, exposeTestCodes: config.exposeTestCodes });
 const adminSesiones = createAdminSesionesUseCases({ store, security });
-// Latidos de la tienda, solo en memoria (PBI-0027).
-const visitas = createVisitasUseCases();
 
 // El orden importa: la primera ruta que coincide responde (como el router original).
 const routes = [
@@ -71,15 +67,9 @@ const routes = [
   ...reclamosRoutes(createReclamosUseCases({ store, nonWorkingDates: config.nonWorkingDates })),
   ...checkoutRoutes(createCheckoutUseCases({ store, security })),
   ...pedidosRoutes(createPedidosUseCases({ store, security })),
-  ...visitasRoutes(visitas),
   ...adminRoutes(
     adminSesiones,
-    createSnapshotUseCases({
-      store,
-      security,
-      resetEnabled: config.allowStoreReset,
-      personasEnLinea: visitas.enLinea,
-    }),
+    createSnapshotUseCases({ store, security, resetEnabled: config.allowStoreReset }),
     createPerfilUseCases({ store, security, adminSesiones }),
     createNotificacionesUseCases({ store }),
   ),

@@ -225,7 +225,7 @@ test.describe('Temas del Admin', () => {
     );
 
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
     expect(await fondoDelBody()).toBe(FONDO_PRINCIPAL.b);
 
     await desplegarGrupo(page, 'Tienda');
@@ -384,15 +384,15 @@ test.describe('Temas del Admin', () => {
   });
 
   for (const rol of ['admin', 'vendedor'] as const) {
-    test(`${rol} no tiene Temas en el menú y /temas lo deja en Resumen`, async ({ page }) => {
+    test(`${rol} no tiene Temas en el menú y /temas lo deja en Dashboard`, async ({ page }) => {
       await ingresarAlAdmin(page, cuentasAdmin[rol]);
       // Con todo desplegado: con «Tienda» plegado, la ausencia de «Temas» pasaría siempre.
       await desplegarTodos(page);
-      await expect(menu(page).getByRole('link', { name: 'Resumen', exact: true })).toBeVisible();
+      await expect(menu(page).getByRole('link', { name: 'Dashboard', exact: true })).toBeVisible();
       await expect(menu(page).getByRole('link', { name: 'Temas', exact: true })).toHaveCount(0);
 
       await page.goto('/temas');
-      await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
       await expect(page.getByRole('heading', { level: 1, name: 'Temas', exact: true })).toHaveCount(0);
     });
   }

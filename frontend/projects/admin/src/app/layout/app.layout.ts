@@ -54,7 +54,7 @@ interface NavigationGroup {
  * de envío» es el de su menú); sin dependencias nuevas ni fuentes de íconos.
  */
 const ICONOS = {
-  resumen: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
+  dashboard: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
   productos: 'M3 12V4h8l9 9-8 8zM7.5 7.5h.01',
   inventario: 'M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7M12 11v10',
   categorias: 'M3 6h6l2 2h10v11H3z',
@@ -77,7 +77,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
   {
     id: 'general',
     label: 'General',
-    items: [{ path: '/', label: 'Resumen', permission: 'dashboard.view', icon: ICONOS.resumen }],
+    items: [{ path: '/', label: 'Dashboard', permission: 'dashboard.view', icon: ICONOS.dashboard }],
   },
   {
     id: 'catalogo',
@@ -351,8 +351,8 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
             </div>
             <!--
               ml-auto: si la cabecera se parte en dos líneas, el menú de usuario sigue a la derecha. Sin «Actualizar»
-              (PBI-0140): cada página consulta sus datos al entrar y el Resumen tiene su propio botón. La campana
-              (PBI-0033) solo está para los roles con pedidos.
+              (PBI-0140): cada página consulta sus datos al entrar y el Dashboard tiene su propio botón. La campana
+              (PBI-0033) solo está para los roles que reciben avisos (PBI-0173).
             -->
             <div class="ml-auto flex min-w-0 items-center gap-2">
               @if (notificaciones.disponible()) {

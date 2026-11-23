@@ -456,3 +456,57 @@ test('un código ya emitido por otro pedido guardado, aunque sea del mismo insta
     mock.timers.reset();
   }
 });
+
+// Lote 13 (ADR-0021), PBI-0173: los intentos rechazados porque la tienda cambió quedan como errores de compra para
+// la campana del Admin, sin datos del comprador ni del pago y sin cambiar la revisión del snapshot.
+
+test('PBI-0173: un checkout rechazado por total, stock, producto o envío deja su error de compra', () => {
+  const casos = [
+    ['ORDER_TOTAL_CHANGED', () => {}, { total: 105 }, null],
+    ['INSUFFICIENT_STOCK', (state) => (state.products[0].stock = 0), {}, 'p-1'],
+    ['PRODUCT_UNAVAILABLE', (state) => (state.products[0].active = false), {}, 'p-1'],
+    ['SHIPPING_UNAVAILABLE', () => {}, { shipping: { ...pedido().shipping, district: 'Barranco' } }, null],
+  ];
+  for (const [codigo, preparar, cambios, productId] of casos) {
+    const store = crearAlmacen();
+    let guardados = 0;
+    store.save = () => (guardados += 1);
+    preparar(store.state);
+    const checkout = createCheckoutUseCases({ store, security });
+    assert.throws(() => checkout.placeOrder(pedido(cambios), '', 'intento-0123456789abcdef'), {
+      code: codigo,
+    });
+    assert.equal(store.state.checkoutErrors.length, 1, codigo);
+    const [registrado] = store.state.checkoutErrors;
+    assert.deepEqual(Object.keys(registrado).sort(), ['at', 'attempt', 'code', 'id', 'productId'], codigo);
+    assert.equal(registrado.code, codigo);
+    assert.equal(registrado.productId, productId, codigo);
+    assert.equal(registrado.attempt, 'h:intento-0123456789abcdef', 'el digest de la clave, no la clave');
+    assert.ok(!JSON.stringify(registrado).includes('ana@example.com'), 'sin datos del comprador');
+    assert.equal(store.state.revision, 0, 'no invalida el snapshot que el Admin está editando');
+    assert.equal(guardados, 1, codigo);
+    assert.equal(store.state.orders.length, 0, codigo);
+  }
+});
+
+test('PBI-0173: el mismo intento rechazado dos veces por lo mismo cuenta una sola vez', () => {
+  const store = crearAlmacen();
+  const checkout = createCheckoutUseCases({ store, security });
+  for (let vez = 0; vez < 2; vez += 1)
+    assert.throws(() => checkout.placeOrder(pedido({ total: 105 }), '', 'intento-0123456789abcdef'), {
+      code: 'ORDER_TOTAL_CHANGED',
+    });
+  assert.equal(store.state.checkoutErrors.length, 1);
+});
+
+test('PBI-0173: los errores de validación del formulario no son errores de compra', () => {
+  const store = crearAlmacen();
+  const checkout = createCheckoutUseCases({ store, security });
+  assert.throws(() => checkout.placeOrder(pedido({ paymentMethod: 'bitcoin' }), ''), {
+    code: 'INVALID_PAYMENT_METHOD',
+  });
+  assert.throws(() => checkout.placeOrder(pedido({ termsAccepted: false }), ''), {
+    code: 'TERMS_NOT_ACCEPTED',
+  });
+  assert.equal((store.state.checkoutErrors ?? []).length, 0);
+});

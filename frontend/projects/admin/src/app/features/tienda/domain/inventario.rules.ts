@@ -15,13 +15,13 @@ export function leerStock(texto: string): LecturaStock {
 /** Estado del stock de un producto (lote 07): el que muestra Inventario y por el que se filtra (PBI-0139). */
 export type EstadoStock = 'sin-stock' | 'stock-bajo' | 'disponible';
 
-/** Unidades hasta las que el stock es bajo, como el Resumen («Productos con 5 unidades o menos»). */
+/** Unidades hasta las que el stock es bajo, como el Dashboard («Productos con 5 unidades o menos»). */
 export const STOCK_BAJO = 5;
 
-/** Texto del Resumen bajo la cifra de «Stock bajo»; dice el umbral que se usa (PBI-0079). */
+/** Texto del Dashboard bajo la cifra de «Stock bajo»; dice el umbral que se usa (PBI-0079). */
 export const NOTA_STOCK_BAJO = `Productos con ${STOCK_BAJO} unidades o menos`;
 
-/** Agotado o con stock bajo: los productos que cuenta «Stock bajo» del Resumen (PBI-0079). */
+/** Agotado o con stock bajo: los productos que cuenta «Stock bajo» del Dashboard (PBI-0079). */
 export const conPocoStock = (stock: number): boolean => stock <= STOCK_BAJO;
 
 export function estadoDeStock(stock: number): EstadoStock {

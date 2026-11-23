@@ -352,7 +352,7 @@ test('PBI-0150: tomarError() devuelve el motivo y lo quita del aviso del panel',
 });
 
 // Lote 08 (ADR-0017), PBI-0085: al entrar a una página, si la consulta falla el panel conserva las cifras de la
-// consulta anterior; antes lo hacía sin decirlo, y el Resumen mostraba cifras viejas como si fueran de ahora.
+// consulta anterior; antes lo hacía sin decirlo, y el Dashboard mostraba cifras viejas como si fueran de ahora.
 test('PBI-0085: entrar() con la consulta fallida conserva los datos y los marca como desactualizados', async () => {
   const { facade } = montar([INICIAL, new Error('caída'), ACTUAL]);
   assert.equal(facade.desactualizado(), false);

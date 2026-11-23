@@ -33,9 +33,16 @@ const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
   timeZone: ZONA_IANA_LIMA,
 });
 
-/** Bloques del Resumen con título, los que se pliegan (D1: la fila de tarjetas no). */
-type BloqueResumen =
-  'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedidos' | 'estados' | 'actividad';
+/**
+ * Bloques del Dashboard que se pliegan: los que tienen título y, desde el lote 13 (PBI-0187), también la fila de
+ * tarjetas de cifras.
+ */
+type BloqueDashboard =
+  'cifras' | 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedidos' | 'estados' | 'actividad';
+
+/** Qué suman las ventas (lote 13, ADR-0021, PBI-0186). */
+const AYUDA_VENTAS =
+  'Suma el valor de los productos vendidos, con IGV y sin el costo del envío. No cuenta los pedidos cancelados.';
 
 @Component({
   selector: 'ws-admin-dashboard',
@@ -51,10 +58,13 @@ type BloqueResumen =
     TarjetaIndicadorComponent,
   ],
   template: `
-    <!-- PBI-0140: «Actualizar» del Resumen, junto a sus cifras; solo vuelve a consultar los datos del Resumen. -->
+    <!--
+      PBI-0140: «Actualizar» del Dashboard, junto a sus cifras; solo vuelve a consultar sus datos. Lote 13 (ADR-0021,
+      PBI-0168): la vista «Dashboard» pasa a llamarse «Dashboard», en la misma ruta (/).
+    -->
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight text-ink">Resumen</h1>
+        <h1 class="text-3xl font-semibold tracking-tight text-ink">Dashboard</h1>
         <p class="mt-2 text-sm text-muted">
           Hola, {{ session.user()?.name }}. Esto es lo que necesita atención hoy.
         </p>
@@ -79,41 +89,6 @@ type BloqueResumen =
 
     <!-- Sin snapshot (BFF caído o sesión vencida) el aviso de error del panel basta: no se muestran cifras a medias. -->
     @if (admin.snapshot()) {
-      <div
-        class="mt-6 grid gap-4 sm:grid-cols-2"
-        [class]="verPedidos() && verClientes() ? 'xl:grid-cols-4' : 'xl:grid-cols-3'"
-      >
-        @if (verPedidos()) {
-          <ws-admin-tarjeta-indicador
-            titulo="Total de pedidos"
-            [valor]="(indicadores().pedidos.total | number) ?? '0'"
-            [variacion]="indicadores().pedidos.variacion"
-            enlace="/pedidos"
-          />
-          <ws-admin-tarjeta-indicador
-            titulo="Total de ventas"
-            [valor]="(indicadores().ventas.total | currency: 'PEN' : 'symbol' : '1.2-2') ?? ''"
-            [variacion]="indicadores().ventas.variacion"
-            enlace="/pedidos"
-          />
-        }
-        @if (verClientes()) {
-          <ws-admin-tarjeta-indicador
-            titulo="Total de clientes"
-            [valor]="(indicadores().clientes.total | number) ?? '0'"
-            [variacion]="indicadores().clientes.variacion"
-            enlace="/clientes"
-          />
-        }
-        <ws-admin-tarjeta-indicador
-          titulo="Stock bajo"
-          [valor]="(admin.lowStock().length | number) ?? '0'"
-          [nota]="notaStockBajo"
-          [enlace]="enlaceStock()"
-          [alerta]="true"
-        />
-      </div>
-
       <!--
         Botón plegable de un bloque con título (feature 003, D1): va dentro del h2, que conserva su nivel y su
         nombre. Controla la región bloque-<id>, que lleva el contenido y el subtítulo.
@@ -130,6 +105,54 @@ type BloqueResumen =
           <svg wsAdminFlecha class="ws-plegable-indicador h-4 w-4 text-muted"></svg>
         </button>
       </ng-template>
+
+      <!-- Lote 13 (PBI-0187): las tarjetas de cifras se pliegan como los demás bloques, con su propio título. -->
+      <section class="mt-6">
+        <h2 class="text-lg font-semibold">
+          <ng-container
+            *ngTemplateOutlet="botonDeBloque; context: { $implicit: 'cifras', titulo: 'Cifras' }"
+          />
+        </h2>
+        <div wsAdminBloquePlegable="cifras" [abierto]="bloqueAbierto('cifras')">
+          <div class="ws-plegable-contenido">
+            <div
+              class="mt-4 grid gap-4 sm:grid-cols-2"
+              [class]="verPedidos() && verClientes() ? 'xl:grid-cols-4' : 'xl:grid-cols-3'"
+            >
+              @if (verPedidos()) {
+                <ws-admin-tarjeta-indicador
+                  titulo="Total de pedidos"
+                  [valor]="(indicadores().pedidos.total | number) ?? '0'"
+                  [variacion]="indicadores().pedidos.variacion"
+                  enlace="/pedidos"
+                />
+                <ws-admin-tarjeta-indicador
+                  titulo="Total de ventas"
+                  [valor]="(indicadores().ventas.total | currency: 'PEN' : 'symbol' : '1.2-2') ?? ''"
+                  [variacion]="indicadores().ventas.variacion"
+                  [ayuda]="ayudaVentas"
+                  enlace="/pedidos"
+                />
+              }
+              @if (verClientes()) {
+                <ws-admin-tarjeta-indicador
+                  titulo="Total de clientes"
+                  [valor]="(indicadores().clientes.total | number) ?? '0'"
+                  [variacion]="indicadores().clientes.variacion"
+                  enlace="/clientes"
+                />
+              }
+              <ws-admin-tarjeta-indicador
+                titulo="Stock bajo"
+                [valor]="(admin.lowStock().length | number) ?? '0'"
+                [nota]="notaStockBajo"
+                [enlace]="enlaceStock()"
+                [alerta]="true"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
       @if (verPedidos()) {
         <div class="mt-5 grid gap-5 lg:grid-cols-3">
@@ -350,60 +373,52 @@ type BloqueResumen =
         </section>
       }
 
-      @if (resumenCompleto()) {
+      @if (dashboardCompleto()) {
         <!--
           Lote 07b (provisional, por confirmar con Daniel): «Actividad reciente» (PBI-0028), los 10 últimos eventos que
-          registra el BFF, y «Personas en línea» (PBI-0027), pestañas de la tienda abiertas en los últimos 5 minutos.
-          Van al final para no mover los bloques que ya había; solo para el Resumen completo (orders.manage): el
-          vendedor ve los pedidos (PBI-0170), pero no la actividad, que nombra a clientes y reclamos que no ve.
+          registra el BFF. Va al final para no mover los bloques que ya había; solo para el Dashboard completo
+          (orders.manage): el vendedor ve los pedidos (PBI-0170), pero no la actividad, que nombra a clientes y reclamos
+          que no ve. Lote 13 (PBI-0172): sin «Personas en línea», que ocupaba la tercera columna de esta fila, la
+          actividad ocupa todo el ancho, como «Pedidos por estado».
         -->
-        <div class="mt-5 grid gap-5 lg:grid-cols-3">
-          <section
-            class="admin-card min-w-0 p-6 lg:col-span-2"
-            [class.self-start]="!bloqueAbierto('actividad')"
-          >
-            <h2 class="text-lg font-semibold">
-              <ng-container
-                *ngTemplateOutlet="
-                  botonDeBloque;
-                  context: { $implicit: 'actividad', titulo: 'Actividad reciente' }
-                "
-              />
-            </h2>
-            <div wsAdminBloquePlegable="actividad" [abierto]="bloqueAbierto('actividad')">
-              <div class="ws-plegable-contenido">
-                <p class="mt-1 text-sm text-muted">Pedidos, cambios de estado, cuentas y reclamos</p>
-                @if (actividad().length) {
-                  <ol class="mt-4 grid gap-3">
-                    @for (evento of actividad(); track evento.id) {
-                      <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
-                        <span class="min-w-0">{{ evento.description }}</span>
-                        <time class="shrink-0 text-xs text-muted tabular-nums" [attr.datetime]="evento.at">
-                          {{ evento.at | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
-                        </time>
-                      </li>
-                    }
-                  </ol>
-                } @else {
-                  <p class="mt-4 text-sm text-muted">Todavía no hay actividad.</p>
-                }
-              </div>
+        <section class="admin-card mt-5 min-w-0 p-6">
+          <h2 class="text-lg font-semibold">
+            <ng-container
+              *ngTemplateOutlet="
+                botonDeBloque;
+                context: { $implicit: 'actividad', titulo: 'Actividad reciente' }
+              "
+            />
+          </h2>
+          <div wsAdminBloquePlegable="actividad" [abierto]="bloqueAbierto('actividad')">
+            <div class="ws-plegable-contenido">
+              <p class="mt-1 text-sm text-muted">Pedidos, cambios de estado, cuentas y reclamos</p>
+              @if (actividad().length) {
+                <ol class="mt-4 grid gap-3">
+                  @for (evento of actividad(); track evento.id) {
+                    <li class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm">
+                      <span class="min-w-0">{{ evento.description }}</span>
+                      <time class="shrink-0 text-xs text-muted tabular-nums" [attr.datetime]="evento.at">
+                        {{ evento.at | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+                      </time>
+                    </li>
+                  }
+                </ol>
+              } @else {
+                <p class="mt-4 text-sm text-muted">Todavía no hay actividad.</p>
+              }
             </div>
-          </section>
-
-          <section class="admin-card min-w-0 self-start p-6">
-            <h2 class="text-lg font-semibold">Personas en línea</h2>
-            <p class="mt-2 text-3xl font-semibold text-ink tabular-nums">
-              {{ admin.snapshot()?.onlineVisitors ?? 0 | number }}
-            </p>
-            <p class="mt-2 text-xs text-muted">Pestañas de la tienda abiertas en los últimos 5 minutos</p>
-          </section>
-        </div>
+          </div>
+        </section>
       }
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Dashboard del Admin. Se llamaba «Resumen» hasta el lote 13 (ADR-0021, PBI-0168); el archivo, la clase y las reglas
+ * (`resumen.rules.ts`) conservan ese nombre interno, que enlazan las especificaciones de las features 001 y 003.
+ */
 export class ResumenPage {
   protected readonly admin = inject(TiendaFacade);
   /** Fecha de los últimos pedidos en la hora de Lima, como el gráfico (PBI-0067). */
@@ -419,10 +434,10 @@ export class ResumenPage {
   protected readonly errorActualizar = signal<string | null>(null);
   protected readonly etiquetas = ETIQUETAS_ESTADO_PEDIDO;
 
-  /** PBI-0170 (lote 11): el vendedor también ve los pedidos, así que también sus cifras y bloques del Resumen. */
+  /** PBI-0170 (lote 11): el vendedor también ve los pedidos, así que también sus cifras y bloques del Dashboard. */
   protected readonly verPedidos = computed(() => this.session.can('orders.view'));
-  /** Actividad reciente y personas en línea: solo para quien gestiona los pedidos (el BFF no las envía al vendedor). */
-  protected readonly resumenCompleto = computed(() => this.session.can('orders.manage'));
+  /** Actividad reciente: solo para quien gestiona los pedidos (el BFF no la envía al vendedor). */
+  protected readonly dashboardCompleto = computed(() => this.session.can('orders.manage'));
   protected readonly verClientes = computed(() => this.session.can('customers.manage'));
   /** Sin Inventario, el stock se cambia en la ficha de cada producto (desde el lote 11, los tres roles lo tienen). */
   protected readonly enlaceStock = computed(() =>
@@ -443,23 +458,24 @@ export class ResumenPage {
     otros: 'bg-danger',
   };
   protected readonly notaStockBajo = NOTA_STOCK_BAJO;
+  protected readonly ayudaVentas = AYUDA_VENTAS;
   protected readonly idDeRegion = idDeBloque;
 
   /**
-   * Bloques plegados. Vive con la página: al entrar al Resumen, también al volver desde otra página o al
+   * Bloques plegados. Vive con la página: al entrar al Dashboard, también al volver desde otra página o al
    * recargar, todos están desplegados (D2), y no se guarda en el navegador (D4, STD-08).
    */
-  protected readonly bloquesPlegados = signal<ReadonlySet<BloqueResumen>>(new Set());
+  protected readonly bloquesPlegados = signal<ReadonlySet<BloqueDashboard>>(new Set());
 
-  protected bloqueAbierto(id: BloqueResumen): boolean {
+  protected bloqueAbierto(id: BloqueDashboard): boolean {
     return !this.bloquesPlegados().has(id);
   }
 
-  protected alternarBloque(id: BloqueResumen): void {
+  protected alternarBloque(id: BloqueDashboard): void {
     this.bloquesPlegados.update((plegados) => alternarPlegable(plegados, id));
   }
 
-  /** Vuelve a consultar los datos del Resumen (PBI-0140); si falla, conserva las cifras y lo dice junto al botón. */
+  /** Vuelve a consultar los datos del Dashboard (PBI-0140); si falla, conserva las cifras y lo dice junto al botón. */
   protected async actualizar(): Promise<void> {
     this.actualizando.set(true);
     this.errorActualizar.set(null);
@@ -468,7 +484,7 @@ export class ResumenPage {
     if (actual) this.ahora.set(new Date());
     else
       this.errorActualizar.set(
-        'No pudimos actualizar el Resumen. Las cifras son las de la última consulta; inténtalo de nuevo.',
+        'No pudimos actualizar el Dashboard. Las cifras son las de la última consulta; inténtalo de nuevo.',
       );
   }
 
