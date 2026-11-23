@@ -56,19 +56,12 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
           Ficha comercial, imágenes, características y stock compartido con el storefront.
         </p>
       </div>
-      @if (session.can('products.manage')) {
-        <a
-          class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
-          routerLink="/productos/nuevo"
-          queryParamsHandling="preserve"
-        >
-          Nuevo producto
-        </a>
-      }
     </div>
     <ws-filter-panel
       class="mt-7"
       etiqueta="Filtros de productos"
+      [agregarQue]="session.can('products.manage') ? 'producto' : null"
+      rutaAgregar="/productos/nuevo"
       [formGroup]="borrador"
       [buscando]="buscando()"
       [error]="errorBusqueda()"

@@ -95,7 +95,7 @@ function applyOrderStatuses(state, orders) {
  */
 const REPLACEABLE = {
   categories: (categories, previous) => {
-    requireValidCategories(categories);
+    requireValidCategories(categories, previous);
     requireRemovedWithoutChildren(categories, previous);
     requireValidCategoryTree(categories);
     requireUniqueCategorySlugs(categories, previous);

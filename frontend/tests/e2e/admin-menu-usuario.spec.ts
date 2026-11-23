@@ -37,7 +37,7 @@ const perfiles = [
     nombre: 'Vendedor Demo',
     iniciales: 'VD',
     etiqueta: 'Vendedor',
-    descripcion: 'Crea productos y modifica sus fichas, precios y stock.',
+    descripcion: 'Crea y modifica productos, gestiona el inventario y ve los pedidos.',
   },
 ] as const;
 

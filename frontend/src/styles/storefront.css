@@ -130,6 +130,17 @@
   object-fit: contain;
 }
 
+/* Lote 11 (PBI-0162): la misma imagen, al mismo tamaño, en las opciones del filtro «Categoría» del catálogo. */
+.ws-category-option-image {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  margin-right: 10px;
+  border-radius: 6px;
+  object-fit: contain;
+  vertical-align: middle;
+}
+
 .ws-navigation-trigger .ws-navigation-icon {
   width: 18px;
   height: 18px;

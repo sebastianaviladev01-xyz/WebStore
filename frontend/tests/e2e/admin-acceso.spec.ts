@@ -58,14 +58,21 @@ test('el superadministrador recorre todos los módulos del panel', async ({ page
   await cerrarSesionAdmin(page);
 });
 
-test('el vendedor solo ve el Resumen y Productos (PBI-0013)', async ({ page }) => {
+test('el vendedor ve el Resumen, Productos, Inventario y Pedidos (PBI-0013, PBI-0170)', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
   // Las ausencias se comprueban con todo desplegado: con un grupo plegado pasarían siempre.
   await desplegarTodos(page);
 
-  await expect(menu(page).getByRole('link')).toHaveText(['Resumen', 'Productos']);
+  await expect(menu(page).getByRole('link')).toHaveText(['Resumen', 'Productos', 'Inventario', 'Pedidos']);
 
-  for (const ruta of ['/usuarios', '/inventario', '/pedidos', '/clientes', '/contenido']) {
+  // PBI-0170 (lote 11, provisional): gestiona el inventario y ve los pedidos, sin cambiar su estado.
+  await page.goto('/inventario');
+  await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible();
+  await page.goto('/pedidos');
+  await expect(page.getByRole('heading', { level: 1, name: 'Pedidos' })).toBeVisible();
+  await expect(page.getByText('Cambiar estado')).toHaveCount(0);
+
+  for (const ruta of ['/usuarios', '/clientes', '/contenido', '/categorias']) {
     await page.goto(ruta);
     await expect(page).toHaveTitle('WebStore Admin | Resumen');
     await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();

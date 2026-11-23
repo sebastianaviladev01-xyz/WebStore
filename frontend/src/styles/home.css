@@ -928,6 +928,26 @@
   gap: 4px;
 }
 
+/*
+ * Lote 11 (PBI-0162): la imagen de la categoría (su versión de 100 × 100 px) en la tarjeta, solo si tiene una. En el
+ * inicio actual va a la izquierda del texto, que toma el ancho libre; en /inicio-anterior, encima del nombre.
+ */
+.ws-category-access-image {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.ws-quick-access:not(.is-current) .ws-category-access-image {
+  margin-bottom: 6px;
+}
+
+.ws-category-access-image + .ws-category-access-text {
+  flex: 1 1 auto;
+}
+
 .ws-quick-access.is-current .ws-category-access-price {
   margin-top: 8px;
   color: var(--ws-ink);
@@ -981,6 +1001,17 @@
   }
   .ws-quick-access.is-current .ws-category-access-arrow {
     display: none;
+  }
+  /* PBI-0162: en dos columnas, la imagen va encima del texto para no estrecharlo. */
+  .ws-quick-access.is-current .ws-category-access:has(> .ws-category-access-image) {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 10px;
+  }
+  .ws-category-access-image {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
   }
 }
 

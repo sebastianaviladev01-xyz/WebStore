@@ -2,7 +2,8 @@
  * Roles fijos acordados el 05/11: no se crean ni se editan, solo se asignan a usuarios.
  * Replica la tabla del BFF (backend/src/domain/sesion/rol.rules.mjs) solo para mostrar u ocultar opciones;
  * el BFF vuelve a validar cada operación. Permisos de la reunión del 11/11 (lote 07, PBI-0013; provisional, por
- * confirmar con Daniel).
+ * confirmar con Daniel). Lote 11 (ADR-0021, PBI-0170; provisional): el vendedor también gestiona Inventario y ve
+ * Pedidos (`orders.view`) sin cambiar su estado (`orders.manage`).
  */
 export type Rol = 'superadmin' | 'admin' | 'vendedor';
 
@@ -17,6 +18,7 @@ export type Permiso =
   | 'customers.manage'
   | 'users.manage'
   | 'users.delete'
+  | 'orders.view'
   | 'orders.manage'
   | 'banners.manage'
   | 'content.manage'
@@ -43,6 +45,7 @@ const ALL: readonly Permiso[] = [
   'customers.manage',
   'users.manage',
   'users.delete',
+  'orders.view',
   'orders.manage',
   'banners.manage',
   'content.manage',
@@ -76,8 +79,8 @@ export const ROLES: readonly DefinicionRol[] = [
   {
     id: 'vendedor',
     label: 'Vendedor',
-    description: 'Crea productos y modifica sus fichas, precios y stock.',
-    permissions: ['dashboard.view', 'products.edit', 'products.manage'],
+    description: 'Crea y modifica productos, gestiona el inventario y ve los pedidos.',
+    permissions: ['dashboard.view', 'products.edit', 'products.manage', 'inventory.manage', 'orders.view'],
   },
 ];
 

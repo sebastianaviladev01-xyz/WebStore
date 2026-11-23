@@ -348,11 +348,14 @@ type BloqueResumen =
             </div>
           </div>
         </section>
+      }
 
+      @if (resumenCompleto()) {
         <!--
           Lote 07b (provisional, por confirmar con Daniel): «Actividad reciente» (PBI-0028), los 10 últimos eventos que
           registra el BFF, y «Personas en línea» (PBI-0027), pestañas de la tienda abiertas en los últimos 5 minutos.
-          Van al final para no mover los bloques que ya había; solo para el Resumen completo.
+          Van al final para no mover los bloques que ya había; solo para el Resumen completo (orders.manage): el
+          vendedor ve los pedidos (PBI-0170), pero no la actividad, que nombra a clientes y reclamos que no ve.
         -->
         <div class="mt-5 grid gap-5 lg:grid-cols-3">
           <section
@@ -416,9 +419,12 @@ export class ResumenPage {
   protected readonly errorActualizar = signal<string | null>(null);
   protected readonly etiquetas = ETIQUETAS_ESTADO_PEDIDO;
 
-  protected readonly verPedidos = computed(() => this.session.can('orders.manage'));
+  /** PBI-0170 (lote 11): el vendedor también ve los pedidos, así que también sus cifras y bloques del Resumen. */
+  protected readonly verPedidos = computed(() => this.session.can('orders.view'));
+  /** Actividad reciente y personas en línea: solo para quien gestiona los pedidos (el BFF no las envía al vendedor). */
+  protected readonly resumenCompleto = computed(() => this.session.can('orders.manage'));
   protected readonly verClientes = computed(() => this.session.can('customers.manage'));
-  /** El vendedor no tiene Inventario (PBI-0013): el stock lo cambia en la ficha de cada producto. */
+  /** Sin Inventario, el stock se cambia en la ficha de cada producto (desde el lote 11, los tres roles lo tienen). */
   protected readonly enlaceStock = computed(() =>
     this.session.can('inventory.manage') ? '/inventario' : '/productos',
   );

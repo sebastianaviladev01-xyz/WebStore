@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
 
+import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import { clasesDeEstadoPedido } from './estado-pedido';
 import { fechaDeEntrega, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
@@ -168,21 +169,24 @@ const PAYMENT_LABELS: Record<string, string> = {
             <dd class="text-right font-semibold">{{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' }}</dd>
           </dl>
 
-          <label class="mt-6 grid gap-1 text-sm">
-            <span id="pedido-cambiar-estado" class="font-medium">Cambiar estado</span>
-            <mat-select
-              aria-labelledby="pedido-cambiar-estado"
-              [value]="order.status"
-              [disabled]="admin.saving()"
-              (selectionChange)="setStatus(order, $event)"
-            >
-              @for (status of statuses; track status) {
-                <mat-option [value]="status">{{ label(status) }}</mat-option>
-              }
-            </mat-select>
-          </label>
-          @if (order.status !== 'cancelled') {
-            <p class="mt-2 text-xs text-muted">Al cancelar, el stock reservado vuelve al inventario.</p>
+          <!-- PBI-0170 (lote 11): el vendedor ve el pedido, pero no cambia su estado (orders.manage). -->
+          @if (puedeCambiarEstado()) {
+            <label class="mt-6 grid gap-1 text-sm">
+              <span id="pedido-cambiar-estado" class="font-medium">Cambiar estado</span>
+              <mat-select
+                aria-labelledby="pedido-cambiar-estado"
+                [value]="order.status"
+                [disabled]="admin.saving()"
+                (selectionChange)="setStatus(order, $event)"
+              >
+                @for (status of statuses; track status) {
+                  <mat-option [value]="status">{{ label(status) }}</mat-option>
+                }
+              </mat-select>
+            </label>
+            @if (order.status !== 'cancelled') {
+              <p class="mt-2 text-xs text-muted">Al cancelar, el stock reservado vuelve al inventario.</p>
+            }
           }
         } @else {
           <p class="text-sm text-muted">Selecciona un pedido para ver su detalle.</p>
@@ -194,6 +198,9 @@ const PAYMENT_LABELS: Record<string, string> = {
 })
 export class PedidosPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly session = inject(SesionFacade);
+  /** Solo quien gestiona los pedidos cambia su estado; el vendedor los ve (PBI-0170). El BFF lo vuelve a validar. */
+  protected readonly puedeCambiarEstado = computed(() => this.session.can('orders.manage'));
   protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_PEDIDO) as EstadoPedido[];
   protected readonly filtros = filtrosDeListado({
     leer: leerFiltrosPedidos,

@@ -171,15 +171,18 @@ test.describe('Menú lateral en escritorio', () => {
     await expect(enlace(page, 'Productos')).toBeFocused();
   });
 
-  test('el vendedor ve General y Catálogo, plegables y sin grupos vacíos (PBI-0013)', async ({ page }) => {
+  test('el vendedor ve General, Catálogo y Ventas, plegables y sin grupos vacíos (PBI-0013, PBI-0170)', async ({
+    page,
+  }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
-    await titulosDeLosGrupos(page, ['General', 'Catálogo']);
-    await esperarGrupos(page, ['General'], ['Catálogo']);
+    await titulosDeLosGrupos(page, ['General', 'Catálogo', 'Ventas']);
+    await esperarGrupos(page, ['General'], ['Catálogo', 'Ventas']);
 
     await desplegarTodos(page);
     const esperado = {
       General: ['Resumen'],
-      Catálogo: ['Productos'],
+      Catálogo: ['Productos', 'Inventario'],
+      Ventas: ['Pedidos'],
     };
     for (const [grupo, enlaces] of Object.entries(esperado)) {
       await expect((await regionDe(page, grupo)).getByRole('link')).toHaveText(enlaces);

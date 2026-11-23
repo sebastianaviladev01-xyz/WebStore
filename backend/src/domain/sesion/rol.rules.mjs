@@ -6,6 +6,9 @@
  * superadministrador tiene la configuración de la tienda (temas, contenido y reinicio) y todo lo demás; el
  * administrador opera la tienda, elimina productos y gestiona a los vendedores; el vendedor crea productos y
  * modifica todos sus campos, sin eliminarlos.
+ *
+ * Lote 11 (ADR-0021, PBI-0170; provisional, por confirmar con Daniel): el vendedor también gestiona Inventario y ve
+ * Pedidos (`orders.view`) sin cambiar su estado (`orders.manage`, del administrador y del superadministrador).
  */
 export const ADMIN_PERMISSIONS = [
   'dashboard.view',
@@ -18,6 +21,7 @@ export const ADMIN_PERMISSIONS = [
   'customers.manage',
   'users.manage',
   'users.delete',
+  'orders.view',
   'orders.manage',
   'banners.manage',
   'content.manage',
@@ -48,8 +52,8 @@ export const ADMIN_ROLES = [
   {
     id: 'vendedor',
     label: 'Vendedor',
-    description: 'Crea productos y modifica sus fichas, precios y stock.',
-    permissions: ['dashboard.view', 'products.edit', 'products.manage'],
+    description: 'Crea y modifica productos, gestiona el inventario y ve los pedidos.',
+    permissions: ['dashboard.view', 'products.edit', 'products.manage', 'inventory.manage', 'orders.view'],
   },
 ];
 

@@ -46,19 +46,12 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
     PaginacionComponent,
   ],
   template: `
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <h1 class="text-3xl font-semibold tracking-tight text-ink">Marcas</h1>
-      <a
-        class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
-        routerLink="/marcas/nueva"
-        queryParamsHandling="preserve"
-      >
-        Nueva marca
-      </a>
-    </div>
+    <h1 class="text-3xl font-semibold tracking-tight text-ink">Marcas</h1>
     <ws-filter-panel
       class="mt-7"
       etiqueta="Filtros de marcas"
+      agregarQue="marca"
+      rutaAgregar="/marcas/nueva"
       [formGroup]="borrador"
       [buscando]="buscando()"
       [error]="errorBusqueda()"

@@ -277,9 +277,9 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
     }
   });
 
-  test('el vendedor no tiene campana', async ({ page }) => {
+  test('el vendedor también tiene campana, porque ve los pedidos (PBI-0170)', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
-    await expect(page.getByRole('button', { name: /^Notificaciones/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Notificaciones/ })).toBeVisible();
   });
 });
 
@@ -426,21 +426,24 @@ test.describe('PBI-0044: menú lateral', () => {
   });
 });
 
-test.describe('PBI-0052: imagen de la categoría', () => {
-  // PNG de 1 × 1 px: el Admin la reduce y la comprime antes de guardarla.
+test.describe('PBI-0052 y PBI-0176: imagen de la categoría', () => {
+  // PNG de 1 × 1 px: el Admin genera la versión de 100 × 100 px (lote 11, PBI-0176) y la comprime antes de guardarla.
   const PNG = Buffer.from(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
     'base64',
   );
 
-  test('se carga, se guarda reducida, la tienda la recibe y se puede quitar', async ({ page }) => {
+  test('se carga, se guarda en 100 × 100 px, la tienda la recibe y se puede quitar', async ({ page }) => {
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/categorias/cat-home');
       await page
         .getByLabel('Cargar imagen')
         .setInputFiles({ name: 'hogar.png', mimeType: 'image/png', buffer: PNG });
-      await expect(page.getByRole('img', { name: 'Imagen actual de la categoría' })).toBeVisible();
+      const actual = page.getByRole('img', { name: 'Imagen actual de la categoría' });
+      await expect(actual).toBeVisible();
+      await expect(actual).toHaveJSProperty('naturalWidth', 100);
+      await expect(actual).toHaveJSProperty('naturalHeight', 100);
       await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias$/);
       const publica = async () => {
@@ -465,5 +468,46 @@ test.describe('PBI-0052: imagen de la categoría', () => {
     } finally {
       await enviarCambios({ categories: { upsert: [{ id: 'cat-home', imageUrl: null }] } });
     }
+  });
+
+  test('PBI-0162: la lista de Categorías muestra la miniatura de la imagen, solo si la categoría la tiene', async ({
+    page,
+  }) => {
+    const IMAGEN_100 =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA5UlEQVR4nO3QQQ0AIAzAwElHOhbWFyG5U9B0DmvzOuAnZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBRdHfptnsVYXbAAAAABJRU5ErkJggg==';
+    try {
+      await enviarCambios({ categories: { upsert: [{ id: 'cat-home', imageUrl: IMAGEN_100 }] } });
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto('/categorias');
+      const lista = page.getByRole('region', { name: 'Lista de categorías' });
+      const fila = (nombre: string) =>
+        lista.locator('div.border-b').filter({ has: page.getByText(nombre, { exact: true }) });
+      await expect(fila('Electrohogar').locator('img')).toHaveAttribute('src', IMAGEN_100);
+      await expect(fila('Electrohogar').locator('img')).toHaveAttribute('alt', '');
+      await expect(fila('Cocina').locator('img')).toHaveCount(0);
+    } finally {
+      await enviarCambios({ categories: { upsert: [{ id: 'cat-home', imageUrl: null }] } });
+    }
+  });
+
+  test('una foto de 1 MB o más, o que no es PNG, JPG ni WebP, no se usa y se dice por qué', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await page.goto('/categorias/cat-home');
+    const cargar = page.getByLabel('Cargar imagen');
+    await cargar.setInputFiles({
+      name: 'grande.png',
+      mimeType: 'image/png',
+      buffer: Buffer.from('0'.repeat(1024 * 1024), 'utf8'),
+    });
+    await expect(page.getByRole('alert')).toHaveText('La foto pesa 1 MB o más. Usa una de menos de 1 MB.');
+    await cargar.setInputFiles({
+      name: 'logo.svg',
+      mimeType: 'image/svg+xml',
+      buffer: Buffer.from('<svg/>'),
+    });
+    await expect(page.getByRole('alert')).toHaveText('Usa una foto PNG, JPG o WebP.');
+    await expect(page.getByRole('img', { name: 'Imagen actual de la categoría' })).toHaveCount(0);
   });
 });
