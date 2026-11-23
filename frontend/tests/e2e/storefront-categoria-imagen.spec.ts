@@ -6,8 +6,9 @@ import { enviarCambios } from './apoyo/catalogo';
  * Lote 07b (ADR-0017), PBI-0052: la tienda muestra la imagen pequeña de una categoría junto a su nombre, en el menú de
  * categorías del escritorio y en el panel del celular, solo si la categoría tiene una. Sin imagen, como antes.
  */
+/** PNG gris de 100 × 100 px: desde el lote 11 (PBI-0176) el BFF solo acepta la versión de 100 × 100 px. */
 const IMAGEN =
-  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA5UlEQVR4nO3QQQ0AIAzAwElHOhbWFyG5U9B0DmvzOuAnZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBRdHfptnsVYXbAAAAABJRU5ErkJggg==';
 
 test.describe('imagen de la categoría', () => {
   test.beforeAll(async () => {

@@ -19,8 +19,8 @@ import { TiendaFacade } from '../application/tienda.facade';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { motivoDeCategoriaRepetida, slugDe } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
-import { BYTES_MAXIMOS_ARCHIVO, reducirFoto } from './reducir-foto';
-import { LADO_IMAGEN_CATEGORIA, MAX_CARACTERES_IMAGEN_CATEGORIA } from '../domain/foto.rules';
+import { imagenDeCategoria } from './reducir-foto';
+import { LADO_IMAGEN_CATEGORIA, motivoParaNoUsarFotoDeCategoria } from '../domain/foto.rules';
 import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.rules';
 import { Categoria } from '../domain/tienda.model';
 
@@ -95,7 +95,8 @@ import { Categoria } from '../domain/tienda.model';
           <fieldset class="min-w-0 rounded-xl border border-line p-4">
             <legend class="px-1 text-sm font-semibold">Imagen de la categoría (opcional)</legend>
             <p class="text-xs text-muted">
-              La tienda la muestra junto al nombre en el menú de categorías. Se reduce a {{ ladoImagen }} px.
+              PNG, JPG o WebP de menos de 1 MB. Se guarda una sola versión de {{ ladoImagen }} ×
+              {{ ladoImagen }} px.
             </p>
             @if (imagen()) {
               <img
@@ -210,25 +211,22 @@ export class RegistroCategoriaPage {
       else untracked(() => this.borrador.aplicar());
     });
   }
-  /** Reduce la imagen a 160 px y la comprime para que quepa en lo que acepta el BFF (PBI-0052). */
+  /**
+   * Acepta una foto PNG, JPG o WebP de menos de 1 MB y genera la única versión que se guarda, de 100 × 100 px (lote 11,
+   * PBI-0176; el BFF de prueba no reduce imágenes, solo las valida).
+   */
   protected onImageSelected(event: Event) {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
     this.imageError.set(null);
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
-      this.imageError.set('Usa una imagen PNG, JPG o WebP.');
+    const motivo = motivoParaNoUsarFotoDeCategoria(file);
+    if (motivo) {
+      this.imageError.set(motivo);
       return;
     }
-    if (file.size > BYTES_MAXIMOS_ARCHIVO) {
-      this.imageError.set('La imagen pesa más de 15 MB. Usa una más liviana.');
-      return;
-    }
-    void reducirFoto(file, {
-      ladoMaximo: LADO_IMAGEN_CATEGORIA,
-      maximo: MAX_CARACTERES_IMAGEN_CATEGORIA,
-    }).then((url) => {
+    void imagenDeCategoria(file).then((url) => {
       if (!url) {
         this.imageError.set('No pudimos reducir la imagen. Usa otra más simple.');
         return;
