@@ -1,3 +1,4 @@
+import { LADO_IMAGEN_DE_CATEGORIA, leerImagen } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
 import { COMPLAINT_STATUSES } from '../reclamos/reclamo.rules.mjs';
@@ -93,13 +94,28 @@ export function requireValidProducts(products) {
 
 /** Imagen pequeña de la categoría (lote 07b, PBI-0052): opcional, como Data URL de una imagen, de hasta 100 000 caracteres. */
 export const MAX_IMAGEN_DE_CATEGORIA = 100_000;
-const IMAGEN_DE_CATEGORIA = /^data:image\/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+=*$/;
-const imagenDeCategoria = (value) =>
-  value === null ||
-  (isText(value) && value.length <= MAX_IMAGEN_DE_CATEGORIA && IMAGEN_DE_CATEGORIA.test(value));
+/** Forma de las imágenes guardadas antes del lote 11 (160 px, también SVG): siguen valiendo mientras no cambien. */
+const IMAGEN_ANTERIOR = /^data:image\/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+=*$/;
 
-export function requireValidCategories(categories) {
+/**
+ * Lote 11 (ADR-0021, PBI-0176; provisional): una imagen nueva o cambiada es la única versión que se guarda, un PNG, un
+ * JPEG o un WebP de 100 × 100 px (`leerImagen` comprueba el tipo y las medidas en sus bytes). La que la categoría ya
+ * tenía guardada se acepta tal cual, para que una imagen del lote 07b no bloquee otros guardados.
+ */
+function imagenDeCategoria(value, anterior) {
+  if (value === null) return true;
+  if (!isText(value) || value.length > MAX_IMAGEN_DE_CATEGORIA) return false;
+  if (value === anterior) return IMAGEN_ANTERIOR.test(value);
+  const imagen = leerImagen(value);
+  return (
+    imagen !== null && imagen.ancho === LADO_IMAGEN_DE_CATEGORIA && imagen.alto === LADO_IMAGEN_DE_CATEGORIA
+  );
+}
+
+/** `previous`, las categorías vigentes: sus imágenes ya guardadas no se vuelven a medir (PBI-0176). */
+export function requireValidCategories(categories, previous = []) {
   requireItems(categories, 'categories');
+  const anteriores = new Map(previous.map((category) => [category.id, category.imageUrl]));
   for (const category of categories)
     check('categories', category, [
       ['name', hasText, 'cada categoría necesita un nombre'],
@@ -107,8 +123,8 @@ export function requireValidCategories(categories) {
       ['order', (v) => v === undefined || v === null || Number.isFinite(v), 'el orden no es válido'],
       [
         'imageUrl',
-        imagenDeCategoria,
-        'la imagen de la categoría debe ser PNG, JPG, WebP o SVG de hasta 70 KB; usa una más pequeña',
+        (value) => imagenDeCategoria(value, anteriores.get(category.id)),
+        `la imagen de la categoría debe ser PNG, JPG o WebP de ${LADO_IMAGEN_DE_CATEGORIA} × ${LADO_IMAGEN_DE_CATEGORIA} px; vuelve a cargarla`,
         { optional: true },
       ],
     ]);

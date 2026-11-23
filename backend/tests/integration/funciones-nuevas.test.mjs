@@ -6,6 +6,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { bearer, conBff, ingresarAlAdmin, pedidoValido, pedir } from './apoyo/servidor.mjs';
+import { dataUrl, png } from '../apoyo/imagenes.mjs';
 
 const VENDEDOR = ['catalogo@webstore.demo', 'Catalogo#2026'];
 const snapshot = async (base, token) =>
@@ -161,10 +162,10 @@ test('PBI-0034: el perfil se edita por su ruta y cambiar la contraseña cierra l
   });
 });
 
-test('PBI-0052: la categoría guarda una imagen pequeña opcional y el catálogo la publica', async () => {
+test('PBI-0052 y PBI-0176: la categoría guarda una imagen opcional de 100 × 100 px y el catálogo la publica', async () => {
   await conBff({ port: 3174 }, async (base) => {
     const { token } = await ingresarAlAdmin(base);
-    const imagen = `data:image/webp;base64,${'A'.repeat(2000)}`;
+    const imagen = dataUrl('png', png(100, 100));
     const guardar = async (cambio) =>
       pedir(base, '/bff/admin/snapshot', {
         method: 'PUT',
@@ -181,6 +182,12 @@ test('PBI-0052: la categoría guarda una imagen pequeña opcional y el catálogo
     assert.equal(pesada.body.error.details.field, 'imageUrl');
     const otroTipo = await guardar({ id: 'cat-tv', imageUrl: 'javascript:alert(1)' });
     assert.equal(otroTipo.status, 400);
+    // Lote 11 (PBI-0176): una sola versión de 100 × 100 px; otras medidas o un tipo que no es el de los bytes, no.
+    for (const otra of [dataUrl('png', png(160, 160)), dataUrl('webp', png(100, 100))]) {
+      const rechazo = await guardar({ id: 'cat-tv', imageUrl: otra });
+      assert.equal(rechazo.status, 400);
+      assert.equal(rechazo.body.error.details.field, 'imageUrl');
+    }
     assert.equal((await guardar({ id: 'cat-tv', imageUrl: null })).status, 200, 'se quita con null');
     assert.equal(
       (await pedir(base, '/bff/catalog/categories')).body.find((item) => item.id === 'cat-tv').imageUrl,

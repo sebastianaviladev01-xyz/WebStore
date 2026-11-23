@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { dataUrl, png } from '../apoyo/imagenes.mjs';
 import { fechaDeLima } from './apoyo/servidor.mjs';
 
 const port = 3107;
@@ -1192,8 +1193,11 @@ try {
   if (typeof campana.total !== 'number' || !Array.isArray(campana.orders))
     throw new Error('GET /admin/notifications no tiene la forma { seenAt, total, orders }');
   // PBI-0170: el vendedor ve los pedidos, así que también la campana de pedidos nuevos.
-  const campanaVendedor = await raw('/bff/admin/notifications', { headers: authorization(vendedor07b.token) });
-  if (campanaVendedor.status !== 200) throw new Error(`Notificaciones del vendedor: ${campanaVendedor.status}`);
+  const campanaVendedor = await raw('/bff/admin/notifications', {
+    headers: authorization(vendedor07b.token),
+  });
+  if (campanaVendedor.status !== 200)
+    throw new Error(`Notificaciones del vendedor: ${campanaVendedor.status}`);
   await esperarError(
     await raw('/bff/admin/notifications/seen', {
       method: 'PUT',
@@ -1257,18 +1261,31 @@ try {
   );
   const conImagen = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   const categoria07b = conImagen.categories[0];
+  // Lote 11 (PBI-0176): la imagen es la única versión, un PNG, JPG o WebP de 100 × 100 px.
+  const imagen100 = dataUrl('png', png(100, 100));
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: conImagen.revision,
+        categories: { upsert: [{ id: categoria07b.id, imageUrl: dataUrl('png', png(160, 160)) }] },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Imagen de la categoría que no es de 100 × 100 px',
+  );
   await request('/bff/admin/snapshot', {
     method: 'PUT',
     headers: authorization(owner.token),
     body: JSON.stringify({
       revision: conImagen.revision,
-      categories: { upsert: [{ id: categoria07b.id, imageUrl: 'data:image/png;base64,iVBORw0KGgo=' }] },
+      categories: { upsert: [{ id: categoria07b.id, imageUrl: imagen100 }] },
     }),
   });
   const publicas07b = await request('/bff/catalog/categories');
-  if (
-    publicas07b.find((item) => item.id === categoria07b.id).imageUrl !== 'data:image/png;base64,iVBORw0KGgo='
-  )
+  if (publicas07b.find((item) => item.id === categoria07b.id).imageUrl !== imagen100)
     throw new Error('El catálogo no publica la imagen de la categoría');
   if (publicas07b.some((item) => !('imageUrl' in item)))
     throw new Error('Cada categoría pública trae imageUrl');
