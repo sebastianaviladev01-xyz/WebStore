@@ -342,7 +342,7 @@ test.describe('PBI-0173: la campana avisa de reclamos nuevos y errores de compra
     await expect(campana).toHaveAccessibleName('Notificaciones: 1 reclamo nuevo y 1 error de compra');
     await campana.click();
     const menu = page.getByRole('menu', { name: 'Notificaciones' });
-    await expect(menu.getByText('Avisos nuevos')).toBeVisible();
+    await expect(menu.getByText('Avisos nuevos', { exact: true })).toBeVisible();
     await expect(menu.getByRole('menuitem')).toHaveText([
       new RegExp(`Reclamo ${reclamo}`),
       /Compra no completada: el total cambió/,
@@ -367,7 +367,7 @@ test.describe('PBI-0173: la campana avisa de reclamos nuevos y errores de compra
     await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
     await campana.click();
     const menu = page.getByRole('menu', { name: 'Notificaciones' });
-    await expect(menu.getByText('Pedidos nuevos')).toBeVisible();
+    await expect(menu.getByText('Pedidos nuevos', { exact: true })).toBeVisible();
     await expect(menu.getByText('No hay pedidos nuevos.')).toBeVisible();
   });
 });
