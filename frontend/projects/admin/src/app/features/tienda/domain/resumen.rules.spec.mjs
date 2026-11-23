@@ -98,10 +98,15 @@ test('un cliente es nuevo el día de su primer pedido, por correo sin mayúscula
   assert.equal(clientesNuevosPorFecha([]).size, 0);
 });
 
-const venta = (createdAt, total, customerEmail, status = 'delivered') => ({
+// Lote 13 (ADR-0021), PBI-0186: las ventas son el valor de los productos (`subtotal`), sin el envío. Cada pedido de
+// prueba lleva un envío de S/ 10 en su `total`, para que sumar el total en lugar del subtotal se note.
+const ENVIO_DE_PRUEBA = 10;
+const venta = (createdAt, subtotal, customerEmail, status = 'delivered') => ({
   id: `P-${createdAt}-${customerEmail}`,
   createdAt,
-  total,
+  subtotal,
+  shippingCost: ENVIO_DE_PRUEBA,
+  total: Math.round((subtotal + ENVIO_DE_PRUEBA) * 100) / 100,
   customerEmail,
   status,
 });
@@ -121,8 +126,32 @@ test('los totales cuentan todos los pedidos, las ventas sin cancelados y todos l
     ahora,
   );
   assert.equal(pedidos.total, 4, 'el pedido cancelado cuenta como pedido');
-  assert.equal(ventas.total, 170.35, 'suma el total sin cancelados y redondea a céntimos');
+  assert.equal(ventas.total, 170.35, 'suma los productos sin cancelados y redondea a céntimos');
   assert.equal(clientes.total, 4, 'incluye al cliente sin pedidos');
+});
+
+test('PBI-0186: las ventas suman el valor de los productos, sin el costo del envío', () => {
+  const pedido = (createdAt, subtotal, shippingCost, status = 'delivered') => ({
+    id: `P-${createdAt}`,
+    createdAt,
+    subtotal,
+    shippingCost,
+    total: Math.round((subtotal + shippingCost) * 100) / 100,
+    customerEmail: 'ana@correo.pe',
+    status,
+  });
+  const { ventas } = calcularIndicadores(
+    [
+      pedido('2026-11-02T15:00:00Z', 199.9, 15),
+      pedido('2026-11-03T15:00:00Z', 50.05, 0),
+      pedido('2026-10-03T15:00:00Z', 100, 12.5),
+      pedido('2026-10-04T15:00:00Z', 80, 10, 'cancelled'),
+    ],
+    clientesDe(1),
+    ahora,
+  );
+  assert.equal(ventas.total, 349.95, '199.90 + 50.05 + 100: ni el envío ni el cancelado');
+  assert.equal(ventas.variacion, 150, '249.95 contra 100, los dos sin envío');
 });
 
 test('la variación es el cambio en % entero y no existe cuando el tramo anterior vale 0', () => {

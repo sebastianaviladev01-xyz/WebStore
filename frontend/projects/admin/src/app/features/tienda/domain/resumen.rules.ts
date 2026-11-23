@@ -62,9 +62,12 @@ export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, 
 
 const redondearMonto = (valor: number) => Math.round(valor * 100) / 100;
 
-/** Ventas: suma del `total` (productos y envío) de los pedidos no cancelados, a céntimos. */
+/**
+ * Ventas: suma del valor de los productos (`subtotal`, IGV incluido) de los pedidos no cancelados, sin el costo del
+ * envío, a céntimos (lote 13, ADR-0021, PBI-0186).
+ */
 const sumarVentas = (pedidos: readonly Pedido[]) =>
-  redondearMonto(pedidos.filter((p) => p.status !== 'cancelled').reduce((suma, p) => suma + p.total, 0));
+  redondearMonto(pedidos.filter((p) => p.status !== 'cancelled').reduce((suma, p) => suma + p.subtotal, 0));
 
 const estaEnTramo = (fecha: FechaLima, tramo: TramoMes) =>
   fecha.anio === tramo.anio &&
@@ -95,7 +98,7 @@ function cifrasDelTramo(
 }
 
 /**
- * Cifras de las tarjetas del Resumen. El total es histórico (pedidos con cancelados, ventas con el `total` de los
+ * Cifras de las tarjetas del Dashboard. El total es histórico (pedidos con cancelados, ventas con el `subtotal` de los
  * no cancelados, todos los clientes); la variación compara el mes en curso con el mismo tramo del mes anterior.
  */
 export function calcularIndicadores(
