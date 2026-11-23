@@ -4,7 +4,7 @@
 - Historia de usuario: ninguna como origen. Sale de [PBI-0137 y PBI-0138](../../../planning/backlog.md), acciones asignadas a Sebastián en la reunión del equipo (Daniel, Walther y Sebastián), con las notas pegadas el 2026-11-14 y registradas en el PR #45. Modifica la forma de trabajar de US15 ([Gestionar productos](../../../planning/user-stories/ep-06-administrar-catalogo/us-15-gestionar-productos/us-15-gestionar-productos.md)), US17 ([Gestionar categorías jerárquicas](../../../planning/user-stories/ep-06-administrar-catalogo/us-17-gestionar-categorias/us-17-gestionar-categorias.md)) y US18 ([Gestionar marcas](../../../planning/user-stories/ep-06-administrar-catalogo/us-18-gestionar-marcas/us-18-gestionar-marcas.md)), sin cambiar sus escenarios.
 - Estado: aprobada
 - Fecha: 2026-11-14
-- Hito de alcance: aprobado por Sebastián Avila el 2026-11-14, con las siete [decisiones del hito](#decisiones-del-hito-de-alcance). D1 a D4 son **provisionales**: responden preguntas de producto que la reunión no cerró, y Sebastián Avila pidió decidirlas con el mejor criterio y corregirlas si Daniel cambia algo («tomemos la iniciativa y si cambia algo luego lo corregimos, pero toma las mejores decisiones»). Daniel respondió el 2026-11-20 en las [decisiones pendientes](../../../planning/PENDING-DECISIONS.md) («Filtros y registro de los listados del Admin») sin pedir cambios en ellas; solo pidió alinear a la derecha los botones del panel (PBI-0171)
+- Hito de alcance: aprobado por Sebastián Avila el 2026-11-14, con las siete [decisiones del hito](#decisiones-del-hito-de-alcance). D1 a D4 son **provisionales**: responden preguntas de producto que la reunión no cerró, y Sebastián Avila pidió decidirlas con el mejor criterio y corregirlas si Daniel cambia algo («tomemos la iniciativa y si cambia algo luego lo corregimos, pero toma las mejores decisiones»). Daniel respondió el 2026-11-20 en las [decisiones pendientes](../../../planning/PENDING-DECISIONS.md) («Filtros y registro de los listados del Admin») sin pedir cambios en ellas; solo pidió alinear a la derecha los botones del panel, en el orden «Buscar», «Limpiar» y «Agregar» y cada uno con su ícono (PBI-0171)
 
 ## Problema y actores
 
@@ -262,7 +262,7 @@ Ninguna.
 
 **Decisiones pendientes** (no bloquean: la feature sigue con las decisiones provisionales):
 
-- D1 a D4: Daniel respondió el 2026-11-20 en [`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md) («Filtros y registro de los listados del Admin») sin pedir cambios en ellas; solo pidió alinear a la derecha los botones del panel (PBI-0171), que va como feature nueva. Si Daniel cambia alguna, se corrige en esta feature si todavía no se ha entregado, o en una feature nueva si ya se entregó.
+- D1 a D4: Daniel respondió el 2026-11-20 en [`PENDING-DECISIONS.md`](../../../planning/PENDING-DECISIONS.md) («Filtros y registro de los listados del Admin») sin pedir cambios en ellas; solo pidió alinear a la derecha los botones del panel, en el orden «Buscar», «Limpiar» y «Agregar» y cada uno con su ícono (PBI-0171), que va como feature nueva. Si Daniel cambia alguna, se corrige en esta feature si todavía no se ha entregado, o en una feature nueva si ya se entregó.
 
 ## Preguntas abiertas
 
@@ -270,7 +270,7 @@ Ninguna. Las preguntas 1 a 4, de producto, tienen respuesta provisional (D1 a D4
 
 ## Decisiones del hito de alcance
 
-Sebastián Avila, 2026-11-14. D1 a D4 y D7 se tomaron con el mejor criterio, a petición suya, a partir de lo que dijo Daniel, de OpenCart (la referencia que usó Daniel en la reunión) y de los patrones que ya tiene el Admin. D1 a D4 son provisionales hasta que Daniel las confirme. Daniel respondió el 2026-11-20 sin pedir cambios en ellas (PBI-0171 es solo la alineación de los botones).
+Sebastián Avila, 2026-11-14. D1 a D4 y D7 se tomaron con el mejor criterio, a petición suya, a partir de lo que dijo Daniel, de OpenCart (la referencia que usó Daniel en la reunión) y de los patrones que ya tiene el Admin. D1 a D4 son provisionales hasta que Daniel las confirme. Daniel respondió el 2026-11-20 sin pedir cambios en ellas (PBI-0171 es solo la alineación, el orden y los íconos de los botones).
 
 - **D1 (provisional). Campos de los filtros.** Productos: «Nombre», «SKU», «Categoría», «Marca» y «Estado». Categorías: «Nombre» y «Categoría padre». Marcas: «Nombre» y «Estado». Un registro sale si cumple todos los filtros escritos, y la categoría de un producto incluye sus subcategorías. Motivo: Daniel citó como ejemplo nombre, tipo, estado y categoría, y OpenCart filtra los productos por nombre, modelo (el SKU), precio, cantidad y estado. Se dejan fuera precio y cantidad, porque OpenCart los busca por valor exacto y para el stock ya está Inventario, y se añaden categoría y marca, que es como se organiza el catálogo.
 - **D2 (provisional). Paginación.** Las tres listas se paginan de 25 en 25, con «Página N de M», anterior y siguiente, como Tarifas de envío. Motivo: Daniel preguntó «¿Qué va a pasar cuando tenga 200 productos?» y notó la paginación de OpenCart; 25 es el tamaño que ya usa el Admin.
