@@ -53,9 +53,9 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** abre la lista, crea un usuario o edita, activa o desactiva uno
 - **Entonces** solo ve a los vendedores, solo puede asignar el rol vendedor y no ve «Eliminar»; si envía al BFF un cambio sobre un superadministrador o un administrador, otro rol o una eliminación, el BFF responde `403 USER_SCOPE_VIOLATION` sin cambiar nada. El superadministrador sigue gestionando a todos y es el único que elimina usuarios.
 
-> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con lo que dijo Daniel el 11/11 («gestiona a los usuarios a nivel vendedor»). Que el administrador no elimine vendedores (solo los desactiva) es la opción más conservadora. Provisional, por confirmar con Daniel ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-permisos.spec.ts` y `permisos-roles.use-cases.test.mjs`. La lista de usuarios tiene el panel de filtros (PBI-0139).
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con lo que dijo Daniel el 11/11 («gestiona a los usuarios a nivel vendedor»). Que el administrador no elimine vendedores (solo los desactiva) es la opción más conservadora. Daniel lo confirmó el 2026-11-18 ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-permisos.spec.ts` y `permisos-roles.use-cases.test.mjs`. La lista de usuarios tiene el panel de filtros (PBI-0139).
 
 ## Fuera de alcance y pendientes
 
-- Los permisos de los roles son provisionales hasta que Daniel responda (PBI-0013 del [backlog](../../../backlog.md), lote 07).
+- Daniel confirmó el 2026-11-18 los permisos de los roles con un cambio en el vendedor, que también gestiona Inventario y ve Pedidos (PBI-0170 del [backlog](../../../backlog.md)).
 - La edición de los datos propios (perfil) se entregó en el lote 07b (PBI-0034) como escenario de [US25](../us-25-iniciar-sesion-admin/us-25-iniciar-sesion-admin.md): no pasa por Usuarios.

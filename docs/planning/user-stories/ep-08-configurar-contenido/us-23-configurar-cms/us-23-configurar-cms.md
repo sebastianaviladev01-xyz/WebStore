@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** superadministrador (desde el lote 07, Contenido es configuración de la tienda: PBI-0013, provisional por confirmar con Daniel en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
+- **Como** superadministrador (desde el lote 07, Contenido es configuración de la tienda: PBI-0013, confirmado por Daniel el 2026-11-18 en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
 - **Quiero** configurar el logo, el color, el contacto, la navegación, el pie de página y las páginas informativas
 - **Para** adaptar la tienda sin cambiar el código
 
@@ -58,4 +58,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** sale del campo o sigue escribiendo
 - **Entonces** el campo avisa qué textos no se mostrarán y por qué, sin impedir guardar.
 
-> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0153), provisional por confirmar con Daniel. Lo prueba `admin-listados.spec.ts`. Los campos de Contenido no cambian (PBI-0141, «Alcance de Contenido del Admin»).
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0153). Daniel confirmó el aviso el 2026-11-20 y aclaró que la navegación superior es para avisos generales a los clientes (PBI-0175). Lo prueba `admin-listados.spec.ts`. Los campos de Contenido no cambian (PBI-0141, «Alcance de Contenido del Admin»); el 2026-11-18 Daniel pidió varios correos, teléfonos y redes sociales (PBI-0169).

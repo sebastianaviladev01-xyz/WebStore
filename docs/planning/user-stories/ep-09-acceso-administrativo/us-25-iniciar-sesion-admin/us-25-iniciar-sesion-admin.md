@@ -47,4 +47,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** cambia su nombre o su correo, o su contraseña indicando la actual
 - **Entonces** el BFF lo guarda si el correo no es de otro usuario y la contraseña nueva es segura, y al cambiar la contraseña cierra sus demás sesiones.
 
-> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0034; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
+> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0034; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-18 Daniel pidió que el correo nuevo se verifique, PBI-0161), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.

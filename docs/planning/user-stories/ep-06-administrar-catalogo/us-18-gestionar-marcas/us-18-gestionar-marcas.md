@@ -39,7 +39,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el primer guardado está en curso
 - **Entonces** el botón dice «Guardando…» y se crea una sola marca.
 
-> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0121 y PBI-0131; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+> Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0121 y PBI-0131; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md), confirmadas por Daniel el 2026-11-18), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
 
 ## Notas
 

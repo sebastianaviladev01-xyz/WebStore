@@ -80,7 +80,7 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 
 ## 5. Calendario de días no laborables
 
-El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles. El BFF excluye sábados y domingos y, además, las fechas de `WEBSTORE_NON_WORKING_DATES`. Esa variable es la **única fuente de feriados**: no hay pantalla en el Admin ni una lista de feriados en el código. Es una decisión provisional, por confirmar con Daniel ([decisiones pendientes](../planning/PENDING-DECISIONS.md), «Calendario de días no laborables»).
+El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles. El BFF excluye sábados y domingos y, además, las fechas de `WEBSTORE_NON_WORKING_DATES`. Esa variable es la **única fuente de feriados**: no hay pantalla en el Admin ni una lista de feriados en el código. El 2026-11-20 Daniel pidió una pantalla en el backoffice para editarlos (PBI-0183; [decisiones pendientes](../planning/PENDING-DECISIONS.md), «Calendario de días no laborables»); hasta que se construya, la variable sigue siendo la única fuente.
 
 1. Cada año, antes de que empiece, arma la lista con los feriados nacionales de Perú de ese año, en formato `AAAA-MM-DD` y separados por coma. De referencia: 1 de enero, Jueves y Viernes Santo (cambian cada año), 1 de mayo, 29 de junio, 28 y 29 de julio, 6 y 30 de agosto, 8 de octubre, 1 de noviembre, 8 y 9 de diciembre y 25 de diciembre. Confírmalos con el calendario oficial del año y añade los días no laborables que decrete el Gobierno (los «feriados puente»), porque cambian de un año a otro.
 2. Defínela como variable de entorno del host o del servicio que arranca el BFF, con las fechas de uno o más años (la lista puede conservar las de años anteriores):

@@ -39,7 +39,7 @@ Errores comunes a todas las rutas:
 
 ## Visitas de la tienda
 
-Personas en línea (lote 07b, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0027; provisional, por confirmar con Daniel):
+Personas en línea (lote 07b, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0027; el 2026-11-20 Daniel pidió quitarla del Dashboard, PBI-0172):
 
 | Método | Ruta | Petición | Respuesta | Errores (`code`) |
 | --- | --- | --- | --- | --- |
@@ -80,14 +80,14 @@ Reglas del checkout (lote 01, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-
 
 - `items`: `{ productId, quantity }` o `{ product: { id }, quantity }` (el CartItem de la tienda). `quantity` es un número entero positivo; un decimal, cero, un negativo o un texto responden `INVALID_ORDER_ITEMS`. Las líneas del mismo producto se unen en una y se validan juntas contra el stock.
 - Un producto inactivo no se vende (`PRODUCT_UNAVAILABLE`), aunque se pida por su `productId`.
-- `deliveryDate`: `AAAA-MM-DD` que exista, desde el día de hoy en Lima. Es provisional: la regla de la primera fecha la decide Daniel ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)). Al cambiarla con `PATCH`, reenviar la que el pedido ya tiene se acepta aunque haya pasado.
+- `deliveryDate`: `AAAA-MM-DD` que exista, desde el día de hoy en Lima. Es provisional: el 2026-11-20 Daniel pidió que la primera fecha se configure por tienda (PBI-0178; [decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)). Al cambiarla con `PATCH`, reenviar la que el pedido ya tiene se acepta aunque haya pasado.
 - `paymentMethod`: `card`, `yape-plin` o `transfer`.
 - `customer` (`fullName`, `email`, `phone`, `document`) y `shipping` (`addressLine`, `district`, `province`, `department` y `reference` opcional) se guardan con lista blanca: cualquier otro campo se descarta, también en `PATCH /orders/:id/shipping`.
 - El BFF recalcula precios, IGV, origen, costo de envío y total; los montos del cliente no se usan para cobrar. Vincula el pedido a la cuenta si llega `Authorization: Bearer` y crea o actualiza el cliente.
 
 Reglas del checkout (lote 04, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md)):
 
-- `termsAccepted`: el booleano `true` (PBI-0040). Ausente, `false` o de otro tipo, `400 TERMS_NOT_ACCEPTED` («Acepta los términos y condiciones para finalizar la compra.»), que se comprueba después del resto de los campos. El pedido guarda `termsAcceptedAt`, la fecha y hora de la aceptación (igual a `createdAt`), y la vista pública lo incluye. Es provisional, por confirmar con Daniel ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)); los pedidos anteriores no lo tienen.
+- `termsAccepted`: el booleano `true` (PBI-0040). Ausente, `false` o de otro tipo, `400 TERMS_NOT_ACCEPTED` («Acepta los términos y condiciones para finalizar la compra.»), que se comprueba después del resto de los campos. El pedido guarda `termsAcceptedAt`, la fecha y hora de la aceptación (igual a `createdAt`), y la vista pública lo incluye. El 2026-11-20 Daniel pidió guardar también la versión de los términos aceptada (PBI-0177; [decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)); los pedidos anteriores no lo tienen.
 - `total`: el total que vio el comprador (PBI-0106). Si llega como número y difiere en medio céntimo o más del que calcula el BFF con los precios y la tarifa vigentes, responde `409 ORDER_TOTAL_CHANGED` con `details: { subtotal, shippingCost, total }` vigentes, sin crear el pedido ni tocar el stock. Sin `total` no se compara. `INSUFFICIENT_STOCK` y `PRODUCT_UNAVAILABLE` se comprueban antes. La tienda siempre lo envía.
 - `Idempotency-Key` (PBI-0086): clave del intento de compra que genera la tienda (de 16 a 128 caracteres `A-Z`, `a-z`, `0-9`, `-` o `_`; si no, `400 INVALID_IDEMPOTENCY_KEY`). El pedido guarda su digest, que no sale en ninguna vista. Si la clave ya creó un pedido, responde `200` con ese pedido, sin validar el cuerpo, sin crear otro y sin descontar stock; como el BFF solo guarda el digest del `accessToken`, emite uno nuevo que sustituye al anterior. Sin cabecera, cada `POST` es un pedido nuevo. La búsqueda y la creación ocurren sin esperas entre medio: dos envíos con la misma clave no crean dos pedidos. La cabecera está en `access-control-allow-headers`.
 
@@ -150,13 +150,13 @@ La obligación de responder en 15 días hábiles está descrita por [Indecopi](h
 
 El ingreso compara la contraseña aunque el correo no exista o el usuario esté inactivo, para tardar lo mismo.
 
-Perfil propio (lote 07b, PBI-0034; provisional, por confirmar con Daniel): los tres roles editan su nombre y su correo y cambian su contraseña, con una ruta propia que no pasa por el snapshot. Las rutas validan la sesión antes de leer el cuerpo. El nombre se recorta; el correo se guarda en minúsculas y no puede ser el de otro usuario del panel (`ADMIN_EMAIL_TAKEN`, «Ese correo ya lo usa otro usuario del panel.»). Cambiar los datos avanza la `revision` del snapshot (los usuarios viajan en él). La contraseña nueva sigue la política de las cuentas (10 caracteres, una letra y un número: `WEAK_PASSWORD`); la actual equivocada responde `INVALID_CURRENT_PASSWORD` («La contraseña actual no es correcta.») sin cerrar nada. Al cambiarla se cierran las demás sesiones de esa persona y se conserva la que hizo el cambio.
+Perfil propio (lote 07b, PBI-0034; el 2026-11-18 Daniel pidió que el correo nuevo se verifique, PBI-0161): los tres roles editan su nombre y su correo y cambian su contraseña, con una ruta propia que no pasa por el snapshot. Las rutas validan la sesión antes de leer el cuerpo. El nombre se recorta; el correo se guarda en minúsculas y no puede ser el de otro usuario del panel (`ADMIN_EMAIL_TAKEN`, «Ese correo ya lo usa otro usuario del panel.»). Cambiar los datos avanza la `revision` del snapshot (los usuarios viajan en él). La contraseña nueva sigue la política de las cuentas (10 caracteres, una letra y un número: `WEAK_PASSWORD`); la actual equivocada responde `INVALID_CURRENT_PASSWORD` («La contraseña actual no es correcta.») sin cerrar nada. Al cambiarla se cierran las demás sesiones de esa persona y se conserva la que hizo el cambio.
 
-Notificaciones (lote 07b, PBI-0033; provisional, por confirmar con Daniel), para los roles con `orders.manage`: `orders` son los pedidos en estado `confirmed` creados después de `seenAt` (todos si es `null`), del más reciente al más antiguo, como mucho 20, cada uno con `{ id, customer, total, createdAt }` (sin datos de contacto); `total` los cuenta todos. `PUT /admin/notifications/seen` recibe `until`, el `createdAt` del pedido más reciente que la persona vio en el menú (fecha ISO en UTC; si no, `INVALID_SEEN_AT`): así un pedido que llegó mientras tanto sigue siendo nuevo. «Visto» se guarda por usuario en el estado (`adminNotificationsSeen`), nunca retrocede ni pasa de la hora del BFF, no cambia la `revision` y se borra si se elimina el usuario.
+Notificaciones (lote 07b, PBI-0033; confirmadas por Daniel el 2026-11-18), para los roles con `orders.manage`: `orders` son los pedidos en estado `confirmed` creados después de `seenAt` (todos si es `null`), del más reciente al más antiguo, como mucho 20, cada uno con `{ id, customer, total, createdAt }` (sin datos de contacto); `total` los cuenta todos. `PUT /admin/notifications/seen` recibe `until`, el `createdAt` del pedido más reciente que la persona vio en el menú (fecha ISO en UTC; si no, `INVALID_SEEN_AT`): así un pedido que llegó mientras tanto sigue siendo nuevo. «Visto» se guarda por usuario en el estado (`adminNotificationsSeen`), nunca retrocede ni pasa de la hora del BFF, no cambia la `revision` y se borra si se elimina el usuario.
 
 El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía.
 
-Desde el lote 07b, para el Resumen completo (roles con `orders.manage`; provisional, por confirmar con Daniel):
+Desde el lote 07b, para el Resumen completo (roles con `orders.manage`; el 2026-11-20 Daniel confirmó la actividad y pidió quitar las personas en línea, PBI-0172):
 
 - `onlineVisitors` (PBI-0027): pestañas de la tienda con un latido en los últimos 5 minutos ([Visitas de la tienda](#visitas-de-la-tienda)); `null` para el vendedor.
 - `activity` (PBI-0028): los últimos eventos, del más reciente al más antiguo, cada uno `{ id, at, type, description }`; `[]` para el vendedor. `type` es `order-created`, `order-status-changed` (desde el Admin, «El equipo pasó el pedido … a «…».», o una cancelación del cliente desde la tienda), `account-registered` o `complaint-registered`. La descripción no lleva correo, teléfono, documento ni dirección: solo el nombre que el Admin ya muestra (el comprador en Pedidos, quien reclama en Reclamaciones); la de una cuenta no dice de quién es, porque el Admin no muestra las cuentas. El estado guarda los últimos 50 (`activity`); no se edita desde el Admin.
@@ -198,7 +198,7 @@ Los productos tienen `gallery` (fotos adicionales). El catálogo público expone
 
 Los roles no se crean ni se editan; solo se asignan. La tabla vive en `backend/src/domain/sesion/rol.rules.mjs` y el Admin la replica en `frontend/projects/admin/src/app/features/sesion/domain/rol.rules.ts` solo para mostrar u ocultar opciones.
 
-Permisos de la reunión del 11/11 (lote 07, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0013). Son **provisionales, por confirmar con Daniel** ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md), «Permisos de los roles»):
+Permisos de la reunión del 11/11 (lote 07, [ADR-0017](../../docs/adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md), PBI-0013). Daniel los confirmó el 2026-11-18 con un cambio por construir: el vendedor también gestiona Inventario y ve Pedidos (PBI-0170; [decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md), «Permisos de los roles»):
 
 | Rol | Permisos | Puede |
 | --- | --- | --- |

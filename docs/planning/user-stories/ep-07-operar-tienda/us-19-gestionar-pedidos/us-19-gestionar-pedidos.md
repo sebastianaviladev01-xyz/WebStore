@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** administrador (desde el lote 07, el vendedor no tiene Pedidos: PBI-0013, provisional por confirmar con Daniel en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
+- **Como** administrador (desde el lote 07, el vendedor no tiene Pedidos: PBI-0013; el 2026-11-18 Daniel pidió que el vendedor vea Pedidos, PBI-0170, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
 - **Quiero** ver los pedidos con su detalle y cambiar su estado
 - **Para** despacharlos
 
@@ -53,4 +53,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** elige un estado en el panel de filtros y pulsa «Buscar», o abre la campana de la cabecera
 - **Entonces** el estado queda en la URL; la campana dice cuántos pedidos confirmados llegaron desde la última vez que la abrió, los lista y lleva a cada uno.
 
-> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0155 y PBI-0033; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-funciones-nuevas.spec.ts` y `admin-guardado-y-datos.spec.ts`.
+> Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0155 y PBI-0033; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md): Daniel confirmó la campana el 2026-11-18 y el 2026-11-20 pidió alinear a la derecha los botones del panel de filtros, PBI-0171), sin especificación propia: lo prueban `frontend/tests/e2e/admin-funciones-nuevas.spec.ts` y `admin-guardado-y-datos.spec.ts`.

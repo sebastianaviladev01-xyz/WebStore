@@ -57,7 +57,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** intenta finalizar la compra
 - **Entonces** cada campo muestra su mensaje y el pedido no se envía. La fecha propuesta es dos días después de hoy, contados con la fecha de Lima.
 
-> Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0040, PBI-0063, PBI-0086 y PBI-0096; los términos son una decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.
+> Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0040, PBI-0063, PBI-0086 y PBI-0096; los términos son una decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-20 Daniel pidió guardar también la versión aceptada, PBI-0177), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.
 
 ## Fuera de alcance y pendientes
 
