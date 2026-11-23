@@ -13,8 +13,9 @@ export interface TemaVisible {
 /**
  * Elige el tema que se pinta (AC-16 y AC-21). `idVistaPrevia` es la cookie `ws_tema_vista_previa`
  * (`null`, `undefined` o `''` significan que no hay). Solo con el modo demo activo la vista previa
- * manda, y solo si su tema sigue existiendo; en cualquier otro caso se pinta el tema activo (o el de por defecto, o
- * el primero, si el activo ya no existe) y `borrarVistaPrevia` pide borrar una cookie que ya no sirve.
+ * manda, y solo si su tema sigue existiendo y es un predefinido, los únicos que ofrece la tuerca (PBI-0188,
+ * ADR-0022); en cualquier otro caso se pinta el tema activo (o el de por defecto, o el primero, si el activo ya no
+ * existe) y `borrarVistaPrevia` pide borrar una cookie que ya no sirve.
  * Es pura: no muta la apariencia ni lee cookies ni el DOM.
  */
 export function temaVisible(apariencia: Apariencia, idVistaPrevia: string | null | undefined): TemaVisible {
@@ -28,7 +29,7 @@ export function temaVisible(apariencia: Apariencia, idVistaPrevia: string | null
   if (!apariencia.demoMode || !hayCookie) {
     return { tema: activo, esVistaPrevia: false, borrarVistaPrevia: hayCookie };
   }
-  const vistaPrevia = themes.find((tema) => tema.id === idVistaPrevia);
+  const vistaPrevia = themes.find((tema) => tema.id === idVistaPrevia && tema.kind === 'predefined');
   return vistaPrevia
     ? { tema: vistaPrevia, esVistaPrevia: true, borrarVistaPrevia: false }
     : { tema: activo, esVistaPrevia: false, borrarVistaPrevia: true };

@@ -2,7 +2,8 @@
  * Cookie de la vista previa de la tuerca (modo demo, ADR-0012). La tienda y el Admin no pueden importarse entre
  * sí, así que cada uno tiene esta copia: `tests/architecture/paridad-entre-aplicaciones.test.mjs` comprueba que
  * las dos son iguales (PBI-0080). Se escribe sin `Domain`: la tienda y el Admin solo la comparten en el mismo
- * host, como `localhost` (PBI-0072).
+ * host, como `localhost` (PBI-0072). Solo la escribe la tuerca del Admin; la tienda, sin tuerca desde el lote 14, la
+ * lee y borra la que ya no sirve (PBI-0188, ADR-0022).
  */
 
 /** Cookie con el id del tema en vista previa (modo demo). */

@@ -2,24 +2,18 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { TemasFacade } from './features/temas/application/temas.facade';
-import { SelectorTemaComponent } from './features/temas/presentation/selector-tema.component';
 
+// La tienda no tiene tuerca de temas, tampoco en modo demo: el tema se configura en el Admin (PBI-0188, ADR-0022).
 @Component({
   selector: 'ws-root',
-  imports: [RouterOutlet, SelectorTemaComponent],
-  // La tuerca y Angular Material van en un chunk aparte: sin modo demo no se descargan.
+  imports: [RouterOutlet],
   template: `
     <router-outlet />
-    @if (temas.modoDemo()) {
-      @defer {
-        <ws-selector-tema />
-      }
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  protected readonly temas = inject(TemasFacade);
+  private readonly temas = inject(TemasFacade);
 
   constructor() {
     void this.temas.cargar();

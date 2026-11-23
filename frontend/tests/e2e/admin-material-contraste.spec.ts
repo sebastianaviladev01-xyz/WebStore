@@ -12,12 +12,13 @@ import {
   restablecerTemas,
 } from './apoyo/contraste';
 import { abrirMenuUsuario, cuentasAdmin } from './apoyo/entorno';
+import { menuDeTemas, tuerca } from './apoyo/modo-demo';
 
 /**
  * Componentes de Material del Admin con los temas (feature 005). TEST-12 (AC-06): con A, B y C, cada texto o
  * marca que Material pinta con el principal, o sobre él, llega a su mínimo (4.5:1 el texto y 3:1 una marca): la
- * casilla marcada, la etiqueta enfocada de un campo, la opción seleccionada de una lista desplegable y el menú de
- * usuario. Cada medida queda en las anotaciones de la prueba. Al terminar, B queda activo.
+ * casilla marcada, la etiqueta enfocada de un campo, la opción seleccionada de una lista desplegable, el menú de
+ * usuario y el selector de tema del modo demo (en la tienda hasta el lote 14, PBI-0188). Cada medida queda en las anotaciones de la prueba. Al terminar, B queda activo.
  */
 test.describe('Componentes de Material del Admin con los temas', () => {
   test.beforeEach(() => restablecerTemas());
@@ -46,6 +47,15 @@ test.describe('Componentes de Material del Admin con los temas', () => {
       exigir(tema, 'menú de usuario, «Perfil»', opcionDelMenu.color, opcionDelMenu.fondo, MINIMO.texto);
       await page.keyboard.press('Escape');
       await expect(menu).toBeHidden();
+
+      // Selector de tema del modo demo: el texto de una opción sobre el panel.
+      await tuerca(page).click();
+      const temas = menuDeTemas(page);
+      await expect(temas).toBeVisible();
+      const temaDelMenu = await medirTexto(temas.getByRole('menuitemradio', { name: /^Azul cobalto/ }));
+      exigir(tema, 'selector de tema, «Azul cobalto»', temaDelMenu.color, temaDelMenu.fondo, MINIMO.texto);
+      await page.keyboard.press('Escape');
+      await expect(temas).toBeHidden();
 
       // Casilla marcada: la marca sobre el relleno y el relleno sobre la tarjeta.
       await page.goto('/contenido');

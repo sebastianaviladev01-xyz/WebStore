@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
@@ -22,18 +22,12 @@ test('las copias de la feature temas son iguales en la tienda y en el Admin', ()
     assert.equal(leer(TIENDA + archivo), leer(ADMIN + archivo), archivo);
 });
 
-test('el selector de tema es igual en las dos aplicaciones, salvo su etiqueta y la hoja que lo pinta', () => {
-  // Las únicas diferencias permitidas: el selector del componente y la hoja de estilos que lo nombra.
-  const diferencias = [
-    ["selector: 'ws-selector-tema'", "selector: 'ws-admin-selector-tema'"],
-    ['Estilos en `storefront.css`, solo con tokens.', 'Estilos en `styles.css` del Admin, solo con tokens.'],
-  ];
-  let tienda = leer(TIENDA + 'presentation/selector-tema.component.ts');
-  for (const [deLaTienda, delAdmin] of diferencias) {
-    assert.ok(tienda.includes(deLaTienda), `falta en la tienda: ${deLaTienda}`);
-    tienda = tienda.replace(deLaTienda, delAdmin);
-  }
-  assert.equal(tienda, leer(ADMIN + 'presentation/selector-tema.component.ts'));
+test('la tuerca de temas solo está en el Admin: la tienda no tiene selector ni sus estilos (PBI-0188)', () => {
+  // Lote 14 (ADR-0022): el tema solo se configura en el Admin; la tienda lee la vista previa, pero no la elige.
+  assert.equal(existsSync(root + TIENDA + 'presentation/selector-tema.component.ts'), false);
+  assert.doesNotMatch(leer('src/app/app.ts'), /selector-tema|SelectorTema/);
+  assert.doesNotMatch(leer('src/styles/storefront.css'), /ws-selector-tema/);
+  assert.ok(existsSync(root + ADMIN + 'presentation/selector-tema.component.ts'));
 });
 
 /** Declaración exportada `nombre` de un archivo TypeScript, tal como está escrita. */

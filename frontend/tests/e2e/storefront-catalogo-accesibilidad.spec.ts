@@ -217,7 +217,7 @@ test.describe('PBI-0109: saltar al contenido', () => {
     await page.goto('/info/envios');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     const saltar = page.getByRole('link', { name: 'Saltar al contenido' });
-    // Es el primer enlace de la tienda; en modo demo, la tuerca «Cambiar tema» puede ir antes.
+    // Es el primer enlace de la tienda: se llega con Tab (la tienda ya no tiene tuerca desde el lote 14, PBI-0188).
     for (let i = 0; i < 3 && !(await saltar.evaluate((el) => el === document.activeElement)); i++)
       await page.keyboard.press('Tab');
     await expect(saltar).toBeFocused();

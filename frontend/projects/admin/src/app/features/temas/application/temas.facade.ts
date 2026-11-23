@@ -19,8 +19,9 @@ export const AVISO_TEMAS_DESACTUALIZADOS =
 
 /**
  * Carga la apariencia del BFF y pinta el tema visible, como en la tienda: escribe sus tokens en `:root` y el
- * color de la barra del navegador. En modo demo recuerda la vista previa en la cookie `ws_tema_vista_previa`
- * (`cookie-vista-previa.ts`, sin `Domain`), que la tienda y el Admin comparten solo en el mismo host.
+ * color de la barra del navegador. En modo demo, la tuerca del Admin ofrece solo A, B y C (PBI-0188, ADR-0022) y
+ * recuerda la vista previa en la cookie `ws_tema_vista_previa` (`cookie-vista-previa.ts`, sin `Domain`): la tienda,
+ * que ya no tiene tuerca, la lee en el mismo host, así que la demo enseña los tres temas también en la tienda.
  *
  * Además gestiona los temas del `superadmin` (`themes.manage`): carga la lista y crea, edita, borra y activa
  * sobre la revisión de temas vigente. Tras activar aplica el tema nuevo sin recargar (AC-10). Si el BFF
@@ -43,6 +44,10 @@ export class TemasFacade {
     return apariencia?.testCredentials ?? apariencia?.demoMode ?? false;
   });
   readonly temas = computed<readonly Tema[]>(() => this.aparienciaState()?.themes ?? []);
+  /** Los temas que ofrece la tuerca del modo demo: solo los predefinidos, A, B y C (PBI-0188, ADR-0022). */
+  readonly temasDeLaTuerca = computed<readonly Tema[]>(() =>
+    this.temas().filter((tema) => tema.kind === 'predefined'),
+  );
   readonly temaActivo = computed<Tema | null>(() => {
     const apariencia = this.aparienciaState();
     return apariencia ? resolverTemaVisible(apariencia, null).tema : null;
@@ -69,7 +74,7 @@ export class TemasFacade {
   }
 
   verTema(id: string): void {
-    if (!this.modoDemo() || !this.temas().some((tema) => tema.id === id)) return;
+    if (!this.modoDemo() || !this.temasDeLaTuerca().some((tema) => tema.id === id)) return;
     escribirVistaPrevia(this.document, id);
     this.vistaPreviaState.set(id);
     this.aplicar();
@@ -148,11 +153,14 @@ export class TemasFacade {
   private sincronizarApariencia(temasAdmin: TemasAdmin): void {
     const modoDemo = this.modoDemo();
     const activo = temasAdmin.themes.find((tema) => tema.id === temasAdmin.activeThemeId);
+    // Como el BFF: en modo demo, A, B, C y el activo si es propio; fuera de él, solo el activo.
+    const predefinidos = temasAdmin.themes.filter((tema) => tema.kind === 'predefined');
+    const deLaDemo = !activo || activo.kind === 'predefined' ? predefinidos : [...predefinidos, activo];
     this.aparienciaState.set({
       demoMode: modoDemo,
       testCredentials: this.credencialesDePrueba(),
       activeThemeId: temasAdmin.activeThemeId,
-      themes: modoDemo || !activo ? temasAdmin.themes : [activo],
+      themes: modoDemo ? deLaDemo : activo ? [activo] : temasAdmin.themes,
     });
     this.descartarVistaPreviaInvalida();
     this.aplicar();

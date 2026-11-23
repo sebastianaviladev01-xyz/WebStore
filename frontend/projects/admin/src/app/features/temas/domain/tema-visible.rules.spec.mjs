@@ -53,13 +53,27 @@ test('sin modo demo: el activo siempre y la cookie se ignora, pidiendo borrarla 
   }
 });
 
-test('con modo demo y vista previa existente: pinta ese tema y conserva la cookie', () => {
-  for (const id of ['a', 't-1']) {
+test('con modo demo y vista previa de un predefinido existente: pinta ese tema y conserva la cookie', () => {
+  for (const id of ['a', 'b']) {
     const visible = temaVisible(apariencia('c', ['a', 'b', 'c', 't-1'], true), id);
     assert.equal(visible.tema.id, id);
     assert.equal(visible.esVistaPrevia, true);
     assert.equal(visible.borrarVistaPrevia, false);
   }
+});
+
+// Lote 14 (PBI-0188, ADR-0022): la tuerca de la demo ofrece solo A, B y C. Una cookie con un tema propio (de antes del
+// cambio o escrita a mano) no es una vista previa: se pinta el activo y se pide borrarla, como hace el BFF.
+test('con modo demo y la vista previa de un tema propio: el activo, y se borra la cookie', () => {
+  const activoPredefinido = temaVisible(apariencia('c', ['a', 'b', 'c', 't-1'], true), 't-1');
+  assert.equal(activoPredefinido.tema.id, 'c');
+  assert.equal(activoPredefinido.esVistaPrevia, false);
+  assert.equal(activoPredefinido.borrarVistaPrevia, true);
+
+  const activoPropio = temaVisible(apariencia('t-1', ['a', 'b', 'c', 't-1'], true), 't-1');
+  assert.equal(activoPropio.tema.id, 't-1');
+  assert.equal(activoPropio.esVistaPrevia, false);
+  assert.equal(activoPropio.borrarVistaPrevia, true);
 });
 
 test('con modo demo y vista previa borrada o ausente: el activo, y se borra la cookie solo si había', () => {

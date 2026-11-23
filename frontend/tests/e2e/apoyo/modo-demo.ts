@@ -4,7 +4,8 @@ import { urls } from './entorno';
 
 /**
  * Apoyo de TEST-21 (feature 002, modo demo). Las e2e arrancan el BFF con `WEBSTORE_DEMO_MODE=true`, así que la
- * tuerca está en todas las pantallas; estas funciones la manejan y miden lo que debe cumplir (AC-15, AC-16, AC-21).
+ * tuerca está en todas las pantallas del Admin (la tienda no la tiene desde el lote 14, PBI-0188); estas funciones la
+ * manejan y miden lo que debe cumplir (AC-15, AC-16, AC-21).
  */
 export const COOKIE_VISTA_PREVIA = 'ws_tema_vista_previa';
 export const PRIMARIO = { b: '#1D4ED8', c: '#F2B705' } as const;

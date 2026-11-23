@@ -1,71 +1,22 @@
 import { expect, test } from '@playwright/test';
 
-import { cantidadEnCarrito, enlaceDelCarrito, urls } from './apoyo/entorno';
-import {
-  ANCHOS,
-  elegirCConTeclado,
-  marcarSinRecarga,
-  PRIMARIO,
-  primario,
-  sigueSinRecargar,
-  sinCruceConLaTuerca,
-  sinModoDemo,
-  temaActivoDelBff,
-  tuerca,
-  vistaPrevia,
-  volverAlActivoConTeclado,
-} from './apoyo/modo-demo';
+import { urls } from './apoyo/entorno';
+import { COOKIE_VISTA_PREVIA, PRIMARIO, primario, tuerca, vistaPrevia } from './apoyo/modo-demo';
 
 /**
- * Modo demo en la tienda (feature 002). TEST-21: la tuerca «Cambiar tema» se maneja con teclado y cambia el
- * tema solo en este navegador (AC-15, AC-21); sin modo demo no existe (AC-16); no tapa el carrito ni «Pagar».
+ * Modo demo en la tienda. Desde el lote 14 (PBI-0188, ADR-0022) la tienda no tiene tuerca: el tema se configura en el
+ * Admin. En modo demo, la tienda pinta la vista previa que eligió la tuerca del Admin (la cookie se comparte en el
+ * mismo host), así que la demo sigue enseñando A, B y C en la tienda.
  */
-test('la tuerca cambia el tema solo en este navegador y se maneja con teclado', async ({
-  page,
-  context,
-  browser,
-}) => {
-  await page.goto('/');
-  await expect(tuerca(page)).toBeVisible();
-  expect(await primario(page)).toBe(PRIMARIO.b);
-  await marcarSinRecarga(page);
-
-  await elegirCConTeclado(page);
-  await expect.poll(() => primario(page)).toBe(PRIMARIO.c);
-  expect(await sigueSinRecargar(page)).toBe(true);
-  expect(await vistaPrevia(context)).toBe('c');
-
-  await page.reload();
-  await expect(tuerca(page)).toBeVisible();
-  expect(await primario(page)).toBe(PRIMARIO.c);
-
-  // Mismo navegador: el Admin también se ve con C (la cookie no distingue puertos en localhost).
-  await page.goto(`${urls.admin}/login`);
-  await expect(tuerca(page)).toBeVisible();
-  expect(await primario(page)).toBe(PRIMARIO.c);
-
-  // Otra persona, en otro navegador, sigue viendo el tema activo, que no cambió en el BFF.
-  const otro = await browser.newContext();
-  try {
-    const otraPagina = await otro.newPage();
-    await otraPagina.goto(`${urls.storefront}/`);
-    await expect(tuerca(otraPagina)).toBeVisible();
-    expect(await primario(otraPagina)).toBe(PRIMARIO.b);
-  } finally {
-    await otro.close();
-  }
-  expect(await temaActivoDelBff(page)).toBe('b');
-
-  await page.goto('/');
-  await expect(tuerca(page)).toBeVisible();
-  await volverAlActivoConTeclado(page);
-  await expect.poll(() => primario(page)).toBe(PRIMARIO.b);
-  expect(await vistaPrevia(context)).toBeNull();
+const vistaPreviaEn = (valor: string) => ({
+  name: COOKIE_VISTA_PREVIA,
+  value: valor,
+  domain: new URL(urls.storefront).hostname,
+  path: '/',
 });
 
-test('sin modo demo, la tuerca no está en la página', async ({ page }) => {
-  await sinModoDemo(page);
-  for (const ruta of ['/', '/catalogo', '/no-existe']) {
+test('la tienda no tiene tuerca, tampoco en modo demo', async ({ page }) => {
+  for (const ruta of ['/', '/catalogo', '/carrito', '/no-existe']) {
     await page.goto(ruta);
     await page.waitForLoadState('networkidle');
     await expect(page.locator('ws-root')).not.toBeEmpty();
@@ -74,38 +25,21 @@ test('sin modo demo, la tuerca no está en la página', async ({ page }) => {
   }
 });
 
-for (const { ancho, alto } of ANCHOS) {
-  test(`a ${ancho} px la tuerca no tapa el carrito ni «Pagar»`, async ({ page, request }) => {
-    await page.setViewportSize({ width: ancho, height: alto });
-    const productos: { id: string; stock: number }[] = await (
-      await request.get(`${urls.bff}/bff/catalog/products`)
-    ).json();
-    // El carrito se escribe antes de que arranque la aplicación: si se escribiera después, CarritoFacade podría
-    // guardar encima su carrito vacío al conciliar el catálogo.
-    await page.addInitScript(
-      (id) => localStorage.setItem('webstore-cart-v1', JSON.stringify([{ productId: id, quantity: 1 }])),
-      productos.find((producto) => producto.stock > 0)!.id,
-    );
-    await page.goto('/');
-    await expect(enlaceDelCarrito(page)).toHaveText(cantidadEnCarrito(1));
+test('la tienda pinta la vista previa de A, B o C que eligió el Admin, sin tuerca', async ({
+  page,
+  context,
+}) => {
+  await context.addCookies([vistaPreviaEn('c')]);
+  await page.goto('/');
+  await expect.poll(() => primario(page)).toBe(PRIMARIO.c);
+  await expect(tuerca(page)).toHaveCount(0);
+  expect(await vistaPrevia(context)).toBe('c');
+});
 
-    const carrito = enlaceDelCarrito(page);
-    await sinCruceConLaTuerca(page, carrito, 'Carrito de la cabecera');
-
-    await page.goto('/carrito');
-    await sinCruceConLaTuerca(page, carrito, 'Carrito de la cabecera');
-    // Textos de la feature 004 (D1, TEST-16).
-    await sinCruceConLaTuerca(
-      page,
-      page.getByRole('link', { name: 'Confirmar pedido' }),
-      '«Confirmar pedido»',
-    );
-
-    await page.goto('/checkout');
-    await sinCruceConLaTuerca(
-      page,
-      page.getByRole('button', { name: 'Finalizar compra' }),
-      '«Finalizar compra»',
-    );
-  });
-}
+test('una vista previa que no es A, B ni C se ignora y se borra', async ({ page, context }) => {
+  await context.addCookies([vistaPreviaEn('no-es-un-predefinido')]);
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+  expect(await primario(page)).toBe(PRIMARIO.b);
+  await expect.poll(() => vistaPrevia(context)).toBeNull();
+});
