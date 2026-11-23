@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
-import { Router, RouterLink, UrlTree } from '@angular/router';
+import { RouterLink } from '@angular/router';
 
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { hijosDeCategoria, descendientesDeCategoria } from '../../catalogo/domain/categoria.rules';
 import { VarianteInicio } from '../../contenido/domain/contenido.model';
-import { esEnlaceExterno } from '../../contenido/domain/enlace.rules';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { CarruselBannersComponent } from './carrusel-banners.component';
+import { BotonesBannerComponent } from './botones-banner.component';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 import { AccesosRapidosComponent } from './accesos-rapidos.component';
 import { RevealDirective } from '../../../shared/ui/reveal.directive';
@@ -22,6 +22,7 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
     RevealDirective,
     RouterLink,
     AtajosServicioComponent,
+    BotonesBannerComponent,
   ],
   template: `
     @if (content.heroBanners().length) {
@@ -151,14 +152,8 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
                   <h3>{{ banner.title }}</h3>
                   <span>{{ banner.description }}</span>
                   <div class="ws-campaign-actions">
-                    <!-- PBI-0128: un enlace externo va en un href; el router lo convertiría en una ruta rota. -->
-                    @if (esEnlaceExterno(banner.ctaUrl)) {
-                      <a [href]="banner.ctaUrl" class="ws-btn-secondary">{{ banner.ctaLabel }}</a>
-                    } @else {
-                      <a [routerLink]="linkFor(banner.ctaUrl)" class="ws-btn-secondary">
-                        {{ banner.ctaLabel }}
-                      </a>
-                    }
+                    <!-- PBI-0184: el botón principal con la paleta primaria y el secundario con la secundaria. -->
+                    <ws-banner-buttons [banner]="banner" />
                     <small>{{ banner.eyebrow }}</small>
                   </div>
                 </div>
@@ -225,7 +220,6 @@ export class InicioPage {
   });
   protected readonly catalog = inject(CatalogoFacade);
   protected readonly content = inject(ContenidoFacade);
-  private readonly router = inject(Router);
   protected readonly selectedCategory = signal('');
 
   protected readonly heroHighlights = computed(() =>
@@ -279,12 +273,6 @@ export class InicioPage {
       .filter((collection) => collection.products.length > 0)
       .slice(0, 2),
   );
-
-  protected readonly esEnlaceExterno = esEnlaceExterno;
-
-  protected linkFor(url: string): UrlTree {
-    return this.router.parseUrl(url);
-  }
 
   protected selectCategory(categoryId: string): void {
     if (categoryId === this.selectedCategory()) return;

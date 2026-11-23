@@ -8,8 +8,12 @@ export interface Banner {
   readonly eyebrow: string;
   readonly title: string;
   readonly description: string;
+  /** Botón principal (paleta primaria). Sin texto o sin enlace, no se muestra (PBI-0184). */
   readonly ctaLabel: string;
   readonly ctaUrl: string;
+  /** Botón secundario (paleta secundaria), opcional (lote 12, PBI-0184). */
+  readonly secondaryCtaLabel?: string;
+  readonly secondaryCtaUrl?: string;
   readonly imageUrl: string;
   readonly mobileImageUrl: string;
   readonly placement: UbicacionBanner;
