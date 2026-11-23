@@ -9,7 +9,7 @@ import { hastaDelMasReciente, INTERVALO_DE_ACTUALIZACION_MS } from '../domain/no
 
 /**
  * Campana del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel): los pedidos nuevos (estado
- * «confirmado») desde la última vez que la persona abrió el menú. Solo para los roles con pedidos (`orders.manage`).
+ * «confirmado») desde la última vez que la persona abrió el menú. Solo para los roles que ven los pedidos (`orders.view`; también el vendedor desde el lote 11, PBI-0170).
  * Un fallo al consultar conserva lo que había: la campana no avisa errores (el panel ya tiene sus avisos).
  */
 @Injectable({ providedIn: 'root' })
@@ -21,7 +21,7 @@ export class NotificacionesFacade {
   /** Con el menú abierto la lista no cambia bajo la persona: la actualización automática espera a que se cierre. */
   private menuAbierto = false;
 
-  readonly disponible = computed(() => this.session.can('orders.manage'));
+  readonly disponible = computed(() => this.session.can('orders.view'));
   readonly total = computed(() => this.estado()?.total ?? 0);
   readonly pedidos = computed(() => this.estado()?.orders ?? []);
 

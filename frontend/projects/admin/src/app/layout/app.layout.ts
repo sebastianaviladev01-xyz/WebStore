@@ -93,7 +93,7 @@ const NAVIGATION: readonly NavigationGroup[] = [
     id: 'ventas',
     label: 'Ventas',
     items: [
-      { path: '/pedidos', label: 'Pedidos', permission: 'orders.manage', icon: ICONOS.pedidos },
+      { path: '/pedidos', label: 'Pedidos', permission: 'orders.view', icon: ICONOS.pedidos },
       { path: '/clientes', label: 'Clientes', permission: 'customers.manage', icon: ICONOS.clientes },
       {
         path: '/reclamaciones',

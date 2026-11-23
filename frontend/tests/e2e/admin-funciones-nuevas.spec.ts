@@ -277,9 +277,9 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
     }
   });
 
-  test('el vendedor no tiene campana', async ({ page }) => {
+  test('el vendedor también tiene campana, porque ve los pedidos (PBI-0170)', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
-    await expect(page.getByRole('button', { name: /^Notificaciones/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /^Notificaciones/ })).toBeVisible();
   });
 });
 

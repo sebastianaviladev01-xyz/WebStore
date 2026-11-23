@@ -65,21 +65,24 @@ test('«Ver más» de una tarjeta lleva al módulo', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1, name: 'Clientes' })).toBeVisible();
 });
 
-test('el vendedor solo ve el stock bajo y las alertas, que llevan a Productos (PBI-0013)', async ({
+test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni actividad (PBI-0013, PBI-0170)', async ({
   page,
 }) => {
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
   const main = page.getByRole('main');
 
-  await expect(main.getByRole('heading', { level: 2, name: 'Stock bajo' })).toBeVisible();
-  for (const oculto of ['Total de pedidos', 'Total de ventas', 'Total de clientes', 'Pedidos por día']) {
+  // PBI-0170 (lote 11, provisional): ve los pedidos, así que también sus cifras; los clientes y la actividad, no.
+  for (const visible of ['Total de pedidos', 'Total de ventas', 'Stock bajo', 'Pedidos por día']) {
+    await expect(main.getByRole('heading', { level: 2, name: visible })).toBeVisible();
+  }
+  for (const oculto of ['Total de clientes', 'Actividad reciente', 'Personas en línea']) {
     await expect(main.getByRole('heading', { level: 2, name: oculto })).toHaveCount(0);
   }
   await expect(main.getByText('Clientes nuevos')).toHaveCount(0);
-  // Sin Inventario, el stock se cambia en la ficha de cada producto.
-  await expect(main.getByRole('link', { name: 'Gestionar productos →' })).toBeVisible();
+  // Con Inventario, el stock bajo lleva allí, como para el administrador.
+  await expect(main.getByRole('link', { name: 'Gestionar inventario →' })).toBeVisible();
   await main.getByRole('link', { name: 'Ver más (Stock bajo)' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Productos' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible();
 });
 
 /**
@@ -216,12 +219,17 @@ test.describe('Bloques plegables del Resumen', () => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     const main = page.getByRole('main');
 
-    // Lote 07 (PBI-0013): sin pedidos, solo queda el bloque de las alertas de inventario.
-    await expect(main.getByRole('heading', { level: 2 }).getByRole('button')).toHaveText([
-      'Alertas de inventario',
-    ]);
+    // Lote 11 (PBI-0170): con los pedidos, todos los bloques menos la actividad reciente, que es del Resumen completo.
+    const bloques = BLOQUES_SUPERADMIN.filter((titulo) => titulo !== 'Actividad reciente').map((titulo) =>
+      titulo === 'Pedidos y clientes nuevos por día' ? 'Pedidos por día' : titulo,
+    );
+    await expect(main.getByRole('heading', { level: 2 }).getByRole('button')).toHaveText(bloques);
     await botonDeBloque(page, 'Alertas de inventario').click();
-    await esperarBloques(page, [], ['Alertas de inventario']);
+    await esperarBloques(
+      page,
+      bloques.filter((titulo) => titulo !== 'Alertas de inventario'),
+      ['Alertas de inventario'],
+    );
   });
 
   test.describe('a 375 px', () => {

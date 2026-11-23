@@ -26,6 +26,7 @@ const OPERACION = [
   'brands.manage',
   'customers.manage',
   'users.manage',
+  'orders.view',
   'orders.manage',
   'banners.manage',
   'shipping.manage',
@@ -35,7 +36,8 @@ const OPERACION = [
 const TABLA = {
   superadmin: [...OPERACION, 'users.delete', 'content.manage', 'store.reset', 'themes.manage'],
   admin: OPERACION,
-  vendedor: ['dashboard.view', 'products.edit', 'products.manage'],
+  // PBI-0170 (lote 11, ADR-0021; provisional): el vendedor gestiona Inventario y ve Pedidos sin cambiar su estado.
+  vendedor: ['dashboard.view', 'products.edit', 'products.manage', 'inventory.manage', 'orders.view'],
 };
 
 const permisosDe = (rol) => [...definicionDeRol(rol).permissions].sort();
@@ -64,6 +66,14 @@ test('rolPuede responde según la tabla y niega sin rol o con un rol desconocido
   assert.ok(!rolPuede(null, 'dashboard.view'));
   assert.ok(!rolPuede(undefined, 'dashboard.view'));
   assert.ok(!rolPuede('owner', 'dashboard.view'));
+});
+
+test('PBI-0170: el vendedor gestiona Inventario y ve Pedidos, pero no cambia su estado', () => {
+  assert.ok(rolPuede('vendedor', 'inventory.manage'));
+  assert.ok(rolPuede('vendedor', 'orders.view'));
+  assert.ok(!rolPuede('vendedor', 'orders.manage'));
+  assert.ok(rolPuede('admin', 'orders.view'));
+  assert.ok(rolPuede('admin', 'orders.manage'));
 });
 
 test('solo el superadministrador gestiona los temas (TEST-09, réplica del Admin)', () => {

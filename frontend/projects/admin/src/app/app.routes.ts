@@ -129,7 +129,8 @@ export const adminRoutes: Routes = [
       {
         path: 'pedidos',
         resolve: conDatos,
-        canMatch: [permisoGuard('orders.manage')],
+        // PBI-0170: la ve quien ve los pedidos; cambiar su estado pide `orders.manage` (la página lo oculta).
+        canMatch: [permisoGuard('orders.view')],
         loadComponent: () => import('./features/tienda/presentation/pedidos.page').then((m) => m.PedidosPage),
         title: 'WebStore Admin | Pedidos',
       },
