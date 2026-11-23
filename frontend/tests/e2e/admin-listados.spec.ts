@@ -5,7 +5,7 @@ import { cuentasAdmin, ingresarAlAdmin, menuAdmin, desplegarGrupo, urls } from '
 
 /**
  * Lote 07, Admin: permisos, listados y accesibilidad (ADR-0017). Recorridos contra el BFF de prueba real:
- * - PBI-0140: sin «Actualizar» en la cabecera; el Resumen tiene el suyo y cada página consulta sus datos al entrar.
+ * - PBI-0140: sin «Actualizar» en la cabecera; el Dashboard tiene el suyo y cada página consulta sus datos al entrar.
  * - PBI-0139: Inventario, Clientes, Usuarios, Banners y Reclamaciones con el panel de filtros de la feature 008.
  * - PBI-0059: Clientes e Inventario no desbordan a 375 px.
  * - PBI-0132: tablas con encabezados, «Editar»/«Eliminar» con su fila, mensajes de error y foco de los archivos.
@@ -66,8 +66,8 @@ async function crearReclamo(asunto: string): Promise<string> {
   }
 }
 
-test.describe('PBI-0140: datos al entrar y «Actualizar» del Resumen', () => {
-  test('el Resumen vuelve a consultar sus datos y cada página consulta los suyos al entrar', async ({
+test.describe('PBI-0140: datos al entrar y «Actualizar» del Dashboard', () => {
+  test('el Dashboard vuelve a consultar sus datos y cada página consulta los suyos al entrar', async ({
     page,
   }) => {
     const antes = (await leerProductos()).find((producto) => producto.id === 'p-004')!;
@@ -81,7 +81,7 @@ test.describe('PBI-0140: datos al entrar y «Actualizar» del Resumen', () => {
         .locator('section', { has: page.getByRole('heading', { name: 'Alertas de inventario' }) });
       await expect(alertas).not.toContainText(antes.name);
 
-      // Otra sesión deja el producto con stock bajo; «Actualizar» del Resumen lo trae.
+      // Otra sesión deja el producto con stock bajo; «Actualizar» del Dashboard lo trae.
       await actualizarProducto('p-004', { stock: 2 });
       const consulta = consultaDelSnapshot(page);
       await page.getByRole('main').getByRole('button', { name: 'Actualizar', exact: true }).click();
@@ -100,7 +100,7 @@ test.describe('PBI-0140: datos al entrar y «Actualizar» del Resumen', () => {
     }
   });
 
-  test('si la consulta del Resumen falla, las cifras se quedan y el motivo sale junto al botón', async ({
+  test('si la consulta del Dashboard falla, las cifras se quedan y el motivo sale junto al botón', async ({
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -109,9 +109,9 @@ test.describe('PBI-0140: datos al entrar y «Actualizar» del Resumen', () => {
     );
     await page.getByRole('main').getByRole('button', { name: 'Actualizar', exact: true }).click();
     await expect(page.getByRole('alert')).toHaveText(
-      'No pudimos actualizar el Resumen. Las cifras son las de la última consulta; inténtalo de nuevo.',
+      'No pudimos actualizar el Dashboard. Las cifras son las de la última consulta; inténtalo de nuevo.',
     );
-    await expect(page.getByRole('main').getByRole('heading', { level: 2, name: 'Stock bajo' })).toBeVisible();
+    await expect(page.getByRole('main').getByRole('heading', { level: 3, name: 'Stock bajo' })).toBeVisible();
   });
 });
 
@@ -466,7 +466,7 @@ test.describe('PBI-0151: lo escrito cuando la sesión vence', () => {
     await page.getByRole('textbox', { name: 'Correo' }).fill(cuentasAdmin.admin.email);
     await page.getByRole('textbox', { name: 'Contraseña' }).fill(cuentasAdmin.admin.password);
     await page.getByRole('button', { name: 'Ingresar al panel' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
     await page.goto('/marcas/nueva');
     await expect(page.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
     await expect(page.getByText('Recuperamos lo que escribiste')).toHaveCount(0);

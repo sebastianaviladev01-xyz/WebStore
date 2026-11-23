@@ -25,7 +25,7 @@ const {
   actividadReciente,
 } = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
-// Lote 07b (ADR-0017), PBI-0028: la actividad reciente del Resumen muestra los 10 últimos eventos.
+// Lote 07b (ADR-0017), PBI-0028: la actividad reciente del Dashboard muestra los 10 últimos eventos.
 test('PBI-0028: la actividad reciente son los 10 eventos más recientes, del último al primero', () => {
   const eventos = Array.from({ length: 14 }, (_, n) => ({
     id: `e-${n}`,
@@ -436,7 +436,7 @@ test('en enero el mes anterior es diciembre del año anterior, no diciembre del 
   assert.equal(pedidos.variacion, -50, '1 de enero contra 2 de diciembre de 2026');
 });
 
-// Lote 08 (ADR-0017), PBI-0077 y PBI-0079: lo que dicen las tarjetas y las barras de estado del Resumen, que antes
+// Lote 08 (ADR-0017), PBI-0077 y PBI-0079: lo que dicen las tarjetas y las barras de estado del Dashboard, que antes
 // vivía en la página y en la tarjeta sin prueba, y la agrupación de estados (D8) en un solo lugar.
 const { tendenciaDeVariacion, textoDeVariacion, lecturaDeTendencia, gruposDeEstado } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`

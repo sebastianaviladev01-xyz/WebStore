@@ -5,7 +5,7 @@ import type { Cliente, EstadoPedido, EventoActividad, Pedido } from './tienda.mo
 import { ETIQUETAS_ESTADO_PEDIDO } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
 
-/** Zona horaria de la tienda: las fechas del Resumen son las de Lima (PBI-0080: una sola vez en el Admin). */
+/** Zona horaria de la tienda: las fechas del Dashboard son las de Lima (PBI-0080: una sola vez en el Admin). */
 export const ZONA_IANA_LIMA = 'America/Lima';
 
 const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
@@ -170,7 +170,7 @@ export function ultimosPedidos(pedidos: readonly Pedido[], limite = 5): Pedido[]
     .slice(0, limite);
 }
 
-/** Grupos de estado del Resumen (D8), en el orden de las barras. */
+/** Grupos de estado del Dashboard (D8), en el orden de las barras. */
 export type GrupoDeEstado = keyof DistribucionEstados;
 
 const GRUPOS_DE_ESTADO: readonly {
@@ -217,7 +217,7 @@ export function distribucionPorEstado(pedidos: readonly Pedido[]): DistribucionE
 }
 
 /**
- * Actividad reciente del Resumen (lote 07b, ADR-0017, PBI-0028): los `limite` eventos más recientes, del último al
+ * Actividad reciente del Dashboard (lote 07b, ADR-0017, PBI-0028): los `limite` eventos más recientes, del último al
  * primero. El BFF guarda los últimos 50.
  */
 export function actividadReciente(eventos: readonly EventoActividad[], limite = 10): EventoActividad[] {

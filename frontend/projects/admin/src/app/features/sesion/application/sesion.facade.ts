@@ -126,7 +126,7 @@ export class SesionFacade {
     return borrador?.valor ?? null;
   }
 
-  /** Página a la que lleva el acceso tras ingresar: donde venció la sesión de la misma persona, o el Resumen. */
+  /** Página a la que lleva el acceso tras ingresar: donde venció la sesión de la misma persona, o el Dashboard. */
   tomarRetorno(): string {
     const ruta = this.retorno;
     this.retorno = '/';

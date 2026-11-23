@@ -208,7 +208,7 @@ export class PedidosPage {
     vacios: FILTROS_PEDIDOS_VACIOS,
     que: 'los pedidos',
   });
-  /** Fechas en la hora de Lima, como el Resumen (PBI-0067). */
+  /** Fechas en la hora de Lima, como el Dashboard (PBI-0067). */
   protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly fechaDeEntrega = fechaDeEntrega;
   /** Id del pedido que pide la URL (`?pedido=<id>`); si no está en la lista filtrada, el detalle es el primero de ella. */

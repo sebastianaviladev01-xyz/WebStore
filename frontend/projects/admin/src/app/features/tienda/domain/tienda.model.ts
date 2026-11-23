@@ -120,7 +120,7 @@ export interface Pedido {
   readonly items: readonly LineaPedido[];
 }
 
-/** Un evento de la actividad reciente del Resumen (lote 07b, PBI-0028). */
+/** Un evento de la actividad reciente del Dashboard (lote 07b, PBI-0028). */
 export interface EventoActividad {
   readonly id: string;
   readonly at: string;
@@ -166,10 +166,8 @@ export interface SnapshotTienda {
   readonly orders: readonly Pedido[];
   readonly complaints: readonly Reclamo[];
   readonly config: ConfiguracionTienda;
-  /** Últimos eventos para el Resumen completo (`orders.manage`); vacía para el vendedor (lote 07b, PBI-0028). */
+  /** Últimos eventos para el Dashboard completo (`orders.manage`); vacía para el vendedor (lote 07b, PBI-0028). */
   readonly activity?: readonly EventoActividad[];
-  /** Pestañas de la tienda abiertas en los últimos 5 minutos; `null` para el vendedor (lote 07b, PBI-0027). */
-  readonly onlineVisitors?: number | null;
 }
 
 /** Etiquetas visibles: el panel nunca muestra los códigos internos. */

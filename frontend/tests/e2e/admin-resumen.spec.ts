@@ -3,8 +3,10 @@ import { expect, test, type Page } from '@playwright/test';
 import { cuentasAdmin, ingresarAlAdmin, menuAdmin } from './apoyo/entorno';
 
 /**
- * Resumen del Admin: estructura y textos de la especificación (tarjetas con «Ver más», gráfico, distritos,
- * alertas, últimos pedidos y estados). No comprueba cifras: dependen de los pedidos que hayan creado otras specs.
+ * Dashboard del Admin (el «Resumen» hasta el lote 13, PBI-0168): estructura y textos de la especificación (tarjetas
+ * con «Ver más», gráfico, distritos, alertas, últimos pedidos y estados). No comprueba cifras: dependen de los pedidos
+ * que hayan creado otras specs. Desde el lote 13 las tarjetas van bajo el h2 «Cifras», que las pliega (PBI-0187), y
+ * su título es un h3.
  */
 const tarjetas = [
   { titulo: 'Total de pedidos', destino: '/pedidos' },
@@ -13,22 +15,22 @@ const tarjetas = [
   { titulo: 'Stock bajo', destino: '/inventario' },
 ];
 
-test('el superadministrador ve los bloques del Resumen en su orden', async ({ page }) => {
+test('el superadministrador ve los bloques del Dashboard en su orden', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   const main = page.getByRole('main');
 
   // Los títulos de los bloques, en el orden de la página.
   await expect(main.getByRole('heading', { level: 2 })).toHaveText([
-    ...tarjetas.map((t) => t.titulo),
+    'Cifras',
     'Pedidos y clientes nuevos por día',
     'Pedidos por distrito',
     'Alertas de inventario',
     'Últimos pedidos',
     'Pedidos por estado',
-    // Lote 07b (PBI-0028 y PBI-0027): al final, para no mover los bloques que ya había.
+    // Lote 07b (PBI-0028): al final, para no mover los bloques que ya había. Sin «Personas en línea» (PBI-0172).
     'Actividad reciente',
-    'Personas en línea',
   ]);
+  await expect(main.getByRole('heading', { level: 3 })).toHaveText(tarjetas.map((t) => t.titulo));
 
   // Cada tarjeta lleva su «Ver más» hacia el módulo correspondiente.
   for (const { titulo, destino } of tarjetas) {
@@ -72,11 +74,13 @@ test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni acti
   const main = page.getByRole('main');
 
   // PBI-0170 (lote 11, provisional): ve los pedidos, así que también sus cifras; los clientes y la actividad, no.
-  for (const visible of ['Total de pedidos', 'Total de ventas', 'Stock bajo', 'Pedidos por día']) {
-    await expect(main.getByRole('heading', { level: 2, name: visible })).toBeVisible();
+  for (const visible of ['Total de pedidos', 'Total de ventas', 'Stock bajo']) {
+    await expect(main.getByRole('heading', { level: 3, name: visible })).toBeVisible();
   }
-  for (const oculto of ['Total de clientes', 'Actividad reciente', 'Personas en línea']) {
-    await expect(main.getByRole('heading', { level: 2, name: oculto })).toHaveCount(0);
+  await expect(main.getByRole('heading', { level: 2, name: 'Pedidos por día' })).toBeVisible();
+  await expect(main.getByRole('heading', { level: 3, name: 'Total de clientes' })).toHaveCount(0);
+  for (const oculto of ['Actividad reciente', 'Personas en línea']) {
+    await expect(main.getByRole('heading', { name: oculto })).toHaveCount(0);
   }
   await expect(main.getByText('Clientes nuevos')).toHaveCount(0);
   // Con Inventario, el stock bajo lleva allí, como para el administrador.
@@ -86,11 +90,13 @@ test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni acti
 });
 
 /**
- * Bloques plegables del Resumen (feature 003, TEST-05). Los cinco bloques con título se pliegan desde un botón
- * dentro de su `h2` y las tarjetas no (D1); plegar oculta el contenido sin perder los datos (AC-04); teclado
- * (AC-05); al recargar o al volver al Resumen, todos desplegados (AC-07, D2, D4); a 375 px también (AC-13).
+ * Bloques plegables del Dashboard (feature 003, TEST-05). Los bloques con título se pliegan desde un botón dentro de
+ * su `h2`; desde el lote 13 (PBI-0187), también la fila de tarjetas, con el h2 «Cifras» (antes no, D1). Plegar
+ * oculta el contenido sin perder los datos (AC-04); teclado (AC-05); al recargar o al volver al Dashboard, todos
+ * desplegados (AC-07, D2, D4); a 375 px también (AC-13).
  */
 const BLOQUES_SUPERADMIN = [
+  'Cifras',
   'Pedidos y clientes nuevos por día',
   'Pedidos por distrito',
   'Alertas de inventario',
@@ -123,8 +129,10 @@ async function esperarBloques(page: Page, abiertos: readonly string[], plegados:
   }
 }
 
-test.describe('Bloques plegables del Resumen', () => {
-  test('los bloques con título tienen botón plegable dentro del h2 y las tarjetas no', async ({ page }) => {
+test.describe('Bloques plegables del Dashboard', () => {
+  test('cada bloque, también la fila de cifras, tiene su botón plegable dentro del h2; cada tarjeta, no', async ({
+    page,
+  }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const main = page.getByRole('main');
 
@@ -132,7 +140,7 @@ test.describe('Bloques plegables del Resumen', () => {
       ...BLOQUES_SUPERADMIN,
     ]);
     for (const { titulo } of tarjetas) {
-      await expect(main.getByRole('heading', { level: 2, name: titulo }).getByRole('button')).toHaveCount(0);
+      await expect(main.getByRole('heading', { level: 3, name: titulo }).getByRole('button')).toHaveCount(0);
     }
     for (const titulo of BLOQUES_SUPERADMIN) await expect(await regionDeBloque(page, titulo)).toHaveCount(1);
     // Al entrar, todos desplegados (D2).
@@ -157,6 +165,26 @@ test.describe('Bloques plegables del Resumen', () => {
     await distritos.click();
     await esperarBloques(page, BLOQUES_SUPERADMIN, []);
     expect(await region.innerText()).toBe(contenido);
+  });
+
+  test('PBI-0187: plegar «Cifras» oculta las cuatro tarjetas sin cambiar los demás bloques', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const cifras = botonDeBloque(page, 'Cifras');
+    const otros = BLOQUES_SUPERADMIN.filter((titulo) => titulo !== 'Cifras');
+
+    await cifras.click();
+    await esperarBloques(page, otros, ['Cifras']);
+    for (const { titulo } of tarjetas)
+      await expect(page.getByRole('main').getByRole('link', { name: `Ver más (${titulo})` })).toBeHidden();
+    // Plegada, la fila no se lleva el «Actualizar» del encabezado.
+    await expect(page.getByRole('button', { name: 'Actualizar' })).toBeVisible();
+
+    await cifras.click();
+    await esperarBloques(page, BLOQUES_SUPERADMIN, []);
+    for (const { titulo } of tarjetas)
+      await expect(page.getByRole('main').getByRole('link', { name: `Ver más (${titulo})` })).toBeVisible();
   });
 
   test('con teclado, Intro y Espacio pliegan y despliegan un bloque y el foco sigue en el botón', async ({
@@ -192,26 +220,26 @@ test.describe('Bloques plegables del Resumen', () => {
     await expect(gestionar).toBeVisible();
   });
 
-  test('al recargar y al volver al Resumen desde otra página, todos los bloques están desplegados', async ({
+  test('al recargar y al volver al Dashboard desde otra página, todos los bloques están desplegados', async ({
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    const plegados = ['Pedidos por distrito', 'Últimos pedidos'];
+    const plegados = ['Cifras', 'Pedidos por distrito', 'Últimos pedidos'];
     const abiertos = BLOQUES_SUPERADMIN.filter((titulo) => !plegados.includes(titulo));
 
     for (const titulo of plegados) await botonDeBloque(page, titulo).click();
     await esperarBloques(page, abiertos, plegados);
 
     await page.reload();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
     await esperarBloques(page, BLOQUES_SUPERADMIN, []);
 
     for (const titulo of plegados) await botonDeBloque(page, titulo).click();
     await esperarBloques(page, abiertos, plegados);
-    await page.getByRole('main').getByRole('link', { name: 'Ver más (Stock bajo)' }).click();
+    await page.getByRole('main').getByRole('link', { name: 'Gestionar inventario →' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible();
-    await menuAdmin(page).getByRole('link', { name: 'Resumen', exact: true }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Resumen' })).toBeVisible();
+    await menuAdmin(page).getByRole('link', { name: 'Dashboard', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
     await esperarBloques(page, BLOQUES_SUPERADMIN, []);
   });
 
@@ -219,7 +247,7 @@ test.describe('Bloques plegables del Resumen', () => {
     await ingresarAlAdmin(page, cuentasAdmin.vendedor);
     const main = page.getByRole('main');
 
-    // Lote 11 (PBI-0170): con los pedidos, todos los bloques menos la actividad reciente, que es del Resumen completo.
+    // Lote 11 (PBI-0170): con los pedidos, todos los bloques menos la actividad reciente, que es del Dashboard completo.
     const bloques = BLOQUES_SUPERADMIN.filter((titulo) => titulo !== 'Actividad reciente').map((titulo) =>
       titulo === 'Pedidos y clientes nuevos por día' ? 'Pedidos por día' : titulo,
     );
@@ -261,7 +289,7 @@ test.describe('Bloques plegables del Resumen', () => {
 });
 
 /**
- * Lote 08 (ADR-0017), PBI-0077: la presentación del Resumen (formato de moneda, texto de la variación y estados vacíos)
+ * Lote 08 (ADR-0017), PBI-0077: la presentación del Dashboard (formato de moneda, texto de la variación y estados vacíos)
  * no tenía prueba. Las cifras de estas pruebas no dependen de los pedidos que hayan creado otras specs: el snapshot
  * que recibe la página se sustituye por uno propio, y no se guarda nada.
  */
@@ -282,13 +310,16 @@ async function conSnapshot(page: Page, cambiar: (snapshot: SnapshotDelResumen) =
   });
 }
 
-const pedidoDe = (n: number, createdAt: string, total: number, status = 'confirmed') => ({
+/** Cada pedido lleva S/ 10 de envío en su total: las ventas suman solo los productos (`subtotal`, PBI-0186). */
+const pedidoDe = (n: number, createdAt: string, subtotal: number, status = 'confirmed') => ({
   id: `WS-RES-${n}`,
   customer: `Cliente ${n}`,
   customerEmail: `cliente-${n}@example.com`,
   district: 'Miraflores',
   status,
-  total,
+  subtotal,
+  shippingCost: 10,
+  total: subtotal + 10,
   createdAt,
   items: [],
 });
@@ -296,9 +327,9 @@ const tarjeta = (page: Page, titulo: string) =>
   page
     .getByRole('main')
     .getByRole('article')
-    .filter({ has: page.getByRole('heading', { level: 2, name: titulo, exact: true }) });
+    .filter({ has: page.getByRole('heading', { level: 3, name: titulo, exact: true }) });
 
-test.describe('Presentación del Resumen con datos propios', () => {
+test.describe('Presentación del Dashboard con datos propios', () => {
   test('sin pedidos ni alertas: cifras en cero, variación sin dato y los estados vacíos dicen qué falta', async ({
     page,
   }) => {
@@ -334,7 +365,7 @@ test.describe('Presentación del Resumen con datos propios', () => {
     await conSnapshot(page, (snapshot) => {
       snapshot.activity = [];
       snapshot.orders = [
-        // Este mes, hasta hoy: 2 pedidos y S/ 1,334.50.
+        // Este mes, hasta hoy: 2 pedidos y S/ 1,334.50 en productos (S/ 1,354.50 con el envío).
         pedidoDe(1, hoy.toISOString(), 1234.5, 'delivered'),
         pedidoDe(2, hoy.toISOString(), 100),
         // El día 1 del mes anterior, dentro del mismo tramo: 1 pedido y S/ 500.00.
@@ -349,16 +380,76 @@ test.describe('Presentación del Resumen con datos propios', () => {
     await expect(pedidos).toContainText('+100 %');
     await expect(pedidos).toContainText('Sube');
     await expect(pedidos).toContainText('frente al mismo tramo del mes anterior');
-    // Las ventas no cuentan el pedido cancelado: 1,334.50 contra 0 del tramo anterior, sin porcentaje.
+    // Las ventas no cuentan el envío (PBI-0186) ni el pedido cancelado: 1,334.50 contra 0 del tramo anterior.
     const ventas = tarjeta(page, 'Total de ventas');
     await expect(ventas).toContainText(/S\/\s?1,334\.50/);
     await expect(ventas).toContainText('—');
 
-    // La tabla de últimos pedidos muestra el total con moneda y la fecha en formato de día.
+    // La tabla de últimos pedidos muestra el total del pedido (con el envío) y la fecha en formato de día.
     const tabla = main.getByRole('region', { name: 'Últimos pedidos' }).getByRole('table');
-    await expect(tabla.getByRole('row', { name: /WS-RES-1/ })).toContainText(/S\/\s?1,234\.50/);
+    await expect(tabla.getByRole('row', { name: /WS-RES-1/ })).toContainText(/S\/\s?1,244\.50/);
     // Estados: 1 de 3 completado, 1 en proceso y 1 cancelado; el resto del reparto va al primer grupo (34, 33 y 33).
     await expect(main.getByText('34 %', { exact: true })).toHaveCount(1);
     await expect(main.getByText('33 %', { exact: true })).toHaveCount(2);
+  });
+});
+
+/**
+ * Lote 13 (ADR-0021), PBI-0186: la ayuda de «Total de ventas» dice qué suma. Se abre con el puntero, con el teclado
+ * y al tocarla, y se cierra con Escape (WCAG 1.4.13); el botón la nombra con `aria-describedby`.
+ */
+test.describe('PBI-0186: ayuda de «Total de ventas»', () => {
+  const TEXTO = 'Suma el valor de los productos vendidos, con IGV y sin el costo del envío.';
+
+  test('con el teclado se abre al enfocarla y Escape la cierra', async ({ page }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const ayuda = page.getByRole('button', { name: 'Qué incluye: Total de ventas' });
+    const texto = page.getByRole('tooltip');
+    await expect(ayuda).toHaveAccessibleDescription(new RegExp(TEXTO.replace(/[.]/g, '\\.')));
+    await expect(texto).toBeHidden();
+
+    await page.locator('body').focus();
+    for (let pulsaciones = 0; pulsaciones < 60; pulsaciones += 1) {
+      if (await ayuda.evaluate((nodo) => nodo === document.activeElement)) break;
+      await page.keyboard.press('Tab');
+    }
+    await expect(ayuda).toBeFocused();
+    await expect(texto).toBeVisible();
+    await expect(texto).toContainText(TEXTO);
+    await page.keyboard.press('Escape');
+    await expect(texto).toBeHidden();
+    await expect(ayuda).toBeFocused();
+  });
+
+  test('con el puntero se abre al pasar por encima y se cierra al salir', async ({ page }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const ayuda = page.getByRole('button', { name: 'Qué incluye: Total de ventas' });
+    const texto = page.getByRole('tooltip');
+    await ayuda.hover();
+    await expect(texto).toBeVisible();
+    // Se puede llevar el puntero al texto sin que desaparezca.
+    await texto.hover();
+    await expect(texto).toBeVisible();
+    await page.getByRole('heading', { level: 1, name: 'Dashboard' }).hover();
+    await expect(texto).toBeHidden();
+  });
+
+  test.describe('a 375 px', () => {
+    test.use({ viewport: { width: 375, height: 812 } });
+
+    test('al tocarla se abre dentro de la tarjeta, sin desbordar la página', async ({ page }) => {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.getByRole('button', { name: 'Qué incluye: Total de ventas' }).click();
+      const texto = page.getByRole('tooltip');
+      await expect(texto).toBeVisible();
+      const cajaTexto = (await texto.boundingBox())!;
+      const cajaTarjeta = (await tarjeta(page, 'Total de ventas').boundingBox())!;
+      expect(cajaTexto.x).toBeGreaterThanOrEqual(cajaTarjeta.x);
+      expect(cajaTexto.x + cajaTexto.width).toBeLessThanOrEqual(cajaTarjeta.x + cajaTarjeta.width);
+      const desborde = await page.evaluate(
+        () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      );
+      expect(desborde).toBe(false);
+    });
   });
 });
