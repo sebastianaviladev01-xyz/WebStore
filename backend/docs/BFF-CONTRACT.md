@@ -156,7 +156,7 @@ Notificaciones (lote 07b, PBI-0033; confirmadas por Daniel el 2026-11-18), para 
 
 El snapshot expone `revision`, `roles` (los tres roles fijos con sus permisos), productos, categorías, marcas, clientes, usuarios administrativos, banners, tarifas, pedidos, reclamos y configuración. Cada colección solo viaja con contenido al rol que puede gestionarla; para los demás llega vacía.
 
-Desde el lote 07b, para el Resumen completo (roles con `orders.manage`; el 2026-11-20 Daniel confirmó la actividad y pidió quitar las personas en línea, PBI-0172):
+Desde el lote 07b, para el Resumen completo (roles con `orders.manage`; el 2026-11-20 Daniel pidió quitar las personas en línea, PBI-0172, y no pidió cambios en la actividad):
 
 - `onlineVisitors` (PBI-0027): pestañas de la tienda con un latido en los últimos 5 minutos ([Visitas de la tienda](#visitas-de-la-tienda)); `null` para el vendedor.
 - `activity` (PBI-0028): los últimos eventos, del más reciente al más antiguo, cada uno `{ id, at, type, description }`; `[]` para el vendedor. `type` es `order-created`, `order-status-changed` (desde el Admin, «El equipo pasó el pedido … a «…».», o una cancelación del cliente desde la tienda), `account-registered` o `complaint-registered`. La descripción no lleva correo, teléfono, documento ni dirección: solo el nombre que el Admin ya muestra (el comprador en Pedidos, quien reclama en Reclamaciones); la de una cuenta no dice de quién es, porque el Admin no muestra las cuentas. El estado guarda los últimos 50 (`activity`); no se edita desde el Admin.

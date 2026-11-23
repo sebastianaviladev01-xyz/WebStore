@@ -185,7 +185,7 @@ Feature 004, entregada con el [PR #26](https://github.com/sebastianaviladev01-xy
 
 ### Admin: funciones nuevas (lote 07b)
 
-Daniel confirmó el menú y la campana el 2026-11-18 y, el 2026-11-20, la actividad reciente; pidió quitar «Personas en línea» (PBI-0172) ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)):
+Daniel confirmó el menú y la campana el 2026-11-18. El 2026-11-20 pidió quitar «Personas en línea» (PBI-0172) y no pidió cambios en la actividad reciente ([decisiones pendientes](../../docs/planning/PENDING-DECISIONS.md)):
 
 - **Menú lateral** (PBI-0044). Cada enlace lleva un ícono SVG de 20 px, de trazo (1.8) y en el color del texto del enlace, a la izquierda de su nombre. Reducido, el menú mide 76 px, sin títulos de grupo: los íconos van centrados, un grupo tras otro separados por una línea `line`, y la marca queda solo con la «W». La hamburguesa va a la izquierda de «Backoffice de la tienda». En el celular, el panel mide hasta 300 px (85 % del ancho), sobre el velo `scrim`, con los grupos como etiquetas `muted`.
 - **Campana** (PBI-0033). Botón de 40 px con la campana de trazo en `muted`, junto al menú de usuario; el número va en un círculo `primary` con texto `on-primary` (10 px, «9+» desde 10). El menú usa el panel del menú de usuario, con 288 px de ancho mínimo.
