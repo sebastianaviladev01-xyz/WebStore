@@ -42,21 +42,31 @@ const {
   INTERVALO_DE_ACTUALIZACION_MS,
 } = await import(`data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`);
 
-const pedido = (id, createdAt) => ({ id, customer: 'Cliente', total: 100, createdAt });
-const NUEVOS = { seenAt: null, total: 1, orders: [pedido('WS-1', '2026-11-15T10:00:00.000Z')] };
+const pedido = (id, at) => ({ type: 'order', id, at, customer: 'Cliente', total: 100 });
+const reclamo = (id, at) => ({ type: 'complaint', id, at, complaintType: 'reclamo' });
+const NUEVOS = {
+  seenAt: null,
+  total: 2,
+  counts: { orders: 1, complaints: 1, checkoutErrors: 0 },
+  items: [reclamo('RC-2026-000001', '2026-11-15T11:00:00.000Z'), pedido('WS-1', '2026-11-15T10:00:00.000Z')],
+};
 
 /** Facade con un gateway que cuenta consultas, un documento con visibilidad y un reloj que se mueve a mano. */
-function montar({ puede = true } = {}) {
+function montar({ puede = true, permisos = null } = {}) {
   const consultas = [];
+  const vistos = [];
   const gateway = Object.assign(Object.create(NotificacionesGateway.prototype), {
     consultar: async () => {
       consultas.push('consultar');
       return NUEVOS;
     },
-    marcarVisto: async () => ({ seenAt: '2026-11-15T10:00:00.000Z', total: 0, orders: NUEVOS.orders }),
+    marcarVisto: async (hasta) => {
+      vistos.push(hasta);
+      return { ...NUEVOS, seenAt: hasta, total: 0, counts: { orders: 0, complaints: 0, checkoutErrors: 0 } };
+    },
   });
   const sesion = Object.assign(Object.create(SesionFacade.prototype), {
-    can: () => puede,
+    can: (permiso) => (permisos ? permisos.includes(permiso) : puede),
     requireToken: () => 'token',
     expirar: () => {},
   });
@@ -84,7 +94,7 @@ function montar({ puede = true } = {}) {
     for (const escucha of escuchas) escucha();
   };
   const esperar = () => new Promise((resolver) => setImmediate(resolver));
-  return { facade, consultas, documento, reloj, escuchas, cambiarVisibilidad, esperar };
+  return { facade, consultas, vistos, documento, reloj, escuchas, cambiarVisibilidad, esperar };
 }
 
 test('cada minuto, con la pestaña visible, la campana consulta al BFF', async () => {
@@ -96,7 +106,7 @@ test('cada minuto, con la pestaña visible, la campana consulta al BFF', async (
   reloj.funcion();
   await esperar();
   assert.equal(consultas.length, 1);
-  assert.equal(facade.total(), 1);
+  assert.equal(facade.total(), 2);
   reloj.funcion();
   await esperar();
   assert.equal(consultas.length, 2);
@@ -156,4 +166,29 @@ test('al detenerla se quitan el temporizador y la escucha, y no queda nada vivo'
   cambiarVisibilidad('visible');
   await esperar();
   assert.equal(consultas.length, 0);
+});
+
+// Lote 13 (ADR-0021), PBI-0173: avisos de pedidos, reclamos y errores de compra.
+
+test('PBI-0173: al abrir el menú marca «visto» hasta el aviso más reciente, de cualquier tipo, y la lista se queda', async () => {
+  const { facade, vistos } = montar();
+  await facade.consultar();
+  assert.deepEqual(
+    facade.avisos().map((aviso) => aviso.id),
+    ['RC-2026-000001', 'WS-1'],
+  );
+  await facade.marcarVisto();
+  assert.deepEqual(vistos, ['2026-11-15T11:00:00.000Z']);
+  assert.equal(facade.total(), 0, 'el número pasa a lo que queda sin ver');
+  assert.deepEqual(facade.conteo(), { orders: 0, complaints: 0, checkoutErrors: 0 });
+  assert.equal(facade.avisos().length, 2, 'con el menú abierto la lista no cambia');
+});
+
+test('PBI-0173: quien gestiona Reclamaciones sin ver pedidos también tiene campana', async () => {
+  const { facade, consultas } = montar({ permisos: ['complaints.manage'] });
+  assert.equal(facade.disponible(), true);
+  await facade.consultar();
+  assert.equal(consultas.length, 1);
+  const sinNada = montar({ permisos: ['products.edit'] });
+  assert.equal(sinNada.facade.disponible(), false);
 });

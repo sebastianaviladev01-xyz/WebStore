@@ -4,14 +4,19 @@ import { MatMenuModule } from '@angular/material/menu';
 import { RouterLink } from '@angular/router';
 
 import { NotificacionesFacade } from '../features/notificaciones/application/notificaciones.facade';
-import { contadorDeLaCampana, nombreDeLaCampana } from '../features/notificaciones/domain/notificacion.rules';
+import {
+  contadorDeLaCampana,
+  nombreDeLaCampana,
+  presentacionDelAviso,
+} from '../features/notificaciones/domain/notificacion.rules';
 import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
 
 /**
  * Campana de la cabecera del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel). El número
- * cuenta los pedidos nuevos (estado «confirmado») desde la última vez que la persona abrió el menú; al abrirlo se
- * marcan como vistos. El menú lista esos pedidos y lleva a cada uno en Pedidos. Usa `MatMenu`, como el menú de
- * usuario: foco, flechas, Escape y clic fuera los resuelve Material. Solo existe para los roles con pedidos.
+ * cuenta los avisos nuevos desde la última vez que la persona abrió el menú; al abrirlo se marcan como vistos. Desde el
+ * lote 13 (ADR-0021, PBI-0173), además de los pedidos nuevos, los reclamos nuevos y los errores de compra, cada uno
+ * con su página (`presentacionDelAviso`). Usa `MatMenu`, como el menú de usuario: foco, flechas, Escape y clic
+ * fuera los resuelve Material. Solo existe para los roles que reciben avisos.
  */
 @Component({
   selector: 'ws-admin-campana',
@@ -52,20 +57,25 @@ import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
       xPosition="before"
     >
       <p class="ws-menu-usuario-cuenta">
-        <strong>Pedidos nuevos</strong>
+        <strong>{{ notificaciones.menu().titulo }}</strong>
         <span>Desde la última vez que abriste este menú</span>
       </p>
       <div class="ws-menu-usuario-separador" role="separator"></div>
-      @for (pedido of notificaciones.pedidos(); track pedido.id) {
-        <a mat-menu-item routerLink="/pedidos" [queryParams]="{ pedido: pedido.id }">
-          <span class="block text-sm font-semibold">{{ pedido.id }} · {{ pedido.customer }}</span>
+      @for (aviso of notificaciones.avisos(); track aviso.type + aviso.id) {
+        @let vista = presentar(aviso);
+        <a mat-menu-item [routerLink]="vista.ruta" [queryParams]="vista.parametros">
+          <span class="block text-sm font-semibold">{{ vista.titulo }}</span>
           <span class="block text-xs text-muted tabular-nums">
-            {{ pedido.total | currency: 'PEN' : 'symbol' : '1.2-2' }} ·
-            {{ pedido.createdAt | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+            @if (aviso.type === 'order') {
+              {{ aviso.total | currency: 'PEN' : 'symbol' : '1.2-2' }} ·
+            } @else if (vista.detalle) {
+              {{ vista.detalle }} ·
+            }
+            {{ aviso.at | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
           </span>
         </a>
       } @empty {
-        <p class="ws-menu-usuario-cuenta">No hay pedidos nuevos.</p>
+        <p class="ws-menu-usuario-cuenta">{{ notificaciones.menu().vacio }}</p>
       }
       <div class="ws-menu-usuario-separador" role="separator"></div>
       <a mat-menu-item routerLink="/pedidos">Ver todos los pedidos</a>
@@ -78,5 +88,6 @@ export class CampanaNotificacionesComponent {
   /** Fechas en la hora de Lima, como el resto del Admin (PBI-0067). */
   protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly contador = computed(() => contadorDeLaCampana(this.notificaciones.total()));
-  protected readonly nombre = computed(() => nombreDeLaCampana(this.notificaciones.total()));
+  protected readonly nombre = computed(() => nombreDeLaCampana(this.notificaciones.conteo()));
+  protected readonly presentar = presentacionDelAviso;
 }
