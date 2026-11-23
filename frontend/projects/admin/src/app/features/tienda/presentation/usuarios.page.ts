@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -22,6 +30,7 @@ import { conservarBorrador } from './borrador';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { enfocarPrimerCampo } from './enfocar-registro';
 
 const EMPTY_USER = {
   name: '',
@@ -66,6 +75,8 @@ const EMPTY_USER = {
     <ws-filter-panel
       class="mt-6"
       etiqueta="Filtros de usuarios"
+      agregarQue="usuario"
+      (agregar)="nuevo()"
       [formGroup]="filtros.borrador"
       [buscando]="filtros.buscando()"
       [error]="filtros.error()"
@@ -215,6 +226,8 @@ export class UsuariosPage {
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
   // Por referencia: el panel de filtros (PBI-0139) también es un FormGroupDirective y va antes en la plantilla.
   private readonly formDirective = viewChild.required<FormGroupDirective>('registro');
+  /** El formulario de alta, para llevarle el foco desde «Agregar» (PBI-0171). */
+  private readonly formulario = viewChild.required('registro', { read: ElementRef<HTMLFormElement> });
   protected readonly editing = signal<string | null>(null);
   /** El usuario tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
   private base: UsuarioAdmin | null = null;
@@ -334,6 +347,11 @@ export class UsuariosPage {
     });
   }
 
+  /** «Agregar» (PBI-0171): sale de la edición, como «Cancelar», y lleva el foco al formulario de alta. */
+  protected nuevo(): void {
+    if (this.editing()) this.reset();
+    enfocarPrimerCampo(this.formulario().nativeElement);
+  }
   protected reset(): void {
     this.editing.set(null);
     this.base = null;

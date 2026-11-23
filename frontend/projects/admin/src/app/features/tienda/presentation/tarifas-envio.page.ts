@@ -1,5 +1,13 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -20,6 +28,7 @@ import { conservarBorrador } from './borrador';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { enfocarPrimerCampo } from './enfocar-registro';
 
 const EMPTY_RATE = { origin: '', destinations: '', price: 0 };
 
@@ -45,6 +54,8 @@ const EMPTY_RATE = { origin: '', destinations: '', price: 0 };
     <ws-filter-panel
       class="mt-7"
       etiqueta="Filtros de tarifas"
+      agregarQue="tarifa"
+      (agregar)="nuevo()"
       [formGroup]="filtros.borrador"
       [buscando]="filtros.buscando()"
       [error]="filtros.error()"
@@ -227,6 +238,8 @@ export class TarifasEnvioPage {
   protected readonly admin = inject(TiendaFacade);
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
   private readonly formDirective = viewChild.required<FormGroupDirective>('rateForm');
+  /** El formulario de alta, para llevarle el foco desde «Agregar» (PBI-0171). */
+  private readonly formulario = viewChild.required('rateForm', { read: ElementRef<HTMLFormElement> });
   protected readonly editing = signal<string | null>(null);
   /** La tarifa tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra ella (PBI-0120). */
   private base: TarifaEnvio | null = null;
@@ -342,6 +355,11 @@ export class TarifasEnvioPage {
     });
   }
 
+  /** «Agregar» (PBI-0171): sale de la edición, como «Cancelar», y lleva el foco al formulario de alta. */
+  protected nuevo(): void {
+    if (this.editing()) this.reset();
+    enfocarPrimerCampo(this.formulario().nativeElement);
+  }
   protected reset(): void {
     this.editing.set(null);
     this.base = null;

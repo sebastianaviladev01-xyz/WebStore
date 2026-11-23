@@ -301,9 +301,9 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
   }
 
   if (!conEliminar) {
-    // Lote 07 (PBI-0013): el vendedor crea productos («Nuevo producto»), pero no los elimina.
+    // Lote 07 (PBI-0013): el vendedor crea productos («Agregar» del panel, lote 11), pero no los elimina.
     await expect(page.getByRole('button', { name: /^Eliminar producto/ })).toHaveCount(0);
-    await expect(page.getByRole('link', { name: 'Nuevo producto', exact: true })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Agregar producto', exact: true })).toBeVisible();
   }
 }
 

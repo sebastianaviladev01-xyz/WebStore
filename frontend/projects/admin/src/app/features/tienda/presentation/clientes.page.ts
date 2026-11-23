@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal, viewChild } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import { FormControl, FormGroup, FormGroupDirective, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -16,6 +24,7 @@ import { conservarBorrador } from './borrador';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { enfocarPrimerCampo } from './enfocar-registro';
 
 const CLIENTE_VACIO = { name: '', email: '', document: '' };
 
@@ -48,6 +57,8 @@ interface BorradorCliente {
     <ws-filter-panel
       class="mt-7"
       etiqueta="Filtros de clientes"
+      agregarQue="cliente"
+      (agregar)="nuevo()"
       [formGroup]="filtros.borrador"
       [buscando]="filtros.buscando()"
       [error]="filtros.error()"
@@ -164,6 +175,8 @@ export class ClientesPage {
   /** resetForm (no form.reset) limpia también el estado enviado; si no, el formulario vacío se muestra con errores. */
   // Por referencia: el panel de filtros (PBI-0139) también es un FormGroupDirective y va antes en la plantilla.
   private readonly formDirective = viewChild.required<FormGroupDirective>('registro');
+  /** El formulario de alta, para llevarle el foco desde «Agregar» (PBI-0171). */
+  private readonly formulario = viewChild.required('registro', { read: ElementRef<HTMLFormElement> });
   protected readonly editing = signal<string | null>(null);
   /** El cliente tal como se cargó al pulsar «Editar»: lo que cambió se calcula contra él (PBI-0120). */
   private base: Cliente | null = null;
@@ -205,6 +218,11 @@ export class ClientesPage {
       ...this.form.getRawValue(),
     });
     if (saved) this.reset();
+  }
+  /** «Agregar» (PBI-0171): sale de la edición, como «Cancelar», y lleva el foco al formulario de alta. */
+  protected nuevo(): void {
+    if (this.editing()) this.reset();
+    enfocarPrimerCampo(this.formulario().nativeElement);
   }
   /** Sale de la edición (PBI-0130): el formulario vuelve a «Nuevo cliente», vacío. */
   protected reset() {

@@ -56,17 +56,12 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
           Estructura por nombres y subcategorías; el orden puede ser explícito o alfabético.
         </p>
       </div>
-      <a
-        class="inline-flex min-h-11 items-center rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
-        routerLink="/categorias/nueva"
-        queryParamsHandling="preserve"
-      >
-        Nueva categoría
-      </a>
     </div>
     <ws-filter-panel
       class="mt-7"
       etiqueta="Filtros de categorías"
+      agregarQue="categoría"
+      rutaAgregar="/categorias/nueva"
       [formGroup]="borrador"
       [buscando]="buscando()"
       [error]="errorBusqueda()"

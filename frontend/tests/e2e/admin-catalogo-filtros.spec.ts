@@ -26,31 +26,31 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
  *   mayúsculas, tildes ni espacios de los extremos.
  * - TEST-12 (AC-04, AC-14): sin resultados, un mensaje distinto del catálogo vacío y el panel disponible;
  *   «Limpiar filtros» vacía todos los filtros de una vez y, con «Buscar», vuelve la lista completa.
- * - TEST-13 (AC-05, AC-06): «Nuevo producto» abre `/productos/nuevo` sin la lista y con todos los campos; «Volver a
+ * - TEST-13 (AC-05, AC-06): «Agregar» (antes «Nuevo producto»; lote 11, PBI-0171) abre `/productos/nuevo` sin la lista y con todos los campos; «Volver a
  *   productos» conserva filtros y página; guardar vuelve al listado con sus filtros y el producto, y la tienda lo
  *   publica.
  * - TEST-14 (AC-07): «Editar» abre `/productos/:id` con los datos actuales y vuelve con el cambio; un producto que
  *   otra sesión eliminó muestra «Este producto ya no existe».
  * - TEST-17 (AC-11, cambiado en el lote 07 por PBI-0013): el vendedor filtra, busca, edita todos los campos y crea
- *   un producto desde «Nuevo producto»; no ve «Eliminar».
+ *   un producto desde «Agregar»; no ve «Eliminar».
  *
  * Categorías (⚠ TASK-09):
  *
  * - TEST-15 (AC-08): «oled» deja una sola fila, la de siempre, con «↳ OLED» y «Padre: TV y audio» aunque el padre no
- *   salga (D7); «Categoría padre» deja solo las hijas directas y «Sin padre», las de primer nivel; «Nueva categoría»
+ *   salga (D7); «Categoría padre» deja solo las hijas directas y «Sin padre», las de primer nivel; «Agregar»
  *   y «Editar» abren su interfaz de registro, y el padre excluye a la misma categoría y a sus subcategorías.
  *
  * Marcas (⚠ TASK-10):
  *
  * - TEST-16 (AC-09): con una marca desactivada por otra sesión, «Inactivos» y «Activos» dejan solo las de ese
- *   estado y «Nombre» filtra sin distinguir mayúsculas; «Nueva marca» y «Editar» abren su interfaz de registro con
+ *   estado y «Nombre» filtra sin distinguir mayúsculas; «Agregar» y «Editar» abren su interfaz de registro con
  *   «Nombre» y «Activa», y guardar vuelve al listado con sus filtros.
  *
  * Las tres páginas y los casos de fallo (TASK-11):
  *
- * - TEST-10 (AC-01, AC-10): a 1440 px, Productos, Categorías y Marcas tienen el título con «Nuevo…» a su derecha, el
- *   panel con «Buscar» y «Limpiar filtros» y la lista, en ese orden vertical, sin formulario de registro; la lista
- *   ocupa el ancho del panel y los bordes coinciden en las tres páginas.
+ * - TEST-10 (AC-01, AC-10): a 1440 px, Productos, Categorías y Marcas tienen el título, el panel y la lista, en ese
+ *   orden vertical, sin formulario de registro; desde el lote 11 (PBI-0171), «Agregar» va en el panel, a la derecha
+ *   de «Buscar» y «Limpiar»; la lista ocupa el ancho del panel y los bordes coinciden en las tres páginas.
  * - TEST-18 (AC-12): a 360, 375 y 390 px con A, B y C, las tres listas y sus registros (nuevo y edición) sin
  *   desplazamiento horizontal y con sus controles dentro de la pantalla. B queda activo al terminar.
  * - TEST-19 (AC-15): con 30 productos, 25 en la página 1 y «Página 1 de 2»; «Siguiente» lleva a la 2; una búsqueda
@@ -171,7 +171,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
     await expect(editar(lista(page))).toHaveCount(originales.length);
   });
 
-  test('TEST-13 · «Nuevo producto» abre el registro, «Volver» conserva los filtros y guardar publica', async ({
+  test('TEST-13 · «Agregar» abre el registro, «Volver» conserva los filtros y guardar publica', async ({
     page,
   }) => {
     const originales = await leerProductos();
@@ -183,7 +183,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await abrirProductos(page, '/productos?nombre=ventilador&pagina=2');
       await expect(panel(page).getByRole('textbox', { name: 'Nombre' })).toHaveValue('ventilador');
 
-      await page.getByRole('link', { name: 'Nuevo producto', exact: true }).click();
+      await page.getByRole('link', { name: 'Agregar producto', exact: true }).click();
       await expect(page).toHaveURL(/\/productos\/nuevo\?nombre=ventilador&pagina=2$/);
       const formulario = page.getByRole('form', { name: 'Nuevo producto' });
       await expect(formulario).toBeVisible();
@@ -212,7 +212,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(panel(page).getByRole('textbox', { name: 'Nombre' })).toHaveValue('ventilador');
 
       // Guardar vuelve al listado con los mismos filtros, y el producto nuevo los cumple.
-      await page.getByRole('link', { name: 'Nuevo producto', exact: true }).click();
+      await page.getByRole('link', { name: 'Agregar producto', exact: true }).click();
       await formulario.getByRole('textbox', { name: 'Nombre', exact: true }).fill(nombre);
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VENT-008');
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Tres velocidades.');
@@ -323,8 +323,8 @@ test.describe('Filtros y registro de productos del Admin', () => {
         sku: antes.sku,
       });
 
-      // Crea un producto desde «Nuevo producto».
-      await page.getByRole('link', { name: 'Nuevo producto', exact: true }).click();
+      // Crea un producto desde «Agregar».
+      await page.getByRole('link', { name: 'Agregar producto', exact: true }).click();
       const nuevo = page.getByRole('form', { name: 'Nuevo producto' });
       await nuevo.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Parlante del vendedor');
       await nuevo.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VEND-07');
@@ -417,8 +417,8 @@ test.describe('Filtros y registro de categorías del Admin', () => {
         'Cocina',
       ]);
 
-      // «Nueva categoría» abre el registro sin la lista; «Volver a categorías» conserva los filtros.
-      await page.getByRole('link', { name: 'Nueva categoría', exact: true }).click();
+      // «Agregar» abre el registro sin la lista; «Volver a categorías» conserva los filtros.
+      await page.getByRole('link', { name: 'Agregar categoría', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\/nueva\?padre=sin-padre$/);
       const nueva = page.getByRole('form', { name: 'Nueva categoría' });
       await expect(nueva).toBeVisible();
@@ -430,7 +430,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
 
       // Guardar vuelve al listado con los mismos filtros; la categoría nueva cuelga de «TV y audio».
-      await page.getByRole('link', { name: 'Nueva categoría', exact: true }).click();
+      await page.getByRole('link', { name: 'Agregar categoría', exact: true }).click();
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Proyectores 008');
       await elegir(page, nueva, 'Categoría padre', 'TV y audio');
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -535,8 +535,8 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
       await expect(filasMarcas(page).locator('strong')).toHaveText(['Zenith']);
 
-      // «Nueva marca» abre el registro sin la lista; «Volver a marcas» conserva los filtros.
-      await page.getByRole('link', { name: 'Nueva marca', exact: true }).click();
+      // «Agregar» abre el registro sin la lista; «Volver a marcas» conserva los filtros.
+      await page.getByRole('link', { name: 'Agregar marca', exact: true }).click();
       await expect(page).toHaveURL(/\/marcas\/nueva\?nombre=zen$/);
       const nueva = page.getByRole('form', { name: 'Nueva marca' });
       await expect(nueva).toBeVisible();
@@ -547,7 +547,7 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
 
       // Guardar vuelve al listado con los mismos filtros; la marca nueva los cumple.
-      await page.getByRole('link', { name: 'Nueva marca', exact: true }).click();
+      await page.getByRole('link', { name: 'Agregar marca', exact: true }).click();
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Zentro 008');
       await nueva.getByRole('checkbox', { name: 'Activa' }).uncheck();
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -600,17 +600,17 @@ const caja = (elemento: Locator): Promise<Caja> =>
 
 const TOLERANCIA = 0.5;
 
-/** Las tres páginas del catálogo con su título, su botón «Nuevo…», su panel y su lista (AC-10). */
+/** Las tres páginas del catálogo con su título, su «Agregar» (nombre accesible), su panel y su lista (AC-10). */
 const PAGINAS_DEL_CATALOGO = [
-  { ruta: '/productos', titulo: 'Productos', nuevo: 'Nuevo producto', panel: panel, lista: lista },
+  { ruta: '/productos', titulo: 'Productos', nuevo: 'Agregar producto', panel: panel, lista: lista },
   {
     ruta: '/categorias',
     titulo: 'Categorías',
-    nuevo: 'Nueva categoría',
+    nuevo: 'Agregar categoría',
     panel: panelCategorias,
     lista: listaCategorias,
   },
-  { ruta: '/marcas', titulo: 'Marcas', nuevo: 'Nueva marca', panel: panelMarcas, lista: listaMarcas },
+  { ruta: '/marcas', titulo: 'Marcas', nuevo: 'Agregar marca', panel: panelMarcas, lista: listaMarcas },
 ] as const;
 
 /**
@@ -681,15 +681,14 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
       const cajaPanel = await caja(filtros);
       const cajaLista = await caja(pagina.lista(page));
 
-      // Orden vertical: título y «Nuevo…», panel, lista.
+      // Orden vertical: título, panel (con «Agregar» dentro, lote 11, PBI-0171), lista.
       expect(cajaTitulo.bottom, que('el título acaba antes del panel')).toBeLessThanOrEqual(cajaPanel.top);
-      expect(cajaNuevo.bottom, que('«Nuevo…» acaba antes del panel')).toBeLessThanOrEqual(cajaPanel.top);
       expect(cajaPanel.bottom, que('el panel acaba antes de la lista')).toBeLessThanOrEqual(cajaLista.top);
-      // «Nuevo…» a la derecha del título, en su fila; la lista con el ancho del panel (todo el contenido).
-      expect(cajaNuevo.left, que('«Nuevo…» a la derecha del título')).toBeGreaterThan(cajaTitulo.right);
-      expect(Math.abs(cajaNuevo.right - cajaPanel.right), que('«Nuevo…» alineado a la derecha')).toBeLessThan(
-        TOLERANCIA + 0.5,
-      );
+      expect(cajaNuevo.top, que('«Agregar» dentro del panel')).toBeGreaterThanOrEqual(cajaPanel.top);
+      expect(cajaNuevo.bottom, que('«Agregar» dentro del panel')).toBeLessThanOrEqual(cajaPanel.bottom);
+      // «Agregar» a la derecha de «Limpiar», en su fila; la lista con el ancho del panel (todo el contenido).
+      const cajaLimpiar = await caja(filtros.getByRole('button', { name: 'Limpiar filtros' }));
+      expect(cajaNuevo.left, que('«Agregar» a la derecha de «Limpiar»')).toBeGreaterThan(cajaLimpiar.right);
       expect(
         Math.abs(cajaLista.left - cajaPanel.left),
         que('lista y panel, mismo borde izquierdo'),
@@ -717,7 +716,9 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
           `${otra.titulo} · ${parte}: borde derecho de Productos`,
         ).toBeLessThan(1);
       }
-      expect(Math.abs(productos.nuevo.right - otra.nuevo.right), `${otra.titulo} · «Nuevo…»`).toBeLessThan(1);
+      expect(Math.abs(productos.nuevo.right - otra.nuevo.right), `${otra.titulo} · «Agregar»`).toBeLessThan(
+        1,
+      );
     }
   });
 
