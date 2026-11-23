@@ -61,7 +61,7 @@ Usa `curl.exe`: en Windows PowerShell 5.1, `curl` es un alias de `Invoke-WebRequ
 
 ### Modo demo
 
-El modo demo muestra la tuerca «Cambiar tema» en la tienda y en el Admin, para enseñar los temas sin activarlos para nadie más ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). Lo enciende el BFF con `WEBSTORE_DEMO_MODE=true`; los frontends no cambian. Solo `true` lo enciende (sin distinguir mayúsculas ni espacios en los extremos): sin la variable, o con `false`, `1` o `sí`, está apagado. Una instalación para un cliente no la define ([puesta en marcha](puesta-en-marcha.md)).
+El modo demo muestra la tuerca «Cambiar tema» en el Admin, con los tres temas predefinidos (A, B y C), para enseñarlos sin activarlos para nadie más ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). La tienda no tiene tuerca: pinta el tema que se elige en la del Admin ([ADR-0022](../adrs/0022-quitar-la-tuerca-de-la-tienda-y-limitar-la-demo-a-los-temas-predefinidos.md), PBI-0188). Lo enciende el BFF con `WEBSTORE_DEMO_MODE=true`; los frontends no cambian. Solo `true` lo enciende (sin distinguir mayúsculas ni espacios en los extremos): sin la variable, o con `false`, `1` o `sí`, está apagado. Una instalación para un cliente no la define ([puesta en marcha](puesta-en-marcha.md)).
 
 En PowerShell, en la terminal del BFF:
 
@@ -74,9 +74,9 @@ La variable sigue activa en esa ventana. Para apagar el modo demo: `Remove-Item 
 
 En Bash: `WEBSTORE_DEMO_MODE=true npm run start:bff`.
 
-- Comprobación: `curl.exe -s http://localhost:3000/bff/appearance` responde `"demoMode":true` y trae los tres temas predefinidos y los propios.
-- El tema que se elige con la tuerca se recuerda en la cookie `ws_tema_vista_previa` del navegador. El BFF solo la lee en modo demo, para servir `/bff/appearance/theme.css` con ese tema; no la guarda y no cambia el tema activo de la tienda.
-- En `localhost`, la tienda (4200) y el Admin (4300) comparten la cookie, porque las cookies no distinguen puertos: el tema elegido en la tienda se ve también en el Admin.
+- Comprobación: `curl.exe -s http://localhost:3000/bff/appearance` responde `"demoMode":true` y trae los tres temas predefinidos y, si el activo es un tema propio, también el activo; nunca los demás temas propios.
+- El tema que se elige con la tuerca se recuerda en la cookie `ws_tema_vista_previa` del navegador. El BFF solo la lee en modo demo, y solo si es A, B o C, para servir `/bff/appearance/theme.css` con ese tema; no la guarda y no cambia el tema activo de la tienda.
+- En `localhost`, la tienda (4200) y el Admin (4300) comparten la cookie, porque las cookies no distinguen puertos: el tema elegido en la tuerca del Admin se ve también en la tienda.
 - **Limitación con túneles:** si la demo se publica con túneles de `trycloudflare.com`, la tienda y el Admin reciben subdominios distintos de un dominio que está en la [Public Suffix List](https://publicsuffix.org/list/public_suffix_list.dat). El navegador no permite una cookie compartida para ese dominio, así que cada aplicación recuerda su propia vista previa.
 - **La cookie es de cada host:** se escribe sin `Domain`, así que la tienda y el Admin solo comparten la vista previa cuando están en el mismo host, como en `localhost`. En un despliegue con dominio propio y subdominios distintos (por ejemplo, `tienda.` y `admin.`) tampoco se comparte: cada aplicación recuerda la suya (lote 03, PBI-0072). Compartirla exigiría escribir la cookie con `Domain` y una decisión de arquitectura.
 - La suite e2e arranca su BFF en modo demo ([`frontend/playwright.config.ts`](../../frontend/playwright.config.ts)).
