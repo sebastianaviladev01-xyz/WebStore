@@ -111,8 +111,11 @@ test('PBI-0033: la campana lista los pedidos confirmados nuevos y «visto» se r
       body: { until: 'ayer' },
     });
     assert.equal(malo.body.error.code, 'INVALID_SEEN_AT');
+    // PBI-0170 (lote 11): el vendedor ve los pedidos, así que también su campana, con su propio «visto».
     const vendedor = await ingresarAlAdmin(base, ...VENDEDOR);
-    assert.equal((await leer(vendedor.token)).status, 403);
+    const campanaDelVendedor = await leer(vendedor.token);
+    assert.equal(campanaDelVendedor.status, 200);
+    assert.equal(campanaDelVendedor.body.total, 1);
     assert.equal((await pedir(base, '/bff/admin/notifications')).status, 401);
   });
 });

@@ -35,9 +35,10 @@ const orderToAdmin = (order) => ({
 });
 
 /**
- * Cada colección solo viaja al rol que puede gestionarla; catálogo y configuración son lectura común. La actividad
- * reciente (PBI-0028) y las personas en línea (PBI-0027) son del Resumen completo (`orders.manage`): para el vendedor
- * llegan vacías (`[]` y `null`).
+ * Cada colección solo viaja al rol que puede gestionarla; catálogo y configuración son lectura común. Los pedidos
+ * viajan a quien los ve (`orders.view`, también el vendedor desde el lote 11, PBI-0170); cambiarlos pide
+ * `orders.manage`. La actividad reciente (PBI-0028) y las personas en línea (PBI-0027) son del Resumen completo
+ * (`orders.manage`): para el vendedor llegan vacías (`[]` y `null`), porque nombran clientes y reclamos que no ve.
  */
 export function buildAdminSnapshot(state, role, personasEnLinea = () => 0) {
   const visible = (permission, value) => (can(role, permission) ? value : []);
@@ -54,7 +55,7 @@ export function buildAdminSnapshot(state, role, personasEnLinea = () => 0) {
     banners: visible('banners.manage', state.banners),
     rates: visible('shipping.manage', state.rates),
     complaints: visible('complaints.manage', state.complaints),
-    orders: visible('orders.manage', state.orders.map(orderToAdmin)),
+    orders: visible('orders.view', state.orders.map(orderToAdmin)),
     config: state.config,
     activity: visible('orders.manage', state.activity ?? []),
     onlineVisitors: can(role, 'orders.manage') ? personasEnLinea() : null,

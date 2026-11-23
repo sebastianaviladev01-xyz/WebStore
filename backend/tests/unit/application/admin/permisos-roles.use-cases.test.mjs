@@ -1,8 +1,8 @@
 /**
  * Permisos de los roles en el guardado y la lectura del snapshot del Admin (lote 07, ADR-0017, PBI-0013; decisión
  * provisional por confirmar con Daniel), con un almacén en memoria. El BFF es la autoridad: el Admin solo oculta.
- * - El vendedor crea productos y modifica todos sus campos, sobre cualquier producto; no los elimina y ya no tiene
- *   pedidos.
+ * - El vendedor crea productos y modifica todos sus campos, sobre cualquier producto; no los elimina. Desde el lote 11
+ *   (ADR-0021, PBI-0170; provisional) gestiona el inventario y ve los pedidos sin cambiar su estado.
  * - Contenido es solo del superadministrador; banners y tarifas siguen con el administrador.
  * - El administrador ve y gestiona solo a los vendedores (crear, editar, activar y desactivar), sin eliminarlos ni
  *   asignar otro rol. El superadministrador gestiona a todos.
@@ -104,16 +104,34 @@ test('PBI-0013: el administrador sí elimina productos', () => {
   assert.ok(!snapshot.products.some((item) => item.id === 'p-003'));
 });
 
-test('PBI-0013: el vendedor ya no ve ni cambia pedidos, clientes ni usuarios', () => {
+test('PBI-0170: el vendedor ve los pedidos, pero no los cambia; tampoco ve clientes ni usuarios', () => {
   const { casos } = casosCon();
   const snapshot = casos.get(vendedor);
-  assert.deepEqual(snapshot.orders, []);
+  assert.deepEqual(
+    snapshot.orders.map((pedido) => [pedido.id, pedido.status]),
+    [['WS-1', 'confirmed']],
+  );
+  assert.equal(snapshot.orders[0].customerEmail, 'a@example.com');
   assert.deepEqual(snapshot.customers, []);
   assert.deepEqual(snapshot.users, []);
   assert.throws(
     guardar(vendedor, { orders: { upsert: [{ id: 'WS-1', status: 'processing' }] } }).resultado,
     rechazo('INSUFFICIENT_ROLE', { collection: 'orders' }),
   );
+});
+
+test('PBI-0170: la actividad reciente sigue siendo del Resumen completo (`orders.manage`)', () => {
+  const store = crearAlmacen();
+  store.state.activity = [{ id: 'e-1', at: '2026-11-01T00:00:00.000Z', type: 'order-created', description: 'x' }];
+  const { casos } = casosCon(store);
+  assert.deepEqual(casos.get(vendedor).activity, []);
+  assert.equal(casos.get(vendedor).onlineVisitors, null);
+  assert.equal(casos.get(admin).activity.length, 1);
+});
+
+test('PBI-0170: el vendedor gestiona el inventario: cambia el stock de un producto', () => {
+  const snapshot = guardar(vendedor, { products: { upsert: [{ id: 'p-003', stock: 42 }] } }).resultado();
+  assert.equal(snapshot.products.find((item) => item.id === 'p-003').stock, 42);
 });
 
 test('PBI-0013: Contenido es solo del superadministrador; banners y tarifas siguen con el administrador', () => {

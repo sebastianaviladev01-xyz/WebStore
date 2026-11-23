@@ -568,18 +568,22 @@ try {
       body: JSON.stringify(update),
     });
 
-  // Permisos de los roles (lote 07, PBI-0013, provisional): el vendedor crea y modifica productos sin eliminarlos,
-  // sin pedidos ni inventario; el administrador gestiona solo a los vendedores y no tiene Contenido.
+  // Permisos de los roles (lote 07, PBI-0013, provisional): el vendedor crea y modifica productos sin eliminarlos;
+  // el administrador gestiona solo a los vendedores y no tiene Contenido. Lote 11 (PBI-0170, provisional): el vendedor
+  // gestiona el inventario y ve los pedidos (`orders.view`) sin cambiar su estado.
   const seller = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
   let sellerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(seller.token) });
   if (
     seller.user.role !== 'vendedor' ||
     sellerSnapshot.users.length ||
     sellerSnapshot.rates.length ||
-    sellerSnapshot.orders.length ||
     sellerSnapshot.customers.length
   )
     throw new Error('El vendedor recibió colecciones fuera de su rol');
+  if (!sellerSnapshot.orders.some((item) => item.id === order.id))
+    throw new Error('PBI-0170: el vendedor debe ver los pedidos');
+  if (!sellerSnapshot.roles.find((role) => role.id === 'vendedor').permissions.includes('orders.view'))
+    throw new Error('PBI-0170: el rol vendedor debe publicar orders.view');
   if (sellerSnapshot.roles?.map((role) => role.id).join() !== 'superadmin,admin,vendedor')
     throw new Error('El snapshot no publica los roles fijos');
   await esperarError(
@@ -1187,12 +1191,9 @@ try {
   const campana = await request('/bff/admin/notifications', { headers: authorization(owner.token) });
   if (typeof campana.total !== 'number' || !Array.isArray(campana.orders))
     throw new Error('GET /admin/notifications no tiene la forma { seenAt, total, orders }');
-  await esperarError(
-    await raw('/bff/admin/notifications', { headers: authorization(vendedor07b.token) }),
-    403,
-    'INSUFFICIENT_ROLE',
-    'Notificaciones del vendedor',
-  );
+  // PBI-0170: el vendedor ve los pedidos, así que también la campana de pedidos nuevos.
+  const campanaVendedor = await raw('/bff/admin/notifications', { headers: authorization(vendedor07b.token) });
+  if (campanaVendedor.status !== 200) throw new Error(`Notificaciones del vendedor: ${campanaVendedor.status}`);
   await esperarError(
     await raw('/bff/admin/notifications/seen', {
       method: 'PUT',

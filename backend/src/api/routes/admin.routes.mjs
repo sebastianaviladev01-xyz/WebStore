@@ -60,13 +60,13 @@ export const adminRoutes = (adminSesiones, snapshot, perfil, notificaciones) => 
     method: 'GET',
     path: '/bff/admin/notifications',
     handle: ({ req }) =>
-      ok(notificaciones.get(adminSesiones.requireAdmin(bearerToken(req), 'orders.manage').user)),
+      ok(notificaciones.get(adminSesiones.requireAdmin(bearerToken(req), 'orders.view').user)),
   },
   {
     method: 'PUT',
     path: '/bff/admin/notifications/seen',
     handle: async ({ req }) => {
-      const { user } = adminSesiones.requireAdmin(bearerToken(req), 'orders.manage');
+      const { user } = adminSesiones.requireAdmin(bearerToken(req), 'orders.view');
       return ok(notificaciones.marcarVisto(user, await readJsonBody(req)));
     },
   },

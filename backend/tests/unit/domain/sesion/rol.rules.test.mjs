@@ -32,6 +32,7 @@ const OPERACION = [
   'brands.manage',
   'customers.manage',
   'users.manage',
+  'orders.view',
   'orders.manage',
   'banners.manage',
   'shipping.manage',
@@ -41,7 +42,8 @@ const OPERACION = [
 const TABLA = {
   superadmin: [...OPERACION, 'users.delete', 'content.manage', 'store.reset', 'themes.manage'],
   admin: OPERACION,
-  vendedor: ['dashboard.view', 'products.edit', 'products.manage'],
+  // PBI-0170 (lote 11, ADR-0021; provisional): el vendedor gestiona Inventario y ve Pedidos sin cambiar su estado.
+  vendedor: ['dashboard.view', 'products.edit', 'products.manage', 'inventory.manage', 'orders.view'],
 };
 
 const permisosDe = (rol) => [...ADMIN_ROLES.find((definicion) => definicion.id === rol).permissions].sort();
@@ -57,12 +59,20 @@ test('los tres roles fijos tienen exactamente los permisos de la tabla', () => {
   assert.deepEqual([...ADMIN_PERMISSIONS].sort(), [...TABLA.superadmin].sort());
 });
 
-test('PBI-0013: el vendedor crea y modifica productos, pero no los elimina ni tiene inventario ni pedidos', () => {
+test('PBI-0013: el vendedor crea y modifica productos, pero no los elimina', () => {
   assert.ok(can('vendedor', 'products.manage'));
   assert.ok(!can('vendedor', 'products.delete'));
-  assert.ok(!can('vendedor', 'inventory.manage'));
-  assert.ok(!can('vendedor', 'orders.manage'));
   assert.ok(can('admin', 'products.delete'));
+});
+
+test('PBI-0170: el vendedor gestiona Inventario y ve Pedidos, pero no cambia su estado', () => {
+  assert.ok(can('vendedor', 'inventory.manage'));
+  assert.ok(can('vendedor', 'orders.view'));
+  assert.ok(!can('vendedor', 'orders.manage'));
+  for (const rol of ['superadmin', 'admin']) {
+    assert.ok(can(rol, 'orders.view'), rol);
+    assert.ok(can(rol, 'orders.manage'), rol);
+  }
 });
 
 test('PBI-0013: Contenido es solo del superadministrador; banners y tarifas siguen con el administrador', () => {
