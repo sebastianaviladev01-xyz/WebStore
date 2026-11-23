@@ -176,6 +176,18 @@ function temaActivoExistente({ activeThemeId, customThemes }, avisar) {
 }
 
 /**
+ * Lote 12 (PBI-0184): hasta entonces, el inicio mostraba al lado del botón de cada banner principal un enlace fijo,
+ * «Ver todos los productos». Un banner guardado antes, sin botón secundario, lo recibe como tal, así se sigue viendo
+ * igual; el resto queda sin secundario. Uno que ya tiene el campo (aunque vacío, si el Admin lo quitó) no cambia.
+ */
+function botonSecundarioAnterior(banner) {
+  if (banner.secondaryCta !== undefined) return {};
+  return (banner.placement ?? 'hero') === 'hero'
+    ? { secondaryCta: 'Ver todos los productos', secondaryCtaUrl: '/catalogo' }
+    : { secondaryCta: '', secondaryCtaUrl: '' };
+}
+
+/**
  * Completa con la semilla lo que falte en data.json, descarta sesiones vencidas y aplica migraciones. `avisar`
  * recibe un texto por cada dato que se repara o se descarta al cargar (hoy, los temas propios: PBI-0068).
  */
@@ -199,6 +211,7 @@ export function normalizeState(input, demoPasswords, avisar = () => {}) {
     mobileImageUrl: '',
     placement: 'hero',
     imageTone: 'light',
+    ...botonSecundarioAnterior(banner),
     ...banner,
   }));
   for (const key of COLLECTIONS) {

@@ -356,3 +356,44 @@ test('lote 07b (PBI-0028 y PBI-0033): un estado sin actividad ni «visto» carga
   }));
   assert.equal(normalizeState({ ...guardado, activity: larga }, demoPasswords).activity.length, 50);
 });
+
+test('lote 12 (PBI-0184): un banner guardado sin botón secundario recibe el «Ver todos los productos» que el inicio mostraba fijo', () => {
+  const guardado = estadoV2();
+  guardado.schemaVersion = SCHEMA_VERSION;
+  guardado.banners = [
+    { id: 'bn-h', title: 'Hero', placement: 'hero', active: true, cta: 'Ver', ctaUrl: '/catalogo' },
+    { id: 'bn-p', title: 'Promo', placement: 'promotion', active: true, cta: 'Ver', ctaUrl: '/catalogo' },
+    {
+      id: 'bn-x',
+      title: 'Sin secundario',
+      placement: 'hero',
+      active: true,
+      cta: 'Ver',
+      ctaUrl: '/catalogo',
+      secondaryCta: '',
+      secondaryCtaUrl: '',
+    },
+  ];
+  const [hero, promocion, quitado] = normalizeState(guardado, demoPasswords).banners;
+  // En el inicio, el héroe llevaba al lado de su botón el enlace fijo «Ver todos los productos»: pasa a su secundario.
+  assert.equal(hero.secondaryCta, 'Ver todos los productos');
+  assert.equal(hero.secondaryCtaUrl, '/catalogo');
+  // Las promociones no tenían un segundo botón.
+  assert.equal(promocion.secondaryCta, '');
+  assert.equal(promocion.secondaryCtaUrl, '');
+  // Un secundario que el Admin ya quitó no vuelve.
+  assert.equal(quitado.secondaryCta, '');
+  assert.equal(quitado.secondaryCtaUrl, '');
+  // Normalizar otra vez no cambia nada.
+  const otraVez = normalizeState(normalizeState(guardado, demoPasswords), demoPasswords).banners;
+  assert.deepEqual(otraVez, normalizeState(guardado, demoPasswords).banners);
+});
+
+test('lote 12 (PBI-0184): los banners principales de la semilla llevan su botón secundario explícito', () => {
+  const heroes = seed.banners.filter((banner) => banner.placement === 'hero');
+  assert.ok(heroes.length > 0);
+  for (const banner of heroes) {
+    assert.equal(banner.secondaryCta, 'Ver todos los productos', banner.id);
+    assert.equal(banner.secondaryCtaUrl, '/catalogo', banner.id);
+  }
+});

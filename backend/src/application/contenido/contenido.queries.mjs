@@ -4,8 +4,11 @@ const bannerToPublic = (banner) => ({
   eyebrow: banner.eyebrow ?? 'Selección WebStore',
   title: banner.title,
   description: banner.description ?? 'Promoción configurable desde el panel administrativo.',
-  ctaLabel: banner.cta,
+  // PBI-0184: los dos botones opcionales; uno sin configurar llega vacío y la tienda no lo muestra.
+  ctaLabel: banner.cta ?? '',
   ctaUrl: banner.ctaUrl ?? '/catalogo',
+  secondaryCtaLabel: banner.secondaryCta ?? '',
+  secondaryCtaUrl: banner.secondaryCtaUrl ?? '',
   imageUrl: banner.imageUrl ?? 'assets/brand/hero.svg',
   mobileImageUrl: banner.mobileImageUrl ?? '',
   placement: banner.placement ?? 'hero',

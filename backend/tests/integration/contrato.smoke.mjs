@@ -561,6 +561,50 @@ try {
   )
     throw new Error('Banner o presentación de imagen no llegó al Storefront');
 
+  // Lote 12 (PBI-0184, provisional): dos botones opcionales por banner, cada uno con su texto y su enlace.
+  let bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const conBotones = await raw('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: { ...authorization(owner.token), 'content-type': 'application/json' },
+    body: JSON.stringify({
+      revision: bannerSnapshot.revision,
+      banners: {
+        upsert: [
+          {
+            id: campaign.id,
+            secondaryCta: 'Ver ofertas',
+            secondaryCtaUrl: 'https://example.com/ofertas',
+          },
+        ],
+      },
+    }),
+  });
+  if (conBotones.status !== 200)
+    throw new Error(`PBI-0184: el botón secundario no se guardó (${conBotones.status})`);
+  const conSecundario = (await request('/bff/content/banners')).find((banner) => banner.id === campaign.id);
+  if (
+    conSecundario?.secondaryCtaLabel !== 'Ver ofertas' ||
+    conSecundario.secondaryCtaUrl !== 'https://example.com/ofertas' ||
+    typeof conSecundario.ctaLabel !== 'string'
+  )
+    throw new Error('PBI-0184: el banner público no trae los dos botones');
+  bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const aMedias = await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: { ...authorization(owner.token), 'content-type': 'application/json' },
+      body: JSON.stringify({
+        revision: bannerSnapshot.revision,
+        banners: { upsert: [{ id: campaign.id, secondaryCtaUrl: '' }] },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'PBI-0184: un botón con texto y sin enlace',
+  );
+  if (aMedias.details?.field !== 'secondaryCtaUrl')
+    throw new Error('PBI-0184: el error de un botón sin enlace debe señalar secondaryCtaUrl');
+
   // Roles fijos: el Admin envía solo las colecciones que cambió, así que las pruebas hacen lo mismo.
   const put = (session, update) =>
     raw('/bff/admin/snapshot', {

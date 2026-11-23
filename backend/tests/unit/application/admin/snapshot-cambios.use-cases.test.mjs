@@ -7,6 +7,7 @@
  * - PBI-0129: un producto con el SKU o la dirección de ficha (slug) de otro se rechaza, diciendo cuál.
  * - PBI-0131: una marca o una categoría que usan productos, o una categoría con subcategorías, no se elimina.
  * - PBI-0145: el pedido del Admin trae la fecha de aceptación de los términos.
+ * - PBI-0184 (lote 12): cada botón del banner se guarda con su texto y su enlace, o sin ninguno de los dos.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -360,4 +361,25 @@ test('PBI-0148: dos categorías que ya compartían dirección no bloquean el gua
     store,
   ).resultado();
   assert.ok(snapshot.categories.some((item) => item.id === 'cat-otra'));
+});
+
+test('lote 12 (PBI-0184): el botón secundario se guarda con su texto y su enlace; a medias se rechaza', () => {
+  const conSecundario = guardar(superadmin, {
+    banners: {
+      upsert: [{ id: 'bn-3', secondaryCta: 'Ver ofertas', secondaryCtaUrl: 'https://example.com' }],
+    },
+  }).resultado();
+  const banner = conSecundario.banners.find((item) => item.id === 'bn-3');
+  assert.equal(banner.secondaryCta, 'Ver ofertas');
+  assert.equal(banner.secondaryCtaUrl, 'https://example.com');
+  assert.equal(banner.cta, 'Ver electrohogar');
+  assert.throws(
+    guardar(superadmin, { banners: { upsert: [{ id: 'bn-3', secondaryCta: 'Ver ofertas' }] } }).resultado,
+    rechazo('INVALID_COLLECTION', { collection: 'banners', field: 'secondaryCtaUrl', id: 'bn-3' }),
+  );
+  // Quitar los dos campos de un botón lo quita.
+  const sinPrincipal = guardar(superadmin, {
+    banners: { upsert: [{ id: 'bn-3', cta: '', ctaUrl: '' }] },
+  }).resultado();
+  assert.equal(sinPrincipal.banners.find((item) => item.id === 'bn-3').cta, '');
 });
