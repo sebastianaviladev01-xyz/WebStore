@@ -127,7 +127,13 @@ const FOTOS_PRIORITARIAS = 6;
               >
                 <mat-option value="">Todas</mat-option>
                 @for (item of catalog.categories(); track item.id) {
-                  <mat-option [value]="item.id">{{ item.name }}</mat-option>
+                  <!-- Lote 11 (PBI-0162): la imagen de la categoría junto a su nombre, si tiene. -->
+                  <mat-option [value]="item.id">
+                    @if (item.imageUrl) {
+                      <img class="ws-category-option-image" [src]="item.imageUrl" alt="" />
+                    }
+                    {{ item.name }}
+                  </mat-option>
                 }
               </mat-select>
             </mat-form-field>

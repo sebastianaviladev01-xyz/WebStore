@@ -470,6 +470,26 @@ test.describe('PBI-0052 y PBI-0176: imagen de la categoría', () => {
     }
   });
 
+  test('PBI-0162: la lista de Categorías muestra la miniatura de la imagen, solo si la categoría la tiene', async ({
+    page,
+  }) => {
+    const IMAGEN_100 =
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA5UlEQVR4nO3QQQ0AIAzAwElHOhbWFyG5U9B0DmvzOuAnZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBRdHfptnsVYXbAAAAABJRU5ErkJggg==';
+    try {
+      await enviarCambios({ categories: { upsert: [{ id: 'cat-home', imageUrl: IMAGEN_100 }] } });
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto('/categorias');
+      const lista = page.getByRole('region', { name: 'Lista de categorías' });
+      const fila = (nombre: string) =>
+        lista.locator('div.border-b').filter({ has: page.getByText(nombre, { exact: true }) });
+      await expect(fila('Electrohogar').locator('img')).toHaveAttribute('src', IMAGEN_100);
+      await expect(fila('Electrohogar').locator('img')).toHaveAttribute('alt', '');
+      await expect(fila('Cocina').locator('img')).toHaveCount(0);
+    } finally {
+      await enviarCambios({ categories: { upsert: [{ id: 'cat-home', imageUrl: null }] } });
+    }
+  });
+
   test('una foto de 1 MB o más, o que no es PNG, JPG ni WebP, no se usa y se dice por qué', async ({
     page,
   }) => {

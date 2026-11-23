@@ -38,6 +38,10 @@ export interface AccesoCategoria extends Categoria {
             wsReveal
             [revealIndex]="index"
           >
+            <!-- Lote 11 (PBI-0162): la imagen de la categoría, si tiene; sin ella, la tarjeta como antes. -->
+            @if (category.imageUrl) {
+              <img class="ws-category-access-image" [src]="category.imageUrl" alt="" />
+            }
             @if (variant() === 'anterior') {
               <strong>{{ category.name }}</strong>
               <small>

@@ -96,12 +96,22 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
           class="flex items-center justify-between border-b border-line p-3"
           [style.padding-left.px]="12 + entry.depth * 24"
         >
-          <div>
-            <strong>{{ entry.depth ? '↳ ' : '' }}{{ entry.category.name }}</strong>
-            <p class="text-xs text-muted">
-              Orden: {{ entry.category.order ?? 'alfabético' }} · Padre:
-              {{ parentName(entry.category.parentId) }}
-            </p>
+          <!-- Lote 11 (PBI-0162): la miniatura de la imagen de la categoría, si tiene; sin ella, la fila como antes. -->
+          <div class="flex min-w-0 items-center gap-3">
+            @if (entry.category.imageUrl) {
+              <img
+                class="h-10 w-10 shrink-0 rounded-lg border border-line bg-subtle object-contain"
+                [src]="entry.category.imageUrl"
+                alt=""
+              />
+            }
+            <div class="min-w-0">
+              <strong>{{ entry.depth ? '↳ ' : '' }}{{ entry.category.name }}</strong>
+              <p class="text-xs text-muted">
+                Orden: {{ entry.category.order ?? 'alfabético' }} · Padre:
+                {{ parentName(entry.category.parentId) }}
+              </p>
+            </div>
           </div>
           <div class="flex gap-3 text-sm font-semibold">
             <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
