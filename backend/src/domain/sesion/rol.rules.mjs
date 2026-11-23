@@ -52,7 +52,8 @@ export const ADMIN_ROLES = [
   {
     id: 'vendedor',
     label: 'Vendedor',
-    description: 'Crea productos y modifica sus fichas, precios y stock; gestiona el inventario y ve los pedidos.',
+    description:
+      'Crea productos y modifica sus fichas, precios y stock; gestiona el inventario y ve los pedidos.',
     permissions: ['dashboard.view', 'products.edit', 'products.manage', 'inventory.manage', 'orders.view'],
   },
 ];

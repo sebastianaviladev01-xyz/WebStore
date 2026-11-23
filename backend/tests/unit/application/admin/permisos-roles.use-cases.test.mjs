@@ -122,7 +122,9 @@ test('PBI-0170: el vendedor ve los pedidos, pero no los cambia; tampoco ve clien
 
 test('PBI-0170: la actividad reciente sigue siendo del Resumen completo (`orders.manage`)', () => {
   const store = crearAlmacen();
-  store.state.activity = [{ id: 'e-1', at: '2026-11-01T00:00:00.000Z', type: 'order-created', description: 'x' }];
+  store.state.activity = [
+    { id: 'e-1', at: '2026-11-01T00:00:00.000Z', type: 'order-created', description: 'x' },
+  ];
   const { casos } = casosCon(store);
   assert.deepEqual(casos.get(vendedor).activity, []);
   assert.equal(casos.get(vendedor).onlineVisitors, null);
