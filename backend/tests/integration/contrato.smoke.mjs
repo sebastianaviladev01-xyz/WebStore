@@ -1184,6 +1184,9 @@ try {
     throw new Error(
       'theme.css de B debe declarar --ws-accent-line: var(--ws-accent) justo después de --ws-on-accent',
     );
+  // Secundario suave (lote 28, ADR-0028): el fondo con el puntero encima en la tienda, el acento al 20 % sobre el blanco.
+  if (!declaraciones.includes('  --ws-accent-soft: color-mix(in srgb, var(--ws-accent) 20%, #ffffff);'))
+    throw new Error('theme.css de B debe declarar --ws-accent-soft al 20 % sobre el blanco');
   const revalidada = await hoja({ 'if-none-match': etagB });
   if (revalidada.status !== 304 || (await revalidada.text()) !== '')
     throw new Error('theme.css con If-None-Match igual al ETag debe responder 304 sin cuerpo');
@@ -1226,10 +1229,19 @@ try {
       .join() !== 'a:predefined,b:predefined,c:predefined'
   )
     throw new Error('GET /bff/admin/themes debe traer la revisión, el activo B y los predefinidos A, B y C');
-  // Lote 20 (ADR-0023): el botón secundario de C con el puntero encima se aclara hacia el blanco; antes era la mezcla
-  // del grafito con el grafito, igual al secundario.
-  if (listaInicial.themes[2].tokens['--ws-accent-strong'] !== 'color-mix(in srgb, #1F2328 90%, #FFFFFF)')
-    throw new Error('El --ws-accent-strong de C debe ser color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+  // Lote 28 (PBI-0240, ADR-0028): C lleva el grafito de principal y el ámbar de secundario, con el texto grafito sobre
+  // el ámbar. El botón principal con el puntero encima se aclara hacia el blanco, como antes el secundario (lote 20).
+  const tokensDeC = listaInicial.themes[2].tokens;
+  if (
+    listaInicial.themes[2].colors.primary !== '#1F2328' ||
+    listaInicial.themes[2].colors.secondary !== '#F2B705' ||
+    tokensDeC['--ws-on-accent'] !== '#1F2328' ||
+    tokensDeC['--ws-primary-strong'] !== 'color-mix(in srgb, #1F2328 90%, #FFFFFF)' ||
+    tokensDeC['--ws-accent-soft'] !== 'color-mix(in srgb, #F2B705 20%, #FFFFFF)'
+  )
+    throw new Error(
+      'C debe traer el grafito de principal, el ámbar de secundario con texto grafito, su principal fuerte y su secundario suave',
+    );
   if (
     listaInicial.themes
       .slice(0, 3)

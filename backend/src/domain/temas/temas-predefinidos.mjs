@@ -2,8 +2,8 @@ import { tokensDelTema } from './tema.rules.mjs';
 
 /**
  * Temas predefinidos (D1): constantes del dominio, no se guardan en el estado ni se editan.
- * A y C toman los valores presentados el 05/11 y derivan el resto con la fórmula de los temas propios
- * (D2). B copia `frontend/src/styles/tokens.css` al pie de la letra (AC-01). La franja superior
+ * A y C toman los valores presentados el 05/11 y derivan el resto con la fórmula de los temas propios (D2); en C, el
+ * principal y el secundario se invirtieron en el lote 28 (PBI-0240). B copia `frontend/src/styles/tokens.css` al pie de la letra (AC-01). La franja superior
  * (`--ws-topbar`) de A y C es la presentada: `#2E1A5C` y el grafito `#1F2328`, con texto blanco.
  * El lienzo de la tienda (`--ws-store-bg`, ADR-0013) es un literal en los tres (D2 de la feature 004): el tono
  * intermedio que Daniel eligió frente al blanco el 2026-11-13 (AC-14). `--ws-border-strong` de B es `#8894a6` (WCAG 1.4.11).
@@ -27,9 +27,11 @@ const coloresB = {
   contrast: '#0F172A',
 };
 
+// Lote 28 (PBI-0240, ADR-0028): Daniel, en la reunión del 2026-11-20, «Principal negro, secundario, amarillo». Hasta
+// el lote, el ámbar era el principal y el grafito el secundario.
 const coloresC = {
-  primary: '#F2B705',
-  secondary: '#1F2328',
+  primary: '#1F2328',
+  secondary: '#F2B705',
   background: '#F2F3F5',
   surface: '#FFFFFF',
   contrast: '#1F2328',
@@ -62,7 +64,7 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-on-primary-soft': 'var(--ws-primary-strong)',
     '--ws-accent': '#c2410c',
     '--ws-accent-strong': 'color-mix(in srgb, var(--ws-accent) 78%, #0f172a)',
-    '--ws-accent-soft': 'color-mix(in srgb, var(--ws-accent) 9%, #ffffff)',
+    '--ws-accent-soft': 'color-mix(in srgb, var(--ws-accent) 20%, #ffffff)',
     '--ws-on-accent': '#ffffff',
     '--ws-accent-line': 'var(--ws-accent)',
     '--ws-link': 'var(--ws-primary)',
@@ -95,14 +97,12 @@ export const TEMAS_PREDEFINIDOS = Object.freeze([
     '--ws-footer-heading': '#ffffff',
   }),
   predefinido('c', 'Grafito y ámbar', coloresC, {
+    // Los tokens de la marca (principal, secundario, enlaces y foco) se derivan de los cinco colores desde el lote 28.
     ...tokensDelTema(coloresC),
-    '--ws-primary-soft': '#FFF6D6',
-    '--ws-on-primary': '#1F2328',
-    '--ws-on-primary-soft': '#8A5A00',
-    '--ws-on-accent': '#F2B705',
-    '--ws-link': '#1F2328',
-    '--ws-focus-ring': '#1F2328',
-    // La franja superior presentada el 05/11 es grafito con texto blanco, no el ámbar oscuro derivado.
+    // Con el grafito de principal y de contraste, la mezcla derivada al 62 % es el mismo grafito: el botón principal no
+    // cambiaría con el puntero encima. Como el acento fuerte del lote 20, se aclara al 90 % con el blanco (1.36:1).
+    '--ws-primary-strong': 'color-mix(in srgb, #1F2328 90%, #FFFFFF)',
+    // La franja superior presentada el 05/11 es grafito con texto blanco, no el principal fuerte derivado.
     '--ws-topbar': '#1F2328',
     '--ws-on-topbar': '#FFFFFF',
     '--ws-store-bg': '#F9F9FA',

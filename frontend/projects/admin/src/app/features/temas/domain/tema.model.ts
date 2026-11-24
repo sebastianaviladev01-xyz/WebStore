@@ -89,7 +89,9 @@ export interface ParContraste {
     | 'danger/dangerSoft'
     | 'warning/background'
     | 'warning/surface'
-    | 'warning/warningSoft';
+    | 'warning/warningSoft'
+    | 'contrast/accentSoft'
+    | 'muted/accentSoft';
   /** Relación de contraste redondeada a un decimal hacia abajo. */
   readonly relacion: number;
   readonly minimo: 4.5 | 3;

@@ -40,7 +40,8 @@ const CAMPOS_DE_COLOR: readonly {
   {
     campo: 'secondary',
     etiqueta: 'Secundario',
-    uso: 'Ofertas, contador del carrito y botón secundario de los banners.',
+    // Lote 28 (PBI-0240, ADR-0028): el secundario rellena los botones secundarios y tiñe el fondo con el puntero encima.
+    uso: 'Botones secundarios, ofertas, contador del carrito y fondo de los menús con el puntero encima.',
   },
   { campo: 'background', etiqueta: 'Fondo principal', uso: 'Lienzo de las páginas.' },
   { campo: 'surface', etiqueta: 'Fondo secundario', uso: 'Tarjetas, formularios y cabecera.' },
@@ -76,6 +77,8 @@ const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
   'warning/background': 'Alerta sobre el fondo principal',
   'warning/surface': 'Alerta sobre el fondo secundario',
   'warning/warningSoft': 'Alerta sobre su recuadro',
+  'contrast/accentSoft': 'Texto sobre el secundario suave (con el puntero encima)',
+  'muted/accentSoft': 'Texto secundario sobre el secundario suave',
 };
 
 /** «Texto sobre el fondo principal: 2.1:1, mínimo 4.5:1», el formato de AC-14. */

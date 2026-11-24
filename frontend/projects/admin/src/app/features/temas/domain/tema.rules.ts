@@ -143,6 +143,8 @@ const TEXTO_MINIMO = 4.5;
 const INTERFAZ_MINIMO = 3;
 /** Cuánto se distingue, como mínimo, el acento con el puntero encima del acento (lote 20). */
 const DIFERENCIA_AL_PASAR = 1.3;
+/** Cuánto secundario lleva el secundario suave sobre la superficie (lote 28, ADR-0028; antes, 9 % y sin uso). */
+const PESO_DEL_SECUNDARIO_SUAVE = 20;
 
 const mismoColor = (a: string, b: string): boolean => String(a).toUpperCase() === String(b).toUpperCase();
 
@@ -254,7 +256,7 @@ function tokensDeMarca({
   contrast: C,
 }: ColoresTema): Partial<Record<NombreToken, string>> {
   // El más legible entre el blanco, el contraste y la superficie (ADR-0019): con un principal muy claro sobre una
-  // base oscura, el blanco y el contraste son claros y solo la superficie se lee. A y C lo fijan con su literal.
+  // base oscura, el blanco y el contraste son claros y solo la superficie se lee. A lo fija con su literal.
   const sobrePrincipal = textoMasLegible(P, [BLANCO, C, Sf]);
   const pesoFuerte = mismoColor(sobrePrincipal, BLANCO) ? 62 : 88;
   const fuerteLegible =
@@ -275,7 +277,8 @@ function tokensDeMarca({
       relacionDeContraste(colorFuerte, mezclarSrgb(P, 0.1, Sf)) >= TEXTO_MINIMO ? principalFuerte : C,
     '--ws-accent': S,
     '--ws-accent-strong': acentoFuerte(S, C, sobreAcento),
-    '--ws-accent-soft': mezcla(S, 9, Sf),
+    // Fondo con el puntero encima o con el foco en la tienda (lote 28, ADR-0028): el secundario al 20 % sobre la superficie.
+    '--ws-accent-soft': mezcla(S, PESO_DEL_SECUNDARIO_SUAVE, Sf),
     '--ws-on-accent': sobreAcento,
     '--ws-accent-line': bordeDelAcento(S, F, Sf, C),
     '--ws-link': enlace,
@@ -503,6 +506,23 @@ export const PARES_DE_CONTRASTE: readonly DefinicionDePar[] = Object.freeze<Defi
     minimo: TEXTO_MINIMO,
     bloquea: false,
   },
+  // Lo que se escribe sobre el secundario suave, el fondo con el puntero encima o con el foco en la tienda (lote 28,
+  // ADR-0028): el texto y el texto tenue de los menús. Con el puntero encima, la tienda escribe con el contraste, no
+  // con el color de los enlaces, que en un tema oscuro no siempre se lee sobre él. Solo avisan.
+  {
+    par: 'contrast/accentSoft',
+    texto: '--ws-ink',
+    fondo: '--ws-accent-soft',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
+  {
+    par: 'muted/accentSoft',
+    texto: '--ws-muted',
+    fondo: '--ws-accent-soft',
+    minimo: TEXTO_MINIMO,
+    bloquea: false,
+  },
 ]);
 
 /** Relación de contraste, sin redondear, de cada par de `PARES_DE_CONTRASTE` en un mapa de tokens. */
@@ -517,7 +537,7 @@ export function medirPares(tokens: ValoresDeToken): Record<string, number> {
 }
 
 /**
- * Revisión de contraste de un tema (AC-14, D7): los 27 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
+ * Revisión de contraste de un tema (AC-14, D7): los 29 pares de `PARES_DE_CONTRASTE`, en ese orden, medidos
  * sobre los tokens que derivan de sus cinco colores. `bloquea` dice si ese par impide guardar cuando queda
  * bajo su mínimo y no depende de la medida.
  *

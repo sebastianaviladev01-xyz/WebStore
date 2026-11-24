@@ -65,11 +65,11 @@ test('predefinidos: mapa completo de tokens en orden y pares de contraste en cen
   }
 });
 
-test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 38 tokens, 27 pares y solo dos bloquean', () => {
+test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 38 tokens, 29 pares y solo dos bloquean', () => {
   assert.equal(TOKENS_DEL_TEMA.length, 38);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.ok(Object.isFrozen(TOKENS_DEL_TEMA) && Object.isFrozen(PARES_DE_CONTRASTE));
-  assert.equal(PARES_DE_CONTRASTE.length, 27);
+  assert.equal(PARES_DE_CONTRASTE.length, 29);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
@@ -134,11 +134,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve los 27 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
+test('revisarContraste devuelve los 29 pares, en el orden de PARES_DE_CONTRASTE, congelados y con bloqueo solo en contraste', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 27);
+    assert.equal(pares.length, 29);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),
@@ -196,7 +196,7 @@ test('validarNombreTema devuelve los mismos mensajes que el BFF', () => {
 
 // Lote 03 (PBI-0061 y PBI-0062, ADR-0019): la réplica calcula el error, la alerta y el texto sobre el principal como el
 // BFF; los casos de `tokensDelTema` lo comprueban valor por valor y aquí, el orden y los pares nuevos.
-test('el error y la alerta van justo después de la franja superior y sus seis pares, al final, solo avisan', () => {
+test('el error y la alerta van justo después de la franja superior y sus seis pares, antes de los del secundario suave, solo avisan', () => {
   const inicio = TOKENS_DEL_TEMA.indexOf('--ws-on-topbar') + 1;
   assert.deepEqual(TOKENS_DEL_TEMA.slice(inicio, inicio + 5), [
     '--ws-danger',
@@ -214,6 +214,9 @@ test('el error y la alerta van justo después de la franja superior y sus seis p
       ['warning/background', false, 4.5],
       ['warning/surface', false, 4.5],
       ['warning/warningSoft', false, 4.5],
+      // Lote 28 (ADR-0028): el texto y el texto tenue sobre el secundario suave, el fondo con el puntero encima.
+      ['contrast/accentSoft', false, 4.5],
+      ['muted/accentSoft', false, 4.5],
     ],
   );
 });
