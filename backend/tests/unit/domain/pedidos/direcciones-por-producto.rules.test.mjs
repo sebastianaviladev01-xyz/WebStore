@@ -137,7 +137,7 @@ test('una dirección de línea incompleta se rechaza como la principal', () => {
       ),
     (error) => {
       assert.equal(error.code, 'VALIDATION_ERROR');
-      assert.deepEqual(error.details, { fields: ['district'] });
+      assert.deepEqual(error.details, { fields: ['district'], productId: 'p-1' });
       return true;
     },
   );
@@ -149,6 +149,39 @@ test('una dirección de línea incompleta se rechaza como la principal', () => {
         principal,
       ),
     rechazo('VALIDATION_ERROR'),
+  );
+});
+
+test('el rechazo de una dirección de línea dice de qué producto es (details.productId)', () => {
+  // Lote 18 (ADR-0021): con una dirección por producto, la tienda marca el campo de esa línea.
+  assert.throws(
+    () =>
+      direccionesDeLasLineas(
+        [
+          { productId: 'p-1', quantity: 1, shipping: otra },
+          { product: { id: 'p-2' }, quantity: 1, shipping: { ...otra, addressLine: '', department: ' ' } },
+        ],
+        'per-product',
+        principal,
+      ),
+    (error) => {
+      assert.equal(error.code, 'VALIDATION_ERROR');
+      assert.deepEqual(error.details, { fields: ['addressLine', 'department'], productId: 'p-2' });
+      return true;
+    },
+  );
+  assert.throws(
+    () =>
+      direccionesDeLasLineas(
+        [{ productId: 'p-3', quantity: 1, shipping: ['Miraflores'] }],
+        'per-product',
+        principal,
+      ),
+    (error) => {
+      assert.equal(error.code, 'VALIDATION_ERROR');
+      assert.equal(error.details.productId, 'p-3');
+      return true;
+    },
   );
 });
 

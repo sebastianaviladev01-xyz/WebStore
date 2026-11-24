@@ -1662,6 +1662,20 @@ try {
   });
   if ((await request('/bff/content/settings')).deliveryAddressMode !== 'per-product')
     throw new Error('La tienda debe recibir una dirección por producto tal como se guardó');
+  const lineaIncompleta = await esperarError(
+    await raw('/bff/checkout/orders', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...pedido19,
+        items: [pedido19.items[0], { ...pedido19.items[1], shipping: { ...otraDireccion, district: '' } }],
+      }),
+    }),
+    400,
+    'VALIDATION_ERROR',
+    'Dirección de línea incompleta',
+  );
+  if (lineaIncompleta.details?.productId !== 'p-005' || lineaIncompleta.details?.fields?.[0] !== 'district')
+    throw new Error('El rechazo de la dirección de una línea debe nombrar su producto y su campo (lote 18)');
   const precios19 = Object.fromEntries(
     (await request('/bff/catalog/products')).map((item) => [item.id, item.price]),
   );
