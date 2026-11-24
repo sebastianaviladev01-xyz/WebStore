@@ -1,4 +1,4 @@
-import { CurrencyPipe } from '@angular/common';
+import { CurrencyPipe, NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { productosSugeridos } from '../../catalogo/domain/sugerencia.rules';
+import { LugarDeSugeridos } from '../../contenido/domain/contenido.model';
 
 /** Lo que pasó al agregar: cuántas unidades se pidieron, cuántas entraron y cuántas quedaron en el carrito. */
 export interface ResultadoAgregarAlCarrito {
@@ -15,12 +16,20 @@ export interface ResultadoAgregarAlCarrito {
   readonly enCarrito: number;
 }
 
+interface DatosDelDialogo extends ResultadoAgregarAlCarrito {
+  readonly lugar: LugarDeSugeridos;
+}
+
+/**
+ * «Producto agregado» con los sugeridos (PBI-0039). Desde el lote 16 (ADR-0021, PBI-0179; provisional) se muestra en el
+ * diálogo, por defecto, o en un panel lateral, según la configuración de la tienda. Los dos son el mismo `MatDialog`:
+ * foco atrapado, Escape, `role="dialog"` y el título como nombre accesible; el panel, además, con `aria-modal="true"`.
+ */
 @Component({
   selector: 'ws-add-to-cart-dialog',
-  imports: [CurrencyPipe, MatDialogModule, MatButtonModule, RouterLink],
+  imports: [CurrencyPipe, MatDialogModule, MatButtonModule, NgTemplateOutlet, RouterLink],
   template: `
-    <h2 mat-dialog-title>{{ data.agregadas ? 'Producto agregado' : 'No se agregaron unidades' }}</h2>
-    <mat-dialog-content>
+    <ng-template #detalle>
       @if (detail(); as text) {
         <p class="text-sm text-muted">{{ text }}</p>
       } @else {
@@ -58,17 +67,43 @@ export interface ResultadoAgregarAlCarrito {
           </ul>
         </div>
       }
-    </mat-dialog-content>
-    <mat-dialog-actions align="end">
-      <button mat-button type="button" (click)="close()">Seguir comprando</button>
-      <button mat-flat-button type="button" cdkFocusInitial (click)="verCarrito()">Ver carrito</button>
-    </mat-dialog-actions>
+    </ng-template>
+
+    @if (enPanel) {
+      <div class="ws-added-panel">
+        <div class="ws-added-panel-header">
+          <h2 mat-dialog-title>{{ titulo }}</h2>
+          <button type="button" class="ws-added-panel-close" aria-label="Cerrar" (click)="close()">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+        </div>
+        <div class="ws-added-panel-body">
+          <ng-container [ngTemplateOutlet]="detalle" />
+        </div>
+        <div class="ws-added-panel-actions">
+          <button mat-flat-button type="button" cdkFocusInitial (click)="verCarrito()">Ver carrito</button>
+          <button mat-stroked-button type="button" (click)="close()">Seguir comprando</button>
+        </div>
+      </div>
+    } @else {
+      <h2 mat-dialog-title>{{ titulo }}</h2>
+      <mat-dialog-content>
+        <ng-container [ngTemplateOutlet]="detalle" />
+      </mat-dialog-content>
+      <mat-dialog-actions align="end">
+        <button mat-button type="button" (click)="close()">Seguir comprando</button>
+        <button mat-flat-button type="button" cdkFocusInitial (click)="verCarrito()">Ver carrito</button>
+      </mat-dialog-actions>
+    }
   `,
+  host: { '[class.ws-added-panel-host]': 'enPanel' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgregarAlCarritoDialog {
-  protected readonly data = inject<ResultadoAgregarAlCarrito>(MAT_DIALOG_DATA);
+  protected readonly data = inject<DatosDelDialogo>(MAT_DIALOG_DATA);
   private readonly catalog = inject(CatalogoFacade);
+  protected readonly enPanel = this.data.lugar === 'side-panel';
+  protected readonly titulo = this.data.agregadas ? 'Producto agregado' : 'No se agregaron unidades';
   protected readonly sugeridos = computed(() =>
     productosSugeridos(this.catalog.products(), this.data.product),
   );
@@ -94,10 +129,31 @@ export class AgregarAlCarritoDialog {
   }
 }
 
-/** Abre «Producto agregado» con su tamaño: la tarjeta y la ficha lo abren igual (PBI-0080). */
+/**
+ * Abre «Producto agregado» con su tamaño: la tarjeta y la ficha lo abren igual (PBI-0080). En el panel lateral
+ * (PBI-0179) ocupa el alto de la ventana, pegado a la derecha, y hasta 420 px de ancho (todo el ancho en el celular).
+ */
 export function abrirAgregarAlCarrito(
   dialog: MatDialog,
   data: ResultadoAgregarAlCarrito,
+  lugar: LugarDeSugeridos,
 ): MatDialogRef<AgregarAlCarritoDialog> {
-  return dialog.open(AgregarAlCarritoDialog, { width: '500px', maxWidth: 'calc(100vw - 32px)', data });
+  const datos: DatosDelDialogo = { ...data, lugar };
+  if (lugar === 'side-panel')
+    return dialog.open(AgregarAlCarritoDialog, {
+      data: datos,
+      width: 'min(420px, 100vw)',
+      maxWidth: '100vw',
+      height: '100dvh',
+      maxHeight: '100dvh',
+      position: { top: '0', right: '0' },
+      panelClass: 'ws-cart-side-panel',
+      // Material ya oculta el resto de la página a los lectores de pantalla; el panel lo dice también con aria-modal.
+      ariaModal: true,
+    });
+  return dialog.open(AgregarAlCarritoDialog, {
+    width: '500px',
+    maxWidth: 'calc(100vw - 32px)',
+    data: datos,
+  });
 }

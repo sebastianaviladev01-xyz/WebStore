@@ -52,6 +52,9 @@ export interface AccesoInferior {
   readonly url: string;
 }
 
+/** Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, PBI-0179): el diálogo o un panel lateral. */
+export type LugarDeSugeridos = 'dialog' | 'side-panel';
+
 export interface ConfiguracionTienda {
   readonly storeName: string;
   readonly logoText: string;
@@ -74,6 +77,8 @@ export interface ConfiguracionTienda {
   readonly shippingPageEnabled: boolean;
   readonly privacyPageEnabled: boolean;
   readonly termsPageEnabled: boolean;
+  /** Opcional: un BFF anterior al lote 16 no lo envía, y entonces es el diálogo (`lugarDeLosSugeridos`). */
+  readonly addToCartDisplay?: LugarDeSugeridos;
 }
 
 export type PaginasHabilitadas = Pick<

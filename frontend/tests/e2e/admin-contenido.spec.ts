@@ -113,3 +113,31 @@ test('lote 15: Contenido edita correos, teléfonos, redes, avisos y accesos como
     });
   }
 });
+
+// Lote 16 (ADR-0021, PBI-0179): Contenido elige dónde muestra la tienda los sugeridos; por defecto, el diálogo. La
+// prueba deja el diálogo al terminar.
+test('lote 16: Contenido elige el panel lateral para los sugeridos y la tienda lo usa al agregar', async ({
+  page,
+  context,
+}) => {
+  await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+  const tienda = await context.newPage();
+  try {
+    await page.goto('/contenido');
+    const lugares = page.getByRole('radiogroup', { name: 'Productos sugeridos al agregar al carrito' });
+    await expect(lugares.getByRole('radio', { name: 'En el diálogo' })).toBeChecked();
+    await lugares.getByRole('radio', { name: 'En un panel lateral' }).check();
+    await page.getByRole('button', { name: 'Guardar configuración' }).click();
+    await expect(page.getByRole('status')).toHaveText('Configuración publicada en la tienda.');
+    expect((await leerSnapshot()).config['addToCartDisplay']).toBe('side-panel');
+
+    await tienda.goto(`${urls.storefront}/catalogo/oled-vision-55-4k`);
+    await tienda.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
+    const panel = tienda.getByRole('dialog', { name: 'Producto agregado' });
+    await expect(panel.getByRole('button', { name: 'Cerrar' })).toBeVisible();
+    const caja = (await panel.boundingBox())!;
+    expect(Math.round(caja.x + caja.width)).toBe(tienda.viewportSize()!.width);
+  } finally {
+    await enviarCambios({ config: { addToCartDisplay: 'dialog' } });
+  }
+});

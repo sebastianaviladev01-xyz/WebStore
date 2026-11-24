@@ -7,6 +7,8 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { CarritoFacade } from '../../carrito/application/carrito.facade';
+import { ContenidoFacade } from '../../contenido/application/contenido.facade';
+import { lugarDeLosSugeridos } from '../../contenido/domain/sugeridos.rules';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 
@@ -109,6 +111,7 @@ export class TarjetaProductoComponent {
   protected readonly prioridadInicial = computed(() => untracked(this.priority));
   private readonly cart = inject(CarritoFacade);
   private readonly dialog = inject(MatDialog);
+  private readonly content = inject(ContenidoFacade);
   private readonly router = inject(Router);
   private readonly clipboard = inject(Clipboard);
   private readonly snackBar = inject(MatSnackBar);
@@ -117,12 +120,16 @@ export class TarjetaProductoComponent {
   protected addToCart(): void {
     const product = this.product();
     const agregadas = this.cart.add(product);
-    abrirAgregarAlCarrito(this.dialog, {
-      product,
-      solicitadas: 1,
-      agregadas,
-      enCarrito: this.cart.quantityOf(product.id),
-    });
+    abrirAgregarAlCarrito(
+      this.dialog,
+      {
+        product,
+        solicitadas: 1,
+        agregadas,
+        enCarrito: this.cart.quantityOf(product.id),
+      },
+      lugarDeLosSugeridos(this.content.settings()),
+    );
   }
 
   protected copyLink(): void {

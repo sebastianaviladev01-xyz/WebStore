@@ -13,6 +13,8 @@ import { MatDialog } from '@angular/material/dialog';
 
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { CarritoFacade } from '../../carrito/application/carrito.facade';
+import { ContenidoFacade } from '../../contenido/application/contenido.facade';
+import { lugarDeLosSugeridos } from '../../contenido/domain/sugeridos.rules';
 import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 
 @Component({
@@ -199,6 +201,7 @@ export class DetalleProductoPage {
   protected readonly catalog = inject(CatalogoFacade);
   private readonly cart = inject(CarritoFacade);
   private readonly dialog = inject(MatDialog);
+  private readonly content = inject(ContenidoFacade);
   protected readonly quantity = signal(1);
   protected readonly product = computed(() => this.catalog.findBySlug(this.slug()));
   protected readonly images = computed(() => {
@@ -221,12 +224,16 @@ export class DetalleProductoPage {
     if (product) {
       const solicitadas = this.quantity();
       const agregadas = this.cart.add(product, solicitadas);
-      abrirAgregarAlCarrito(this.dialog, {
-        product,
-        solicitadas,
-        agregadas,
-        enCarrito: this.cart.quantityOf(product.id),
-      });
+      abrirAgregarAlCarrito(
+        this.dialog,
+        {
+          product,
+          solicitadas,
+          agregadas,
+          enCarrito: this.cart.quantityOf(product.id),
+        },
+        lugarDeLosSugeridos(this.content.settings()),
+      );
     }
   }
 }

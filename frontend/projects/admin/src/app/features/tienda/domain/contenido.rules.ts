@@ -1,3 +1,5 @@
+import type { LugarDeSugeridos } from './tienda.model';
+
 /**
  * Listas de Contenido (lote 15, ADR-0021): correos, teléfonos y redes (PBI-0169), avisos de la barra superior
  * (PBI-0175) y accesos inferiores del pie (PBI-0185). Son las reglas del BFF (`domain/admin/contenido.rules.mjs`),
@@ -14,6 +16,18 @@ export const MAXIMOS_DE_CONTENIDO = {
   textoDeAviso: 140,
   textoDeAcceso: 40,
 } as const;
+
+/**
+ * Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, ADR-0021, PBI-0179; provisional). Los valores
+ * son los del BFF (`MODOS_DE_SUGERIDOS`); el primero, el diálogo, es el que la tienda usa por defecto.
+ */
+export const LUGARES_DE_SUGERIDOS: readonly {
+  readonly valor: LugarDeSugeridos;
+  readonly etiqueta: string;
+}[] = [
+  { valor: 'dialog', etiqueta: 'En el diálogo' },
+  { valor: 'side-panel', etiqueta: 'En un panel lateral' },
+];
 
 const CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TELEFONO = /^\+?[\d\s().-]+$/;

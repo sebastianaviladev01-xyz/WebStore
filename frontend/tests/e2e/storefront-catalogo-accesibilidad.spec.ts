@@ -114,6 +114,64 @@ test.describe('PBI-0039: también te puede interesar', () => {
   });
 });
 
+test.describe('PBI-0179: sugeridos en un panel lateral (lote 16, ADR-0021)', () => {
+  /** La configuración de la tienda con el panel lateral, solo en la respuesta de esta prueba: no cambia el BFF. */
+  const conPanelLateral = (page: Page) =>
+    page.route('**/bff/content/settings', async (ruta) => {
+      const respuesta = await ruta.fetch();
+      await ruta.fulfill({
+        response: respuesta,
+        json: { ...(await respuesta.json()), addToCartDisplay: 'side-panel' },
+      });
+    });
+
+  for (const ancho of [1440, 375]) {
+    test(`a ${ancho} px, el panel ocupa el borde derecho, atrapa el foco, sugiere y se cierra con Escape`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: ancho, height: 800 });
+      await conPanelLateral(page);
+      await page.goto('/catalogo/oled-vision-55-4k');
+      const agregar = page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' });
+      await agregar.click();
+      const panel = page.getByRole('dialog', { name: 'Producto agregado' });
+      await expect(panel).toHaveAttribute('aria-modal', 'true');
+      await expect(panel.getByRole('button', { name: 'Ver carrito' })).toBeFocused();
+      await expect(panel.getByRole('button', { name: 'Seguir comprando' })).toBeVisible();
+      await expect(
+        panel.getByRole('list', { name: 'También te puede interesar' }).getByRole('listitem'),
+      ).toHaveCount(1);
+      // Pegado a la derecha y con el alto de la ventana; en el celular, con todo el ancho.
+      const caja = (await panel.boundingBox())!;
+      expect(Math.round(caja.x + caja.width)).toBe(ancho);
+      expect(Math.round(caja.y)).toBe(0);
+      expect(Math.round(caja.height)).toBe(800);
+      expect(Math.round(caja.width)).toBe(Math.min(ancho, 420));
+      // El foco no sale del panel.
+      for (let i = 0; i < 6; i++) {
+        await page.keyboard.press('Tab');
+        expect(await panel.evaluate((el) => el.contains(document.activeElement))).toBe(true);
+      }
+      await page.keyboard.press('Escape');
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await expect(agregar).toBeFocused();
+
+      await agregar.click();
+      await page
+        .getByRole('dialog', { name: 'Producto agregado' })
+        .getByRole('button', { name: 'Cerrar' })
+        .click();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+      await agregar.click();
+      await page
+        .getByRole('dialog', { name: 'Producto agregado' })
+        .getByRole('button', { name: 'Ver carrito' })
+        .click();
+      await expect(page).toHaveURL('/carrito');
+    });
+  }
+});
+
 test.describe('PBI-0046: favicon', () => {
   for (const [app, url] of [
     ['la tienda', urls.storefront + '/'],
