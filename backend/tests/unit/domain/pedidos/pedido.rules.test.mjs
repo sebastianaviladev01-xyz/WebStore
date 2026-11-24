@@ -51,6 +51,24 @@ test('la ventana de 24 horas incluye el instante exacto y termina un milisegundo
   assert.equal(canModify(pedido), false);
 });
 
+test('PBI-0245: la ventana se mide con el instante que recibe, no con el reloj del sistema', () => {
+  const compra = Date.parse('2026-11-10T15:00:00.000Z');
+  const pedido = { status: 'confirmed', createdAt: new Date(compra).toISOString() };
+  const dentro = new Date(compra + ORDER_MODIFICATION_WINDOW_MS);
+  const fuera = new Date(compra + ORDER_MODIFICATION_WINDOW_MS + 1);
+  // El reloj del sistema está una semana después: no debe decidir el resultado.
+  mock.timers.reset();
+  mock.timers.enable({ apis: ['Date'], now: compra + 7 * ORDER_MODIFICATION_WINDOW_MS });
+  try {
+    assert.equal(withinModificationWindow(pedido, dentro), true);
+    assert.equal(canModify(pedido, dentro), true);
+    assert.equal(withinModificationWindow(pedido, fuera), false);
+    assert.equal(canModify(pedido, fuera), false);
+  } finally {
+    mock.timers.reset();
+  }
+});
+
 test('un pedido sin enviar ni cancelar está abierto; uno enviado, entregado o cancelado, no', () => {
   for (const status of ['confirmed', 'processing']) assert.equal(isOrderOpen({ status }), true, status);
   for (const status of ['shipped', 'delivered', 'cancelled'])

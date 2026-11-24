@@ -48,7 +48,7 @@ export function createPedidosUseCases({ store, security, now = () => new Date() 
         'ORDER_NOT_MODIFIABLE',
         'El pedido ya se envió, se entregó o se canceló: no se puede cambiar.',
       );
-    if (!canModify(order))
+    if (!canModify(order, now()))
       throw new DomainError('conflict', 'ORDER_WINDOW_EXPIRED', 'La ventana de modificación ya venció.');
     return order;
   }
