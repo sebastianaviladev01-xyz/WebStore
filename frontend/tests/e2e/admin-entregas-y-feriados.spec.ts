@@ -102,9 +102,12 @@ test('PBI-0183: el superadministrador agrega y quita días no laborables, con fi
     // Otro año en el filtro: la lista cambia.
     await page.getByRole('combobox', { name: 'Año' }).click();
     await page.getByRole('option', { name: fechaDeEntrega(0).slice(0, 4) }).click();
+    // Se espera a que se cierre la lista: abrirla otra vez mientras se cierra deja la opción a medio quitar (CI).
+    await expect(page.getByRole('listbox')).toHaveCount(0);
     await expect(page.getByRole('table', { name: `Días no laborables de ${anio}` })).toHaveCount(0);
     await page.getByRole('combobox', { name: 'Año' }).click();
     await page.getByRole('option', { name: anio }).click();
+    await expect(page.getByRole('listbox')).toHaveCount(0);
 
     page.once('dialog', (dialogo) => void dialogo.accept());
     await tabla.getByRole('button', { name: `Quitar el ${visible}` }).click();
