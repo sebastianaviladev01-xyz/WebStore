@@ -45,7 +45,6 @@ for (const tema of ['a', 'b', 'c']) {
 
 export const escenarios = {
   ...tienda,
-  'tienda-inicio-anterior-b': { tienda: true, ruta: '/inicio-anterior', tema: 'b', antes: quieto },
   'banners-superadmin': { ruta: '/banners', rol: 'superadmin' },
   'banners-editar-hero-superadmin': {
     ruta: '/banners',

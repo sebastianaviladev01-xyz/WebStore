@@ -12,10 +12,12 @@ import {
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatRadioModule } from '@angular/material/radio';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { BYTES_MAXIMOS_FOTO } from '../domain/foto.rules';
 import {
+  LUGARES_DE_SUGERIDOS,
   MAXIMOS_DE_CONTENIDO,
   motivoDeCorreo,
   motivoDeDestino,
@@ -24,7 +26,7 @@ import {
   motivoDeRed,
   motivoDeTelefono,
 } from '../domain/contenido.rules';
-import { ConfiguracionTienda } from '../domain/tienda.model';
+import { ConfiguracionTienda, LugarDeSugeridos } from '../domain/tienda.model';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { conservarBorrador } from './borrador';
 import { CampoDeLista, FilaDeLista, ListaContenidoComponent } from './lista-contenido.component';
@@ -82,6 +84,7 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
     MatFormFieldModule,
     MatInputModule,
     MatCheckboxModule,
+    MatRadioModule,
     ListaContenidoComponent,
   ],
   template: `
@@ -263,6 +266,26 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
         <mat-checkbox formControlName="termsPageEnabled">Términos y condiciones</mat-checkbox>
       </div>
 
+      <!-- Lote 16 (ADR-0021, PBI-0179; provisional): dónde muestra la tienda «Producto agregado» con los sugeridos. -->
+      <fieldset class="mt-6 rounded-2xl border border-line p-4">
+        <legend id="ws-lugar-sugeridos" class="px-1 text-sm font-semibold">
+          Productos sugeridos al agregar al carrito
+        </legend>
+        <p id="ws-lugar-sugeridos-ayuda" class="text-xs leading-5 text-muted">
+          Dónde muestra la tienda «Producto agregado», con hasta tres productos de la misma categoría.
+        </p>
+        <mat-radio-group
+          formControlName="addToCartDisplay"
+          class="mt-3 grid gap-2 sm:grid-cols-2"
+          aria-labelledby="ws-lugar-sugeridos"
+          aria-describedby="ws-lugar-sugeridos-ayuda"
+        >
+          @for (lugar of lugaresDeSugeridos; track lugar.valor) {
+            <mat-radio-button [value]="lugar.valor">{{ lugar.etiqueta }}</mat-radio-button>
+          }
+        </mat-radio-group>
+      </fieldset>
+
       @if (saveError()) {
         <p
           class="mt-6 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
@@ -310,6 +333,7 @@ export class ContenidoPage {
     shippingPageEnabled: new FormControl(true, { nonNullable: true }),
     privacyPageEnabled: new FormControl(true, { nonNullable: true }),
     termsPageEnabled: new FormControl(true, { nonNullable: true }),
+    addToCartDisplay: new FormControl<LugarDeSugeridos>('dialog', { nonNullable: true }),
   });
 
   /** La configuración tal como se cargó en el formulario: lo que cambió se calcula contra ella (PBI-0120). */
@@ -396,6 +420,7 @@ export class ContenidoPage {
 
   // --- Listas de Contenido (lote 15, ADR-0021) ---
   protected readonly maximos = MAXIMOS_DE_CONTENIDO;
+  protected readonly lugaresDeSugeridos = LUGARES_DE_SUGERIDOS;
   protected readonly camposDeCorreo: readonly CampoDeLista[] = [
     { clave: 'value', etiqueta: 'Correo' },
     { clave: 'label', etiqueta: 'Etiqueta del correo', pista: 'Opcional.' },

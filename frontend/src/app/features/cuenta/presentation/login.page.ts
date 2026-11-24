@@ -49,7 +49,7 @@ import { rutaDeRetorno } from '../domain/cuenta.rules';
                 [queryParams]="{ email: form.controls.email.value }"
                 class="mt-2 inline-block underline underline-offset-4"
               >
-                Verificar mi cuenta
+                Verificar cuenta
               </a>
             }
           </div>

@@ -8,8 +8,9 @@ const rutas = [
   { ruta: '/', titulo: 'WebStore | Inicio', encabezado: 'El cine, en tu sala.' },
   { ruta: '/catalogo', titulo: 'WebStore | Productos', encabezado: 'Todos los productos' },
   { ruta: '/carrito', titulo: 'WebStore | Carrito', encabezado: 'Carrito' },
-  // Feature 004 (D1, TEST-16): la ruta no cambia; el título y el encabezado dicen «Finalizar compra».
-  { ruta: '/checkout', titulo: 'WebStore | Finalizar compra', encabezado: 'Finalizar compra' },
+  // Lote 16 (PBI-0190): la ruta no cambia; el título y el encabezado dicen «Datos de tu compra», y «Finalizar
+  // compra» queda solo para el botón del final.
+  { ruta: '/checkout', titulo: 'WebStore | Datos de tu compra', encabezado: 'Datos de tu compra' },
   { ruta: '/pedidos', titulo: 'WebStore | Mis pedidos', encabezado: 'Mis pedidos' },
   { ruta: '/cuenta/login', titulo: 'WebStore | Iniciar sesión', encabezado: 'Iniciar sesión' },
   { ruta: '/cuenta/registro', titulo: 'WebStore | Registro', encabezado: 'Crear cuenta' },
@@ -32,11 +33,12 @@ for (const { ruta, titulo, encabezado } of rutas) {
   });
 }
 
-test('el inicio anterior sigue publicado y no aparece en el menú', async ({ page }) => {
+test('PBI-0193: /inicio-anterior ya no existe y muestra la página 404 (lote 16, ADR-0021)', async ({
+  page,
+}) => {
   await page.goto('/inicio-anterior');
-  await expect(page).toHaveTitle('WebStore | Inicio (versión anterior)');
-  await expect(page.getByRole('region', { name: 'Promociones principales' })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Productos destacados' })).toBeVisible();
+  await expect(page).toHaveTitle('WebStore | Página no encontrada');
+  await expect(page.getByRole('heading', { level: 1, name: 'Página no encontrada' })).toBeVisible();
   await expect(page.locator('a[href="/inicio-anterior"]')).toHaveCount(0);
 });
 
@@ -70,3 +72,28 @@ test('la cabecera y el pie llevan a las secciones principales', async ({ page })
   await page.getByRole('link', { name: 'Ir al inicio' }).first().click();
   await expect(page).toHaveURL('/');
 });
+
+for (const ancho of [1440, 375]) {
+  test(`PBI-0191: a ${ancho} px, el buscador de la cabecera conserva su relleno al enfocarlo y al escribir`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: ancho, height: 800 });
+    await page.goto('/');
+    const buscador = page
+      .getByRole('banner')
+      .getByRole('searchbox', { name: 'Buscar productos' })
+      .filter({ visible: true });
+    const estilo = () =>
+      buscador.evaluate((el) => {
+        const css = getComputedStyle(el);
+        return { fondo: css.backgroundColor, contorno: css.outlineStyle };
+      });
+    const enReposo = await estilo();
+    await buscador.fill('oled');
+    await expect(buscador).toBeFocused();
+    const conFoco = await estilo();
+    expect(conFoco.fondo).toBe(enReposo.fondo);
+    // El foco se ve por el anillo de foco (input:focus-visible), no por el cambio de fondo.
+    expect(conFoco.contorno).toBe('solid');
+  });
+}

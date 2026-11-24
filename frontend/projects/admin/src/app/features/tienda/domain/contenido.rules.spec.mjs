@@ -87,3 +87,22 @@ test('los máximos de cada lista son los del BFF', () => {
     textoDeAcceso: 40,
   });
 });
+
+test('lote 16 (PBI-0179): los sugeridos van en el diálogo o en un panel lateral, los mismos lugares que acepta el BFF', async () => {
+  const { LUGARES_DE_SUGERIDOS } = await import(
+    `data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`
+  );
+  const { MODOS_DE_SUGERIDOS, MODO_DE_SUGERIDOS_POR_DEFECTO } = await import(
+    new URL('../../../../../../../../backend/src/domain/admin/contenido.rules.mjs', import.meta.url)
+  );
+  assert.deepEqual(
+    LUGARES_DE_SUGERIDOS.map((lugar) => lugar.valor),
+    [...MODOS_DE_SUGERIDOS],
+  );
+  assert.deepEqual(
+    LUGARES_DE_SUGERIDOS.map((lugar) => lugar.etiqueta),
+    ['En el diálogo', 'En un panel lateral'],
+  );
+  // El primero es el que la tienda usa por defecto.
+  assert.equal(LUGARES_DE_SUGERIDOS[0].valor, MODO_DE_SUGERIDOS_POR_DEFECTO);
+});

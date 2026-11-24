@@ -115,7 +115,7 @@
 
 /*
  * Enlaces de servicio a la derecha (Envíos): mismo color y peso que las categorías, con ícono, para que se
- * lean como enlace y no como un dato suelto. La cabecera anterior conserva su gris en home-previous.css.
+ * lean como enlace y no como un dato suelto.
  */
 .ws-navigation-secondary .ws-navigation-trigger {
   gap: 7px;
@@ -739,9 +739,10 @@
 }
 
 /* El panel de los tres pasos del checkout tiene el aspecto del resumen del pedido, sin su sticky (feature 004,
-   D4). */
+   D4); el bloque de «Finalizar compra», debajo de los pasos, también (lote 16, PBI-0190). */
 .ws-order-summary,
-.ws-checkout-panel {
+.ws-checkout-panel,
+.ws-checkout-confirm {
   padding: 28px;
   border: 1px solid var(--ws-border);
   border-radius: 14px;
@@ -766,8 +767,8 @@
 
 /* Resumen del carrito y del checkout: acompaña al scroll desde escritorio, a la misma distancia de
    la cabecera que los filtros (antes se metía 11 px debajo de ella). En pantallas bajas se
-   desplaza por dentro para que su botón principal ("Confirmar pedido" en el carrito y "Finalizar
-   compra" en el checkout) nunca quede fuera de la vista. */
+   desplaza por dentro para que su contenido nunca quede fuera de la vista ("Confirmar pedido" en el
+   carrito; en el checkout, "Finalizar compra" va debajo de los pasos desde el lote 16, PBI-0190). */
 @media (min-width: 1024px) {
   .ws-order-summary {
     position: sticky;
@@ -1187,7 +1188,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .ws-order-summary,
-  .ws-checkout-panel {
+  .ws-checkout-panel,
+  .ws-checkout-confirm {
     padding: 22px;
   }
 }
@@ -1259,4 +1261,65 @@
   .ws-header-main > .ml-auto {
     margin-left: calc(-0.65rem - 5px);
   }
+}
+
+/*
+ * «Producto agregado» en un panel lateral (lote 16, ADR-0021, PBI-0179; provisional), si la configuración de la tienda
+ * lo elige. Es el mismo MatDialog que el diálogo, pegado a la derecha y con el alto de la ventana: solo se cambian sus
+ * tokens (esquinas rectas) y el reparto del contenido, con las acciones siempre a la vista abajo.
+ */
+.ws-cart-side-panel {
+  --mat-dialog-container-shape: 0;
+}
+
+.ws-added-panel-host,
+.ws-added-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ws-added-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-right: 20px;
+  border-bottom: 1px solid var(--ws-border);
+}
+
+.ws-added-panel-close {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--ws-border);
+  border-radius: 50%;
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+}
+
+.ws-added-panel-close svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.ws-added-panel-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.ws-added-panel-actions {
+  display: grid;
+  gap: 12px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--ws-border);
 }

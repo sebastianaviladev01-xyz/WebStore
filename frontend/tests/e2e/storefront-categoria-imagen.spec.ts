@@ -6,7 +6,7 @@ import { enviarCambios } from './apoyo/catalogo';
  * Lote 07b (ADR-0017), PBI-0052: la tienda muestra la imagen pequeña de una categoría junto a su nombre, en el menú de
  * categorías del escritorio y en el panel del celular, solo si la categoría tiene una. Sin imagen, como antes. Lote 11
  * (ADR-0021, PBI-0162): también en el filtro «Categoría» del catálogo y en las tarjetas «Compra por categoría» del
- * inicio y de /inicio-anterior.
+ * inicio (`/inicio-anterior` se quitó en el lote 16, PBI-0193).
  */
 /** PNG gris de 100 × 100 px: desde el lote 11 (PBI-0176) el BFF solo acepta la versión de 100 × 100 px. */
 const IMAGEN =
@@ -48,17 +48,16 @@ test.describe('imagen de la categoría', () => {
     await expect(page.getByRole('combobox', { name: 'Categoría' })).toHaveText('TV y audio');
   });
 
-  for (const ruta of ['/', '/inicio-anterior'])
-    test(`PBI-0162: las tarjetas «Compra por categoría» de ${ruta} muestran la imagen, solo si la categoría la tiene`, async ({
-      page,
-    }) => {
-      await page.goto(ruta);
-      const seccion = page.getByRole('region', { name: 'Compra por categoría' });
-      const tv = seccion.getByRole('link', { name: /^TV y audio/ });
-      await expect(tv.locator('img')).toHaveAttribute('src', IMAGEN);
-      await expect(tv.locator('img')).toHaveAttribute('alt', '');
-      await expect(seccion.getByRole('link', { name: /^Electrohogar/ }).locator('img')).toHaveCount(0);
-    });
+  test('PBI-0162: las tarjetas «Compra por categoría» del inicio muestran la imagen, solo si la categoría la tiene', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const seccion = page.getByRole('region', { name: 'Compra por categoría' });
+    const tv = seccion.getByRole('link', { name: /^TV y audio/ });
+    await expect(tv.locator('img')).toHaveAttribute('src', IMAGEN);
+    await expect(tv.locator('img')).toHaveAttribute('alt', '');
+    await expect(seccion.getByRole('link', { name: /^Electrohogar/ }).locator('img')).toHaveCount(0);
+  });
 
   test.describe('en el celular', () => {
     test.use({ viewport: { width: 375, height: 812 } });

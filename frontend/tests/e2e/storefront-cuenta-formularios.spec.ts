@@ -21,7 +21,7 @@ async function registrar(page: Page, correo: string): Promise<void> {
   await page.getByRole('textbox', { name: 'DNI' }).fill('45678912');
   await page.getByRole('textbox', { name: 'Contraseña' }).fill(CONTRASENA);
   await page.getByRole('button', { name: 'Registrar y verificar correo' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Verifica tu cuenta' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Verificar cuenta' })).toBeVisible();
 }
 
 const codigoDeDemostracion = async (page: Page): Promise<string> => {
@@ -69,7 +69,9 @@ test.describe('PBI-0098: verificar la cuenta', () => {
     await expect(page.getByText(/inicia sesión para recibir un código nuevo/i)).toHaveCount(0);
     await page.getByRole('textbox', { name: 'Correo' }).fill(correo);
     await page.getByRole('button', { name: 'Enviar un código nuevo' }).click();
-    await expect(page.getByRole('status')).toContainText('Si hay una cuenta sin verificar con ese correo');
+    await expect(page.getByRole('status')).toHaveText(
+      'Si hay una cuenta sin verificar con ese correo, te enviamos un código nuevo y el anterior deja de valer.',
+    );
     const segundo = await codigoDeDemostracion(page);
     expect(segundo).not.toBe(primero);
 
@@ -86,28 +88,28 @@ test.describe('PBI-0098: verificar la cuenta', () => {
     await page.goto('/cuenta/login');
     await ingresar(page, correo);
     await expect(page.getByRole('alert')).toContainText('Verifica tu cuenta');
-    await page.getByRole('link', { name: 'Verificar mi cuenta' }).click();
+    await page.getByRole('link', { name: 'Verificar cuenta' }).click();
     await expect(page).toHaveURL(/\/cuenta\/verificar/);
     await expect(page.getByRole('textbox', { name: 'Correo' })).toHaveValue(correo);
   });
 });
 
-test.describe('PBI-0154: recuperar la contraseña no promete un correo', () => {
-  test('los textos hablan de un código que se genera, no de un correo que se envía, y se puede cambiar la contraseña', async ({
+test.describe('PBI-0154 y PBI-0180: recuperar la contraseña', () => {
+  test('los textos dicen que te enviamos un código, el de demostración se ve en la página y se puede cambiar la contraseña', async ({
     page,
     request,
   }) => {
     const { correo } = await cuentaVerificada(request);
     await page.goto('/cuenta/recuperar');
     const main = page.getByRole('main');
-    await expect(main).toContainText('Escribe el correo de tu cuenta para generar un código temporal.');
+    await expect(main).toContainText('Escribe el correo de tu cuenta y te enviaremos un código temporal.');
     await page.getByRole('textbox', { name: 'Correo' }).fill(correo);
     await page.getByRole('button', { name: 'Enviar código' }).click();
     await expect(main.getByRole('status')).toHaveText(
-      'Si hay una cuenta con ese correo, generamos un código temporal.',
+      'Si hay una cuenta con ese correo, te enviamos un código temporal.',
     );
-    // Ningún texto de la página dice que llegará un correo.
-    await expect(main).not.toContainText(/recibirás|enviaremos|te enviamos|bandeja/i);
+    // Lote 16 (PBI-0180): los textos dicen «te enviamos», como pidió Daniel; ya no hablan de generar el código.
+    await expect(main).not.toContainText(/generamos|generar un código/i);
     const codigo = (await page.getByText('Canal local de demostración:').locator('..').textContent())?.match(
       /\d{6}/,
     )?.[0];

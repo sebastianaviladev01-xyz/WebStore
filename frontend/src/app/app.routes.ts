@@ -19,13 +19,6 @@ export const routes: Routes = [
         title: 'WebStore | Inicio',
       },
       {
-        // Inicio previo a la alineación con la propuesta B, publicado aparte para compararlo. No está en el menú.
-        path: 'inicio-anterior',
-        loadComponent: () => import('./features/vitrina/presentation/inicio.page').then((m) => m.InicioPage),
-        data: { variant: 'anterior' },
-        title: 'WebStore | Inicio (versión anterior)',
-      },
-      {
         path: 'catalogo',
         loadChildren: () => import('./features/vitrina/vitrina.routes').then((m) => m.vitrinaRoutes),
       },
@@ -39,7 +32,7 @@ export const routes: Routes = [
         path: 'checkout',
         loadComponent: () =>
           import('./features/checkout/presentation/checkout.page').then((m) => m.CheckoutPage),
-        title: 'WebStore | Finalizar compra',
+        title: 'WebStore | Datos de tu compra',
       },
       {
         path: 'pedido/:orderId',

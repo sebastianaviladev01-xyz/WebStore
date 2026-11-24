@@ -8,12 +8,13 @@ import {
   ingresarAlAdmin,
   urls,
 } from './apoyo/entorno';
+import { esperarFotos } from './apoyo/fotos';
 
 /**
  * Compra como invitado: el checkout cotiza el envío por distrito, crea el pedido en el BFF, lo muestra en
  * «Mis pedidos» del dispositivo y el Admin lo ve en Pedidos y al comprador en Clientes. Feature 004 (D1, TEST-11):
- * se llega por «Ver carrito» y «Confirmar pedido», y el checkout dice «Finalizar compra» en el `h1`, en el título
- * del navegador y en el botón que crea el pedido. Como el `h1` y el botón comparten el texto, se buscan por rol.
+ * se llega por «Ver carrito» y «Confirmar pedido». Lote 16 (ADR-0021, PBI-0190): el checkout se titula «Datos de tu
+ * compra» (`h1` y título del navegador) y «Finalizar compra» es solo el botón que crea el pedido, al final.
  */
 test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ page }) => {
   const correo = correoUnico('invitado');
@@ -27,9 +28,11 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await page.getByRole('main').getByRole('link', { name: 'Confirmar pedido' }).click();
 
   await expect(page).toHaveURL('/checkout');
-  await expect(page).toHaveTitle('WebStore | Finalizar compra');
-  await expect(page.getByRole('heading', { level: 1, name: 'Finalizar compra', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: 'Checkout' })).toHaveCount(0);
+  await expect(page).toHaveTitle('WebStore | Datos de tu compra');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Datos de tu compra', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Finalizar compra' })).toHaveCount(0);
   await expect(finalizar).toBeDisabled();
   await expect(page.getByRole('link', { name: 'Volver al carrito' })).toBeVisible();
 
@@ -145,13 +148,62 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
   await expect(page.getByRole('main')).toContainText(correo);
 });
 
-test('TEST-11: con el carrito vacío, el checkout se titula «Finalizar compra» sobre el estado vacío', async ({
+test('TEST-11: con el carrito vacío, el checkout se titula «Datos de tu compra» sobre el estado vacío', async ({
   page,
 }) => {
   await page.goto('/checkout');
   await expect(page).toHaveURL('/checkout');
-  await expect(page).toHaveTitle('WebStore | Finalizar compra');
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Finalizar compra');
+  await expect(page).toHaveTitle('WebStore | Datos de tu compra');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Datos de tu compra');
   await expect(page.getByRole('heading', { level: 2, name: 'No hay productos para comprar' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Finalizar compra' })).toHaveCount(0);
+});
+
+test.describe('PBI-0190: «Finalizar compra» al final (lote 16, ADR-0021)', () => {
+  for (const ancho of [1440, 375]) {
+    test(`a ${ancho} px, el botón va después del método de pago, de la casilla de términos y del total`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: ancho, height: 900 });
+      await page.goto('/catalogo/soundbar-cinema-500');
+      await page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Ver carrito' }).click();
+      await page.getByRole('main').getByRole('link', { name: 'Confirmar pedido' }).click();
+      await expect(page.getByRole('button', { name: 'Finalizar compra' })).toBeVisible();
+      await esperarFotos(page);
+
+      // Las cajas en coordenadas del documento, medidas a la vez para que el desplazamiento no las mueva.
+      const cajas = await page.getByRole('main').evaluate((main) => {
+        const caja = (texto: string) => {
+          const el = [...main.querySelectorAll<HTMLElement>('button, a, span, label, p')].find(
+            (candidato) => candidato.textContent?.trim() === texto && candidato.childElementCount === 0,
+          );
+          const r = el!.getBoundingClientRect();
+          return { x: r.x, top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, right: r.right };
+        };
+        return {
+          boton: caja('Finalizar compra'),
+          pago: caja('Transferencia bancaria'),
+          casilla: caja('Acepto los términos y condiciones'),
+          enlace: caja('Leer los términos y condiciones'),
+          total: caja('Total'),
+        };
+      });
+      expect(cajas.boton.top).toBeGreaterThan(cajas.pago.bottom);
+      if (ancho === 375) {
+        // La casilla y su enlace van encima del botón, y el resumen antes: el total se ve antes de pagar.
+        expect(cajas.boton.top).toBeGreaterThan(cajas.enlace.bottom);
+        expect(cajas.boton.top).toBeGreaterThan(cajas.total.bottom);
+      } else {
+        // En escritorio, la casilla va a la izquierda del botón, en la misma franja; el resumen, al lado.
+        expect(cajas.boton.x).toBeGreaterThan(cajas.casilla.right);
+        expect(cajas.boton.bottom).toBeGreaterThan(cajas.casilla.top);
+      }
+      // Ningún otro control de la compra queda después del botón en el orden del formulario.
+      const ultimoDelFormulario = await page.evaluate(() =>
+        [...document.querySelectorAll('form button, form input, form a')].at(-1)?.textContent?.trim(),
+      );
+      expect(ultimoDelFormulario).toBe('Finalizar compra');
+    });
+  }
 });

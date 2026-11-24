@@ -264,5 +264,7 @@ export const seed = {
     shippingPageEnabled: true,
     privacyPageEnabled: true,
     termsPageEnabled: true,
+    // Dónde van los sugeridos al agregar al carrito: el diálogo, salvo que la tienda elija el panel lateral (PBI-0179).
+    addToCartDisplay: 'dialog',
   },
 };

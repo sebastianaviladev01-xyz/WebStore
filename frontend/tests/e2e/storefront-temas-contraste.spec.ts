@@ -17,8 +17,8 @@ import { enlaceDelCarrito, urls } from './apoyo/entorno';
 
 /**
  * Temas y contraste en la tienda (lote 03, ADR-0017 y ADR-0019).
- * - PBI-0084: en `/inicio-anterior`, el contador del carrusel y la categoría del menú con el puntero encima usan el
- *   color de los enlaces, no el principal: con A, B y C se leen a 4.5:1 o más.
+ * - PBI-0084: la categoría del menú con el puntero encima se lee a 4.5:1 o más con A, B y C. El contador del carrusel
+ *   que también medía solo existía en `/inicio-anterior`, que se quitó en el lote 16 (PBI-0193).
  * - PBI-0060 y PBI-0061: con un tema propio oscuro, lo escrito en un campo, las opciones de una lista y el mensaje de
  *   error se leen.
  * - PBI-0062: con un principal muy claro sobre una base oscura, el texto del botón principal se lee.
@@ -56,16 +56,10 @@ test.describe('Temas y contraste en la tienda', () => {
   test.afterAll(() => restablecerTemas(PREFIJO));
 
   for (const tema of TEMAS) {
-    test(`PBI-0084: con ${tema.toUpperCase()}, el contador del carrusel y la categoría activa de /inicio-anterior se leen`, async ({
-      page,
-    }) => {
+    test(`PBI-0084: con ${tema.toUpperCase()}, la categoría activa del menú se lee`, async ({ page }) => {
       await activarTema(tema);
-      await page.goto('/inicio-anterior');
+      await page.goto('/');
       const enlace = await colorDelToken(page, '--ws-link');
-
-      const contador = await medirTexto(page.getByText(/^\s*1 \/ \d+\s*$/));
-      expect(enRgb(contador.color), 'el contador usa el color de los enlaces').toBe(enlace);
-      exigir(tema, 'contador del carrusel «1 / N»', contador.color, contador.fondo, MINIMO.texto);
 
       const categoria = page
         .getByRole('navigation', { name: 'Categorías principales' })

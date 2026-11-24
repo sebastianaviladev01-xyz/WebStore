@@ -4,11 +4,13 @@ import {
   Component,
   computed,
   ElementRef,
+  effect,
   inject,
   input,
   signal,
   viewChild,
 } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -17,11 +19,13 @@ import { Router, RouterLink } from '@angular/router';
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import {
   FiltrosCatalogo,
-  TOPES_DE_PRECIO,
+  filtrarPorNombreYCategoria,
   filtrarProductos,
   hayFiltrosCatalogo,
   leerFiltrosCatalogo,
+  limitesDePrecio,
   parametrosDeFiltrosCatalogo,
+  validarRangoDePrecio,
 } from '../../catalogo/domain/filtro-catalogo.rules';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
@@ -38,6 +42,7 @@ const FOTOS_PRIORITARIAS = 6;
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    ReactiveFormsModule,
     TarjetaProductoComponent,
     RouterLink,
   ],
@@ -138,19 +143,52 @@ const FOTOS_PRIORITARIAS = 6;
               </mat-select>
             </mat-form-field>
 
-            <mat-form-field subscriptSizing="dynamic">
-              <mat-label>Precio máximo</mat-label>
-              <mat-select
-                canSelectNullableOptions
-                [value]="filtros().precioMaximo"
-                (selectionChange)="aplicar({ precioMaximo: $event.value })"
-              >
-                <mat-option [value]="null">Todos los precios</mat-option>
-                @for (tope of topes; track tope) {
-                  <mat-option [value]="tope">S/ {{ tope.toLocaleString('en-US') }}</mat-option>
+            <!--
+              Lote 16 (ADR-0021, PBI-0181): rango de precio con mínimo y máximo. Se aplica al confirmar el campo (salir
+              de él o Enter), no con cada tecla, para no avisar de un rango a medio escribir.
+            -->
+            <div class="ws-price-range grid gap-4" role="group" aria-label="Rango de precio">
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Precio mínimo (S/)</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  aria-describedby="ws-precio-ayuda"
+                  [placeholder]="placeholderMinimo()"
+                  [formControl]="precioMinimo"
+                  (change)="aplicarPrecio()"
+                  (keydown.enter)="aplicarPrecio()"
+                />
+                @if (precioMinimo.errors?.['motivo']; as error) {
+                  <mat-error>{{ error }}</mat-error>
                 }
-              </mat-select>
-            </mat-form-field>
+              </mat-form-field>
+              <mat-form-field subscriptSizing="dynamic">
+                <mat-label>Precio máximo (S/)</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  aria-describedby="ws-precio-ayuda"
+                  [placeholder]="placeholderMaximo()"
+                  [formControl]="precioMaximo"
+                  (change)="aplicarPrecio()"
+                  (keydown.enter)="aplicarPrecio()"
+                />
+                @if (precioMaximo.errors?.['motivo']; as error) {
+                  <mat-error>{{ error }}</mat-error>
+                }
+              </mat-form-field>
+              @if (limites(); as limite) {
+                <p id="ws-precio-ayuda" class="text-xs leading-5 text-muted">
+                  En el catálogo: de S/ {{ formatoPrecio(limite.minimo) }} a S/
+                  {{ formatoPrecio(limite.maximo) }}.
+                </p>
+              }
+            </div>
           </div>
           @if (hasFilters()) {
             <button type="button" class="ws-text-link ws-filter-clear" (click)="clearFilters()">
@@ -215,18 +253,47 @@ export class CatalogoPage {
   protected readonly fotosPrioritarias = FOTOS_PRIORITARIAS;
   readonly categoria = input<string | undefined>();
   readonly buscar = input<string | undefined>();
+  readonly precioMin = input<string | undefined>();
+  readonly precioMax = input<string | undefined>();
+  /** El tope del filtro anterior (lote 05): un enlace guardado con `precio` se lee como el máximo (PBI-0181). */
   readonly precio = input<string | undefined>();
 
   protected readonly catalog = inject(CatalogoFacade);
   private readonly router = inject(Router);
   protected readonly filtersOpen = signal(false);
-  protected readonly topes = TOPES_DE_PRECIO;
   private readonly botonFiltros = viewChild<ElementRef<HTMLButtonElement>>('botonFiltros');
 
   /** Los filtros son los parámetros de la URL: el panel, la cabecera y los enlaces de categoría los cambian (PBI-0108). */
   protected readonly filtros = computed(() =>
-    leerFiltrosCatalogo({ buscar: this.buscar(), categoria: this.categoria(), precio: this.precio() }),
+    leerFiltrosCatalogo({
+      buscar: this.buscar(),
+      categoria: this.categoria(),
+      precioMin: this.precioMin(),
+      precioMax: this.precioMax(),
+      precio: this.precio(),
+    }),
   );
+  /**
+   * Lo escrito en los campos del precio. Vuelve a lo de la URL cuando esta cambia (Limpiar, Atrás). Un rango que no
+   * vale marca el campo con su motivo, que se borra al volver a escribir.
+   */
+  protected readonly precioMinimo = new FormControl('', { nonNullable: true });
+  protected readonly precioMaximo = new FormControl('', { nonNullable: true });
+  /** El precio más bajo y el más alto de lo que se ve sin el filtro de precio, como ayuda para el rango. */
+  protected readonly limites = computed(() =>
+    limitesDePrecio(
+      filtrarPorNombreYCategoria(this.catalog.products(), this.catalog.categories(), this.filtros()),
+    ),
+  );
+  protected readonly placeholderMinimo = computed(() => {
+    const limite = this.limites();
+    return limite ? formatoPrecio(limite.minimo) : '';
+  });
+  protected readonly placeholderMaximo = computed(() => {
+    const limite = this.limites();
+    return limite ? formatoPrecio(limite.maximo) : '';
+  });
+  protected readonly formatoPrecio = formatoPrecio;
   protected readonly categoryTitle = computed(
     () =>
       this.catalog.categories().find((category) => category.id === this.filtros().categoria)?.name ??
@@ -240,6 +307,27 @@ export class CatalogoPage {
   protected onSearch(event: Event): void {
     // Cada letra reemplaza la entrada del historial, para que «Atrás» no las recorra una por una.
     this.aplicar({ buscar: (event.target as HTMLInputElement).value }, true);
+  }
+
+  constructor() {
+    effect(() => {
+      const { precioMinimo, precioMaximo } = this.filtros();
+      this.precioMinimo.setValue(textoDePrecio(precioMinimo));
+      this.precioMaximo.setValue(textoDePrecio(precioMaximo));
+    });
+  }
+
+  /** Aplica el rango escrito si vale; si no, cada campo muestra su motivo y la URL no cambia (PBI-0181). */
+  protected aplicarPrecio(): void {
+    const rango = validarRangoDePrecio(this.precioMinimo.value, this.precioMaximo.value);
+    if (!rango.ok) {
+      marcarMotivo(this.precioMinimo, rango.errores.minimo);
+      marcarMotivo(this.precioMaximo, rango.errores.maximo);
+      return;
+    }
+    const { precioMinimo, precioMaximo } = this.filtros();
+    if (precioMinimo === rango.precioMinimo && precioMaximo === rango.precioMaximo) return;
+    this.aplicar({ precioMinimo: rango.precioMinimo, precioMaximo: rango.precioMaximo });
   }
 
   protected clearFilters(): void {
@@ -260,4 +348,20 @@ export class CatalogoPage {
     const boton = this.botonFiltros()?.nativeElement;
     if (boton?.checkVisibility()) boton.focus();
   }
+}
+
+function textoDePrecio(precio: number | null): string {
+  return precio === null ? '' : String(precio);
+}
+
+/** Los precios como los muestra la tienda: con separador de miles y sin decimales si no los tienen. */
+function formatoPrecio(precio: number): string {
+  return precio.toLocaleString('en-US', { maximumFractionDigits: 2 });
+}
+
+/** Marca el campo con el motivo por el que no vale; sin motivo, lo deja como está. */
+function marcarMotivo(control: FormControl<string>, motivo: string | undefined): void {
+  if (!motivo) return;
+  control.setErrors({ motivo });
+  control.markAsTouched();
 }

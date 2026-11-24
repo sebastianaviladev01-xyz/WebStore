@@ -1,6 +1,6 @@
 import { LADO_IMAGEN_DE_CATEGORIA, leerImagen } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
-import { LISTAS_DE_CONTENIDO, validarListaDeContenido } from './contenido.rules.mjs';
+import { LISTAS_DE_CONTENIDO, esModoDeSugeridos, validarListaDeContenido } from './contenido.rules.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
 import { COMPLAINT_STATUSES } from '../reclamos/reclamo.rules.mjs';
 
@@ -267,6 +267,9 @@ export function requireValidConfig(config, current) {
       result[key] = lista.valor;
       continue;
     }
+    // Lote 16 (ADR-0021, PBI-0179): los sugeridos van en el diálogo o en un panel lateral.
+    if (key === 'addToCartDisplay' && !esModoDeSugeridos(value))
+      throw invalid('config', key, 'los sugeridos van en el diálogo o en un panel lateral');
     const expected = typeof current[key];
     if (typeof value !== expected) throw invalid('config', key, 'hay un campo con un valor que no es válido');
     result[key] = value;

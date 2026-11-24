@@ -8,9 +8,9 @@ import { CuentaFacade } from '../application/cuenta.facade';
 import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
 
 /**
- * Recuperar la contraseña (PBI-0154, lote 08). Como en `/cuenta/verificar` (PBI-0098), los textos no dicen que se envía
- * un correo: no hay correo real (PBI-0008) y el código de demostración se muestra en la página. Provisional, por
- * confirmar con Daniel (decisiones pendientes, «Textos de verificar la cuenta»).
+ * Recuperar la contraseña (PBI-0154, lote 08). Lote 16 (ADR-0021, PBI-0180): como en `/cuenta/verificar`, los textos
+ * dicen «te enviamos un código», como pidió Daniel. Sin correo real (PBI-0008), el código de demostración se muestra en
+ * la página, en el «Canal local de demostración».
  */
 @Component({
   selector: 'ws-recover-page',
@@ -20,7 +20,7 @@ import { contrasenaSegura, MENSAJE_CONTRASENA } from './contrasena.validator';
       <form [formGroup]="form" (ngSubmit)="submit()" class="ws-card ws-outline-fields w-full max-w-lg p-8">
         <h1 class="text-4xl font-semibold">Recuperar contraseña</h1>
         <p class="mt-3 text-sm leading-6 text-muted">
-          Escribe el correo de tu cuenta para generar un código temporal. Después podrás definir una
+          Escribe el correo de tu cuenta y te enviaremos un código temporal. Después podrás definir una
           contraseña nueva.
         </p>
         <div class="mt-6 grid gap-3">
@@ -128,7 +128,7 @@ export class RecuperarPage {
       if (result.ok) {
         this.codeRequested.set(true);
         this.demoCode.set(result.testCode ?? '');
-        this.message.set('Si hay una cuenta con ese correo, generamos un código temporal.');
+        this.message.set('Si hay una cuenta con ese correo, te enviamos un código temporal.');
       }
       return;
     }

@@ -17,8 +17,9 @@ import { correoUnico } from './apoyo/entorno';
  * va en la capa base, así que las utilidades de color y de subrayado de un enlace se aplican.
  * - TEST-08 (AC-01): a 375 px, con A, B y C, «Ver todos los productos» del cajón móvil tiene el texto de
  *   `--ws-on-primary` sobre `--ws-primary`, a 4.5:1 o más.
- * - TEST-09 (AC-02, AC-07): con B, los diez enlaces de «Enlaces afectados por D1» del plan, en reposo y al pasar
- *   el puntero, muestran el color y el subrayado que declaran, y «Olvidé mi contraseña», que no declara nada,
+ * - TEST-09 (AC-02, AC-07): con B, los enlaces de «Enlaces afectados por D1» del plan, en reposo y al pasar el
+ *   puntero, muestran el color y el subrayado que declaran (el 10, «Seguimiento de pedidos», solo estaba en
+ *   `/inicio-anterior`, que se quitó en el lote 16, PBI-0193), y «Olvidé mi contraseña», que no declara nada,
  *   sigue con el color del texto que lo rodea y sin subrayado.
  * Las pruebas solo leen con `getComputedStyle` y localizan cada enlace por su rol y su nombre. Al terminar, B
  * queda activo.
@@ -179,19 +180,6 @@ test.describe('Enlaces de la tienda con los temas', () => {
       color: heredado,
       subrayado: 'underline',
     });
-
-    // 10. «Seguimiento de pedidos», que la franja solo muestra en /inicio-anterior.
-    await page.goto('/inicio-anterior');
-    const seguimiento = page.getByRole('link', { name: 'Seguimiento de pedidos' });
-    comprobar('10 · «Seguimiento de pedidos»', await medirEnlace(seguimiento), {
-      color: heredado,
-      subrayado: 'none',
-    });
-    comprobar(
-      '10 · «Seguimiento de pedidos», con el puntero',
-      await medirEnlace(seguimiento, { puntero: true }),
-      { color: heredado, subrayado: 'underline' },
-    );
 
     // 4. «Crear cuenta», y el control: «Olvidé mi contraseña» no declara nada y sigue heredando.
     await page.goto('/cuenta/login');
