@@ -16,10 +16,12 @@ import { CarritoFacade } from '../../carrito/application/carrito.facade';
 import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { lugarDeLosSugeridos } from '../../contenido/domain/sugeridos.rules';
 import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
+import { BotonCompararComponent } from './boton-comparar.component';
+import { ComparadorFacade } from '../../comparador/application/comparador.facade';
 
 @Component({
   selector: 'ws-product-detail-page',
-  imports: [CurrencyPipe, NgOptimizedImage, RouterLink],
+  imports: [BotonCompararComponent, CurrencyPipe, NgOptimizedImage, RouterLink],
   template: `
     <section class="ws-container ws-pdp py-8 sm:py-12">
       <nav class="ws-pdp-breadcrumb" aria-label="Ruta de navegación">
@@ -119,6 +121,19 @@ import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
               }
             </div>
 
+            <!-- Lote 19 (PBI-0001): «Comparar» y, con productos elegidos, el acceso a la comparación. -->
+            <div class="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2">
+              <ws-compare-toggle [product]="item" />
+              @if (comparador.cantidad()) {
+                <a
+                  routerLink="/comparar"
+                  class="text-sm font-semibold text-link underline-offset-4 hover:underline"
+                >
+                  Ver comparación ({{ comparador.cantidad() }})
+                </a>
+              }
+            </div>
+
             @if (item.stock > 0) {
               <div class="mt-8 flex items-center gap-3">
                 <div class="inline-flex h-12 items-center rounded-full border border-line bg-surface p-1">
@@ -202,6 +217,7 @@ export class DetalleProductoPage {
   private readonly cart = inject(CarritoFacade);
   private readonly dialog = inject(MatDialog);
   private readonly content = inject(ContenidoFacade);
+  protected readonly comparador = inject(ComparadorFacade);
   protected readonly quantity = signal(1);
   protected readonly product = computed(() => this.catalog.findBySlug(this.slug()));
   protected readonly images = computed(() => {

@@ -24,7 +24,7 @@ export const config: SheriffConfig = {
     'app:*': [sameTag],
     'feature:*': [sameTag, 'layer:core', 'layer:shared-ui'],
     // Dependencias entre features del storefront, en una sola dirección (sin ciclos).
-    'feature:vitrina': ['feature:catalogo', 'feature:carrito', 'feature:contenido'],
+    'feature:vitrina': ['feature:catalogo', 'feature:carrito', 'feature:comparador', 'feature:contenido'],
     'feature:carrito': ['feature:catalogo'],
     'feature:checkout': [
       'feature:carrito',

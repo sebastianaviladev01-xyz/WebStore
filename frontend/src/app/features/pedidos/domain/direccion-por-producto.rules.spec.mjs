@@ -12,18 +12,24 @@ const source = await readFile(new URL('./direccion-por-producto.rules.ts', impor
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { modoDeDireccion, mismaDireccion, destinosDelPedido, envioPorDestinos, direccionVisible } = await import(
-  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
-);
+const { modoDeDireccion, mismaDireccion, destinosDelPedido, envioPorDestinos, direccionVisible } =
+  await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 const bff = await import(
-  new URL(
-    '../../../../../../backend/src/domain/pedidos/direcciones-por-producto.rules.mjs',
-    import.meta.url,
-  )
+  new URL('../../../../../../backend/src/domain/pedidos/direcciones-por-producto.rules.mjs', import.meta.url)
 );
 
-const principal = { addressLine: 'Av. Demo 123', district: 'San Isidro', province: 'Lima', department: 'Lima' };
-const otra = { addressLine: 'Calle Regalo 456', district: 'Miraflores', province: 'Lima', department: 'Lima' };
+const principal = {
+  addressLine: 'Av. Demo 123',
+  district: 'San Isidro',
+  province: 'Lima',
+  department: 'Lima',
+};
+const otra = {
+  addressLine: 'Calle Regalo 456',
+  district: 'Miraflores',
+  province: 'Lima',
+  department: 'Lima',
+};
 const tarifas = [
   { id: 'r-1', origin: 'Lima Centro', destination: 'San Isidro', price: 12 },
   { id: 'r-2', origin: 'Callao', destination: 'Miraflores', price: 9.5 },
@@ -40,7 +46,10 @@ test('el modo es una por producto solo si la configuración lo elige; si no, una
 test('dos direcciones son la misma con la regla del BFF', () => {
   const casos = [
     [principal, { ...principal, addressLine: '  av.  demo 123 ', district: 'SAN ISIDRO', reference: 'x' }],
-    [{ ...otra, district: 'Jesús María' }, { ...otra, district: 'Jesus Maria' }],
+    [
+      { ...otra, district: 'Jesús María' },
+      { ...otra, district: 'Jesus Maria' },
+    ],
     [principal, otra],
     [principal, { ...principal, addressLine: 'Av. Demo 124' }],
     [principal, { ...principal, province: 'Callao' }],
@@ -77,5 +86,8 @@ test('un destino sin tarifa deja el envío sin calcular', () => {
 
 test('la dirección se muestra en una línea, con la referencia si la trae', () => {
   assert.equal(direccionVisible(otra), 'Calle Regalo 456, Miraflores, Lima, Lima');
-  assert.equal(direccionVisible({ ...otra, reference: 'Portón verde' }), 'Calle Regalo 456, Miraflores, Lima, Lima (Portón verde)');
+  assert.equal(
+    direccionVisible({ ...otra, reference: 'Portón verde' }),
+    'Calle Regalo 456, Miraflores, Lima, Lima (Portón verde)',
+  );
 });
