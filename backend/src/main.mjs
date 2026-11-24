@@ -26,6 +26,7 @@ import { createCheckoutUseCases } from './application/checkout/checkout.use-case
 import { createContenidoQueries } from './application/contenido/contenido.queries.mjs';
 import { createCuentasUseCases } from './application/cuentas/cuentas.use-cases.mjs';
 import { createEnviosQueries } from './application/envios/envios.queries.mjs';
+import { migrarFotosDePedidosAnteriores } from './application/pedidos/fotos-de-pedidos-anteriores.mjs';
 import { createPedidosUseCases } from './application/pedidos/pedidos.use-cases.mjs';
 import { createReclamosUseCases } from './application/reclamos/reclamos.use-cases.mjs';
 import { createTemasQueries } from './application/temas/temas.queries.mjs';
@@ -51,6 +52,8 @@ try {
   console.error(error.message);
   process.exit(1);
 }
+// Lote 27 (PBI-0236): los pedidos anteriores al lote 25 dejan de guardar las fotos de la galería como Data URL.
+migrarFotosDePedidosAnteriores(store, (aviso) => console.warn(aviso));
 // PBI-0010 y PBI-0163: el calendario se renueva cada año; si falta el año en curso, el log lo dice al arrancar y otra
 // vez cuando cambia el año de Lima con el BFF en marcha. Desde el lote 17 (PBI-0183) mira el calendario del estado.
 const vigiaDeFeriados = crearVigiaDeFeriados({
