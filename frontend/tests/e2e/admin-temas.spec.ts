@@ -324,6 +324,22 @@ test.describe('Temas del Admin', () => {
     await expect(formulario.getByRole('heading', { name: 'Nuevo tema' })).toBeInViewport();
   });
 
+  test('PBI-0237: a 375 px, el error del nombre no se monta sobre «Colores»', async ({ page }) => {
+    // Se entra con el menú lateral del escritorio y se pasa a 375 px ya en Temas.
+    await abrirTemas(page);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await nuevoTema(page).click();
+    const formulario = dialogo(page);
+    const nombre = formulario.getByRole('textbox', { name: 'Nombre' });
+    await nombre.fill('');
+    await nombre.blur();
+    const error = formulario.getByText('El nombre del tema debe tener entre 1 y 40 caracteres.');
+    await expect(error).toBeVisible();
+    const cajaError = (await error.boundingBox())!;
+    const cajaColores = (await formulario.getByText('Colores', { exact: true }).boundingBox())!;
+    expect(cajaError.y + cajaError.height).toBeLessThanOrEqual(cajaColores.y);
+  });
+
   test('borrar un tema propio que no es el activo lo quita de la lista', async ({ page }) => {
     const nombre = nombreUnico('borrar');
     await conApi((api) => api.crear(nombre));

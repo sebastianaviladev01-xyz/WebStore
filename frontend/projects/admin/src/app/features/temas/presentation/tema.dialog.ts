@@ -126,7 +126,8 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
           class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
         >
           <div class="min-w-0">
-            <mat-form-field>
+            <!-- PBI-0237: un error de dos líneas (a 375 px) agranda el espacio de abajo y no tapa «Colores». -->
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Nombre</mat-label>
               <input matInput maxlength="40" autocomplete="off" formControlName="nombre" />
               @if (nombre.errors?.['nombre']; as motivo) {
