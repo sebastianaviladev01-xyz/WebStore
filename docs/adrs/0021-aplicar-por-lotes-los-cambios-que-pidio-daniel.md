@@ -120,7 +120,7 @@ Se ejecutaron diez lotes el 2026-11-23, cada uno con su rama y su PR hacia `dev`
 | 17, entrega, términos y feriados | [#74](https://github.com/sebastianaviladev01-xyz/WebStore/pull/74) |
 | 19, comparador y direcciones | [#75](https://github.com/sebastianaviladev01-xyz/WebStore/pull/75) |
 | 20, hallazgos de los lotes 11 a 17 | [#76](https://github.com/sebastianaviladev01-xyz/WebStore/pull/76) |
-| 18, cierre ([ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md)) | El PR de este lote |
+| 18, cierre ([ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md)) | [#77](https://github.com/sebastianaviladev01-xyz/WebStore/pull/77) |
 
 El lote 20 no estaba en el reparto inicial: reunió los hallazgos que anotaron los PR de los lotes 11 a 17, más PBI-0194. Los hallazgos del lote 19 (stock compartido de las e2e, foto grande en el detalle del pedido y el error de la dirección de una línea sin su producto) se corrigieron en el lote 18. Todos tienen su PBI, PBI-0195 a PBI-0209, en el [backlog](../planning/backlog.md).
 
