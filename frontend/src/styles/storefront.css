@@ -880,21 +880,8 @@
   background: var(--ws-surface);
 }
 
-/* Campos del checkout con contorno (feature 004, D5): solo con los tokens de Material, sin tocar sus clases
-   internas (STD-04). En reposo, el borde fuerte del tema (3:1 sobre la superficie); con el foco, 2 px en el color
-   de foco. El error usa --mat-sys-error (--ws-danger), también al pasar el ratón, que Material pintaría con su
-   rojo fijo. La etiqueta sube con la transición de Material, que se quita sola con movimiento reducido.
-   Lote 05 (PBI-0047): los demás formularios de la tienda (cuenta, detalle del pedido y libro de reclamaciones) usan
-   los mismos campos con .ws-outline-fields. */
-.ws-checkout-panel,
-.ws-outline-fields {
-  --mat-form-field-outlined-outline-color: var(--ws-border-strong);
-  --mat-form-field-outlined-focus-outline-color: var(--ws-focus-ring);
-  --mat-form-field-outlined-focus-outline-width: 2px;
-  --mat-form-field-outlined-container-shape: var(--ws-radius);
-  --mat-form-field-outlined-error-hover-outline-color: var(--ws-danger);
-  --mat-form-field-outlined-error-hover-label-text-color: var(--ws-danger);
-}
+/* Campos con contorno del checkout y de .ws-outline-fields: en campos-con-contorno.css, que comparte el Admin
+   (lote 25, PBI-0212). */
 
 /* Resumen del carrito y del checkout: acompaña al scroll desde escritorio, a la misma distancia de
    la cabecera que los filtros (antes se metía 11 px debajo de ella). En pantallas bajas se

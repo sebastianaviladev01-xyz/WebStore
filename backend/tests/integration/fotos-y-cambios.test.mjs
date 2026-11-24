@@ -6,19 +6,22 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { bearer, conBff, ingresarAlAdmin, pedir } from './apoyo/servidor.mjs';
+import { dataUrl, webp } from '../apoyo/imagenes.mjs';
 
 test('PBI-0119: con 2 MB de fotos guardadas, el stock y la ficha de un producto se siguen guardando', async () => {
   await conBff({ port: 3160 }, async (base) => {
     const { token } = await ingresarAlAdmin(base);
     const leer = async () => (await pedir(base, '/bff/admin/snapshot', { headers: bearer(token) })).body;
-    // Seis fotos de 400 KB en tres productos: la colección completa ya no cabe en un guardado.
-    const foto = (n) => `data:image/jpeg;base64,${String(n).repeat(400 * 1024)}`;
-    for (const id of ['p-001', 'p-002', 'p-003']) {
+    // Nueve fotos de unos 240 KB en tres productos: la colección completa ya no cabe en un guardado. Desde el lote 25
+    // (ADR-0026) cada foto nueva es una imagen cargada de verdad (WebP de hasta 1600 px y 250 KB), no cualquier texto.
+    const foto = (n) => `${dataUrl('webp', webp(1600 - n, 1200))}${'A'.repeat(240 * 1024)}`;
+    for (const [i, id] of ['p-001', 'p-002', 'p-003'].entries()) {
       const { revision } = await leer();
+      const gallery = [1, 2, 3].map((n) => foto(i * 3 + n));
       const respuesta = await pedir(base, '/bff/admin/snapshot', {
         method: 'PUT',
         headers: bearer(token),
-        body: { revision, products: { upsert: [{ id, gallery: [foto(1), foto(2)] }] } },
+        body: { revision, products: { upsert: [{ id, gallery }] } },
       });
       assert.equal(respuesta.status, 200, JSON.stringify(respuesta.body).slice(0, 200));
     }
@@ -43,7 +46,7 @@ test('PBI-0119: con 2 MB de fotos guardadas, el stock y la ficha de un producto 
     assert.equal(stock.body.products.find((item) => item.id === 'p-004').stock, 7);
     assert.equal(
       stock.body.products.find((item) => item.id === 'p-001').gallery.length,
-      2,
+      3,
       'conserva las fotos',
     );
   });

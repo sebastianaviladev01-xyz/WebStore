@@ -167,3 +167,60 @@ test('PBI-0214: las imágenes del banner guardadas antes siguen valiendo mientra
   });
   assert.doesNotThrow(() => requireValidBanners([{ ...antes, title: 'Otro título' }], [antes]));
 });
+
+/*
+ * Lote 25 (ADR-0025 y ADR-0026; provisional): las fotos de la galería también se cargan como archivo, nunca como URL
+ * (Daniel: «no adjuntas como URL»). Una foto nueva es un PNG, un JPEG o un WebP de hasta 1600 px por lado y 250 KB,
+ * como la imagen principal; las que el producto ya tenía guardadas siguen valiendo mientras sigan en la galería.
+ */
+const imagenes = () => ({
+  imageUrl: 'assets/products/tv-studio.jpg',
+  thumbnailUrl: 'assets/products/tv-studio-480.jpg',
+});
+
+test('lote 25: acepta fotos nuevas de la galería cargadas como archivo', () => {
+  const gallery = [
+    dataUrl('webp', webp(1600, 1200)),
+    dataUrl('jpeg', jpeg(1200, 1600)),
+    dataUrl('png', png(300, 200)),
+  ];
+  const antes = producto(imagenes());
+  assert.doesNotThrow(() => requireValidProducts([{ ...antes, gallery }], [antes]));
+  const cargadas = {
+    imageUrl: dataUrl('webp', webp(1600, 1200)),
+    thumbnailUrl: dataUrl('webp', webp(480, 360)),
+  };
+  assert.doesNotThrow(() => requireValidProducts([producto({ ...cargadas, gallery })], []));
+});
+
+test('lote 25: rechaza en la galería una URL nueva, una foto más grande o con otro tipo que el de sus bytes', () => {
+  const antes = producto(imagenes());
+  for (const foto of [
+    'https://example.com/foto.jpg',
+    'assets/brand/living-room-v2.jpg',
+    dataUrl('webp', webp(1601, 1200)),
+    dataUrl('jpeg', png(800, 600)),
+    `${dataUrl('webp', webp(1600, 1200))}${'A'.repeat(MAX_IMAGEN_DE_PRODUCTO)}`,
+  ])
+    assert.throws(
+      () => requireValidProducts([{ ...antes, gallery: [foto] }], [antes]),
+      rechazaEn('gallery', /fotos de la galería/),
+      foto.slice(0, 40),
+    );
+});
+
+test('lote 25: las fotos de la galería guardadas antes (URL o rutas de assets) siguen valiendo mientras sigan', () => {
+  const antes = producto({
+    ...imagenes(),
+    gallery: ['assets/brand/living-room-v2.jpg', 'https://example.com/foto.jpg'],
+  });
+  assert.doesNotThrow(() => requireValidProducts([{ ...antes, name: 'Otro nombre' }], [antes]));
+  // Quitar una o cambiar el orden no la vuelve a medir.
+  assert.doesNotThrow(() =>
+    requireValidProducts([{ ...antes, gallery: ['https://example.com/foto.jpg'] }], [antes]),
+  );
+  const nueva = dataUrl('webp', webp(800, 600));
+  assert.doesNotThrow(() =>
+    requireValidProducts([{ ...antes, gallery: [...antes.gallery, nueva] }], [antes]),
+  );
+});

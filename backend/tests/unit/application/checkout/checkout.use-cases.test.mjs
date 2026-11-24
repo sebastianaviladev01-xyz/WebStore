@@ -517,3 +517,18 @@ test('PBI-0173: los errores de validación del formulario no son errores de comp
   });
   assert.equal((store.state.checkoutErrors ?? []).length, 0);
 });
+
+test('lote 25 (ADR-0026): el pedido guarda las direcciones de las fotos de la galería, no sus Data URL', () => {
+  const store = crearAlmacen();
+  const foto = `data:image/png;base64,${Buffer.from([0x89, 0x50, 0x4e, 0x47]).toString('base64')}`;
+  store.state.products[0].imageUrl = 'assets/products/tv-studio.jpg';
+  store.state.products[0].gallery = [foto, 'assets/brand/living-room-v2.jpg'];
+  const order = createCheckoutUseCases({ store, security }).placeOrder(pedido(), '');
+  const guardado = store.state.orders[0];
+  assert.equal(guardado.id, order.id);
+  const [principal, cargada, ruta] = guardado.items[0].product.images;
+  assert.equal(principal, 'assets/products/tv-studio.jpg');
+  assert.match(cargada, /^\/bff\/images\/products\/p-1\/gallery\/0\?v=/);
+  assert.equal(ruta, 'assets/brand/living-room-v2.jpg');
+  assert.ok(!JSON.stringify(guardado.items).includes('data:'), 'ninguna Data URL en el pedido');
+});

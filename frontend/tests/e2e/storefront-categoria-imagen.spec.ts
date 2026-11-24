@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 
 import { enviarCambios } from './apoyo/catalogo';
 
@@ -11,6 +11,15 @@ import { enviarCambios } from './apoyo/catalogo';
 /** PNG gris de 100 × 100 px: desde el lote 11 (PBI-0176) el BFF solo acepta la versión de 100 × 100 px. */
 const IMAGEN =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAA5UlEQVR4nO3QQQ0AIAzAwElHOhbWFyG5U9B0DmvzOuAnZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBWYFZgVmBRdHfptnsVYXbAAAAABJRU5ErkJggg==';
+
+/**
+ * Lote 25 (ADR-0026, PBI-0228): la tienda no recibe la Data URL, sino la dirección del BFF con su versión, y la imagen
+ * se carga desde ahí con sus 100 × 100 px.
+ */
+async function esperarImagenServida(imagen: Locator): Promise<void> {
+  await expect(imagen).toHaveAttribute('src', /^\/bff\/images\/categories\/cat-tv\/image\?v=[\w-]+$/);
+  await expect(imagen).toHaveJSProperty('naturalWidth', 100);
+}
 
 test.describe('imagen de la categoría', () => {
   test.beforeAll(async () => {
@@ -26,7 +35,7 @@ test.describe('imagen de la categoría', () => {
     await page.goto('/');
     const menu = page.getByRole('navigation', { name: 'Categorías principales' });
     const tv = menu.getByRole('button', { name: 'TV y audio' });
-    await expect(tv.locator('img')).toHaveAttribute('src', IMAGEN);
+    await esperarImagenServida(tv.locator('img'));
     // Decorativa: el nombre de la categoría ya lo dice.
     await expect(tv.locator('img')).toHaveAttribute('alt', '');
     await expect(menu.getByRole('link', { name: 'Electrohogar', exact: true }).locator('img')).toHaveCount(0);
@@ -38,7 +47,7 @@ test.describe('imagen de la categoría', () => {
     await page.goto('/catalogo');
     await page.getByRole('combobox', { name: 'Categoría' }).click();
     const tv = page.getByRole('option', { name: 'TV y audio', exact: true });
-    await expect(tv.locator('img')).toHaveAttribute('src', IMAGEN);
+    await esperarImagenServida(tv.locator('img'));
     await expect(tv.locator('img')).toHaveAttribute('alt', '');
     await expect(page.getByRole('option', { name: 'Electrohogar', exact: true }).locator('img')).toHaveCount(
       0,
@@ -54,7 +63,7 @@ test.describe('imagen de la categoría', () => {
     await page.goto('/');
     const seccion = page.getByRole('region', { name: 'Compra por categoría' });
     const tv = seccion.getByRole('link', { name: /^TV y audio/ });
-    await expect(tv.locator('img')).toHaveAttribute('src', IMAGEN);
+    await esperarImagenServida(tv.locator('img'));
     await expect(tv.locator('img')).toHaveAttribute('alt', '');
     await expect(seccion.getByRole('link', { name: /^Electrohogar/ }).locator('img')).toHaveCount(0);
   });
@@ -66,10 +75,7 @@ test.describe('imagen de la categoría', () => {
       await page.goto('/');
       await page.getByRole('button', { name: 'Abrir menú de navegación' }).click();
       const panel = page.getByRole('navigation', { name: 'Navegación móvil' });
-      await expect(panel.locator('summary', { hasText: 'TV y audio' }).locator('img')).toHaveAttribute(
-        'src',
-        IMAGEN,
-      );
+      await esperarImagenServida(panel.locator('summary', { hasText: 'TV y audio' }).locator('img'));
       await expect(panel.locator('summary', { hasText: 'Electrohogar' }).locator('img')).toHaveCount(0);
     });
   });

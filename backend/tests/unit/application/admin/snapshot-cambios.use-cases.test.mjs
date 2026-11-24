@@ -92,6 +92,8 @@ test('PBI-0119: un producto nuevo se agrega completo y uno retirado se elimina, 
   const nuevo = {
     ...producto('p-004'),
     ...imagenesDeProducto(),
+    // Lote 25: la galería de otro producto no es una foto cargada para el nuevo.
+    gallery: [],
     id: 'p-nuevo',
     sku: 'NUEVO-1',
     name: 'Parlante nuevo',
@@ -122,6 +124,8 @@ test('PBI-0226 (lote 23): un producto nuevo sin stock se crea con 0 unidades, ta
   const { stock, ...sinStock } = {
     ...producto('p-004'),
     ...imagenesDeProducto(),
+    // Lote 25: la galería de otro producto no es una foto cargada para el nuevo.
+    gallery: [],
     id: 'p-nuevo',
     sku: 'NUEVO-1',
     name: 'Parlante nuevo',
@@ -247,6 +251,8 @@ test('PBI-0129: un producto con el SKU de otro se rechaza diciendo cuál', () =>
   const nuevo = {
     ...producto('p-004'),
     ...imagenesDeProducto(),
+    // Lote 25: la galería de otro producto no es una foto cargada para el nuevo.
+    gallery: [],
     id: 'p-nuevo',
     sku: 'tv-oled-55-vsn',
     name: 'Televisor nuevo',
@@ -263,6 +269,8 @@ test('PBI-0129: un producto con la dirección de ficha de otro se rechaza dicien
   const nuevo = {
     ...producto('p-004'),
     ...imagenesDeProducto(),
+    // Lote 25: la galería de otro producto no es una foto cargada para el nuevo.
+    gallery: [],
     id: 'p-nuevo',
     sku: 'OTRO-1',
     name: 'Oled Visión 55 4K',

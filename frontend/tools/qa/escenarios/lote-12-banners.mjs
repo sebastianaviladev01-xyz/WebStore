@@ -3,7 +3,7 @@
 // formulario del Admin; PBI-0174, los enlaces externos de los banners en otra pestaña (no cambia lo que se ve).
 // La tienda se toma con A, B y C. Los datos son los de la copia, sin cambios; `conBotonesSecundarios` añade, solo en la
 // respuesta de `/content/banners` de esa toma, un botón secundario a las promociones para ver los dos juntos.
-import { pulsar } from '../lib/qa.mjs';
+import { sinGuardar } from '../lib/qa.mjs';
 
 /** El carrusel cambia de banner cada 8 s y las secciones aparecen al desplazarse: se anulan las dos cosas. */
 const quieto = async (page) => {
@@ -46,9 +46,6 @@ for (const tema of ['a', 'b', 'c']) {
 export const escenarios = {
   ...tienda,
   'banners-superadmin': { ruta: '/banners', rol: 'superadmin' },
-  'banners-editar-hero-superadmin': {
-    ruta: '/banners',
-    rol: 'superadmin',
-    accion: pulsar('Editar banner El cine, en tu sala.'),
-  },
+  // Desde el lote 21 (PBI-0211), «Editar banner …» es un enlace a la página de registro: se abre por su ruta (lote 25).
+  'banners-editar-hero-superadmin': { ruta: '/banners/bn-1', rol: 'superadmin', antes: sinGuardar },
 };

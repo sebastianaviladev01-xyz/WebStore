@@ -82,9 +82,12 @@ try {
   if (products[0].images[0] !== products[0].imageUrl || products[0].images.length < 2)
     throw new Error('La ficha pública no expone la galería con la imagen principal primero');
   snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  // Lote 25 (ADR-0026): una foto nueva de la galería se carga como archivo; la tienda la recibe por dirección y la
+  // foto que el producto ya tenía (una ruta de assets/) sigue valiendo.
+  const fotoCargada = dataUrl('webp', webp(1200, 900));
   snapshot.products[0] = {
     ...snapshot.products[0],
-    gallery: ['assets/products/tv.svg', 'assets/brand/living-room-v2.jpg'],
+    gallery: [fotoCargada, 'assets/brand/living-room-v2.jpg'],
   };
   await request('/bff/admin/snapshot', {
     method: 'PUT',
@@ -92,11 +95,34 @@ try {
     body: JSON.stringify(snapshot),
   });
   products = await request('/bff/catalog/products');
+  const [, fotoPublica, rutaPublica] = products[0].images;
   if (
-    products[0].images.join() !==
-    [products[0].imageUrl, 'assets/products/tv.svg', 'assets/brand/living-room-v2.jpg'].join()
+    products[0].images.length !== 3 ||
+    !/^\/bff\/images\/products\/[^/]+\/gallery\/0\?v=[A-Za-z0-9_-]{12}$/.test(fotoPublica) ||
+    rutaPublica !== 'assets/brand/living-room-v2.jpg' ||
+    JSON.stringify(products).includes('data:')
   )
-    throw new Error('La galería editada en Admin no llegó al Storefront');
+    throw new Error('La galería editada en Admin no llegó al Storefront por dirección');
+  const fotoServida = await raw(fotoPublica);
+  if (
+    fotoServida.status !== 200 ||
+    dataUrl('webp', Buffer.from(await fotoServida.arrayBuffer())) !== fotoCargada
+  )
+    throw new Error('Lote 25: GET /bff/images no sirve la foto cargada de la galería');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: snapshot.revision,
+        products: { upsert: [{ id: snapshot.products[0].id, gallery: ['https://example.com/foto.jpg'] }] },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Lote 25: una URL nueva en la galería',
+  );
 
   // Lote 22 (ADR-0025, PBI-0215): los destacados son los que marca el Admin, sin tope; la semilla marca los cuatro
   // primeros. Una marca que no es booleana se rechaza con 400 INVALID_COLLECTION.
@@ -349,6 +375,8 @@ try {
             {
               ...conCambio.products[0],
               // Lote 24 (PBI-0214): un producto nuevo llega con sus imágenes cargadas.
+              // Lote 25: sin la galería del producto que copia, que no es una foto cargada para el nuevo.
+              gallery: [],
               ...imagenesDeProducto(),
               id: 'p-smoke-slug',
               sku: 'SMOKE-SLUG',
@@ -434,6 +462,8 @@ try {
           {
             ...plantilla,
             // Lote 24 (PBI-0214): un producto nuevo llega con sus imágenes cargadas.
+            // Lote 25: sin la galería del producto que copia, que no es una foto cargada para el nuevo.
+            gallery: [],
             ...imagenesDeProducto(),
             id: 'p-smoke-stock',
             sku: 'SMOKE-STOCK',
@@ -886,7 +916,8 @@ try {
     id: 'p-smoke-vendedor',
     name: 'Producto creado por el vendedor',
     sku: 'SMOKE-VENDEDOR',
-    gallery: ['assets/products/tv.svg'],
+    // Lote 25 (ADR-0026): la foto de la galería se carga como archivo.
+    gallery: [dataUrl('png', png(64, 48))],
     price: 1,
   };
   const sellerCreate = await put(seller, {
@@ -1585,8 +1616,17 @@ try {
     }),
   });
   const publicas07b = await request('/bff/catalog/categories');
-  if (publicas07b.find((item) => item.id === categoria07b.id).imageUrl !== imagen100)
-    throw new Error('El catálogo no publica la imagen de la categoría');
+  // Lote 25 (ADR-0026): el catálogo publica la dirección de la imagen, no su Data URL, y el BFF la sirve.
+  const direccion07b = publicas07b.find((item) => item.id === categoria07b.id).imageUrl;
+  if (!/^\/bff\/images\/categories\/[^/]+\/image\?v=[A-Za-z0-9_-]{12}$/.test(direccion07b ?? ''))
+    throw new Error('El catálogo no publica la dirección de la imagen de la categoría');
+  const servida07b = await raw(direccion07b);
+  if (
+    servida07b.status !== 200 ||
+    `data:${servida07b.headers.get('content-type')};base64,${Buffer.from(await servida07b.arrayBuffer()).toString('base64')}` !==
+      imagen100
+  )
+    throw new Error('Lote 25: GET /bff/images no sirve la imagen de la categoría');
   if (publicas07b.some((item) => !('imageUrl' in item)))
     throw new Error('Cada categoría pública trae imageUrl');
 

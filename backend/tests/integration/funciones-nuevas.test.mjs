@@ -242,7 +242,13 @@ test('PBI-0052 y PBI-0176: la categoría guarda una imagen opcional de 100 × 10
       });
     assert.equal((await guardar({ id: 'cat-tv', imageUrl: imagen })).status, 200);
     const publicas = (await pedir(base, '/bff/catalog/categories')).body;
-    assert.equal(publicas.find((item) => item.id === 'cat-tv').imageUrl, imagen);
+    // Lote 25 (ADR-0026): el catálogo publica la dirección de la imagen, no su Data URL; el BFF la sirve.
+    const direccion = publicas.find((item) => item.id === 'cat-tv').imageUrl;
+    assert.match(direccion, /^\/bff\/images\/categories\/cat-tv\/image\?v=/);
+    const servida = await fetch(base + direccion);
+    assert.equal(servida.status, 200);
+    assert.equal(servida.headers.get('content-type'), 'image/png');
+    assert.equal(dataUrl('png', Buffer.from(await servida.arrayBuffer())), imagen);
     assert.equal(publicas.find((item) => item.id === 'cat-home').imageUrl, null);
 
     const pesada = await guardar({ id: 'cat-tv', imageUrl: `data:image/webp;base64,${'A'.repeat(200_000)}` });

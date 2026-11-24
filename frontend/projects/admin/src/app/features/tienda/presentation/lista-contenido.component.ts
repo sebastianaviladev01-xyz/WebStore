@@ -30,7 +30,12 @@ export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
         <p class="mb-3 text-xs leading-5 text-muted">{{ descripcion() }}</p>
       }
       @for (fila of lista().controls; track fila; let i = $index; let primera = $first) {
-        <div class="grid items-start gap-x-3" [class]="columnas[campos().length] ?? columnas[3]">
+        <!-- Lote 25 (PBI-0212): separación entre campos apilados para la etiqueta flotante del contorno. -->
+        <div
+          class="grid items-start gap-x-3 gap-y-2"
+          [class]="columnas[campos().length] ?? columnas[3]"
+          [class.mt-2]="!primera"
+        >
           @for (campo of campos(); track campo.clave) {
             <mat-form-field>
               <mat-label>{{ campo.etiqueta }} {{ i + 1 }}</mat-label>

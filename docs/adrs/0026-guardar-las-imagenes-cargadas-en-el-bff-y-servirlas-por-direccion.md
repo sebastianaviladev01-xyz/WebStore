@@ -27,9 +27,19 @@ Guardaremos las imágenes cargadas del producto y del banner como Data URL en el
 - **El BFF valida en los bytes** (`imagen.rules.mjs`) una imagen nueva o cambiada: formato real, lado mayor y peso, y que la miniatura sea la reducción de la imagen principal. Rechaza una URL nueva. Las imágenes guardadas antes (rutas de `assets/`) siguen valiendo mientras no cambien.
 - **La tienda recibe una dirección**: `GET /bff/images/{collection}/{id}/{field}` sirve la imagen con su tipo. La versión (`?v=`) es un resumen de la imagen: con ella la caché es larga e inmutable; sin ella, se revalida. Una ruta de `assets/` llega como siempre.
 
-La galería y la imagen de la categoría siguen como están (Data URL dentro del JSON): no son parte de PBI-0214.
+En el lote 24, la galería y la imagen de la categoría siguieron como estaban (Data URL dentro del JSON), porque no eran parte de PBI-0214. El lote 25 las lleva a la misma forma ([Ampliación del lote 25](#ampliación-del-lote-25)).
 
 *Motivo:* es la única opción en la que la tienda no paga en cada carga el peso de las fotos ni deja de optimizarlas, y su forma (una dirección por imagen) es la que tendrá el backend de producción.
+
+### Ampliación del lote 25
+
+Tomada en el lote 25 ([ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md)); provisional, por confirmar con Daniel Avila. Lo que el lote 24 dejó como estaba se cierra con la misma decisión:
+
+- **Las fotos de la galería se cargan como archivo**, como la imagen principal: el backoffice ya no ofrece «URL de foto» (Daniel: «no adjuntas como URL»). El BFF valida una foto nueva con el lado y el peso de la imagen principal (1600 px y 250 KB de Data URL) y rechaza una URL o una ruta nuevas (`field: 'gallery'`). Las fotos que el producto ya tenía (URL, rutas de `assets/` o Data URL de antes) siguen valiendo mientras sigan en su galería.
+- **La tienda recibe una dirección por foto**: `/bff/images/products/{id}/gallery/{n}?v={versión}`, donde `n` es la posición de la foto en la galería guardada. La posición puede cambiar al quitar o reordenar fotos; la versión, que es el resumen de la imagen, hace que el navegador no confunda una foto con otra.
+- **La imagen de la categoría** llega como `/bff/images/categories/{id}/image?v={versión}`. Una imagen guardada antes que no es PNG, JPEG ni WebP (la SVG del lote 07b) sigue llegando dentro del JSON: servir SVG desde el origen de la tienda abriría la puerta a guiones, y esas imágenes desaparecen al volver a cargarlas.
+- **Los pedidos** guardan la ficha pública del producto, así que desde el lote guardan las direcciones de la galería, no sus Data URL. Los pedidos creados antes conservan lo que guardaron.
+- **La foto de un pedido cuyo producto se eliminó** deja de servirse (`404 IMAGE_NOT_FOUND`). El detalle del pedido de la tienda muestra entonces un recuadro neutro del mismo tamaño en lugar de la imagen rota; el nombre del producto, el precio y la cantidad siguen a la vista. Se descartó guardar una copia de la miniatura en cada pedido: haría crecer cada pedido unos 60 KB por línea y la dirección de esa copia, pública para que la cargue un `<img>`, diría qué compró cada pedido a quien adivine su código. En producción, el almacén de objetos conservará los archivos que use un pedido aunque el producto se elimine.
 
 ## Consecuencias
 
@@ -39,7 +49,7 @@ La galería y la imagen de la categoría siguen como están (Data URL dentro del
 
 - `data.json` crece con cada imagen (hasta unos 310 KB por producto y 750 KB por banner). Es aceptable en el BFF de prueba, que se reinicia con los datos de ejemplo; el backend de producción guardará los archivos en un almacén de objetos y la base de datos, solo su dirección (PBI-0197 y PBI-0198).
 - El BFF de prueba no reduce imágenes: lo hace el backoffice y el BFF solo comprueba lo que recibe, como con la categoría. El backend de producción recibirá la original y generará él las versiones, con las mismas medidas; el backoffice dejará entonces de reducirlas.
-- Un pedido guarda la dirección de la miniatura: si el producto se elimina, su foto deja de verse en el detalle del pedido (`404 IMAGE_NOT_FOUND`).
+- Un pedido guarda la dirección de la miniatura: si el producto se elimina, su foto deja de verse en el detalle del pedido (`404 IMAGE_NOT_FOUND`). Desde el lote 25, la tienda pinta en su lugar un recuadro neutro.
 - Por confirmar con Daniel: si se guarda la original además de las versiones, los tamaños y pesos máximos, y el límite de 15 MB del archivo (para la categoría pidió menos de 1 MB).
 
 **Vigencia:** provisional hasta que Daniel la confirme. Responsable: Sebastián Avila.

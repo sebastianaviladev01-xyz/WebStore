@@ -1,4 +1,4 @@
-import { CurrencyPipe, NgOptimizedImage } from '@angular/common';
+import { CurrencyPipe, IMAGE_LOADER, ImageLoaderConfig, NgOptimizedImage } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -19,9 +19,27 @@ import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 import { BotonCompararComponent } from './boton-comparar.component';
 import { ComparadorFacade } from '../../comparador/application/comparador.facade';
 
+/** Lado mayor de la miniatura de los listados (lote 24, ADR-0026): 480 px. */
+const LADO_MINIATURA = 480;
+
+/**
+ * Cargador de la foto principal de la ficha (lote 25, ADR-0026). La foto de la ficha mide hasta 1600 px y en un celular
+ * se pinta a unos 300 px: sin un conjunto de tamaños, `NgOptimizedImage` avisa que es mucho más grande de lo necesario
+ * (NG02960). El BFF de prueba no genera tamaños a pedido, pero cada producto tiene dos versiones: la miniatura de 480 px
+ * (`loaderParams.miniatura`) y la foto de la ficha. Para un ancho de hasta 480 px se usa la miniatura; para otro, la foto.
+ * Solo lo usa esta página, que no pinta otras fotos con `ngSrc`.
+ */
+export function cargadorDeLaFicha({ src, width, loaderParams }: ImageLoaderConfig): string {
+  const miniatura = loaderParams?.['miniatura'];
+  return width !== undefined && width <= LADO_MINIATURA && typeof miniatura === 'string' && miniatura
+    ? miniatura
+    : src;
+}
+
 @Component({
   selector: 'ws-product-detail-page',
   imports: [BotonCompararComponent, CurrencyPipe, NgOptimizedImage, RouterLink],
+  providers: [{ provide: IMAGE_LOADER, useValue: cargadorDeLaFicha }],
   template: `
     <section class="ws-container ws-pdp py-8 sm:py-12">
       <nav class="ws-pdp-breadcrumb" aria-label="Ruta de navegación">
@@ -48,9 +66,16 @@ import { ComparadorFacade } from '../../comparador/application/comparador.facade
                 </span>
               }
               @if (selectedImage() === 0) {
-                <!-- La imagen principal conserva la optimización de LCP; las fotos adicionales pueden ser Data URL. 800 × 600: la proporción 4:3 de las fotos de producto. -->
+                <!--
+                  La imagen principal conserva la optimización de LCP. 800 × 600: la proporción 4:3 de las fotos de
+                  producto. Lote 25 (NG02960): la miniatura de 480 px o la foto de la ficha, según el ancho que se pinta
+                  (cargadorDeLaFicha); desde lg, la columna de la foto mide unos 640 px.
+                -->
                 <img
                   [ngSrc]="item.imageUrl"
+                  [loaderParams]="{ miniatura: item.thumbnailUrl }"
+                  ngSrcset="480w, 1600w"
+                  sizes="(min-width: 1024px) 640px, 100vw"
                   [alt]="item.name"
                   width="800"
                   height="600"

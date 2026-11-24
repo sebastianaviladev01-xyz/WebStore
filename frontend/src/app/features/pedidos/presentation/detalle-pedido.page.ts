@@ -80,13 +80,34 @@ import { direccionVisible } from '../domain/direccion-por-producto.rules';
                   carga la miniatura, no la foto grande (NG02960, lote 18); un pedido antiguo sin miniatura usa la foto.
                 -->
                 <span class="grid h-20 w-28 shrink-0 place-items-center rounded-xl bg-soft p-2">
-                  <img
-                    [ngSrc]="item.product.thumbnailUrl || item.product.imageUrl"
-                    [alt]="item.product.name"
-                    width="96"
-                    height="72"
-                    class="h-16 w-auto max-w-full"
-                  />
+                  <!--
+                    Lote 25 (ADR-0026): si el producto se eliminó, el BFF ya no sirve su foto (404). En lugar de la
+                    imagen rota, la caja queda con un icono neutro; el nombre del producto sigue al lado.
+                  -->
+                  @if (fotosNoDisponibles().has(item.product.id)) {
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="h-8 w-8 fill-none stroke-current text-muted"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      role="img"
+                      [attr.aria-label]="'Foto de ' + item.product.name + ' no disponible'"
+                    >
+                      <rect x="3" y="5" width="18" height="14" rx="2" />
+                      <path d="m3 16 5-5 4 4 3-3 6 6" />
+                      <circle cx="16" cy="9" r="1.5" />
+                    </svg>
+                  } @else {
+                    <img
+                      [ngSrc]="item.product.thumbnailUrl || item.product.imageUrl"
+                      [alt]="item.product.name"
+                      width="96"
+                      height="72"
+                      class="h-16 w-auto max-w-full"
+                      (error)="fotoNoDisponible(item.product.id)"
+                    />
+                  }
                 </span>
                 <div>
                   <h2 class="font-semibold">{{ item.product.name }}</h2>
@@ -236,6 +257,11 @@ export class DetallePedidoPage implements OnInit {
   protected readonly orders = inject(PedidosFacade);
   private readonly shipping = inject(EnviosFacade);
   protected readonly loading = signal(true);
+  /** Lote 25 (ADR-0026): productos del pedido cuya foto no cargó (por ejemplo, porque el producto se eliminó). */
+  protected readonly fotosNoDisponibles = signal<ReadonlySet<string>>(new Set());
+  protected fotoNoDisponible(productId: string): void {
+    this.fotosNoDisponibles.update((ids) => new Set([...ids, productId]));
+  }
   protected readonly saving = signal(false);
   protected readonly notice = signal<string | null>(null);
   protected readonly order = computed(() => this.orders.get(this.orderId()));

@@ -119,6 +119,27 @@ function requireValidProductImages(product, anterior) {
 }
 
 /**
+ * Lote 25 (ADR-0025 y ADR-0026; provisional): las fotos de la galería también se cargan como archivo, nunca como URL
+ * (Daniel: «no adjuntas como URL»). Una foto nueva es un PNG, un JPEG o un WebP con el lado y el peso de la imagen
+ * principal; las que el producto ya tenía en su galería (URL, rutas de `assets/` o Data URL de antes) siguen valiendo
+ * mientras sigan en ella, aunque cambie el orden o se quiten otras.
+ */
+function requireValidGallery(product, anterior) {
+  if (product.gallery === undefined) return;
+  const guardadas = new Set(Array.isArray(anterior?.gallery) ? anterior.gallery : []);
+  for (const foto of product.gallery) {
+    if (guardadas.has(foto) || !foto.trim()) continue;
+    if (!imagenCargada(foto, IMAGEN_DE_PRODUCTO))
+      throw invalid(
+        'products',
+        'gallery',
+        `las fotos de la galería deben ser PNG, JPG o WebP de hasta ${LADO_IMAGEN_DE_PRODUCTO} px por lado; vuelve a cargarlas`,
+        product.id,
+      );
+  }
+}
+
+/**
  * Productos completos (rol con `products.manage`): SKU único, precio y stock válidos. `previous`, los productos
  * vigentes: sus imágenes ya guardadas no se vuelven a medir (PBI-0214).
  */
@@ -144,6 +165,7 @@ export function requireValidProducts(products, previous = []) {
       ['gallery', textList, 'la galería no es válida', { optional: true }],
     ]);
     requireValidProductImages(product, anteriores.get(product.id));
+    requireValidGallery(product, anteriores.get(product.id));
     // PBI-0129: el mensaje dice qué producto ya usa el SKU.
     const sku = product.sku.trim().toLowerCase();
     if (skus.has(sku))

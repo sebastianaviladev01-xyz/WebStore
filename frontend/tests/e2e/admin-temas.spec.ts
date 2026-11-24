@@ -140,6 +140,14 @@ test.describe('Temas del Admin', () => {
     await nuevoTema(page).click();
     const formulario = dialogo(page);
     await expect(formulario.getByRole('heading', { name: 'Nuevo tema' })).toBeVisible();
+    // Lote 25 (PBI-0224): a 1440 px, la ventana mide 1200 px (antes 960) y la vista previa es más ancha que los colores.
+    expect((await formulario.boundingBox())?.width).toBe(1200);
+    const vistaPrevia = await formulario
+      .getByRole('heading', { name: 'Vista previa' })
+      .locator('..')
+      .boundingBox();
+    const colores = await formulario.getByRole('group', { name: 'Colores' }).boundingBox();
+    expect(vistaPrevia!.width).toBeGreaterThan(colores!.width * 1.2);
 
     // Nombre repetido, sin distinguir mayúsculas ni espacios.
     await formulario.getByLabel('Nombre').fill(' azul COBALTO ');

@@ -9,17 +9,17 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  *
  * - TEST-01 (AC-01, AC-04): con A, B y C, a 360, 375 y 390 px, la página no desplaza en horizontal ni al entrar
  *   ni editando, y ningún elemento de `main` acaba a la derecha de `clientWidth`.
- * - TEST-02 (AC-02, AC-04): el formulario «Nuevo producto» tiene todos sus campos, la galería, «Agregar»,
- *   «Cargar foto» y «Guardar producto» dentro de su caja; el grupo «Imagen principal», con «Cargar imagen» (lote 24,
+ * - TEST-02 (AC-02, AC-04): el formulario «Nuevo producto» tiene todos sus campos, la galería, «Cargar foto» y
+ *   «Guardar producto» dentro de su caja (lote 25: sin «URL de foto» ni «Agregar», la foto solo se carga como archivo); el grupo «Imagen principal», con «Cargar imagen» (lote 24,
  *   PBI-0214: ya no hay URL ni miniatura que escribir), dentro de su caja y por encima de la galería; al editar «OLED Vision 55” 4K» y añadir una foto, las miniaturas, sus botones y el aviso de foto
  *   repetida quedan dentro de la galería.
- * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea), el precio, el
- *   stock y las acciones se ven, caben en la lista y no se solapan; la cabecera se oculta o cabe; la celda del
+ * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea, en su propia celda
+ *   desde el lote 25, PBI-0219), el precio, el stock y las acciones se ven, caben en la lista y no se solapan; la cabecera se oculta o cabe; la celda del
  *   stock dice «Stock N» y el 0 tiene el color de `--ws-danger`.
  * - TEST-04 (AC-01, AC-03): lo mismo con el vendedor y B a 375 px, sin «Eliminar» (desde el lote 07, con «Nuevo
  *   producto»: PBI-0013).
- * - TEST-05 (AC-05): con B, a 768 y 1440 px, el escritorio sigue igual (cabecera, una sola línea por fila, la
- *   celda solo con el número); a 767 px, la cabecera se oculta y la celda
+ * - TEST-05 (AC-05): con B, a 768 y 1440 px, el escritorio sigue igual (cabecera con «SKU» desde el lote 25, una sola
+ *   línea por fila, la celda solo con el número); a 767 px, la cabecera se oculta y la celda
  *   dice «Stock N».
  *
  * Desde la feature 008, el formulario está en su interfaz de registro: «Nuevo producto» en `/productos/nuevo` y
@@ -27,7 +27,7 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  *
  * Los localizadores usan roles y textos visibles (`frontend/architecture.md` §6). La fila de un producto es un
  * `div` sin otro rol: se localiza como el `div` de la lista que tiene el enlace «Editar» y el nombre, y sus hijos
- * directos son, en orden, el bloque del producto (nombre en `strong` y línea del SKU en `p`), el precio, el
+ * directos son, en orden, el bloque del producto (el nombre en `strong`), el SKU (lote 25, PBI-0219), el precio, el
  * stock y las acciones. Se leen con `evaluate` para medir sus cajas. Las aserciones son `expect.soft`, con el
  * tema, el ancho y lo que se comprueba, para que el informe muestre todas las causas de un rojo.
  */
@@ -52,7 +52,8 @@ const STOCK_CON_ETIQUETA = /^Stock \d+$/;
 const STOCK_SOLO_NUMERO = /^\d+$/;
 
 const PRODUCTO_CON_GALERIA = PRODUCTOS[0].nombre;
-const FOTO_NUEVA = 'assets/products/washer-studio.jpg';
+/** Lote 25 (ADR-0026): la foto de la galería se carga como archivo; esta es una de la tienda, relativa a `frontend/`. */
+const FOTO_NUEVA = 'src/assets/products/washer-studio.jpg';
 const AVISO_FOTO_REPETIDA = 'Esa foto ya está en el producto.';
 
 interface Caja {
@@ -108,7 +109,7 @@ const filaDe = (page: Page, nombre: string) =>
     .filter({ has: page.getByRole('link', { name: /^Editar / }) })
     .filter({ hasText: nombre });
 
-/** Hijos directos de la fila (bloque, precio, stock, acciones): cajas, y texto visible de cada uno. */
+/** Hijos directos de la fila (bloque, SKU, precio, stock, acciones): cajas, y texto visible de cada uno. */
 interface HijoDeFila {
   caja: Caja;
   texto: string;
@@ -126,13 +127,12 @@ async function hijosDeFila(fila: Locator): Promise<HijoDeFila[]> {
   );
 }
 
-/** Rectángulos de la línea del SKU: cuántas líneas ocupa (valores de `top` distintos con ancho mayor que 0). */
+/** Rectángulos del SKU en su celda: cuántas líneas ocupa (valores de `top` distintos con ancho mayor que 0). */
 async function lineasDelSku(fila: Locator, sku: string): Promise<number> {
   return fila.evaluate((nodo, buscado) => {
-    const bloque = nodo.children[0];
-    const parrafo = bloque.querySelector('p');
-    if (!parrafo) throw new Error('La fila no tiene la línea del SKU');
-    const recorrido = document.createTreeWalker(parrafo, NodeFilter.SHOW_TEXT);
+    const celda = nodo.children[1];
+    if (!celda) throw new Error('La fila no tiene la celda del SKU');
+    const recorrido = document.createTreeWalker(celda, NodeFilter.SHOW_TEXT);
     for (let actual = recorrido.nextNode(); actual; actual = recorrido.nextNode()) {
       const posicion = (actual.textContent ?? '').indexOf(buscado);
       if (posicion < 0) continue;
@@ -142,7 +142,7 @@ async function lineasDelSku(fila: Locator, sku: string): Promise<number> {
       const rectangulos = Array.from(rango.getClientRects()).filter((r) => r.width > 0);
       return new Set(rectangulos.map((r) => Math.round(r.top))).size;
     }
-    throw new Error(`La línea del SKU no contiene «${buscado}»`);
+    throw new Error(`La celda del SKU no contiene «${buscado}»`);
   }, sku);
 }
 
@@ -228,7 +228,7 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
 
     const visibles: [string, Locator][] = [
       ['nombre', fila.getByText(producto.nombre, { exact: true })],
-      ['línea del SKU', fila.getByText(producto.sku)],
+      ['SKU', fila.getByText(producto.sku)],
       ['Editar', fila.getByRole('link', { name: /^Editar / })],
     ];
     if (conEliminar) {
@@ -250,10 +250,11 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
     expect.soft(lineas, que('líneas del SKU')).toBe(1);
 
     const hijos = await hijosDeFila(fila);
-    expect(hijos, que('hijos directos de la fila')).toHaveLength(4);
-    const [bloque, precio, stock, acciones] = hijos;
+    expect(hijos, que('hijos directos de la fila')).toHaveLength(5);
+    const [bloque, sku, precio, stock, acciones] = hijos;
     const partes: [string, HijoDeFila][] = [
       ['bloque del producto', bloque],
+      ['SKU', sku],
       ['precio', precio],
       ['stock', stock],
       ['acciones', acciones],
@@ -313,7 +314,6 @@ const CAMPOS: readonly (readonly [RolDeCampo, string])[] = [
   ['textbox', 'Nombre'],
   ['textbox', 'SKU'],
   ['textbox', 'Descripción'],
-  ['textbox', 'URL de foto'],
   ['textbox', 'Características (una por línea)'],
   ['spinbutton', 'Precio'],
   // Sin «Stock» desde el lote 23 (ADR-0025, PBI-0226): se gestiona solo en Inventario.
@@ -350,7 +350,6 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
     ['grupo «Imagen principal»', formulario.getByRole('group', { name: 'Imagen principal' })],
     ['texto «Cargar imagen»', formulario.getByText('Cargar imagen', { exact: true })],
     ['grupo «Galería de fotos»', galeria],
-    ['botón «Agregar»', formulario.getByRole('button', { name: 'Agregar', exact: true })],
     ['texto «Cargar foto»', formulario.getByText('Cargar foto', { exact: true })],
     ['botón «Guardar producto»', formulario.getByRole('button', { name: 'Guardar producto' })],
   ];
@@ -376,24 +375,17 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
     .toBe(true);
 }
 
-/** TEST-02: edita el producto con galería, añade una foto y repite la URL; sin guardar. */
+/** TEST-02: edita el producto con galería, carga una foto y la vuelve a cargar; sin guardar. */
 async function comprobarGaleria(page: Page, lugar: Lugar): Promise<void> {
   const formulario = await editarProducto(page, PRODUCTO_CON_GALERIA);
   await comprobarSinDesborde(page, lugar, 'editando');
 
   const galeria = formulario.getByRole('group', { name: 'Galería de fotos' });
-  const urlDeFoto = formulario.getByRole('textbox', { name: 'URL de foto', exact: true });
-  const agregar = formulario.getByRole('button', { name: 'Agregar', exact: true });
   const que = (parte: string) => etiqueta(lugar, `galería · ${parte}`);
+  // Lote 25 (ADR-0026): la foto se carga como archivo; el Admin la reduce y, si es la misma, la reconoce repetida.
+  const cargarFoto = () => formulario.getByLabel('Cargar foto', { exact: true }).setInputFiles(FOTO_NUEVA);
 
-  // La tuerca «Cambiar tema» del modo demo está fija abajo a la derecha: «Agregar» se lleva al centro de la vista.
-  const pulsarAgregar = async () => {
-    await agregar.evaluate((nodo) => nodo.scrollIntoView({ block: 'center' }));
-    await agregar.click();
-  };
-
-  await urlDeFoto.fill(FOTO_NUEVA);
-  await pulsarAgregar();
+  await cargarFoto();
   const piezas: [string, Locator][] = [
     ['imagen «Foto 2 del producto»', galeria.getByRole('img', { name: 'Foto 2 del producto' })],
     ['imagen «Foto 3 del producto»', galeria.getByRole('img', { name: 'Foto 3 del producto' })],
@@ -413,8 +405,7 @@ async function comprobarGaleria(page: Page, lugar: Lugar): Promise<void> {
   }
   await comprobarSinDesborde(page, lugar, 'editando con tres fotos');
 
-  await urlDeFoto.fill(FOTO_NUEVA);
-  await pulsarAgregar();
+  await cargarFoto();
   const aviso = galeria.getByRole('alert');
   await expect(aviso).toHaveText(AVISO_FOTO_REPETIDA);
   await expect(aviso).toBeVisible();
@@ -484,7 +475,7 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
       const encabezado = cabecera(page);
       await expect(encabezado).toHaveCount(1);
       expect.soft(await encabezado.isVisible(), etiqueta(lugar, 'cabecera visible')).toBe(true);
-      for (const titulo of ['Producto', 'Precio', 'Stock']) {
+      for (const titulo of ['Producto', 'SKU', 'Precio', 'Stock']) {
         expect
           .soft(
             await encabezado.getByText(titulo, { exact: true }).isVisible(),
@@ -498,14 +489,14 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
         await expect(fila).toHaveCount(1);
         const que = (parte: string) => etiqueta(lugar, `${producto.nombre} · ${parte}`);
         const hijos = await hijosDeFila(fila);
-        expect(hijos, que('hijos directos de la fila')).toHaveLength(4);
-        const [bloque, precio, stock, acciones] = hijos;
-        // El bloque del producto tiene dos líneas (nombre y SKU) y el resto de la fila se centra sobre él
-        // (`items-center`): el centro del nombre queda media línea por encima, así que el precio, el stock y las
-        // acciones se comparan con el centro del bloque (menos de 2 px) y, además, deben caer en la franja
-        // vertical del nombre, es decir, en su misma línea.
+        expect(hijos, que('hijos directos de la fila')).toHaveLength(5);
+        const [bloque, sku, precio, stock, acciones] = hijos;
+        // Desde el lote 25 (PBI-0219) el bloque del producto es solo el nombre y el SKU tiene su celda; el resto de
+        // la fila se centra sobre él (`items-center`): el SKU, el precio, el stock y las acciones se comparan con el
+        // centro del bloque (menos de 2 px) y, además, deben caer en la franja vertical del nombre, en su misma línea.
         const cajaDelNombre = await caja(fila.getByText(producto.nombre, { exact: true }));
         const alineados: [string, Caja][] = [
+          ['SKU', sku.caja],
           ['precio', precio.caja],
           ['stock', stock.caja],
           ['acciones', acciones.caja],
@@ -547,9 +538,9 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
     expect.soft(await encabezado.isVisible(), etiqueta(lugar, 'cabecera oculta')).toBe(false);
     for (const producto of PRODUCTOS) {
       const hijos = await hijosDeFila(filaDe(page, producto.nombre));
-      expect(hijos).toHaveLength(4);
+      expect(hijos).toHaveLength(5);
       expect
-        .soft(hijos[2].texto, etiqueta(lugar, `${producto.nombre} · celda del stock`))
+        .soft(hijos[3].texto, etiqueta(lugar, `${producto.nombre} · celda del stock`))
         .toMatch(STOCK_CON_ETIQUETA);
     }
   });

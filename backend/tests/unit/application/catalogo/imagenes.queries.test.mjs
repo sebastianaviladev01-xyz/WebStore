@@ -113,3 +113,79 @@ test('PBI-0214: una imagen que no existe o que no es una imagen cargada responde
       `${coleccion}/${id}/${campo}`,
     );
 });
+
+/*
+ * Lote 25 (ADR-0025 y ADR-0026; provisional): las fotos de la galería y la imagen de la categoría tampoco viajan como
+ * Data URL dentro del JSON público. Cada foto de la galería tiene su dirección por posición
+ * (`/bff/images/products/{id}/gallery/{n}`) y la imagen de la categoría, `/bff/images/categories/{id}/image`. Una imagen
+ * guardada antes que no es PNG, JPEG ni WebP (la SVG de una categoría del lote 07b) o una ruta de `assets/` llega tal
+ * cual.
+ */
+const foto1 = dataUrl('webp', webp(1200, 900));
+const foto2 = dataUrl('png', png(64, 48));
+const svg = 'data:image/svg+xml;base64,PHN2Zy8+';
+
+const conGaleria = () =>
+  estado({
+    products: [
+      {
+        id: 'p-1',
+        name: 'Televisor',
+        sku: 'TV-1',
+        active: true,
+        imageUrl: principal,
+        thumbnailUrl: miniatura,
+        gallery: [foto1, 'assets/brand/living-room-v2.jpg', principal, foto2, foto1],
+      },
+    ],
+    categories: [
+      {
+        id: 'cat-tv',
+        name: 'Televisores',
+        parentId: null,
+        order: 1,
+        imageUrl: dataUrl('webp', webp(100, 100)),
+      },
+      { id: 'cat-old', name: 'Antigua', parentId: null, order: 2, imageUrl: svg },
+      { id: 'cat-none', name: 'Sin imagen', parentId: null, order: 3 },
+    ],
+  });
+
+test('lote 25: las fotos cargadas de la galería llegan por dirección, una por posición y sin repetir', () => {
+  const [tv] = createCatalogoQueries({ store: { state: conGaleria() } }).listProducts();
+  assert.equal(tv.images.length, 4, 'la principal, dos fotos cargadas y la ruta de assets');
+  assert.equal(tv.images[0], tv.imageUrl);
+  assert.match(tv.images[1], /^\/bff\/images\/products\/p-1\/gallery\/0\?v=[A-Za-z0-9_-]{12}$/);
+  assert.equal(tv.images[2], 'assets/brand/living-room-v2.jpg');
+  assert.match(tv.images[3], /^\/bff\/images\/products\/p-1\/gallery\/3\?v=/);
+  assert.ok(!JSON.stringify(tv).includes('data:'), 'ninguna Data URL en la ficha pública');
+});
+
+test('lote 25: la imagen cargada de la categoría llega por dirección; la SVG anterior, tal cual', () => {
+  const [tv, antigua, sinImagen] = createCatalogoQueries({ store: { state: conGaleria() } }).listCategories();
+  assert.match(tv.imageUrl, /^\/bff\/images\/categories\/cat-tv\/image\?v=[A-Za-z0-9_-]{12}$/);
+  assert.equal(antigua.imageUrl, svg);
+  assert.equal(sinImagen.imageUrl, null);
+});
+
+test('lote 25: sirve una foto de la galería por su posición y la imagen de la categoría', () => {
+  const imagenes = createImagenesQueries({ store: { state: conGaleria() } });
+  const foto = imagenes.obtener('products', 'p-1', 'gallery/3');
+  assert.equal(foto.tipo, 'png');
+  assert.deepEqual(foto.bytes, Buffer.from(foto2.split(',')[1], 'base64'));
+  assert.equal(imagenes.obtener('categories', 'cat-tv', 'image').tipo, 'webp');
+  for (const [coleccion, id, campo] of [
+    ['products', 'p-1', 'gallery/1'],
+    ['products', 'p-1', 'gallery/9'],
+    ['products', 'p-1', 'gallery/x'],
+    ['categories', 'cat-old', 'image'],
+    ['categories', 'cat-none', 'image'],
+    ['categories', 'cat-tv', 'thumbnail'],
+    ['banners', 'bn 1', 'gallery/0'],
+  ])
+    assert.throws(
+      () => imagenes.obtener(coleccion, id, campo),
+      (error) => error.code === 'IMAGE_NOT_FOUND',
+      `${coleccion}/${id}/${campo}`,
+    );
+});

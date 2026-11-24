@@ -4,6 +4,7 @@
 @import '@fontsource-variable/source-sans-3';
 @import './styles/tokens.css';
 @import './styles/storefront.css';
+@import './styles/campos-con-contorno.css';
 @import './styles/home.css';
 @import './styles/material-typography.css';
 

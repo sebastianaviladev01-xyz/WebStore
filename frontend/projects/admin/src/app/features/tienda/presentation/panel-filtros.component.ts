@@ -28,7 +28,11 @@ const ICONOS = {
   host: { class: 'block' },
   template: `
     <form class="admin-card p-5" role="search" [attr.aria-label]="etiqueta()" (submit)="enviar($event)">
-      <div class="grid gap-x-4 sm:grid-cols-2 xl:grid-cols-3">
+      <!--
+        Lote 25 (PBI-0212): con el contorno, la etiqueta flotante sobresale unos 7 px del borde; la separación entre filas
+        evita que tape la ayuda o el error del campo de arriba.
+      -->
+      <div class="grid gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-3">
         <ng-content />
       </div>
       <div class="mt-2 flex flex-wrap justify-end gap-3">
