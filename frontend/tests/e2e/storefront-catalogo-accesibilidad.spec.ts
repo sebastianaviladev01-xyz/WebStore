@@ -87,10 +87,23 @@ test.describe('PBI-0026 y PBI-0054: sin avisos de NgOptimizedImage', () => {
   });
 });
 
+/**
+ * Avisos NG0956 de Angular en la consola: un `@for` que sigue sus elementos por identidad volvió a crear la lista
+ * entera (lote 20, ADR-0021). Pasaba al ir de una ficha a la de un sugerido.
+ */
+function avisosNG0956(page: Page): string[] {
+  const avisos: string[] = [];
+  page.on('console', (mensaje) => {
+    if (mensaje.text().includes('NG0956')) avisos.push(mensaje.text());
+  });
+  return avisos;
+}
+
 test.describe('PBI-0039: también te puede interesar', () => {
   test('el diálogo sugiere productos de la misma categoría con stock, que llevan a su ficha', async ({
     page,
   }) => {
+    const ng0956 = avisosNG0956(page);
     await page.goto('/catalogo/oled-vision-55-4k');
     await page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
     const dialogo = page.getByRole('dialog', { name: 'Producto agregado' });
@@ -103,6 +116,8 @@ test.describe('PBI-0039: también te puede interesar', () => {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page).toHaveURL('/catalogo/soundbar-cinema-500');
     await expect(page.getByRole('heading', { level: 1, name: 'Soundbar Cinema 500' })).toBeVisible();
+    // Lote 20: la ficha nueva no vuelve a crear sus listas enteras (NG0956).
+    expect(ng0956).toEqual([]);
   });
 
   test('sin otros productos con stock en la categoría no muestra la sección', async ({ page }) => {
@@ -170,6 +185,21 @@ test.describe('PBI-0179: sugeridos en un panel lateral (lote 16, ADR-0021)', () 
       await expect(page).toHaveURL('/carrito');
     });
   }
+
+  test('el sugerido del panel lleva a su ficha sin volver a crear sus listas (NG0956, lote 20)', async ({
+    page,
+  }) => {
+    const ng0956 = avisosNG0956(page);
+    await conPanelLateral(page);
+    await page.goto('/catalogo/oled-vision-55-4k');
+    await page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
+    await page
+      .getByRole('dialog', { name: 'Producto agregado' })
+      .getByRole('link', { name: /Soundbar Cinema 500/ })
+      .click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Soundbar Cinema 500' })).toBeVisible();
+    expect(ng0956).toEqual([]);
+  });
 });
 
 test.describe('PBI-0046: favicon', () => {

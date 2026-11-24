@@ -69,7 +69,8 @@ import { ComparadorFacade } from '../../comparador/application/comparador.facade
             </div>
             @if (images().length > 1) {
               <div class="ws-pdp-thumbs" role="group" aria-label="Fotos del producto">
-                @for (url of images(); track url; let i = $index) {
+                <!-- Por posición (lote 20), como los destacados: otra ficha no vuelve a crear las miniaturas (NG0956). -->
+                @for (url of images(); track $index; let i = $index) {
                   <button
                     type="button"
                     [class.is-active]="selectedImage() === i"
@@ -116,7 +117,8 @@ import { ComparadorFacade } from '../../comparador/application/comparador.facade
             </div>
 
             <div class="ws-pdp-highlights mt-7 grid grid-cols-2 gap-3 sm:grid-cols-4">
-              @for (highlight of item.highlights; track highlight) {
+              <!-- Por posición (lote 20): al pasar a otra ficha, cambia el texto sin volver a crear la lista (NG0956). -->
+              @for (highlight of item.highlights; track $index) {
                 <div class="p-3 text-center text-xs font-semibold text-muted-strong">{{ highlight }}</div>
               }
             </div>
