@@ -16,6 +16,7 @@ import { PedidosFacade } from '../application/pedidos.facade';
 import { EnviosFacade } from '../../envios/application/envios.facade';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
 import { esCambioDeFechaValido, fechaDeLima, fechaVisible } from '../domain/fecha-entrega.rules';
+import { direccionVisible } from '../domain/direccion-por-producto.rules';
 @Component({
   selector: 'ws-order-detail-page',
   imports: [
@@ -87,6 +88,10 @@ import { esCambioDeFechaValido, fechaDeLima, fechaVisible } from '../domain/fech
                 <div>
                   <h2 class="font-semibold">{{ item.product.name }}</h2>
                   <p class="text-sm text-muted">Cantidad: {{ item.quantity }}</p>
+                  <!-- Lote 19 (PBI-0006): el producto que va a otra dirección (una por producto) la dice. -->
+                  @if (item.shipping; as direccion) {
+                    <p class="text-sm text-muted">Se entrega en: {{ direccionVisible(direccion) }}</p>
+                  }
                   <strong>
                     {{ item.product.price * item.quantity | currency: 'PEN' : 'symbol' : '1.2-2' }}
                   </strong>
@@ -97,6 +102,11 @@ import { esCambioDeFechaValido, fechaDeLima, fechaVisible } from '../domain/fech
               <h2 class="text-xl font-semibold">Dirección de entrega</h2>
               @if (o.shippingOrigin) {
                 <p class="mt-1 text-sm text-muted">Despacho desde {{ o.shippingOrigin }}.</p>
+              }
+              @if (tieneOtrasDirecciones()) {
+                <p class="mt-1 text-sm text-muted">
+                  Los productos que van a otra dirección la conservan si cambias esta.
+                </p>
               }
               <form [formGroup]="form" class="ws-outline-fields mt-4 grid gap-3 sm:grid-cols-2">
                 <mat-form-field>
@@ -226,6 +236,11 @@ export class DetallePedidoPage implements OnInit {
   protected readonly saving = signal(false);
   protected readonly notice = signal<string | null>(null);
   protected readonly order = computed(() => this.orders.get(this.orderId()));
+  protected readonly direccionVisible = direccionVisible;
+  /** Alguna línea va a otra dirección (una por producto, lote 19, PBI-0006). */
+  protected readonly tieneOtrasDirecciones = computed(
+    () => this.order()?.items.some((item) => item.shipping) ?? false,
+  );
   protected readonly destinations = computed(() =>
     [...new Set(this.shipping.rates().map((r) => r.destination))].sort(),
   );
