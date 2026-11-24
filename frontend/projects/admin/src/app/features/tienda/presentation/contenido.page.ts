@@ -485,9 +485,14 @@ export class ContenidoPage {
       [this.form.controls.announcements, config.announcements, nuevoAviso],
       [this.form.controls.quickLinks, config.quickLinks, nuevoAcceso],
     ] as const;
+    // Lote 20 (ADR-0021): las filas que ya había se conservan, vacías y sin tocar, y solo se añaden o quitan las que
+    // faltan o sobran. Con filas nuevas en cada carga, el `@for` de la lista (que sigue cada fila por identidad)
+    // volvía a crearlas todas y Angular avisaba NG0956.
     for (const [lista, elementos, nueva] of listas) {
-      lista.clear({ emitEvent: false });
-      (elementos ?? []).forEach(() => lista.push(nueva(), { emitEvent: false }));
+      const cuantas = (elementos ?? []).length;
+      while (lista.length > cuantas) lista.removeAt(lista.length - 1, { emitEvent: false });
+      lista.controls.forEach((fila) => fila.reset(undefined, { emitEvent: false }));
+      while (lista.length < cuantas) lista.push(nueva(), { emitEvent: false });
     }
     // Solo los campos del formulario: la configuración trae también los de «Entregas y feriados» y la versión de los
     // términos (lote 17), que esta página no edita.

@@ -41,6 +41,11 @@ test('lote 15: Contenido edita correos, teléfonos, redes, avisos y accesos como
   page,
 }) => {
   const antes = (await leerSnapshot()).config;
+  // Lote 20: al recargar tras guardar, las listas conservan sus filas; antes se volvían a crear (aviso NG0956).
+  const ng0956: string[] = [];
+  page.on('console', (mensaje) => {
+    if (mensaje.text().includes('NG0956')) ng0956.push(mensaje.text());
+  });
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   try {
     await page.goto('/contenido');
@@ -103,6 +108,12 @@ test('lote 15: Contenido edita correos, teléfonos, redes, avisos y accesos como
     ]);
     expect(publicas.socialLinks).toEqual([{ label: 'Instagram', url: 'https://www.instagram.com/webstore' }]);
     expect(publicas.quickLinks).toEqual(antes['quickLinks']);
+    // Lo guardado sigue en el formulario, en su orden, y ninguna lista se volvió a crear entera.
+    await expect(page.getByRole('textbox', { name: 'Aviso 1', exact: true })).toHaveValue(
+      'Mantenimiento el domingo',
+    );
+    await expect(page.getByRole('textbox', { name: 'Teléfono 2', exact: true })).toHaveValue('(01) 555-0000');
+    expect(ng0956).toEqual([]);
   } finally {
     await enviarCambios({
       config: {
