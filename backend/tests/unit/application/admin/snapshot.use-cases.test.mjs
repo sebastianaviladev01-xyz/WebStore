@@ -121,6 +121,9 @@ const invalidos = [
     'config con un acceso inferior sin destino',
     { config: { quickLinks: [{ group: 'A', label: 'B', url: '' }] } },
   ],
+  // Lote 16 (ADR-0021, PBI-0179): los sugeridos van en el diálogo o en un panel lateral, nada más.
+  ['config con un lugar de los sugeridos desconocido', { config: { addToCartDisplay: 'panel' } }],
+  ['config con un lugar de los sugeridos que no es texto', { config: { addToCartDisplay: true } }],
   ['precio negativo', { products: seed.products.map((p, i) => (i ? p : { ...p, price: -1 })) }],
   ['precio no numérico', { products: seed.products.map((p, i) => (i ? p : { ...p, price: '10' })) }],
   ['stock negativo', { products: seed.products.map((p, i) => (i ? p : { ...p, stock: -1 })) }],
@@ -304,4 +307,18 @@ test('tras el rechazo, el Admin recarga y reintenta sobre la revisión nueva: se
   assert.ok(store.state.brands.some((item) => item.id === 'b-x'));
   assert.ok(store.state.brands.some((item) => item.id === 'b-y'));
   assert.equal(store.guardados, 2);
+});
+
+test('lote 16 (PBI-0179): config guarda dónde van los sugeridos y avisa si el valor no vale', () => {
+  const { store, resultado } = guardar(superadmin, { config: { addToCartDisplay: 'side-panel' } });
+  resultado();
+  assert.equal(store.state.config.addToCartDisplay, 'side-panel');
+
+  const fallido = guardar(superadmin, { config: { addToCartDisplay: 'modal' } });
+  assert.throws(fallido.resultado, (error) => {
+    assert.equal(error.code, 'INVALID_COLLECTION');
+    assert.deepEqual(error.details, { collection: 'config', field: 'addToCartDisplay' });
+    assert.match(error.message, /^Revisa el contenido de la tienda: /);
+    return true;
+  });
 });

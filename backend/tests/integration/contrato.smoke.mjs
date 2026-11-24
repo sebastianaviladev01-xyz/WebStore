@@ -588,6 +588,35 @@ try {
     if (JSON.stringify(conListas[clave]) !== JSON.stringify(valor))
       throw new Error(`Contenido no publica ${clave} tal como se guardó`);
 
+  // Lote 16 (ADR-0021, PBI-0179): dónde van los sugeridos al agregar al carrito. Por defecto, el diálogo.
+  if (conListas.addToCartDisplay !== 'dialog')
+    throw new Error('Contenido debe publicar addToCartDisplay, con «dialog» por defecto');
+  const lugarInvalido = await raw('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: { addToCartDisplay: 'modal' } }),
+  });
+  const problemaDeLugar = await esperarError(
+    lugarInvalido,
+    400,
+    'INVALID_COLLECTION',
+    'addToCartDisplay no válido',
+  );
+  if (problemaDeLugar.details?.field !== 'addToCartDisplay')
+    throw new Error('El rechazo de addToCartDisplay debe nombrar el campo en details.field');
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: { addToCartDisplay: 'side-panel' } }),
+  });
+  if ((await request('/bff/content/settings')).addToCartDisplay !== 'side-panel')
+    throw new Error('Contenido no publica addToCartDisplay tal como se guardó');
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: { addToCartDisplay: 'dialog' } }),
+  });
+
   snapshot.banners[0] = {
     ...snapshot.banners[0],
     title: 'Campaña de prueba',

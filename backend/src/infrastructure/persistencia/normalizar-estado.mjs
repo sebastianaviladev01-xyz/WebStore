@@ -2,6 +2,8 @@ import { normalizarActividad } from '../../domain/admin/actividad.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
 import {
   CAMPOS_ANTERIORES_DE_CONTENIDO,
+  MODO_DE_SUGERIDOS_POR_DEFECTO,
+  esModoDeSugeridos,
   listasDesdeContenidoAnterior,
 } from '../../domain/admin/contenido.rules.mjs';
 import { normalizarErroresDeCompra } from '../../domain/admin/errores-de-compra.rules.mjs';
@@ -259,6 +261,9 @@ export function normalizeState(input, demoPasswords, avisar = () => {}) {
   if (versionGuardada < 3) migrarColoresDeContenido(next);
   if (versionGuardada < 4) migrarListasDeContenido(next, input.config ?? {});
   next.config = sinColoresDeContenido(next.config);
+  // Lote 16 (PBI-0179): sin el campo lo completa la semilla; un valor desconocido vuelve al diálogo, sin migración.
+  if (!esModoDeSugeridos(next.config.addToCartDisplay))
+    next.config.addToCartDisplay = MODO_DE_SUGERIDOS_POR_DEFECTO;
   for (const clave of CAMPOS_ANTERIORES_DE_CONTENIDO) delete next.config[clave];
   next.appearance.activeThemeId = temaActivoExistente(next.appearance, avisar);
   next.schemaVersion = SCHEMA_VERSION;

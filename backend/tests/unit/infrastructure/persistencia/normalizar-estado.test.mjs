@@ -474,3 +474,16 @@ test('la semilla normalizada conserva sus listas de Contenido', () => {
   for (const clave of ['contactEmails', 'contactPhones', 'socialLinks', 'announcements', 'quickLinks'])
     assert.deepEqual(next.config[clave], seed.config[clave], clave);
 });
+
+test('lote 16 (PBI-0179): un estado sin el lugar de los sugeridos, o con uno desconocido, carga con el diálogo', () => {
+  const sinCampo = estadoV3();
+  delete sinCampo.config.addToCartDisplay;
+  assert.equal(normalizeState(sinCampo, demoPasswords).config.addToCartDisplay, 'dialog');
+  const desconocido = estadoV3();
+  desconocido.config.addToCartDisplay = 'popup';
+  assert.equal(normalizeState(desconocido, demoPasswords).config.addToCartDisplay, 'dialog');
+  const panel = estadoV3();
+  panel.config.addToCartDisplay = 'side-panel';
+  assert.equal(normalizeState(panel, demoPasswords).config.addToCartDisplay, 'side-panel');
+  assert.equal(seed.config.addToCartDisplay, 'dialog');
+});

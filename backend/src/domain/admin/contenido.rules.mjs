@@ -28,6 +28,14 @@ export const CAMPOS_ANTERIORES_DE_CONTENIDO = Object.freeze([
   'topNavigation',
 ]);
 
+/**
+ * Dónde muestra la tienda los productos sugeridos al agregar al carrito (lote 16, ADR-0021, PBI-0179; provisional): en
+ * el diálogo «Producto agregado», como hasta ahora y lo que Daniel dijo que basta, o en un panel lateral.
+ */
+export const MODOS_DE_SUGERIDOS = Object.freeze(['dialog', 'side-panel']);
+export const MODO_DE_SUGERIDOS_POR_DEFECTO = 'dialog';
+export const esModoDeSugeridos = (valor) => MODOS_DE_SUGERIDOS.includes(valor);
+
 export const MAXIMO_ETIQUETA = 30;
 export const MAXIMO_TEXTO_DE_AVISO = 140;
 export const MAXIMO_GRUPOS_DEL_PIE = 3;

@@ -214,3 +214,14 @@ test('migración: un dato de antes que no cumple las reglas nuevas se conserva t
   assert.deepEqual(listas.contactPhones, [{ value: 'llámanos', label: '' }]);
   assert.equal(listas.announcements[0].text.length, 200);
 });
+
+test('lote 16 (PBI-0179): los sugeridos al agregar al carrito van en el diálogo o en un panel lateral; por defecto, el diálogo', async () => {
+  const { MODOS_DE_SUGERIDOS, MODO_DE_SUGERIDOS_POR_DEFECTO, esModoDeSugeridos } =
+    await import('../../../../src/domain/admin/contenido.rules.mjs');
+  assert.deepEqual([...MODOS_DE_SUGERIDOS], ['dialog', 'side-panel']);
+  assert.equal(MODO_DE_SUGERIDOS_POR_DEFECTO, 'dialog');
+  assert.equal(esModoDeSugeridos('dialog'), true);
+  assert.equal(esModoDeSugeridos('side-panel'), true);
+  for (const otro of ['panel', 'Dialog', '', null, undefined, 1])
+    assert.equal(esModoDeSugeridos(otro), false);
+});
