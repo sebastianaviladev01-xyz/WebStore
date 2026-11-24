@@ -1,9 +1,13 @@
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
+  Injectable,
+  Injector,
   signal,
   untracked,
 } from '@angular/core';
@@ -16,11 +20,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import {
+  arbolDeCategorias,
+  FilaDeCategoria,
+  filasVisibles,
+  moverEnArbol,
+} from '../domain/arbol-categorias.rules';
 import { aplanarArbolCategorias } from '../domain/categoria.rules';
 import { motivoParaNoEliminarCategoria } from '../domain/eliminacion.rules';
 import { FILTROS_CATEGORIAS_VACIOS, SIN_PADRE } from '../domain/filtro-catalogo.model';
 import {
-  filtrarCategorias,
   leerFiltrosCategorias,
   leerPagina,
   ParametrosUrl,
@@ -31,11 +40,26 @@ import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 
 /**
- * Listado de categorías (feature 008): panel de filtros debajo del título, la lista en orden de árbol a todo el
- * ancho y la paginación. Los filtros aplicados y la página viven en la URL; el panel edita un borrador que «Buscar»
- * aplica después de traer los datos actuales. Una categoría filtrada conserva su fila de siempre: sangría, «↳» y
- * «Padre: …», aunque el padre no salga en los resultados (D7). El registro se abre en `/categorias/nueva` y
- * `/categorias/:id` (`RegistroCategoriaPage`).
+ * Categorías abiertas del árbol (lote 22, PBI-0220) mientras dura la sesión del panel: al volver de editar una
+ * categoría, el árbol sigue abierto donde estaba. `filtros` son los aplicados con que se calcularon: al cambiar, se
+ * vuelven a abrir solo las que contienen las que coinciden con el nombre.
+ */
+@Injectable({ providedIn: 'root' })
+export class EstadoArbolCategorias {
+  readonly abiertas = signal<ReadonlySet<string>>(new Set());
+  filtros: string | null = null;
+}
+
+/**
+ * Listado de categorías (feature 008): panel de filtros debajo del título, la lista a todo el ancho y la paginación.
+ * Los filtros aplicados y la página viven en la URL; el panel edita un borrador que «Buscar» aplica después de traer los
+ * datos actuales. El registro se abre en `/categorias/nueva` y `/categorias/:id` (`RegistroCategoriaPage`).
+ *
+ * Lote 22 (ADR-0025, PBI-0220; provisional, por confirmar con Daniel): la lista es un árbol que se abre y se cierra por
+ * niveles (`tree` y `treeitem` con `aria-expanded`), en lugar de la ruta en texto. La paginación cuenta las categorías
+ * de primer nivel, cada una con sus ramas. Teclado: ↑ ↓ Inicio y Fin recorren las filas, → abre o baja a la primera
+ * hija, ← cierra o sube a la que la contiene, `*` abre las hermanas, Intro o Espacio abre o cierra, y Tab lleva a
+ * «Editar» y «Eliminar» de la fila con el foco.
  */
 @Component({
   selector: 'ws-categories-page',
@@ -91,48 +115,81 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
       </p>
     }
     <section class="admin-card mt-6 p-4" aria-label="Lista de categorías">
-      @for (entry of pagina().items; track entry.category.id) {
-        <div
-          class="flex items-center justify-between border-b border-line p-3"
-          [style.padding-left.px]="12 + entry.depth * 24"
-        >
-          <!-- Lote 11 (PBI-0162): la miniatura de la imagen de la categoría, si tiene; sin ella, la fila como antes. -->
-          <div class="flex min-w-0 items-center gap-3">
-            @if (entry.category.imageUrl) {
-              <img
-                class="h-10 w-10 shrink-0 rounded-lg border border-line bg-subtle object-contain"
-                [src]="entry.category.imageUrl"
-                alt=""
-              />
-            }
-            <div class="min-w-0">
-              <strong>{{ entry.depth ? '↳ ' : '' }}{{ entry.category.name }}</strong>
-              <p class="text-xs text-muted">
-                Orden: {{ entry.category.order ?? 'alfabético' }} · Padre:
-                {{ parentName(entry.category.parentId) }}
-              </p>
-            </div>
-          </div>
-          <div class="flex gap-3 text-sm font-semibold">
-            <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
-            <a
-              class="inline-flex items-center text-link"
-              [routerLink]="['/categorias', entry.category.id]"
-              queryParamsHandling="preserve"
-              [attr.aria-label]="'Editar categoría ' + entry.category.name"
+      @if (filas().length) {
+        <ul role="tree" aria-label="Árbol de categorías">
+          @for (fila of filas(); track fila.category.id) {
+            <li
+              role="treeitem"
+              class="flex cursor-pointer items-center justify-between border-b border-line p-3"
+              [id]="'nodo-' + fila.category.id"
+              [style.padding-left.px]="12 + (fila.nivel - 1) * 24"
+              [attr.aria-level]="fila.nivel"
+              [attr.aria-setsize]="fila.total"
+              [attr.aria-posinset]="fila.posicion"
+              [attr.aria-expanded]="fila.tieneHijas ? fila.abierta : null"
+              [attr.aria-labelledby]="'nombre-' + fila.category.id"
+              [attr.aria-describedby]="'detalle-' + fila.category.id"
+              [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
+              [attr.aria-selected]="enfocable() === fila.category.id"
+              (focus)="foco.set(fila.category.id)"
+              (keydown)="tecla($event, fila)"
+              (click)="pulsar($event, fila)"
             >
-              Editar
-            </a>
-            <button
-              class="text-danger"
-              [attr.aria-label]="'Eliminar categoría ' + entry.category.name"
-              (click)="remove(entry.category.id)"
-            >
-              Eliminar
-            </button>
-          </div>
-        </div>
-      } @empty {
+              <div class="flex min-w-0 items-center gap-3">
+                <!-- Con el puntero, toda la fila abre o cierra; sin hijas, la flecha solo ocupa su lugar. -->
+                <span class="grid h-6 w-6 shrink-0 place-items-center text-muted" aria-hidden="true">
+                  @if (fila.tieneHijas) {
+                    <svg
+                      viewBox="0 0 24 24"
+                      class="h-4 w-4 fill-none stroke-current transition-transform motion-reduce:transition-none"
+                      [class.rotate-90]="fila.abierta"
+                      stroke-width="2.25"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="m9 6 6 6-6 6" />
+                    </svg>
+                  }
+                </span>
+                <!-- Lote 11 (PBI-0162): la miniatura de la imagen de la categoría, si tiene; sin ella, la fila como antes. -->
+                @if (fila.category.imageUrl) {
+                  <img
+                    class="h-10 w-10 shrink-0 rounded-lg border border-line bg-subtle object-contain"
+                    [src]="fila.category.imageUrl"
+                    alt=""
+                  />
+                }
+                <div class="min-w-0">
+                  <strong [id]="'nombre-' + fila.category.id">{{ fila.category.name }}</strong>
+                  <p class="text-xs text-muted" [id]="'detalle-' + fila.category.id">
+                    Orden: {{ fila.category.order ?? 'alfabético' }}{{ subcategorias(fila) }}
+                  </p>
+                </div>
+              </div>
+              <div class="flex gap-3 text-sm font-semibold">
+                <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
+                <a
+                  class="inline-flex items-center text-link"
+                  [routerLink]="['/categorias', fila.category.id]"
+                  queryParamsHandling="preserve"
+                  [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
+                  [attr.aria-label]="'Editar categoría ' + fila.category.name"
+                >
+                  Editar
+                </a>
+                <button
+                  class="text-danger"
+                  [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
+                  [attr.aria-label]="'Eliminar categoría ' + fila.category.name"
+                  (click)="remove(fila.category.id)"
+                >
+                  Eliminar
+                </button>
+              </div>
+            </li>
+          }
+        </ul>
+      } @else {
         <p class="p-10 text-center text-sm text-muted">
           {{
             admin.categories().length ? 'Ninguna categoría cumple los filtros.' : 'Todavía no hay categorías.'
@@ -148,6 +205,9 @@ export class CategoriasPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly estado = inject(EstadoArbolCategorias);
+  private readonly injector = inject(Injector);
+  private readonly host: HTMLElement = inject(ElementRef).nativeElement;
   protected readonly sinPadre = SIN_PADRE;
   /** Parámetros de consulta de la URL; con un parámetro repetido, el primero. */
   private readonly parametros = toSignal(
@@ -160,13 +220,22 @@ export class CategoriasPage {
   );
   /** Filtros de la última búsqueda, los de la URL. */
   protected readonly aplicados = computed(() => leerFiltrosCategorias(this.parametros()));
-  /** Resultados en orden de árbol, con la profundidad de cada categoría. */
-  protected readonly resultados = computed(() =>
-    filtrarCategorias(this.admin.categories(), this.aplicados()),
-  );
+  /** El árbol con los filtros aplicados: sus raíces y las que empiezan abiertas por el filtro de nombre. */
+  protected readonly arbol = computed(() => arbolDeCategorias(this.admin.categories(), this.aplicados()));
+  /** La página cuenta las categorías de primer nivel del árbol, cada una con sus ramas. */
   protected readonly pagina = computed(() =>
-    paginar(this.resultados(), leerPagina(this.parametros()), ELEMENTOS_POR_PAGINA),
+    paginar(this.arbol().raices, leerPagina(this.parametros()), ELEMENTOS_POR_PAGINA),
   );
+  /** Las filas que se ven en la página: sus raíces y las hijas de las abiertas. */
+  protected readonly filas = computed(() => filasVisibles(this.pagina().items, this.estado.abiertas()));
+  /** La fila que tuvo el foco por última vez. */
+  protected readonly foco = signal<string | null>(null);
+  /** La única fila a la que se llega con Tab (con sus acciones): la del foco si se ve; si no, la primera. */
+  protected readonly enfocable = computed(() => {
+    const filas = this.filas();
+    const foco = this.foco();
+    return filas.some((fila) => fila.category.id === foco) ? foco : (filas[0]?.category.id ?? null);
+  });
   /** Opciones de «Categoría padre»: todas, en orden jerárquico. */
   protected readonly tree = computed(() => aplanarArbolCategorias(this.admin.categories()));
   /** Lo que se escribe en el panel; se aplica con «Buscar». */
@@ -183,6 +252,16 @@ export class CategoriasPage {
     effect(() => {
       const aplicados = this.aplicados();
       untracked(() => this.borrador.setValue({ ...aplicados }));
+    });
+    // Con otros filtros, el árbol vuelve a abrir solo lo que contiene las que coinciden con el nombre.
+    effect(() => {
+      const clave = JSON.stringify(this.aplicados());
+      const abiertas = this.arbol().abiertas;
+      untracked(() => {
+        if (this.estado.filtros === clave) return;
+        this.estado.filtros = clave;
+        this.estado.abiertas.set(new Set(abiertas));
+      });
     });
   }
   /** Trae los datos actuales y aplica el borrador desde la página 1; si falla, conserva filtros y resultados. */
@@ -216,8 +295,50 @@ export class CategoriasPage {
   protected indent(depth: number) {
     return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
-  protected parentName(id?: string) {
-    return id ? (this.admin.categories().find((c) => c.id === id)?.name ?? id) : '—';
+  /** « · 2 subcategorías» de una categoría con hijas en el árbol; nada en el último nivel. */
+  protected subcategorias(fila: FilaDeCategoria): string {
+    if (!fila.tieneHijas) return '';
+    const cantidad = this.admin.categories().filter((c) => c.parentId === fila.category.id).length;
+    return cantidad ? ` · ${cantidad} ${cantidad === 1 ? 'subcategoría' : 'subcategorías'}` : '';
+  }
+  /** Abre o cierra una categoría; si la fila con el foco queda dentro de una cerrada, el foco pasa a esa categoría. */
+  private alternar(id: string, abrir: boolean) {
+    this.estado.abiertas.update((actuales) => {
+      const siguientes = new Set(actuales);
+      if (abrir) siguientes.add(id);
+      else siguientes.delete(id);
+      return siguientes;
+    });
+    const foco = this.foco();
+    if (!abrir && foco && !this.filas().some((fila) => fila.category.id === foco)) this.enfocar(id);
+  }
+  /** Lleva el foco a una fila cuando ya está en pantalla (puede aparecer recién al abrir la que la contiene). */
+  private enfocar(id: string) {
+    this.foco.set(id);
+    afterNextRender(() => this.host.querySelector<HTMLElement>(`#${CSS.escape('nodo-' + id)}`)?.focus(), {
+      injector: this.injector,
+    });
+  }
+  /** Teclado del árbol sobre la fila; sobre «Editar» y «Eliminar» las teclas hacen lo de siempre. */
+  protected tecla(evento: KeyboardEvent, fila: FilaDeCategoria) {
+    if (evento.target !== evento.currentTarget) return;
+    if (evento.key === 'Enter' || evento.key === ' ') {
+      evento.preventDefault();
+      if (fila.tieneHijas) this.alternar(fila.category.id, !fila.abierta);
+      return;
+    }
+    const movimiento = moverEnArbol(this.filas(), fila.category.id, evento.key);
+    if (!movimiento) return;
+    evento.preventDefault();
+    for (const id of movimiento.abrir) this.alternar(id, true);
+    for (const id of movimiento.cerrar) this.alternar(id, false);
+    this.enfocar(movimiento.foco);
+  }
+  /** Con el puntero, la fila se abre o se cierra (salvo al pulsar «Editar» o «Eliminar»). */
+  protected pulsar(evento: MouseEvent, fila: FilaDeCategoria) {
+    if ((evento.target as HTMLElement).closest('a, button')) return;
+    this.foco.set(fila.category.id);
+    if (fila.tieneHijas) this.alternar(fila.category.id, !fila.abierta);
   }
   /** PBI-0131: una categoría con subcategorías o productos no se elimina; se dice por qué, sin pedir confirmación. */
   protected async remove(id: string) {

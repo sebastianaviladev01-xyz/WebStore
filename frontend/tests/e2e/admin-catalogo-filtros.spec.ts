@@ -36,8 +36,8 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
  *
  * Categorías (⚠ TASK-09):
  *
- * - TEST-15 (AC-08): «oled» deja una sola fila, la de siempre, con «↳ OLED» y «Padre: TV y audio» aunque el padre no
- *   salga (D7); «Categoría padre» deja solo las hijas directas y «Sin padre», las de primer nivel; «Agregar»
+ * - TEST-15 (AC-08; desde el lote 22, PBI-0220, la lista es un árbol): «oled» deja «OLED» dentro de «TV y audio», abierta
+ *   para que se vea; «Categoría padre» deja sus hijas directas (con sus ramas cerradas) y «Sin padre», las de primer nivel; «Agregar»
  *   y «Editar» abren su interfaz de registro, y el padre excluye a la misma categoría y a sus subcategorías.
  *
  * Marcas (⚠ TASK-10):
@@ -354,10 +354,10 @@ test.describe('Filtros y registro de productos del Admin', () => {
 
 const listaCategorias = (page: Page) => page.getByRole('region', { name: 'Lista de categorías' });
 const panelCategorias = (page: Page) => page.getByRole('search', { name: 'Filtros de categorías' });
-/** Filas de la lista de categorías: cada una con su nombre, «Orden: … · Padre: …», «Editar» y «Eliminar». */
-const filasCategorias = (page: Page) => listaCategorias(page).locator(':scope > div');
+/** Filas visibles del árbol de categorías (lote 22, PBI-0220): cada una con su nombre, «Orden: …», «Editar» y «Eliminar». */
+const filasCategorias = (page: Page) => listaCategorias(page).getByRole('treeitem');
 const filaCategoria = (page: Page, nombre: string) =>
-  filasCategorias(page).filter({ has: page.locator('strong', { hasText: nombre }) });
+  listaCategorias(page).getByRole('treeitem', { name: nombre, exact: true });
 
 async function abrirCategorias(page: Page): Promise<void> {
   await page.goto('/categorias');
@@ -378,17 +378,19 @@ test.describe('Filtros y registro de categorías del Admin', () => {
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await abrirCategorias(page);
-      await expect(filasCategorias(page)).toHaveCount(originales.length);
+      // Cerrado, el árbol muestra solo las de primer nivel.
+      await expect(filasCategorias(page)).toHaveCount(originales.filter((c) => !c.parentId).length);
 
-      // «oled»: una sola fila, la de hoy (sangría de su profundidad, «↳» y el nombre del padre), aunque «TV y audio»
-      // no esté en los resultados (D7).
+      // «oled»: la que coincide, dentro de «TV y audio», que se abre para que se vea (PBI-0220; antes, una sola fila
+      // con «↳» y «Padre: TV y audio», D7).
       await panelCategorias(page).getByRole('textbox', { name: 'Nombre' }).fill('oled');
       await buscarCategorias(page);
       await expect(page).toHaveURL(/\/categorias\?nombre=oled$/);
-      await expect(filasCategorias(page)).toHaveCount(1);
-      await expect(filasCategorias(page).locator('strong')).toHaveText('↳ OLED');
-      await expect(filasCategorias(page)).toContainText('Orden: 1 · Padre: TV y audio');
-      await expect(filasCategorias(page)).toHaveCSS('padding-left', '36px');
+      await expect(filasCategorias(page).locator('strong')).toHaveText(['TV y audio', 'OLED']);
+      await expect(filaCategoria(page, 'TV y audio')).toHaveAttribute('aria-expanded', 'true');
+      await expect(filaCategoria(page, 'OLED')).toHaveAttribute('aria-level', '2');
+      await expect(filaCategoria(page, 'OLED')).toContainText('Orden: 1');
+      await expect(filaCategoria(page, 'OLED')).toHaveCSS('padding-left', '36px');
 
       // Otra sesión añade una hija de «TV y audio» y una nieta (hija de «OLED»); «Buscar» las trae.
       await agregarCategorias([
@@ -401,10 +403,9 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await buscarCategorias(page);
       await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
       // Solo las hijas directas, en orden de árbol; la nieta no sale.
-      await expect(filasCategorias(page).locator('strong')).toHaveText(['↳ OLED', '↳ Barras de sonido 008']);
-      for (const fila of await filasCategorias(page).all()) {
-        await expect(fila).toContainText('Padre: TV y audio');
-      }
+      await expect(filasCategorias(page).locator('strong')).toHaveText(['OLED', 'Barras de sonido 008']);
+      await expect(filaCategoria(page, 'OLED')).toHaveAttribute('aria-expanded', 'false');
+      await expect(filaCategoria(page, 'Barras de sonido 008')).not.toHaveAttribute('aria-expanded');
 
       // «Sin padre»: solo las de primer nivel.
       await elegir(page, panelCategorias(page), 'Categoría padre', 'Sin padre');
@@ -463,7 +464,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await edicion.getByRole('textbox', { name: 'Nombre', exact: true }).fill('OLED 008');
       await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
-      await expect(filaCategoria(page, 'OLED 008')).toContainText('Padre: TV y audio');
+      await expect(filaCategoria(page, 'OLED 008')).toBeVisible();
 
       // Otra sesión elimina una categoría con la lista abierta: al abrirla, ya no existe.
       await retirarCategorias(['e2e-008-barras']);

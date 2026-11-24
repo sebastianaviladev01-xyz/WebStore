@@ -29,6 +29,12 @@ label:has(> input[type='file']:focus-visible) {
   outline-offset: 2px;
 }
 
+/* Lote 22 (PBI-0220): la fila del árbol de Categorías recibe el foco; el contorno va por dentro de la tarjeta. */
+[role='treeitem']:focus-visible {
+  outline: 2px solid var(--ws-focus-ring);
+  outline-offset: -2px;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--ws-primary) 24%, var(--ws-surface));
   color: var(--ws-ink);
