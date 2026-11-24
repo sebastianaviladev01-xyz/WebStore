@@ -6,6 +6,7 @@ import {
   desplegarGrupo,
   fechaDeEntrega,
   ingresarAlAdmin,
+  terminosAceptados,
   urls,
 } from './apoyo/entorno';
 import { esperarFotos } from './apoyo/fotos';
@@ -122,7 +123,7 @@ test('un invitado compra, consulta su pedido y el Admin lo recibe', async ({ pag
       items: [{ productId: 'p-004', quantity: 1 }],
       paymentMethod: 'yape-plin',
       deliveryDate: fechaDeEntrega(),
-      termsAccepted: true,
+      ...(await terminosAceptados(page.request)),
     },
   });
   expect(respuesta.ok()).toBeTruthy();

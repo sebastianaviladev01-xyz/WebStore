@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type APIRequestContext, type Page } from '@playwright/test';
 
 /**
  * Puertos de los servidores que levanta `playwright.config.ts` para las pruebas e2e. Son distintos de los de
@@ -79,13 +79,25 @@ export async function cerrarSesionAdmin(page: Page): Promise<void> {
 
 /**
  * Fecha de entrega `AAAA-MM-DD` de Lima, `dias` después de hoy, para los pedidos que las pruebas crean por la API:
- * el BFF rechaza una fecha anterior a hoy en Lima (lote 01, PBI-0096).
+ * el BFF rechaza una fecha anterior a la primera fecha de entrega (lote 01, PBI-0096; lote 17, PBI-0178: por defecto,
+ * mañana en Lima).
  */
 export function fechaDeEntrega(dias = 2): string {
   const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
   const fecha = new Date(`${hoy}T12:00:00Z`);
   fecha.setUTCDate(fecha.getUTCDate() + dias);
   return fecha.toISOString().slice(0, 10);
+}
+
+/**
+ * Aceptación de los términos para los pedidos que las pruebas crean por la API (lote 17, PBI-0177): el BFF exige la
+ * versión vigente, que cambia si otra prueba guarda un texto nuevo de los términos.
+ */
+export async function terminosAceptados(
+  api: APIRequestContext,
+): Promise<{ termsAccepted: true; termsVersion: number }> {
+  const ajustes = await (await api.get(`${urls.bff}/bff/content/settings`)).json();
+  return { termsAccepted: true, termsVersion: ajustes.termsVersion };
 }
 
 /** Correo único por ejecución para no chocar con registros de otra prueba. */

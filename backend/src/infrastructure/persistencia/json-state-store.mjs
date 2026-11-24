@@ -52,8 +52,14 @@ function writeAtomically(dataFile, contenido) {
  * normalización repara o descarta al cargar (un tema propio inválido, PBI-0068) se escribe en `avisar`, el log del
  * BFF por defecto.
  */
-export function createJsonStateStore({ dataFile, demoPasswords, avisar = (aviso) => console.warn(aviso) }) {
-  let state = normalizeState(load(dataFile), demoPasswords, avisar);
+export function createJsonStateStore({
+  dataFile,
+  demoPasswords,
+  avisar = (aviso) => console.warn(aviso),
+  fechasNoLaborablesIniciales = new Set(),
+}) {
+  const opciones = { fechasNoLaborablesIniciales };
+  let state = normalizeState(load(dataFile), demoPasswords, avisar, opciones);
   const save = () => writeAtomically(dataFile, JSON.stringify(state, null, 2));
   save();
 
@@ -65,8 +71,13 @@ export function createJsonStateStore({ dataFile, demoPasswords, avisar = (aviso)
       state = next;
     },
     save,
-    /** Estado de demostración recién normalizado (para reiniciar la tienda). */
+    /** Estado de demostración recién normalizado (para reiniciar la tienda), con el calendario inicial (lote 17). */
     initialState: () =>
-      normalizeState({ ...structuredClone(seed), schemaVersion: SCHEMA_VERSION }, demoPasswords),
+      normalizeState(
+        { ...structuredClone(seed), schemaVersion: SCHEMA_VERSION },
+        demoPasswords,
+        () => {},
+        opciones,
+      ),
   };
 }

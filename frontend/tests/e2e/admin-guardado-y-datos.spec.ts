@@ -10,7 +10,14 @@ import {
   productoDePrueba,
   retirarProductos,
 } from './apoyo/catalogo';
-import { correoUnico, cuentasAdmin, fechaDeEntrega, ingresarAlAdmin, urls } from './apoyo/entorno';
+import {
+  correoUnico,
+  cuentasAdmin,
+  fechaDeEntrega,
+  ingresarAlAdmin,
+  terminosAceptados,
+  urls,
+} from './apoyo/entorno';
 
 /**
  * Lote 06, Admin: guardado y datos (ADR-0017). Recorridos del Admin contra el BFF de prueba real:
@@ -64,7 +71,7 @@ async function crearPedido(page: Page): Promise<string> {
       items: [{ productId: 'p-004', quantity: 1 }],
       paymentMethod: 'card',
       deliveryDate: fechaDeEntrega(),
-      termsAccepted: true,
+      ...(await terminosAceptados(page.request)),
     },
   });
   expect(respuesta.ok()).toBe(true);
@@ -390,7 +397,10 @@ test.describe('Pedidos', () => {
     const cambiar = page.getByRole('combobox', { name: 'Cambiar estado' });
     await expect(filtro).toBeVisible();
     await expect(page.getByRole('heading', { level: 2, name: id })).toBeVisible();
-    await expect(page.getByText(/Aceptados el \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/)).toBeVisible();
+    // Lote 17 (PBI-0177): con los segundos y la versión aceptada.
+    await expect(
+      page.getByText(/Aceptados el \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}\s*Versión \d+/),
+    ).toBeVisible();
 
     // PBI-0126: responder «Cancelar» a la confirmación deja el selector como estaba.
     page.once('dialog', (dialogo) => void dialogo.dismiss());

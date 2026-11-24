@@ -150,6 +150,15 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Contenido',
       },
       {
+        // Lote 17 (ADR-0021, PBI-0178 y PBI-0183): la primera fecha de entrega y los días no laborables.
+        path: 'entregas',
+        resolve: conDatos,
+        canMatch: [permisoGuard('content.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/entregas.page').then((m) => m.EntregasPage),
+        title: 'WebStore Admin | Entregas y feriados',
+      },
+      {
         path: 'temas',
         canMatch: [permisoGuard('themes.manage')],
         loadComponent: () => import('./features/temas/presentation/temas.page').then((m) => m.TemasPage),

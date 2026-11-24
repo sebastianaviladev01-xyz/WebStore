@@ -2,7 +2,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 
 import { leerProductos } from './apoyo/catalogo';
 import { interiorFrenteAlFondo } from './apoyo/campos';
-import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
+import { correoUnico, fechaDeEntrega, terminosAceptados, urls } from './apoyo/entorno';
 import { esperarFotos } from './apoyo/fotos';
 
 /**
@@ -303,7 +303,7 @@ test.describe('PBI-0146 y PBI-0113: detalle del pedido', () => {
         deliveryDate: fechaDeEntrega(),
         paymentMethod: 'card',
         items: [{ productId: soundbar.id, quantity: 1 }],
-        termsAccepted: true,
+        ...(await terminosAceptados(request)),
       },
     });
     expect(compra.status()).toBe(201);
@@ -323,9 +323,10 @@ test.describe('PBI-0146 y PBI-0113: detalle del pedido', () => {
     await esperarFotos(page);
     expect(avisos).toEqual([]);
 
-    const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+    // Lote 17 (PBI-0178): el mínimo es la primera fecha de entrega de la tienda; por defecto, mañana en Lima.
+    const primera = fechaDeEntrega(1);
     const fecha = page.getByLabel('Fecha de entrega');
-    await expect(fecha).toHaveAttribute('min', hoy);
+    await expect(fecha).toHaveAttribute('min', primera);
     const { interior, fondo } = await interiorFrenteAlFondo(fecha);
     expect(interior).toBe(fondo);
 
@@ -336,7 +337,9 @@ test.describe('PBI-0146 y PBI-0113: detalle del pedido', () => {
     await fecha.fill('2020-01-01');
     await page.getByRole('textbox', { name: 'Dirección' }).fill('');
     await page.getByRole('button', { name: 'Actualizar dirección' }).click();
-    await expect(fecha).toHaveAccessibleDescription('Elige una fecha desde hoy.');
+    await expect(fecha).toHaveAccessibleDescription(
+      `Elige una fecha desde el ${primera.split('-').reverse().join('/')}.`,
+    );
     await expect(page.getByRole('textbox', { name: 'Dirección' })).toHaveAccessibleDescription(
       'Ingresa la dirección.',
     );

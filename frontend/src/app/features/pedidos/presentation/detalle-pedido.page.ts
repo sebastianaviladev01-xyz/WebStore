@@ -15,7 +15,7 @@ import { RouterLink } from '@angular/router';
 import { PedidosFacade } from '../application/pedidos.facade';
 import { EnviosFacade } from '../../envios/application/envios.facade';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido } from '../domain/pedido.model';
-import { esCambioDeFechaValido, fechaDeLima } from '../domain/fecha-entrega.rules';
+import { esCambioDeFechaValido, fechaDeLima, fechaVisible } from '../domain/fecha-entrega.rules';
 @Component({
   selector: 'ws-order-detail-page',
   imports: [
@@ -129,11 +129,11 @@ import { esCambioDeFechaValido, fechaDeLima } from '../domain/fecha-entrega.rule
                 </mat-form-field>
                 <mat-form-field>
                   <mat-label>Fecha de entrega</mat-label>
-                  <input matInput type="date" formControlName="deliveryDate" [attr.min]="today" />
+                  <input matInput type="date" formControlName="deliveryDate" [attr.min]="primera()" />
                   @if (form.controls.deliveryDate.hasError('required')) {
                     <mat-error>Elige una fecha de entrega.</mat-error>
                   } @else {
-                    <mat-error>Elige una fecha desde hoy.</mat-error>
+                    <mat-error>Elige una fecha desde el {{ fechaVisible(primera()) }}.</mat-error>
                   }
                 </mat-form-field>
               </form>
@@ -229,11 +229,16 @@ export class DetallePedidoPage implements OnInit {
   protected readonly destinations = computed(() =>
     [...new Set(this.shipping.rates().map((r) => r.destination))].sort(),
   );
-  /** Hoy en Lima: el mínimo del campo de fecha, la misma regla del checkout (PBI-0146). */
-  protected readonly today = fechaDeLima(new Date());
-  /** Desde hoy en Lima, o la fecha que el pedido ya tiene (el BFF la acepta aunque haya pasado). */
+  /**
+   * El mínimo del campo de fecha: la primera fecha de entrega de la tienda, la misma del checkout (PBI-0146; lote 17,
+   * PBI-0178). Mientras no llega, hoy en Lima; el BFF vuelve a validar.
+   */
+  private readonly hoy = fechaDeLima(new Date());
+  protected readonly primera = computed(() => this.orders.primeraFechaDeEntrega() ?? this.hoy);
+  protected readonly fechaVisible = fechaVisible;
+  /** Desde la primera fecha, o la fecha que el pedido ya tiene (el BFF la acepta aunque sea anterior). */
   private readonly fechaValida = (control: AbstractControl<string>): ValidationErrors | null =>
-    !control.value || esCambioDeFechaValido(control.value, this.today, this.order()?.deliveryDate ?? '')
+    !control.value || esCambioDeFechaValido(control.value, this.primera(), this.order()?.deliveryDate ?? '')
       ? null
       : { fechaPasada: true };
   protected readonly form = new FormGroup({
@@ -249,6 +254,7 @@ export class DetallePedidoPage implements OnInit {
   });
   async ngOnInit() {
     this.loading.set(true);
+    void this.orders.cargarPrimeraFechaDeEntrega();
     // Sin respuesta del BFF (sin conexión) se muestra lo que hay en memoria; si el BFF ya no lo autoriza (404), la
     // facade lo olvida y no se muestra (PBI-0104).
     const o = (await this.orders.load(this.orderId())) ?? this.orders.get(this.orderId());

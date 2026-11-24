@@ -112,6 +112,8 @@ try {
     paymentMethod: 'card',
     items: [{ product: { ...product, price: 1 }, quantity: 2 }],
     termsAccepted: true,
+    // Lote 17 (PBI-0177): la versión de los términos que mostró la tienda (la 1 en un estado nuevo).
+    termsVersion: 1,
   };
   // Lote 04 (ADR-0017): sin aceptar los términos (PBI-0040) o con un total que no es el del BFF (PBI-0106), no se
   // crea nada ni se toca el stock.
@@ -151,6 +153,8 @@ try {
   if (repetido.id !== order.id || 'idempotencyKeyHash' in repetido)
     throw new Error('La misma clave no devolvió el mismo pedido');
   if (!order.termsAcceptedAt) throw new Error('El pedido no guarda la aceptación de los términos');
+  if (order.termsVersion !== 1)
+    throw new Error('El pedido no guarda la versión de los términos aceptada (PBI-0177)');
   order.accessToken = repetido.accessToken;
   products = await request('/bff/catalog/products');
   if (products[0].stock !== 13) throw new Error('Checkout no descontó stock, o lo descontó dos veces');
@@ -1223,7 +1227,8 @@ try {
     'Cuerpo que no es JSON',
   );
 
-  // Checkout (PBI-0096): fecha desde hoy en Lima, método de pago ofrecido, cantidad entera y lista blanca.
+  // Checkout (PBI-0096): fecha desde la primera que permite la tienda (lote 17, PBI-0178: por defecto, mañana en
+  // Lima), método de pago ofrecido, cantidad entera y lista blanca.
   const checkoutCon = (cambios) =>
     raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify({ ...command, ...cambios }) });
   await esperarError(
@@ -1232,6 +1237,14 @@ try {
     'INVALID_DELIVERY_DATE',
     'Fecha pasada',
   );
+  const deHoy = await esperarError(
+    await checkoutCon({ deliveryDate: fechaDeLima(0) }),
+    400,
+    'INVALID_DELIVERY_DATE',
+    'Hoy, con la primera fecha por defecto (mañana)',
+  );
+  if (deHoy.details?.minimum !== fechaDeLima(1))
+    throw new Error('INVALID_DELIVERY_DATE debe traer la primera fecha en details.minimum');
   await esperarError(
     await checkoutCon({ paymentMethod: 'bitcoin' }),
     400,
@@ -1245,13 +1258,13 @@ try {
     'Cantidad decimal',
   );
   const conCamposDeMas = await checkoutCon({
-    deliveryDate: fechaDeLima(0),
+    deliveryDate: fechaDeLima(1),
     customer: { ...command.customer, role: 'admin' },
     shipping: { ...command.shipping, price: 0 },
     items: [{ productId: products[0].id, quantity: 1 }],
   });
   if (conCamposDeMas.status !== 201)
-    throw new Error(`Un pedido para hoy debe aceptarse: ${conCamposDeMas.status}`);
+    throw new Error(`Un pedido para la primera fecha debe aceptarse: ${conCamposDeMas.status}`);
   const pedidoFiltrado = await conCamposDeMas.json();
   if ('role' in pedidoFiltrado.customer || 'price' in pedidoFiltrado.shipping)
     throw new Error('El checkout guardó campos de más en customer o shipping');
@@ -1437,6 +1450,167 @@ try {
     throw new Error('El catálogo no publica la imagen de la categoría');
   if (publicas07b.some((item) => !('imageUrl' in item)))
     throw new Error('Cada categoría pública trae imageUrl');
+
+  // Lote 17 (ADR-0021; provisional): primera fecha de entrega (PBI-0178), versiones de los términos (PBI-0177) y
+  // calendario de días no laborables (PBI-0183).
+  owner = await adminLogin();
+  const manager17 = await adminLogin('admin@webstore.demo', 'Admin#2026');
+  const primera = await request('/bff/checkout/delivery-dates');
+  if (primera.minimum !== fechaDeLima(1))
+    throw new Error(`GET /checkout/delivery-dates debe dar mañana en Lima por defecto: ${primera.minimum}`);
+  let snapshot17 = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  if (
+    snapshot17.config.firstDeliveryDay !== 'next-calendar-day' ||
+    snapshot17.config.deliveryCutoffTime !== ''
+  )
+    throw new Error('La configuración debe traer la primera fecha de entrega por defecto');
+  if (!Array.isArray(snapshot17.nonWorkingDates) || snapshot17.nonWorkingDates.length !== 0)
+    throw new Error('El snapshot debe traer nonWorkingDates (vacía sin WEBSTORE_NON_WORKING_DATES)');
+  const horaInvalida = await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ revision: snapshot17.revision, config: { deliveryCutoffTime: '25:00' } }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Hora de corte no válida',
+  );
+  if (horaInvalida.details?.field !== 'deliveryCutoffTime')
+    throw new Error('El rechazo de la hora de corte debe nombrar el campo');
+  snapshot17 = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot17.revision, config: { firstDeliveryDay: 'same-day' } }),
+  });
+  if ((await request('/bff/checkout/delivery-dates')).minimum !== fechaDeLima(0))
+    throw new Error('Con «el mismo día», la primera fecha es hoy');
+  snapshot17 = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot17.revision,
+      config: { firstDeliveryDay: 'next-calendar-day' },
+    }),
+  });
+  // Días no laborables: solo el superadministrador; fechas válidas y sin repetir.
+  const sinPermiso = await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(manager17.token),
+      body: JSON.stringify({
+        revision: snapshot17.revision,
+        nonWorkingDates: { upsert: [{ id: 'nwd-smoke', date: '2026-12-25' }] },
+      }),
+    }),
+    403,
+    'INSUFFICIENT_ROLE',
+    'El administrador no edita los días no laborables',
+  );
+  if (sinPermiso.details?.collection !== 'nonWorkingDates')
+    throw new Error('El 403 de los días no laborables debe nombrar la colección');
+  if (
+    (await request('/bff/admin/snapshot', { headers: authorization(manager17.token) })).nonWorkingDates.length
+  )
+    throw new Error('El administrador no debe recibir los días no laborables');
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: snapshot17.revision,
+        nonWorkingDates: { upsert: [{ id: 'nwd-smoke', date: '2026-02-30' }] },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Día no laborable con una fecha que no existe',
+  );
+  snapshot17 = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot17.revision,
+      nonWorkingDates: { upsert: [{ id: 'nwd-smoke', date: '2026-12-25', name: ' Navidad ' }] },
+    }),
+  });
+  if (
+    JSON.stringify(snapshot17.nonWorkingDates) !==
+    JSON.stringify([{ id: 'nwd-smoke', date: '2026-12-25', name: 'Navidad' }])
+  )
+    throw new Error('El día no laborable no se guardó como se envió');
+  await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: snapshot17.revision,
+        nonWorkingDates: { upsert: [{ id: 'nwd-otro', date: '2026-12-25' }] },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Día no laborable repetido',
+  );
+  snapshot17 = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot17.revision, nonWorkingDates: { remove: ['nwd-smoke'] } }),
+  });
+  // Versiones de los términos: el BFF numera, la tienda y el Admin ven la vigente y el checkout exige esa.
+  const ajustes17 = await request('/bff/content/settings');
+  if (ajustes17.termsVersion !== 1 || ajustes17.termsPublishedAt !== null)
+    throw new Error('Los ajustes públicos deben traer la versión 1 de los términos, sin fecha');
+  snapshot17 = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot17.revision,
+      config: { termsContent: `${ajustes17.termsContent} Texto nuevo.`, termsVersion: 7 },
+    }),
+  });
+  if (snapshot17.config.termsVersion !== 2 || typeof snapshot17.config.termsPublishedAt !== 'string')
+    throw new Error(
+      'Un texto nuevo de los términos debe publicar la versión 2 con su fecha (y no la del Admin)',
+    );
+  if ((await request('/bff/content/settings')).termsVersion !== 2)
+    throw new Error('La tienda debe recibir la versión vigente de los términos');
+  const pedido17 = {
+    ...command,
+    deliveryDate: fechaDeLima(2),
+    items: [{ productId: 'p-004', quantity: 1 }],
+  };
+  const terminosViejos = await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(pedido17) }),
+    409,
+    'TERMS_VERSION_CHANGED',
+    'Términos aceptados en una versión anterior',
+  );
+  if (terminosViejos.details?.termsVersion !== 2)
+    throw new Error('TERMS_VERSION_CHANGED debe traer la versión vigente');
+  await esperarError(
+    await raw('/bff/checkout/orders', {
+      method: 'POST',
+      body: JSON.stringify({ ...pedido17, termsVersion: '2' }),
+    }),
+    400,
+    'INVALID_TERMS_VERSION',
+    'Versión de los términos que no es un número',
+  );
+  const conVersion2 = await request('/bff/checkout/orders', {
+    method: 'POST',
+    body: JSON.stringify({ ...pedido17, termsVersion: 2 }),
+  });
+  snapshot17 = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const pedidoDelAdmin = snapshot17.orders.find((item) => item.id === conVersion2.id);
+  if (pedidoDelAdmin?.termsVersion !== 2 || pedidoDelAdmin.termsAcceptedAt !== conVersion2.createdAt)
+    throw new Error('El pedido del Admin debe traer la versión aceptada y la fecha y hora de la aceptación');
+  await request(`/bff/orders/${conVersion2.id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': conVersion2.accessToken },
+    body: '{}',
+  });
+  console.log('✓ Lote 17: primera fecha de entrega, días no laborables y versiones de los términos');
 
   console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
   console.log('✓ Storefront → Admin: pedido/cliente/inventario');

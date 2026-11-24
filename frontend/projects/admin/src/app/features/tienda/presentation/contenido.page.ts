@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import { formatDate } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormArray,
@@ -28,6 +29,7 @@ import {
 } from '../domain/contenido.rules';
 import { ConfiguracionTienda, LugarDeSugeridos } from '../domain/tienda.model';
 import { mensajeDeError } from '../domain/formulario.rules';
+import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { conservarBorrador } from './borrador';
 import { CampoDeLista, FilaDeLista, ListaContenidoComponent } from './lista-contenido.component';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
@@ -254,9 +256,20 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>Términos y condiciones</mat-label>
-          <textarea matInput rows="7" formControlName="termsContent"></textarea>
+          <textarea
+            matInput
+            rows="7"
+            formControlName="termsContent"
+            aria-describedby="ws-version-terminos"
+          ></textarea>
           <mat-error>{{ mensaje(form.controls.termsContent.errors) }}</mat-error>
         </mat-form-field>
+        <!-- Lote 17 (ADR-0021, PBI-0177; provisional): la versión vigente de los términos la numera el BFF. -->
+        @if (versionDeTerminos(); as version) {
+          <p id="ws-version-terminos" class="-mt-2 text-xs leading-5 text-muted sm:col-span-2">
+            {{ version }}
+          </p>
+        }
       </div>
 
       <div class="mt-4 grid gap-2 sm:grid-cols-2">
@@ -339,6 +352,18 @@ export class ContenidoPage {
   /** La configuración tal como se cargó en el formulario: lo que cambió se calcula contra ella (PBI-0120). */
   private base: ConfiguracionTienda | null = null;
   protected readonly mensaje = mensajeDeError;
+  /**
+   * La versión vigente de los términos y cuándo se publicó, en la hora de Lima (lote 17, PBI-0177): la numera el BFF al
+   * guardar un texto distinto.
+   */
+  protected readonly versionDeTerminos = computed(() => {
+    const config = this.admin.config();
+    if (!config?.termsVersion) return null;
+    const publicada = config.termsPublishedAt
+      ? `, publicada el ${formatDate(config.termsPublishedAt, 'dd/MM/yyyy HH:mm', 'es-PE', ZONA_HORARIA_LIMA)}`
+      : ' (anterior al registro de versiones)';
+    return `Versión vigente de los términos: ${config.termsVersion}${publicada}. Si cambias el texto y guardas, se publica la versión ${config.termsVersion + 1}: cada pedido guarda la versión que aceptó el comprador.`;
+  });
   /** PBI-0151: lo escrito vuelve si la sesión venció a mitad de la edición y se ingresa otra vez. */
   protected readonly borrador = conservarBorrador({
     form: this.form,
@@ -464,7 +489,13 @@ export class ContenidoPage {
       lista.clear({ emitEvent: false });
       (elementos ?? []).forEach(() => lista.push(nueva(), { emitEvent: false }));
     }
-    this.form.setValue(config as unknown as ReturnType<ContenidoPage['form']['getRawValue']>, {
+    // Solo los campos del formulario: la configuración trae también los de «Entregas y feriados» y la versión de los
+    // términos (lote 17), que esta página no edita.
+    const valores = config as unknown as Record<string, unknown>;
+    const delFormulario = Object.fromEntries(
+      Object.keys(this.form.controls).map((clave) => [clave, valores[clave]]),
+    );
+    this.form.setValue(delFormulario as ReturnType<ContenidoPage['form']['getRawValue']>, {
       emitEvent: false,
     });
   }
@@ -479,7 +510,8 @@ export class ContenidoPage {
       this.form.markAllAsTouched();
       return;
     }
-    const editado = this.form.getRawValue() as unknown as ConfiguracionTienda;
+    // Lo que esta página no edita (lote 17) se queda como estaba: solo viaja lo que cambió.
+    const editado = { ...base, ...this.form.getRawValue() } as unknown as ConfiguracionTienda;
     if (!(await this.admin.guardarConfiguracion(base, editado))) {
       this.saveError.set(
         this.admin.tomarError() ?? 'No pudimos guardar la configuración. Inténtalo de nuevo.',

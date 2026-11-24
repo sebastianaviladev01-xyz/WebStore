@@ -29,6 +29,7 @@ export const config: SheriffConfig = {
     'feature:checkout': [
       'feature:carrito',
       'feature:catalogo',
+      'feature:contenido',
       'feature:cuenta',
       'feature:envios',
       'feature:pedidos',

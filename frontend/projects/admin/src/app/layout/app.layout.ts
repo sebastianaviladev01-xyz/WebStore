@@ -65,6 +65,7 @@ const ICONOS = {
   reclamaciones: 'M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3zM4 17a3 3 0 0 1 3-3h11',
   banners: 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M15 9h.01',
   contenido: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5',
+  entregas: 'M4 6h16v14H4zM8 3v5M16 3v5M4 10h16M8 14h2M14 14h2M8 17h2',
   temas:
     'M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.6 0-.9-.7-1.4-.7-2.3 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5zM7.5 11h.01M10 7.5h.01M15 7.5h.01',
   envios:
@@ -109,6 +110,13 @@ const NAVIGATION: readonly NavigationGroup[] = [
     items: [
       { path: '/banners', label: 'Banners', permission: 'banners.manage', icon: ICONOS.banners },
       { path: '/contenido', label: 'Contenido', permission: 'content.manage', icon: ICONOS.contenido },
+      // Lote 17 (ADR-0021, PBI-0178 y PBI-0183): configuración de la tienda, del superadministrador como Contenido.
+      {
+        path: '/entregas',
+        label: 'Entregas y feriados',
+        permission: 'content.manage',
+        icon: ICONOS.entregas,
+      },
       { path: '/temas', label: 'Temas', permission: 'themes.manage', icon: ICONOS.temas },
       { path: '/envios', label: 'Tarifas de envío', permission: 'shipping.manage', icon: ICONOS.envios },
     ],

@@ -1,3 +1,5 @@
+import { terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
+
 /** Banner público con valores por defecto para los campos que el Admin no completó. */
 const bannerToPublic = (banner) => ({
   id: banner.id,
@@ -26,7 +28,8 @@ const bannerToPublic = (banner) => ({
 /** Contenido público de la tienda: configuración del CMS y campañas. */
 export function createContenidoQueries({ store }) {
   return {
-    getSettings: () => store.state.config,
+    // Lote 17 (PBI-0177): con la versión vigente de los términos, que el checkout envía al aceptarlos.
+    getSettings: () => ({ ...store.state.config, ...terminosVigentes(store.state.termsVersions) }),
     listBanners: () => store.state.banners.map(bannerToPublic),
   };
 }

@@ -28,6 +28,7 @@ import {
   SnapshotTienda,
   TarifaEnvio,
   ConfiguracionTienda,
+  DiaNoLaborable,
 } from '../domain/tienda.model';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
@@ -62,6 +63,8 @@ export class TiendaFacade {
   readonly orders = computed(() => this.state()?.orders ?? []);
   readonly complaints = computed(() => this.state()?.complaints ?? []);
   readonly config = computed(() => this.state()?.config ?? null);
+  /** Calendario de días no laborables (lote 17, PBI-0183); vacío para quien no tiene `content.manage`. */
+  readonly nonWorkingDates = computed(() => this.state()?.nonWorkingDates ?? []);
   readonly lowStock = computed(() => this.products().filter((p) => conPocoStock(p.stock)));
   readonly loading = signal(false);
   /** Hay un guardado en curso (PBI-0121): los formularios desactivan «Guardar» y no envían otro. */
@@ -270,6 +273,13 @@ export class TiendaFacade {
         ),
       );
     });
+  }
+  /** Agrega un día no laborable (lote 17, PBI-0183); el BFF lo valida y lo ordena por fecha. */
+  agregarDiaNoLaborable(dia: DiaNoLaborable): Promise<boolean> {
+    return this.guardarRegistro('nonWorkingDates', null, dia);
+  }
+  quitarDiaNoLaborable(id: string): Promise<boolean> {
+    return this.eliminarRegistro('nonWorkingDates', id);
   }
   guardarReclamo(base: Reclamo, editado: Reclamo): Promise<boolean> {
     return this.guardarRegistro('complaints', base, editado);

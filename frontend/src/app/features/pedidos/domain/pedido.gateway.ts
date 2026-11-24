@@ -16,4 +16,6 @@ export abstract class PedidoGateway {
   abstract listMine(sessionToken: string): Promise<readonly Pedido[]>;
   abstract get(id: string, credentials: CredencialesPedido): Promise<Pedido>;
   abstract change(id: string, change: CambioPedido, credentials: CredencialesPedido): Promise<Pedido>;
+  /** La primera fecha de entrega (`AAAA-MM-DD`) que se puede elegir ahora (lote 17, PBI-0178). */
+  abstract primeraFechaDeEntrega(): Promise<string>;
 }

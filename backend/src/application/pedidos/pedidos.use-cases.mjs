@@ -1,5 +1,5 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
-import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
+import { nowIso } from '../../domain/comun/reloj.mjs';
 import { conEvento, eventoEstadoDePedido } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { requireShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
@@ -11,6 +11,7 @@ import {
   orderAmounts,
   orderBelongsTo,
 } from '../../domain/pedidos/pedido.rules.mjs';
+import { primeraFechaDeLaTienda } from '../../domain/pedidos/primera-fecha-de-entrega.rules.mjs';
 import { accountForToken, requireAccount } from '../cuentas/cuentas.use-cases.mjs';
 
 /** Vista pública del pedido: nunca expone el hash del token de acceso, el de la clave de idempotencia ni la cuenta. */
@@ -20,7 +21,7 @@ export const orderToPublic = ({ accessTokenHash, idempotencyKeyHash, accountId, 
  * Consulta y modificación de pedidos por su dueño: la cuenta (token Bearer) o el invitado
  * con el token de acceso entregado en el checkout.
  */
-export function createPedidosUseCases({ store, security }) {
+export function createPedidosUseCases({ store, security, now = () => new Date() }) {
   function listMine(bearerToken) {
     const account = requireAccount(store.state, bearerToken, security);
     return store.state.orders.filter((order) => orderBelongsTo(order, account)).map(orderToPublic);
@@ -61,9 +62,16 @@ export function createPedidosUseCases({ store, security }) {
     order.updatedAt = nowIso();
   }
 
-  /** Desde hoy en Lima; la fecha vigente del pedido se acepta sin cambios (la tienda la reenvía con la dirección). */
+  /**
+   * Desde la primera fecha de entrega de la tienda (lote 17, PBI-0178); la fecha vigente del pedido se acepta sin
+   * cambios (la tienda la reenvía con la dirección).
+   */
   function changeDeliveryDate(order, data) {
-    order.deliveryDate = requireDeliveryDate(data.deliveryDate, limaDate(), order.deliveryDate);
+    order.deliveryDate = requireDeliveryDate(
+      data.deliveryDate,
+      primeraFechaDeLaTienda(store.state, now()),
+      order.deliveryDate,
+    );
     order.updatedAt = nowIso();
   }
 

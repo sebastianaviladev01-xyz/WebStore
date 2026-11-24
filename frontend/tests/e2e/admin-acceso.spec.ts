@@ -17,6 +17,12 @@ const modulos = [
   { enlace: 'Reclamaciones', titulo: 'WebStore Admin | Reclamaciones', encabezado: 'Reclamaciones' },
   { enlace: 'Banners', titulo: 'WebStore Admin | Banners', encabezado: 'Banners y campañas' },
   { enlace: 'Contenido', titulo: 'WebStore Admin | Contenido', encabezado: 'Contenido y configuración' },
+  // Lote 17 (ADR-0021, PBI-0178 y PBI-0183): la primera fecha de entrega y los días no laborables.
+  {
+    enlace: 'Entregas y feriados',
+    titulo: 'WebStore Admin | Entregas y feriados',
+    encabezado: 'Entregas y feriados',
+  },
   { enlace: 'Temas', titulo: 'WebStore Admin | Temas', encabezado: 'Temas' },
   { enlace: 'Tarifas de envío', titulo: 'WebStore Admin | Envíos', encabezado: 'Tarifas de envío' },
   { enlace: 'Usuarios y roles', titulo: 'WebStore Admin | Usuarios', encabezado: 'Usuarios y roles' },
@@ -88,7 +94,7 @@ test('el administrador gestiona Usuarios y no ve Contenido ni Temas (PBI-0013)',
   await desplegarTodos(page);
 
   await expect(menu(page).getByRole('link', { name: 'Usuarios y roles', exact: true })).toBeVisible();
-  for (const oculto of ['Contenido', 'Temas']) {
+  for (const oculto of ['Contenido', 'Entregas y feriados', 'Temas']) {
     await expect(menu(page).getByRole('link', { name: oculto, exact: true })).toHaveCount(0);
   }
   for (const visible of [

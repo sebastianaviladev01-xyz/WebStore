@@ -29,29 +29,35 @@ import { createReclamosUseCases } from './application/reclamos/reclamos.use-case
 import { createTemasQueries } from './application/temas/temas.queries.mjs';
 import { createTemasUseCases } from './application/temas/temas.use-cases.mjs';
 import { crearVigiaDeFeriados, readConfig } from './infrastructure/config.mjs';
+import { fechasNoLaborables } from './domain/calendario/dias-no-laborables.rules.mjs';
 import { limaDate } from './domain/comun/reloj.mjs';
 import { createJsonStateStore } from './infrastructure/persistencia/json-state-store.mjs';
 import { hashPassword, passwordMatches } from './infrastructure/seguridad/password-hasher.mjs';
 import { createCode, createToken, digest, newId } from './infrastructure/seguridad/tokens.mjs';
 
 const config = readConfig(process.env);
-// PBI-0010 y PBI-0163: la lista de feriados se renueva cada año; si falta el año en curso, el log lo dice al
-// arrancar y otra vez cuando cambia el año de Lima con el BFF en marcha.
-const vigiaDeFeriados = crearVigiaDeFeriados({
-  nonWorkingDates: config.nonWorkingDates,
-  hoy: () => limaDate(),
-  avisar: (aviso) => console.warn(aviso),
-});
-vigiaDeFeriados.comprobar();
-vigiaDeFeriados.iniciar();
 let store;
 try {
-  store = createJsonStateStore({ dataFile: config.dataFile, demoPasswords: config.demoPasswords });
+  store = createJsonStateStore({
+    dataFile: config.dataFile,
+    demoPasswords: config.demoPasswords,
+    // Lote 17 (PBI-0183): `WEBSTORE_NON_WORKING_DATES` solo da el calendario de un estado que no lo tiene.
+    fechasNoLaborablesIniciales: config.nonWorkingDates,
+  });
 } catch (error) {
   // Un archivo de datos dañado no se reemplaza por la demo (PBI-0088): el BFF no arranca y dice por qué.
   console.error(error.message);
   process.exit(1);
 }
+// PBI-0010 y PBI-0163: el calendario se renueva cada año; si falta el año en curso, el log lo dice al arrancar y otra
+// vez cuando cambia el año de Lima con el BFF en marcha. Desde el lote 17 (PBI-0183) mira el calendario del estado.
+const vigiaDeFeriados = crearVigiaDeFeriados({
+  fechasNoLaborables: () => fechasNoLaborables(store.state.nonWorkingDates),
+  hoy: () => limaDate(),
+  avisar: (aviso) => console.warn(aviso),
+});
+vigiaDeFeriados.comprobar();
+vigiaDeFeriados.iniciar();
 const security = { hashPassword, passwordMatches, digest, createCode, createToken, newId };
 
 const cuentas = createCuentasUseCases({ store, security, exposeTestCodes: config.exposeTestCodes });
@@ -64,7 +70,7 @@ const routes = [
   ...catalogoRoutes(createCatalogoQueries({ store })),
   ...contenidoRoutes(createContenidoQueries({ store })),
   ...enviosRoutes(createEnviosQueries({ store })),
-  ...reclamosRoutes(createReclamosUseCases({ store, nonWorkingDates: config.nonWorkingDates })),
+  ...reclamosRoutes(createReclamosUseCases({ store })),
   ...checkoutRoutes(createCheckoutUseCases({ store, security })),
   ...pedidosRoutes(createPedidosUseCases({ store, security })),
   ...adminRoutes(

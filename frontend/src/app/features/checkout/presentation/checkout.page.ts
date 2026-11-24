@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -20,17 +20,19 @@ import { EnviosFacade } from '../../envios/application/envios.facade';
 import { MetodoPago } from '../../pedidos/domain/pedido.model';
 import { CotizacionEnvio } from '../../envios/domain/envio.model';
 import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
+import { PedidosFacade } from '../../pedidos/application/pedidos.facade';
 import {
   esFechaDeEntregaValida,
   fechaDeEntregaPropuesta,
   fechaDeLima,
+  fechaVisible,
 } from '../../pedidos/domain/fecha-entrega.rules';
 
-/** La fecha de entrega va desde hoy en Lima (PBI-0096); vacía, la marca `required`. */
-const desdeHoyEnLima =
-  (hoy: string) =>
+/** La fecha de entrega va desde la primera que permite la tienda (PBI-0096; lote 17, PBI-0178); vacía, la marca `required`. */
+const desdeLaPrimeraFecha =
+  (primera: () => string) =>
   (control: AbstractControl<string>): ValidationErrors | null =>
-    !control.value || esFechaDeEntregaValida(control.value, hoy) ? null : { fechaPasada: true };
+    !control.value || esFechaDeEntregaValida(control.value, primera()) ? null : { fechaPasada: true };
 
 @Component({
   selector: 'ws-checkout-page',
@@ -151,13 +153,13 @@ const desdeHoyEnLima =
                 </mat-form-field>
                 <mat-form-field>
                   <mat-label>Fecha de entrega preferida</mat-label>
-                  <input matInput type="date" formControlName="deliveryDate" [attr.min]="today" />
+                  <input matInput type="date" formControlName="deliveryDate" [attr.min]="primera()" />
                   @if (
                     form.controls.deliveryDate.touched && form.controls.deliveryDate.hasError('required')
                   ) {
                     <mat-error>Elige una fecha de entrega.</mat-error>
                   } @else if (form.controls.deliveryDate.touched && form.controls.deliveryDate.invalid) {
-                    <mat-error>Elige una fecha desde hoy.</mat-error>
+                    <mat-error>Elige una fecha desde el {{ fechaVisible(primera()) }}.</mat-error>
                   }
                 </mat-form-field>
                 <mat-form-field>
@@ -329,8 +331,14 @@ export class CheckoutPage {
   protected readonly shipping = inject(EnviosFacade);
   private readonly router = inject(Router);
   private readonly currency = inject(CurrencyPipe);
-  /** Hoy en Lima: el mínimo del campo de fecha (PBI-0096). */
-  protected readonly today = fechaDeLima(new Date());
+  private readonly orders = inject(PedidosFacade);
+  /**
+   * El mínimo del campo de fecha y la fecha propuesta: la primera fecha de entrega que calcula el BFF con la
+   * configuración de la tienda (lote 17, PBI-0178). Mientras no llega, hoy en Lima (PBI-0096); el BFF vuelve a validar.
+   */
+  private readonly hoy = fechaDeLima(new Date());
+  protected readonly primera = computed(() => this.orders.primeraFechaDeEntrega() ?? this.hoy);
+  protected readonly fechaVisible = fechaVisible;
   /** Cotizaciones pedidas: solo cuenta la última (PBI-0107). */
   private quoteRequest = 0;
   /** El envío cambió entre lo que vio el comprador y lo vigente (PBI-0106). */
@@ -379,9 +387,9 @@ export class CheckoutPage {
     province: new FormControl('Lima', { nonNullable: true, validators: [Validators.required] }),
     department: new FormControl('Lima', { nonNullable: true, validators: [Validators.required] }),
     reference: new FormControl('', { nonNullable: true }),
-    deliveryDate: new FormControl(fechaDeEntregaPropuesta(new Date()), {
+    deliveryDate: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, desdeHoyEnLima(this.today)],
+      validators: [Validators.required, desdeLaPrimeraFecha(() => this.primera())],
     }),
     paymentMethod: new FormControl<MetodoPago>('card', {
       nonNullable: true,
@@ -392,6 +400,21 @@ export class CheckoutPage {
 
   constructor() {
     this.checkout.iniciar();
+    // Lote 17 (PBI-0178): al llegar la primera fecha (o al cambiar, tras un rechazo del BFF), se propone ella, salvo
+    // que el comprador ya haya elegido una válida.
+    effect(() => {
+      const primera = this.orders.primeraFechaDeEntrega();
+      if (!primera) return;
+      const fecha = this.form.controls.deliveryDate;
+      fecha.setValue(fechaDeEntregaPropuesta(fecha.value, primera));
+    });
+    // Lote 17 (PBI-0177): si los términos cambiaron, el comprador los vuelve a aceptar.
+    effect(() => {
+      if (!this.checkout.terminosCambiaron()) return;
+      const terminos = this.form.controls.termsAccepted;
+      terminos.setValue(false);
+      terminos.markAsTouched();
+    });
   }
 
   protected async refreshQuote(): Promise<void> {

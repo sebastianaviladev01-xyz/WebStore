@@ -1,8 +1,8 @@
 import { reserveStock } from '../../domain/catalogo/inventario.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
-import { limaDate, nowIso } from '../../domain/comun/reloj.mjs';
 import { conEvento, eventoPedidoCreado } from '../../domain/admin/actividad.rules.mjs';
 import { conErrorDeCompra, errorDeCompraDe } from '../../domain/admin/errores-de-compra.rules.mjs';
+import { requireTermsVersion, terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { requireShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
@@ -16,22 +16,32 @@ import {
   requireTermsAccepted,
 } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
 import { nextOrderId, orderAmounts, roundMoney } from '../../domain/pedidos/pedido.rules.mjs';
+import { primeraFechaDeLaTienda } from '../../domain/pedidos/primera-fecha-de-entrega.rules.mjs';
 import { toPublicProduct } from '../catalogo/catalogo.queries.mjs';
 import { accountForToken } from '../cuentas/cuentas.use-cases.mjs';
 import { orderToPublic } from '../pedidos/pedidos.use-cases.mjs';
 
 /**
  * Valida el pedido y se queda solo con lo conocido (PBI-0096). El Storefront envía CartItem ({product, quantity})
- * y sus montos; precios, stock y envío salen siempre del estado del BFF.
+ * y sus montos; precios, stock y envío salen siempre del estado del BFF. Lote 17 (ADR-0021): la fecha de entrega desde
+ * la primera que permite la tienda en `instante` (PBI-0178) y la versión de los términos que el comprador aceptó, que
+ * debe ser la vigente (PBI-0177), después de comprobar que los aceptó.
  */
-function requireOrderCommand(command) {
-  return {
+function requireOrderCommand(command, state, instante) {
+  const pedido = {
     customer: pickCustomer(command.customer),
     shipping: pickShipping(command.shipping),
-    deliveryDate: requireDeliveryDate(command.deliveryDate, limaDate()),
+    deliveryDate: requireDeliveryDate(command.deliveryDate, primeraFechaDeLaTienda(state, instante)),
     paymentMethod: requirePaymentMethod(command.paymentMethod),
     requested: requireOrderLines(command.items),
     termsAccepted: requireTermsAccepted(command.termsAccepted),
+  };
+  return {
+    ...pedido,
+    termsVersion: requireTermsVersion(
+      command.termsVersion,
+      terminosVigentes(state.termsVersions).termsVersion,
+    ),
   };
 }
 
@@ -69,7 +79,8 @@ function registerCustomer(state, customer, security) {
 }
 
 /** Checkout: reserva stock, toma el envío de la tabla de tarifas y emite el token de acceso del pedido. */
-export function createCheckoutUseCases({ store, security }) {
+export function createCheckoutUseCases({ store, security, now = () => new Date() }) {
+  const nowIso = () => now().toISOString();
   const orderForKey = (key) =>
     key ? store.state.orders.find((order) => order.idempotencyKeyHash === security.digest(key)) : undefined;
 
@@ -118,7 +129,12 @@ export function createCheckoutUseCases({ store, security }) {
   }
 
   function crearPedido(command, bearerToken, key) {
-    const { customer, shipping, deliveryDate, paymentMethod, requested } = requireOrderCommand(command);
+    const instante = now();
+    const { customer, shipping, deliveryDate, paymentMethod, requested, termsVersion } = requireOrderCommand(
+      command,
+      store.state,
+      instante,
+    );
     const rate = requireShippingRate(store.state.rates, shipping.district);
     const products = reserveStock(store.state.products, requested, { requireActive: true });
     const { state } = store;
@@ -140,11 +156,11 @@ export function createCheckoutUseCases({ store, security }) {
     state.products = products;
     const account = accountForToken(state, bearerToken, security);
     const accessToken = security.createToken();
-    const createdAt = nowIso();
+    const createdAt = instante.toISOString();
     const order = {
       id: nextOrderId(
         state.orders.map((item) => item.id),
-        Date.now(),
+        instante.getTime(),
       ),
       createdAt,
       updatedAt: createdAt,
@@ -156,7 +172,9 @@ export function createCheckoutUseCases({ store, security }) {
       paymentMethod,
       items,
       ...amounts,
+      // PBI-0177: la fecha y hora de la aceptación, con segundos, y la versión aceptada.
       termsAcceptedAt: createdAt,
+      termsVersion,
       accessTokenHash: security.digest(accessToken),
       ...(key ? { idempotencyKeyHash: security.digest(key) } : {}),
       ...(account ? { accountId: account.id } : {}),
@@ -170,5 +188,8 @@ export function createCheckoutUseCases({ store, security }) {
     return { ...orderToPublic(order), accessToken };
   }
 
-  return { placeOrder, replay };
+  /** La primera fecha de entrega que la tienda puede elegir ahora (lote 17, PBI-0178): el mínimo del checkout. */
+  const firstDeliveryDate = () => ({ minimum: primeraFechaDeLaTienda(store.state, now()) });
+
+  return { placeOrder, replay, firstDeliveryDate };
 }

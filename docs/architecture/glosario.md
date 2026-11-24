@@ -91,7 +91,10 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Libro de reclamaciones | Formulario público donde el consumidor deja un reclamo o una queja y recibe una constancia. | Feature `reclamos`: `LibroReclamacionesPage`, `ReclamosFacade` | `/bff/complaints`; `application/reclamos/` |
 | Reclamo | Registro del libro de reclamaciones, con tipo, estado, plazo y respuesta del proveedor. | `Reclamo` (Admin), `RegistrarReclamoCommand`, `TipoReclamo`; `ReclamacionesPage` | `complaints` |
 | Constancia del reclamo | Comprobante con el código `REC-AAAA-xxxxx` y la fecha límite de respuesta. | `ConstanciaReclamo` | `id`, `dueAt` |
-| Plazo de respuesta | 15 días hábiles desde el registro, contando de lunes a viernes y los feriados configurados. | — | `COMPLAINT_DUE_BUSINESS_DAYS`, `WEBSTORE_NON_WORKING_DATES` |
+| Plazo de respuesta | 15 días hábiles desde el registro, contando de lunes a viernes, sin los días no laborables. | — | `COMPLAINT_DUE_BUSINESS_DAYS` |
+| Día no laborable | Feriado o día en que la tienda no atiende; con sábados y domingos, no es día hábil. Lo mantiene el superadministrador en «Entregas y feriados» (lote 17, PBI-0183). | `DiaNoLaborable` (Admin), `EntregasPage` | `nonWorkingDates`; `domain/calendario/dias-no-laborables.rules.mjs`; `WEBSTORE_NON_WORKING_DATES` solo como valor inicial |
+| Primera fecha de entrega | La fecha más temprana que el comprador puede elegir: el mismo día, el día calendario siguiente o el siguiente día hábil, con una hora de corte opcional en hora de Lima (lote 17, PBI-0178). | `ReglaDePrimeraEntrega` (Admin), `PedidosFacade.primeraFechaDeEntrega` (tienda) | `firstDeliveryDay`, `deliveryCutoffTime`; `/bff/checkout/delivery-dates`; `primeraFechaDeEntrega()` |
+| Versión de los términos | Número de cada texto publicado de los términos y condiciones; sube al guardar un texto distinto. El pedido guarda la versión aceptada (lote 17, PBI-0177). | `versionDeTerminos()` (Admin) | `termsVersions`, `termsVersion`, `termsPublishedAt`; `TERMS_VERSION_CHANGED` |
 | Respuesta del proveedor | Respuesta de la tienda al reclamo, registrada en el Admin. Su envío por correo está pendiente. | — | `providerResponse` |
 
 ## Apariencia y temas

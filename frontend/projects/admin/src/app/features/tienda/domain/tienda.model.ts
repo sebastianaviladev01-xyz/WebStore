@@ -114,6 +114,8 @@ export interface Pedido {
   readonly paymentMethod: string;
   /** Cuándo aceptó el comprador los términos (lote 04); null en pedidos anteriores a esa casilla (PBI-0145). */
   readonly termsAcceptedAt: string | null;
+  /** La versión de los términos aceptada (lote 17, PBI-0177); null en pedidos anteriores al registro de versiones. */
+  readonly termsVersion?: number | null;
   readonly subtotal: number;
   readonly shippingCost: number;
   readonly total: number;
@@ -153,6 +155,16 @@ export interface AccesoInferior {
   readonly url: string;
 }
 
+/** Primera fecha de entrega que puede elegir el comprador (lote 17, PBI-0178): hoy, mañana o el siguiente día hábil. */
+export type ReglaDePrimeraEntrega = 'same-day' | 'next-calendar-day' | 'next-business-day';
+
+/** Un día no laborable del calendario de la tienda (lote 17, PBI-0183): su fecha (`AAAA-MM-DD`) y un nombre opcional. */
+export interface DiaNoLaborable {
+  readonly id: string;
+  readonly date: string;
+  readonly name: string;
+}
+
 /** Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, PBI-0179): el diálogo o un panel lateral. */
 export type LugarDeSugeridos = 'dialog' | 'side-panel';
 
@@ -179,6 +191,12 @@ export interface ConfiguracionTienda {
   readonly privacyPageEnabled: boolean;
   readonly termsPageEnabled: boolean;
   readonly addToCartDisplay: LugarDeSugeridos;
+  /** Primera fecha de entrega y hora de corte opcional (`HH:MM` en hora de Lima, o vacía); lote 17, PBI-0178. */
+  readonly firstDeliveryDay: ReglaDePrimeraEntrega;
+  readonly deliveryCutoffTime: string;
+  /** La versión vigente de los términos y cuándo se publicó (null si es anterior al registro); la calcula el BFF. */
+  readonly termsVersion: number;
+  readonly termsPublishedAt: string | null;
 }
 
 export interface SnapshotTienda {
@@ -198,6 +216,8 @@ export interface SnapshotTienda {
   readonly config: ConfiguracionTienda;
   /** Últimos eventos para el Dashboard completo (`orders.manage`); vacía para el vendedor (lote 07b, PBI-0028). */
   readonly activity?: readonly EventoActividad[];
+  /** Calendario de días no laborables (lote 17, PBI-0183); solo para el superadministrador (`content.manage`). */
+  readonly nonWorkingDates: readonly DiaNoLaborable[];
 }
 
 /** Etiquetas visibles: el panel nunca muestra los códigos internos. */

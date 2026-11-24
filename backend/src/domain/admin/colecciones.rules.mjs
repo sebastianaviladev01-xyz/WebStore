@@ -1,7 +1,12 @@
+import {
+  esFechaDeCalendario,
+  MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE,
+} from '../calendario/dias-no-laborables.rules.mjs';
 import { LADO_IMAGEN_DE_CATEGORIA, leerImagen } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
 import { LISTAS_DE_CONTENIDO, esModoDeSugeridos, validarListaDeContenido } from './contenido.rules.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
+import { esHoraDeCorte, esReglaDePrimeraEntrega } from '../pedidos/primera-fecha-de-entrega.rules.mjs';
 import { COMPLAINT_STATUSES } from '../reclamos/reclamo.rules.mjs';
 
 /**
@@ -21,6 +26,7 @@ const ETIQUETAS = {
   users: 'los usuarios',
   orders: 'los pedidos',
   complaints: 'las reclamaciones',
+  nonWorkingDates: 'los días no laborables',
 };
 
 function invalid(collection, field, detalle, id = undefined) {
@@ -270,12 +276,63 @@ export function requireValidConfig(config, current) {
     // Lote 16 (ADR-0021, PBI-0179): los sugeridos van en el diálogo o en un panel lateral.
     if (key === 'addToCartDisplay' && !esModoDeSugeridos(value))
       throw invalid('config', key, 'los sugeridos van en el diálogo o en un panel lateral');
+    // Lote 17 (ADR-0021, PBI-0178): la primera fecha de entrega y la hora de corte opcional.
+    if (key === 'firstDeliveryDay' && !esReglaDePrimeraEntrega(value))
+      throw invalid(
+        'config',
+        key,
+        'la primera fecha de entrega es el mismo día, el día calendario siguiente o el siguiente día hábil',
+      );
+    if (key === 'deliveryCutoffTime' && !esHoraDeCorte(value))
+      throw invalid('config', key, 'la hora de corte va en formato de 24 horas (14:00) o vacía');
     const expected = typeof current[key];
     if (typeof value !== expected) throw invalid('config', key, 'hay un campo con un valor que no es válido');
     result[key] = value;
   }
   if (!hasText(result.storeName)) throw invalid('config', 'storeName', 'la tienda necesita un nombre');
   return result;
+}
+
+/** Máximo de días no laborables guardados: los feriados de varios años, con margen. */
+export const MAXIMO_DIAS_NO_LABORABLES = 400;
+
+const fechaVisible = (fecha) => fecha.split('-').reverse().join('/');
+
+/**
+ * Días no laborables (lote 17, ADR-0021, PBI-0183; provisional): `date` es una fecha `AAAA-MM-DD` que existe, sin
+ * repetir; `name`, opcional, texto de hasta 60 caracteres. Devuelve la lista con el nombre recortado, solo los campos
+ * conocidos y ordenada por fecha.
+ */
+export function requireValidNonWorkingDates(dias) {
+  requireItems(dias, 'nonWorkingDates');
+  if (dias.length > MAXIMO_DIAS_NO_LABORABLES)
+    throw invalid('nonWorkingDates', null, `se admiten hasta ${MAXIMO_DIAS_NO_LABORABLES} fechas`);
+  const fechas = new Set();
+  const resultado = [];
+  for (const dia of dias) {
+    check('nonWorkingDates', dia, [
+      ['date', esFechaDeCalendario, 'cada día necesita una fecha válida'],
+      ['name', optionalText, 'el nombre del día no es válido'],
+    ]);
+    const name = typeof dia.name === 'string' ? dia.name.trim() : '';
+    if (name.length > MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE)
+      throw invalid(
+        'nonWorkingDates',
+        'name',
+        `el nombre admite hasta ${MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE} caracteres`,
+        dia.id,
+      );
+    if (fechas.has(dia.date))
+      throw invalid(
+        'nonWorkingDates',
+        'date',
+        `la fecha ${fechaVisible(dia.date)} ya está en la lista`,
+        dia.id,
+      );
+    fechas.add(dia.date);
+    resultado.push({ id: dia.id, date: dia.date, name });
+  }
+  return resultado.sort((a, b) => a.date.localeCompare(b.date));
 }
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

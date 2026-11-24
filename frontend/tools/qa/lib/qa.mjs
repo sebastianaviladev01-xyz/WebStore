@@ -132,7 +132,9 @@ export async function activarTema(token, id) {
  * para capturar el detalle de un pedido sin cuenta. Cambia datos: úsalo solo sobre una copia (`WEBSTORE_DATA_FILE`).
  */
 export async function crearPedidoDeInvitado() {
-  const hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(new Date());
+  // Lote 17 (PBI-0178 y PBI-0177): la primera fecha de entrega y la versión vigente de los términos, del BFF.
+  const { minimum } = await (await fetch(`${BFF}/bff/checkout/delivery-dates`)).json();
+  const { termsVersion } = await (await fetch(`${BFF}/bff/content/settings`)).json();
   const productos = await (await fetch(`${BFF}/bff/catalog/products`)).json();
   const respuesta = await fetch(
     `${BFF}/bff/checkout/orders`,
@@ -149,10 +151,11 @@ export async function crearPedidoDeInvitado() {
         province: 'Lima',
         department: 'Lima',
       },
-      deliveryDate: hoy,
+      deliveryDate: minimum,
       paymentMethod: 'card',
       items: [{ productId: productos.find((producto) => producto.stock > 0).id, quantity: 1 }],
       termsAccepted: true,
+      termsVersion,
     }),
   );
   if (!respuesta.ok) throw new Error(`No se pudo crear el pedido de invitado: ${respuesta.status}`);
