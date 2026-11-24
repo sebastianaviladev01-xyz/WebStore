@@ -1,11 +1,5 @@
-import { aplanarArbolCategorias, EntradaArbolCategorias, idsDescendientes } from './categoria.rules';
-import {
-  EstadoFiltro,
-  FiltrosCategorias,
-  FiltrosMarcas,
-  FiltrosProductos,
-  SIN_PADRE,
-} from './filtro-catalogo.model';
+import { idsDescendientes } from './categoria.rules';
+import { EstadoFiltro, FiltrosCategorias, FiltrosMarcas, FiltrosProductos } from './filtro-catalogo.model';
 import { contieneTexto } from './listado.rules';
 import { Categoria, Marca, Producto } from './tienda.model';
 
@@ -31,25 +25,6 @@ export function filtrarProductos(
       (!enCategoria || enCategoria.has(producto.categoryId)) &&
       (!filtros.marcaId || producto.brandId === filtros.marcaId) &&
       cumpleEstado(producto.active, filtros.estado),
-  );
-}
-
-/**
- * Categorías que cumplen los filtros, en el orden de árbol de `aplanarArbolCategorias` y con su profundidad.
- * «Categoría padre» deja solo las hijas directas; `SIN_PADRE`, las de primer nivel (también las que apuntan a un
- * padre que ya no existe, que el árbol muestra como raíz).
- */
-export function filtrarCategorias(
-  categorias: readonly Categoria[],
-  filtros: FiltrosCategorias,
-): readonly EntradaArbolCategorias[] {
-  const ids = new Set(categorias.map((categoria) => categoria.id));
-  const esRaiz = (categoria: Categoria) => !categoria.parentId || !ids.has(categoria.parentId);
-  const cumplePadre = (categoria: Categoria) =>
-    !filtros.padreId ||
-    (filtros.padreId === SIN_PADRE ? esRaiz(categoria) : categoria.parentId === filtros.padreId);
-  return aplanarArbolCategorias(categorias).filter(
-    ({ category }) => contieneTexto(category.name, filtros.nombre) && cumplePadre(category),
   );
 }
 

@@ -20,7 +20,6 @@ const salida = ts.transpileModule(fuente, {
 const regla = await import(`data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`);
 const {
   filtrarProductos,
-  filtrarCategorias,
   filtrarMarcas,
   SIN_PADRE,
   FILTROS_PRODUCTOS_VACIOS,
@@ -172,60 +171,6 @@ test('TEST-03: todos los filtros a la vez se cumplen juntos', () => {
   });
   assert.deepEqual(ids(filtrarProductos(productos, categorias, todos)), ['p3']);
   assert.deepEqual(ids(filtrarProductos(productos, categorias, { ...todos, estado: 'activos' })), []);
-});
-
-const filas = (entradas) => entradas.map(({ category, depth }) => `${depth}:${category.id}`);
-const filtrosC = (cambios) => ({ ...FILTROS_CATEGORIAS_VACIOS, ...cambios });
-
-test('TEST-04: sin filtros, todas las categorías en orden de árbol con su profundidad', () => {
-  assert.deepEqual(filas(filtrarCategorias(categorias, FILTROS_CATEGORIAS_VACIOS)), [
-    '0:tv',
-    '1:oled',
-    '2:oled-4k',
-    '1:barras',
-    '0:hogar',
-    '1:cocina',
-  ]);
-});
-
-test('TEST-04: por nombre, una subcategoría sale sola, con su profundidad y su parentId', () => {
-  const resultado = filtrarCategorias(categorias, filtrosC({ nombre: ' oled 4k ' }));
-  assert.deepEqual(filas(resultado), ['2:oled-4k']);
-  assert.equal(resultado[0].category.parentId, 'oled');
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ nombre: 'OLED' }))), [
-    '1:oled',
-    '2:oled-4k',
-  ]);
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ nombre: 'cocína' }))), ['1:cocina']);
-});
-
-test('TEST-04: por padre, solo las hijas directas, sin nietas', () => {
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ padreId: 'tv' }))), ['1:oled', '1:barras']);
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ padreId: 'oled' }))), ['2:oled-4k']);
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ padreId: 'oled-4k' }))), []);
-});
-
-test('TEST-04: «Sin padre» deja solo las de primer nivel, y una de padre inexistente cuenta como raíz', () => {
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ padreId: SIN_PADRE }))), [
-    '0:tv',
-    '0:hogar',
-  ]);
-  const conHuerfana = [...categorias, cat('huerfana', 'Antigua', 'borrada')];
-  assert.deepEqual(filas(filtrarCategorias(conHuerfana, filtrosC({ padreId: SIN_PADRE }))), [
-    '0:tv',
-    '0:huerfana',
-    '0:hogar',
-  ]);
-});
-
-test('TEST-04: nombre y padre a la vez', () => {
-  assert.deepEqual(filas(filtrarCategorias(categorias, filtrosC({ nombre: 'barras', padreId: 'tv' }))), [
-    '1:barras',
-  ]);
-  assert.deepEqual(
-    filas(filtrarCategorias(categorias, filtrosC({ nombre: 'barras', padreId: SIN_PADRE }))),
-    [],
-  );
 });
 
 const marcas = [
