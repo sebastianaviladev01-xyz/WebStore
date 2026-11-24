@@ -12,7 +12,7 @@ import { cuentasAdmin, ingresarAlAdmin, menuAdmin, desplegarGrupo, urls } from '
  * - PBI-0148: una categoría con la dirección de otra no se envía.
  * - PBI-0149: fechas de Reclamaciones en la hora de Lima con el navegador en otra zona.
  * - PBI-0151: lo escrito vuelve tras ingresar de nuevo, solo para la misma persona, sin guardarse en el navegador.
- * - PBI-0153: Contenido avisa, sin bloquear, si un texto de la navegación superior no lleva a ninguna página.
+ * - PBI-0153 (el aviso de la navegación superior) se quitó en el lote 15: la navegación pasó a ser avisos (PBI-0175).
  * Las pruebas que cambian datos los dejan como estaban en un `finally`: las suites van en serie.
  */
 
@@ -410,23 +410,6 @@ test.describe('PBI-0149: Reclamaciones con el navegador en otra zona', () => {
     await expect(plazo).toHaveText(new RegExp(`\\b${dia('America/Lima')}\\b`));
     await expect(plazo).not.toHaveText(new RegExp(`\\b${dia('Asia/Tokyo')}\\b`));
   });
-});
-
-test('PBI-0153: Contenido avisa si un texto de la navegación superior no lleva a ninguna página', async ({
-  page,
-}) => {
-  await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-  await page.goto('/contenido');
-  const navegacion = page.getByRole('textbox', { name: 'Navegación superior' });
-  await expect(navegacion).not.toHaveValue('');
-  await navegacion.fill('Inicio, Productos, Despachos');
-  await expect(navegacion).toHaveAccessibleDescription(
-    /«Despachos» no lleva a ninguna página de la tienda y no se mostrará\./,
-  );
-  // Es un aviso: no impide guardar.
-  await expect(page.getByRole('button', { name: 'Guardar configuración' })).toBeEnabled();
-  await navegacion.fill('Inicio, Productos, Envíos');
-  await expect(navegacion).not.toHaveAccessibleDescription(/no lleva/);
 });
 
 test.describe('PBI-0151: lo escrito cuando la sesión vence', () => {

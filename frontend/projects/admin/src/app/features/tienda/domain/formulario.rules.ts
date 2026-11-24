@@ -1,7 +1,8 @@
 /**
  * Mensaje de un campo de un formulario del Admin con errores (lote 07, ADR-0017; PBI-0132): antes solo se veía el
  * borde rojo. Recibe los errores del control (`control.errors`) y devuelve qué hacer, o `null` si no hay. Un motivo
- * propio del formulario, como un dato repetido (`repetido`, lote 06), se muestra tal cual y antes que los demás.
+ * propio del formulario, como un dato repetido (`repetido`, lote 06) o el de una regla (`motivo`, lote 15), se muestra
+ * tal cual y antes que los demás.
  */
 export function mensajeDeError(errores: Readonly<Record<string, unknown>> | null): string | null {
   if (!errores) return null;
@@ -9,6 +10,9 @@ export function mensajeDeError(errores: Readonly<Record<string, unknown>> | null
   if (!claves.length) return null;
   const repetido = errores['repetido'];
   if (typeof repetido === 'string') return repetido;
+  // Lote 15: las reglas de las listas de Contenido devuelven su motivo (`contenido.rules.ts`).
+  const motivo = errores['motivo'];
+  if (typeof motivo === 'string') return motivo;
   const detalle = (clave: string, campo: string) =>
     (errores[clave] as Readonly<Record<string, number>> | undefined)?.[campo];
   if ('required' in errores) return 'Completa este campo.';

@@ -43,3 +43,11 @@ test('PBI-0132: un motivo propio del formulario (por ejemplo, un dato repetido) 
 test('PBI-0132: un error sin mensaje conocido pide revisar el campo', () => {
   assert.equal(mensajeDeError({ otro: true }), 'Revisa este campo.');
 });
+
+test('lote 15: el motivo de una regla de Contenido (por ejemplo, un teléfono mal escrito) se muestra tal cual', () => {
+  assert.equal(
+    mensajeDeError({ motivo: 'Usa de 6 a 15 dígitos; se admiten espacios, +, guiones y paréntesis.' }),
+    'Usa de 6 a 15 dígitos; se admiten espacios, +, guiones y paréntesis.',
+  );
+  assert.equal(mensajeDeError({ required: true, motivo: 'Escribe el correo.' }), 'Escribe el correo.');
+});
