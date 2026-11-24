@@ -41,7 +41,7 @@ function applyProducts(state, value, role) {
     throw new DomainError('validation', 'INVALID_PRODUCTS', 'La colección de productos es obligatoria.');
   const products = resolveCollectionChanges('products', state.products, value);
   // PBI-0158: los productos solo los cambia un rol con `products.manage` (los tres fijos). La rama de «solo la ficha»
-  // (`products.edit` sin `products.manage`) se quitó: si Daniel decide un vendedor con permisos parciales, vuelve.
+  // (`products.edit` sin `products.manage`) se quitó: Daniel confirmó el 2026-11-18 que el vendedor modifica todo.
   if (!can(role, 'products.manage'))
     throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
   const next = requireValidProducts(products);

@@ -13,7 +13,7 @@ import {
 } from '../domain/notificacion.rules';
 
 /**
- * Campana del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel): los avisos nuevos desde la
+ * Campana del Admin (lote 07b, ADR-0017, PBI-0033; confirmada por Daniel el 2026-11-18): los avisos nuevos desde la
  * última vez que la persona abrió el menú. Pedidos nuevos para quien los ve (`orders.view`; también el vendedor desde
  * el lote 11, PBI-0170) y, desde el lote 13 (ADR-0021, PBI-0173), reclamos nuevos y errores de compra para quien los
  * gestiona; el BFF decide qué avisos recibe cada rol.

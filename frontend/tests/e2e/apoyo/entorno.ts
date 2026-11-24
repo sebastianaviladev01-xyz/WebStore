@@ -37,6 +37,48 @@ export async function ingresarAlAdmin(
 export const menuAdmin = (page: Page) => page.getByRole('navigation', { name: 'Administración' });
 
 /**
+ * Enlaces del menú lateral del Admin que ve cada rol, en su orden (lote 20, ADR-0021). Las pruebas comparan los
+ * nombres, no un número fijo: una página nueva se añade aquí una vez y, si falta, el fallo dice cuál.
+ */
+export const enlacesDelMenu = {
+  superadmin: [
+    'Dashboard',
+    'Productos',
+    'Inventario',
+    'Categorías',
+    'Marcas',
+    'Pedidos',
+    'Clientes',
+    'Reclamaciones',
+    'Banners',
+    'Contenido',
+    'Entregas y feriados',
+    'Temas',
+    'Tarifas de envío',
+    'Usuarios y roles',
+  ],
+  admin: [
+    'Dashboard',
+    'Productos',
+    'Inventario',
+    'Categorías',
+    'Marcas',
+    'Pedidos',
+    'Clientes',
+    'Reclamaciones',
+    'Banners',
+    'Tarifas de envío',
+    'Usuarios y roles',
+  ],
+  vendedor: ['Dashboard', 'Productos', 'Inventario', 'Pedidos'],
+} as const;
+
+/** Comprueba que el menú lateral tiene los enlaces de `rol`, por su nombre y en orden (con los grupos desplegados). */
+export async function comprobarEnlacesDelMenu(page: Page, rol: keyof typeof enlacesDelMenu): Promise<void> {
+  await expect(menuAdmin(page).getByRole('link')).toHaveText([...enlacesDelMenu[rol]]);
+}
+
+/**
  * Despliega un grupo del menú lateral del Admin si está plegado (feature 003). Los enlaces de un grupo
  * plegado no son visibles: sin esto, un clic falla y un `toHaveCount(0)` pasaría siempre. En móvil no hay
  * títulos de grupo y no hace nada.

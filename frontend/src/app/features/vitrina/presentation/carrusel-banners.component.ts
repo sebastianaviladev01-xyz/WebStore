@@ -49,7 +49,7 @@ import { BotonesBannerComponent } from './botones-banner.component';
                   </div>
                   @if (highlights().length) {
                     <ul class="ws-hero-highlights">
-                      @for (highlight of highlights(); track highlight; let position = $index) {
+                      @for (highlight of highlights(); track $index; let position = $index) {
                         <li>
                           <svg viewBox="0 0 24 24" aria-hidden="true">
                             @if (position === 0) {

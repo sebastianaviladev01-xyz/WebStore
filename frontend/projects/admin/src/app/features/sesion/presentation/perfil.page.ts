@@ -34,9 +34,10 @@ const repetidaIgual = (grupo: AbstractControl): ValidationErrors | null => {
 
 /**
  * Perfil de la cuenta de la sesión (feature 003, AC-12, D5): nombre, correo, rol y lo que ese rol puede hacer. Desde
- * el lote 07b (ADR-0017, PBI-0034; provisional, por confirmar con Daniel) los tres roles editan su nombre y su correo y
+ * el lote 07b (ADR-0017, PBI-0034) los tres roles editan su nombre y su correo y
  * cambian su contraseña pidiendo la actual, con las rutas propias del BFF (no el snapshot). Al cambiar la contraseña,
- * el BFF cierra las demás sesiones de la persona.
+ * el BFF cierra las demás sesiones de la persona. Daniel respondió el 2026-11-18 que el correo nuevo debe verificarse
+ * (PBI-0161): espera al correo real (PBI-0008); hasta entonces, el correo cambia sin verificar.
  */
 @Component({
   selector: 'ws-admin-perfil',

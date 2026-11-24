@@ -12,7 +12,7 @@ import {
 import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
 
 /**
- * Campana de la cabecera del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel). El número
+ * Campana de la cabecera del Admin (lote 07b, ADR-0017, PBI-0033; confirmada por Daniel el 2026-11-18). El número
  * cuenta los avisos nuevos desde la última vez que la persona abrió el menú; al abrirlo se marcan como vistos. Desde el
  * lote 13 (ADR-0021, PBI-0173), además de los pedidos nuevos, los reclamos nuevos y los errores de compra, cada uno
  * con su página (`presentacionDelAviso`). Usa `MatMenu`, como el menú de usuario: foco, flechas, Escape y clic

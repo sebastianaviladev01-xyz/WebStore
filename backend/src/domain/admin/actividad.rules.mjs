@@ -1,5 +1,5 @@
 /**
- * Actividad reciente del Resumen del Admin (lote 07b, ADR-0017, PBI-0028; provisional, por confirmar con Daniel). Un
+ * Actividad reciente del Resumen del Admin (lote 07b, ADR-0017, PBI-0028; Daniel no pidió cambios el 2026-11-20). Un
  * evento `{ id, at, type, description }` al crear un pedido, al cambiar su estado, al registrar una cuenta y al
  * registrar un reclamo. La descripción no lleva más datos personales que el nombre que el Admin ya muestra (el del
  * comprador en Pedidos y el de quien reclama en Reclamaciones): ni correo, ni teléfono, ni documento, ni dirección.

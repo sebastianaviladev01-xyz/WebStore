@@ -42,3 +42,15 @@ El tinte suave (`--ws-accent-soft`, el secundario al 9 % sobre la superficie) no
 **Más difícil:** el mapa tiene 38 tokens. Quien añada un token sigue el patrón de ADR-0019 (BFF, réplica del Admin, `NombreToken` en las dos aplicaciones, `casos-tema.json`, `tokens.css`, contrato y smoke test). Un componente nuevo relleno con el acento debe llevar también el borde (`ring-1 ring-inset ring-accent-line` o `box-shadow: inset 0 0 0 1px var(--ws-accent-line)`).
 
 **Fuera de alcance:** qué otros elementos de la tienda deberían llevar el secundario es una pregunta de producto para Daniel; el lote solo hace que se vea bien donde ya se aplica.
+
+## Ampliación del 2026-11-23 (lote 20)
+
+Un hallazgo de los lotes de ADR-0021: con C, el botón secundario con el puntero encima no cambiaba de tono. Su secundario y su contraste son el mismo grafito (`#1F2328`), así que la mezcla al 78 % daba el grafito (1.00:1 frente al acento) y solo cambiaban la sombra y el desplazamiento. Lo mismo le pasa a cualquier tema propio cuyo secundario se parezca a su contraste, y a los que caían en el acento porque su texto no llegaba sobre la mezcla (por ejemplo `#D97706`).
+
+- `--ws-accent-strong` sirve si deja el texto sobre el acento a 4.5:1 **y** se distingue del acento con al menos 1.3:1 (B, el de referencia, cambia 1.37:1). Primero, la mezcla al 78 % con el contraste, como hasta ahora; si no sirve, la primera mezcla con el blanco o con el negro, de 10 en 10 % (`color-mix(S 90%, #FFFFFF)`, `color-mix(S 90%, #000000)`, 80 %…), que sirva; si ninguna sirve, el acento.
+- A y B no cambian. C pasa de `color-mix(in srgb, #1F2328 78%, #1F2328)` a `color-mix(in srgb, #1F2328 90%, #FFFFFF)`: 1.36:1 frente al grafito y su texto ámbar a 6.39:1. En los casos de `casos-tema.json`, `#D97706` sobre la base de B pasa del acento a `color-mix(#D97706 70%, #FFFFFF)` y `#F97316` sobre la base oscura, de su mezcla con `#F5F7FA` a `color-mix(#F97316 70%, #FFFFFF)`.
+- Sin tokens ni pares nuevos y sin migración: el mapa sigue con 38 tokens y 27 pares; los tokens se calculan al leer. Cambia el valor de una clave que ya existía.
+
+*Motivo:* el estado con el puntero encima debe verse en cualquier tema sin perder el contraste del texto; empezar por la mezcla de siempre deja A y B como estaban.
+
+El mismo lote revisó el tinte suave: `--ws-accent-soft` sigue sin uso en las plantillas (su única regla, `.ws-promo-secondary`, tampoco se usaba y se quitó). Queda en el mapa como **reservado** para un fondo suave del secundario: quitarlo cambiaría el contrato de 38 claves, el cálculo del BFF y su réplica, `casos-tema.json`, el smoke test y estos ADR, sin ningún efecto visible.

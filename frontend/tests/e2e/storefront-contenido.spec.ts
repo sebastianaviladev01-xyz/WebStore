@@ -131,3 +131,24 @@ test('PBI-0185: con la semilla, el pie tiene las columnas de antes; los accesos 
   await pie.getByRole('link', { name: 'Contacto', exact: true }).click();
   await expect(page).toHaveURL(/\/info\/contacto$/);
 });
+
+// Lote 20 (ADR-0021, hallazgo del lote 17): la página de Términos dice qué versión está vigente y cuándo se publicó,
+// porque el comprador acepta ese número en el checkout (PBI-0177). La fecha es la de Lima; sin fecha, solo la versión.
+test.describe('Términos: la versión vigente y su fecha', () => {
+  test('con fecha de publicación, «Versión N · publicada el DD/MM/AAAA», en hora de Lima', async ({
+    page,
+  }) => {
+    // 02:30 UTC del 1 de marzo es aún 28 de febrero en Lima.
+    await conAjustes(page, { termsVersion: 3, termsPublishedAt: '2026-03-01T02:30:00.000Z' });
+    await page.goto('/info/terminos');
+    await expect(page.getByRole('main').getByText(/^Versión \d/)).toHaveText(
+      'Versión 3 · publicada el 28/02/2026',
+    );
+  });
+
+  test('sin fecha de publicación, solo la versión', async ({ page }) => {
+    await conAjustes(page, { termsVersion: 1, termsPublishedAt: null });
+    await page.goto('/info/terminos');
+    await expect(page.getByRole('main').getByText(/^Versión \d/)).toHaveText('Versión 1');
+  });
+});

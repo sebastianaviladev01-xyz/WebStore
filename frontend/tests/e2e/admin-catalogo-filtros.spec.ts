@@ -303,7 +303,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await editar(filaDe(page, antes.name)).click();
       await expect(page).toHaveURL(/\/productos\/p-004\?nombre=soundbar$/);
       const formulario = page.getByRole('form', { name: 'Editar producto' });
-      // Lote 07 (PBI-0013, provisional): el vendedor modifica todos los campos del producto.
+      // Lote 07 (PBI-0013, confirmado por Daniel el 2026-11-18): el vendedor modifica todos los campos del producto.
       await expect(formulario.getByRole('textbox', { name: 'SKU', exact: true })).toBeEditable();
       await expect(formulario.getByRole('spinbutton', { name: 'Precio', exact: true })).toBeEditable();
       await expect(formulario.getByRole('combobox', { name: 'Categoría' })).toBeEnabled();

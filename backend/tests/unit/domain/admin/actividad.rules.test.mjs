@@ -1,5 +1,5 @@
 /**
- * Actividad reciente del Resumen (lote 07b, ADR-0017, PBI-0028; provisional, por confirmar con Daniel): un evento al
+ * Actividad reciente del Resumen (lote 07b, ADR-0017, PBI-0028; Daniel no pidió cambios el 2026-11-20): un evento al
  * crear un pedido, al cambiar su estado, al registrar una cuenta y al registrar un reclamo, con fecha, tipo y una
  * descripción sin más datos personales que el nombre que el Admin ya muestra. Se guardan los últimos 50.
  */

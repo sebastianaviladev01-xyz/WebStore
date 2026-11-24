@@ -5,9 +5,9 @@ import { requirePassword } from '../../domain/cuentas/cuenta.rules.mjs';
 import { adminUserToPublic } from './admin.views.mjs';
 
 /**
- * Perfil propio del Admin (lote 07b, ADR-0017, PBI-0034; provisional, por confirmar con Daniel): los tres roles editan
- * su nombre y su correo y cambian su contraseña, con una ruta propia que no pasa por el snapshot. La sesión se valida
- * antes de mirar los datos.
+ * Perfil propio del Admin (lote 07b, ADR-0017, PBI-0034): los tres roles editan su nombre y su correo y cambian su
+ * contraseña, con una ruta propia que no pasa por el snapshot. La sesión se valida antes de mirar los datos. Daniel
+ * respondió el 2026-11-18 que el correo nuevo debe verificarse (PBI-0161), lo que espera al correo real (PBI-0008).
  */
 export function createPerfilUseCases({ store, security, adminSesiones }) {
   function actualizarDatos(token, command) {

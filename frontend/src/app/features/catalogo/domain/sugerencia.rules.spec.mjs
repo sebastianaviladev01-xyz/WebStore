@@ -1,6 +1,6 @@
 /**
- * Productos sugeridos del diálogo «Producto agregado» (PBI-0039, lote 05, ADR-0017; provisional, por confirmar con
- * Daniel): hasta tres de la misma categoría, con stock y distintos del agregado, en el orden del catálogo.
+ * Productos sugeridos del diálogo «Producto agregado» (PBI-0039, lote 05, ADR-0017; confirmado por Daniel el
+ * 2026-11-20): hasta tres de la misma categoría, con stock y distintos del agregado, en el orden del catálogo.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

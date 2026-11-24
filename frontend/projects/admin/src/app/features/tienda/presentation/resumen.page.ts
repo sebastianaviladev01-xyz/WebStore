@@ -375,7 +375,7 @@ const AYUDA_VENTAS =
 
       @if (dashboardCompleto()) {
         <!--
-          Lote 07b (provisional, por confirmar con Daniel): «Actividad reciente» (PBI-0028), los 10 últimos eventos que
+          Lote 07b (Daniel no pidió cambios el 2026-11-20): «Actividad reciente» (PBI-0028), los 10 últimos eventos que
           registra el BFF. Va al final para no mover los bloques que ya había; solo para el Dashboard completo
           (orders.manage): el vendedor ve los pedidos (PBI-0170), pero no la actividad, que nombra a clientes y reclamos
           que no ve. Lote 13 (PBI-0172): sin «Personas en línea», que ocupaba la tercera columna de esta fila, la

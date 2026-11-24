@@ -53,9 +53,10 @@ export function readConfig(env) {
 }
 
 /**
- * Aviso del calendario de días no laborables (PBI-0010; provisional, por confirmar con Daniel): hay que renovarlo cada
- * año. Desde el lote 17 (ADR-0021, PBI-0183) se mantiene en el Admin («Entregas y feriados») y vive en el estado del
- * BFF. Devuelve el texto del aviso si `fechas` no trae ninguna fecha `AAAA-MM-DD` de `year`, o `null` si la trae.
+ * Aviso del calendario de días no laborables (PBI-0010): hay que renovarlo cada año. Daniel pidió el 2026-11-20 una
+ * pantalla para editarlo: desde el lote 17 (ADR-0021, PBI-0183) se mantiene en el Admin («Entregas y feriados») y vive
+ * en el estado del BFF. Devuelve el texto del aviso si `fechas` no trae ninguna fecha `AAAA-MM-DD` de `year`, o `null`
+ * si la trae.
  */
 export function avisoDeFeriados(fechas, year) {
   const delAnio = (fecha) => fecha.startsWith(`${year}-`) && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(fecha);
