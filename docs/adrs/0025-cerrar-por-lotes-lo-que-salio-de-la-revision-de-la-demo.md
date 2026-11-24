@@ -42,7 +42,7 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros (backlog,
 | 22 | Destacados y categorías | PBI-0215, 0220 |
 | 23 | Dashboard, reclamaciones e inventario | PBI-0222, 0223, 0226 |
 | 24 | Imágenes y banners | PBI-0214, 0221 |
-| 25 | Campos y listado de productos | PBI-0212, 0218, 0219, 0224 |
+| 25 | Campos, listado de productos y hallazgos | PBI-0212, 0218, 0219, 0224 y los hallazgos de los lotes 21 a 24 |
 | 26 | Cierre documental | Los registros de todos los lotes y el cierre de este ADR |
 
 ### Decisiones provisionales de partida
@@ -74,3 +74,29 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros (backlog,
 - Responsable: Sebastián Avila. Termina cuando se fusiona el lote 26 o cuando él la retira.
 - Aprobación: Sebastián Avila, 2026-11-24. Falta informar a Daniel Avila.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+Se ejecutaron seis lotes el 2026-11-24, cada uno con su rama y su PR en borrador hacia `dev`, apilados en este orden y auditados por la sesión principal (diff, `npm run verify` y e2e completo, y capturas cuando tocaba la interfaz). Los fusiona Sebastián Avila:
+
+| Lote | Elementos | PR |
+|---|---|---|
+| 21, mantenimientos del backoffice | PBI-0211, 0213, 0216 y 0217 | [#81](https://github.com/sebastianaviladev01-xyz/WebStore/pull/81) |
+| 22, destacados y categorías | PBI-0215 y 0220 | [#80](https://github.com/sebastianaviladev01-xyz/WebStore/pull/80) |
+| 23, Dashboard, reclamaciones e inventario | PBI-0222, 0223 y 0226 | [#82](https://github.com/sebastianaviladev01-xyz/WebStore/pull/82) |
+| 24, imágenes y banners ([ADR-0026](0026-guardar-las-imagenes-cargadas-en-el-bff-y-servirlas-por-direccion.md)) | PBI-0214 y 0221 | [#83](https://github.com/sebastianaviladev01-xyz/WebStore/pull/83) |
+| 25, campos, listado de productos y hallazgos | PBI-0212, 0218, 0219 y 0224, y los hallazgos de los lotes 21 a 24 | [#84](https://github.com/sebastianaviladev01-xyz/WebStore/pull/84) |
+| 26, cierre documental | Los registros y este cierre | PR del lote 26 |
+
+El lote 25 reunió, además de sus cuatro elementos, los hallazgos que anotaron los PR de los lotes 21 a 24: la galería con «URL de foto», la galería y la imagen de la categoría como Data URL dentro del JSON, `NG02960` en la ficha, `filtrarCategorias` sin uso, escenarios de capturas rotos, dos mejoras de Reclamaciones y las notas del ajuste porcentual. Llevó la galería y la categoría a la forma de ADR-0026, que amplió. Todos tienen su PBI en el [backlog](../planning/backlog.md): PBI-0227 a PBI-0233, cerrados, y PBI-0234 a PBI-0236, los que el lote 25 dejó abiertos.
+
+Los registros quedaron al día en el lote 26: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (cada fila «Revisión de la demo» dice qué quedó construido, y cada detalle que no se decidió en la reunión dice «Provisional, por confirmar con Daniel»), la [trazabilidad](../planning/TRACEABILITY.md#revisión-de-la-demo-lotes-21-a-26-2026-11-24), la [funcionalidad](../planning/FUNCIONALIDAD.md), las [historias de usuario](../planning/user-stories/user-stories.md) y el [historial del 2026-11-24](../changelog/CHANGELOG-2026-11-24.md).
+
+**Lo que queda abierto**, con su motivo en la fila de cada elemento del backlog:
+
+- **Daniel:** confirmar las decisiones provisionales, sobre todo PBI-0211 (contradice su respuesta del 2026-11-20 sobre los listados) y PBI-0217 (quita el ajuste porcentual que Walther había aceptado); confirmar [ADR-0026](0026-guardar-las-imagenes-cargadas-en-el-bff-y-servirlas-por-direccion.md); el modelo de datos base, con la serie por unidad del SKU (PBI-0043); y la marca del producto, de la que depende PBI-0234.
+- **Sebastián con Daniel y Walther:** el cronograma (PBI-0225).
+- **Hallazgos abiertos del lote 25:** la ventana del tema no crece en alto (PBI-0235) y los pedidos anteriores conservan Data URL de la galería (PBI-0236).
+- **Lo que ya estaba fuera:** terceros, una persona y el backend de producción, como al [cerrar ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md#cierre).
+
+Falta informar a Daniel Avila, como decía la aprobación. No queda ninguna excepción vigente: esta termina al fusionar el PR del lote 26, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
