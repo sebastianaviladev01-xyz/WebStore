@@ -1,6 +1,6 @@
 import { expect, request as nuevoRequest, test, type Page } from '@playwright/test';
 
-import { actualizarProducto, enviarCambios, leerProductos, leerSnapshot } from './apoyo/catalogo';
+import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
 import {
   comprobarEnlacesDelMenu,
   correoUnico,
@@ -290,8 +290,9 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
   test('se pone al día al volver a la pestaña y cada minuto, sin cambiar de página (PBI-0160)', async ({
     page,
   }) => {
-    // Los tres pedidos descuentan stock de p-004, que otras specs también usan: se deja como estaba.
-    const stockInicial = (await leerProductos()).find((producto) => producto.id === 'p-004')!.stock;
+    // Los tres pedidos descuentan stock de p-004, que otras specs también usan: se cancelan al terminar, lo que
+    // devuelve el stock sin pisarlo (sobrescribirlo dejaba los pedidos abiertos y el stock de más al cancelarlos).
+    const pedidos: string[] = [];
     try {
       await page.clock.install();
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -301,12 +302,12 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
       await expect(campana).toHaveAccessibleName('Notificaciones: no hay avisos nuevos');
 
       // Al volver a la pestaña: el navegador avisa con `visibilitychange`.
-      await crearPedido('Vuelta Lote 08');
+      pedidos.push(await crearPedido('Vuelta Lote 08'));
       await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
       await expect(campana).toHaveAccessibleName('Notificaciones: 1 pedido nuevo');
 
       // Con la pestaña visible, cada minuto.
-      await crearPedido('Minuto Lote 08');
+      pedidos.push(await crearPedido('Minuto Lote 08'));
       await page.clock.fastForward(61_000);
       await expect(campana).toHaveAccessibleName('Notificaciones: 2 pedidos nuevos');
 
@@ -314,7 +315,7 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
       await page.evaluate(() => {
         Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
       });
-      await crearPedido('Oculta Lote 08');
+      pedidos.push(await crearPedido('Oculta Lote 08'));
       const consultas: string[] = [];
       page.on('request', (peticion) => {
         if (peticion.url().includes('/bff/admin/notifications')) consultas.push(peticion.url());
@@ -329,7 +330,8 @@ test.describe('PBI-0033: campana de pedidos nuevos', () => {
       });
       await expect(campana).toHaveAccessibleName('Notificaciones: 3 pedidos nuevos');
     } finally {
-      await actualizarProducto('p-004', { stock: stockInicial });
+      if (pedidos.length)
+        await enviarCambios({ orders: { upsert: pedidos.map((id) => ({ id, status: 'cancelled' })) } });
     }
   });
 
