@@ -41,7 +41,7 @@ npm run start:admin        # Admin: http://localhost:4300
 
 Los dos frontends llegan al BFF por `/bff` con el proxy de [`frontend/proxy.conf.json`](frontend/proxy.conf.json). La primera vez, el BFF crea `backend/data.json` a partir de sus datos de ejemplo; ese archivo no se versiona. Para trabajar sobre una copia, arráncalo con `WEBSTORE_DATA_FILE=<ruta>`.
 
-Rutas útiles del Storefront: `/` (inicio), `/inicio-anterior` (inicio previo, para comparar; no está en el menú), `/catalogo`, `/carrito`, `/checkout`, `/cuenta/login`, `/pedidos` y `/libro-reclamaciones`.
+Rutas útiles del Storefront: `/` (inicio), `/catalogo`, `/carrito`, `/checkout`, `/cuenta/login`, `/pedidos` y `/libro-reclamaciones`.
 
 ### Demo publicada
 
