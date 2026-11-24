@@ -1,6 +1,6 @@
 # Arquitectura del frontend
 
-Cómo se organiza el código del workspace Angular: dos aplicaciones (Storefront y Admin), reglas de dependencia, convenciones, integración con el BFF y pruebas. Sigue el mismo esquema que el frontend de IdShield.
+Cómo se organiza el código del workspace Angular: dos aplicaciones (Storefront y Admin, que el producto llama storefront y backoffice: [glosario](../docs/architecture/glosario.md#aplicaciones)), reglas de dependencia, convenciones, integración con el BFF y pruebas. Sigue el mismo esquema que el frontend de IdShield.
 
 No incluye versiones (están en [`package.json`](package.json)) ni comandos (están en el [README](../README.md) y en el [`AGENTS.md` raíz](../AGENTS.md)). La vista de sistema está en [`docs/architecture/README.md`](../docs/architecture/README.md).
 

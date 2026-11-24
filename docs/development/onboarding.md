@@ -37,7 +37,7 @@ En este orden:
 |---|---|---|
 | 1 | [`AGENTS.md`](../../AGENTS.md) y el [README](../../README.md) | El mapa del repositorio, los comandos y las reglas que siguen personas y agentes |
 | 2 | [Producto](../planning/PRODUCT.md) y [alcance](../planning/SCOPE.md) | Qué es WebStore, para quién y qué entra en el MVP |
-| 3 | [Arquitectura del sistema](../architecture/README.md) | Storefront, Admin y BFF de prueba, una sola fuente de datos y los roles |
+| 3 | [Arquitectura del sistema](../architecture/README.md) | Storefront, backoffice y BFF de prueba, una sola fuente de datos y los roles |
 | 4 | [Glosario](../architecture/glosario.md) | Los nombres de negocio en español y su nombre en el código y en el contrato |
 | 5 | [Flujo SDD + TDD](../architecture/development-workflow.md) | Las 7 etapas, los hitos humanos, el ciclo TDD y un PR por hito |
 | 6 | [Especificaciones por feature](../specs/README.md) y su [índice](../specs/features/README.md) | La carpeta de una feature, los identificadores REQ, AC, TASK y TEST, y los estados |
