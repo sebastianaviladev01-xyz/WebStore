@@ -1,7 +1,8 @@
 // Archivo de escenarios de ejemplo para `capturas.mjs` (PBI-0057). Copia este archivo, cámbiale el nombre por el de la
 // tarea (se usa como carpeta de salida) y deja solo las rutas que toca el cambio. Cada escenario es una página, con el
 // tema que se ve (`a`, `b` o `c`; por omisión, `b`), el rol del Admin con el que se entra y, si hace falta, algo que
-// hacer antes (`antes`) o después (`accion`) de abrirla. `capturas.mjs` toma cada uno a los anchos de `anchos`.
+// hacer antes (`antes`) o después (`accion`) de abrirla. `capturas.mjs` toma cada uno a los anchos de `anchos`, con
+// movimiento reducido (lo que aparece al desplazarse ya está a la vista); `conMovimiento: true` lo toma con animaciones.
 import { pulsar, sinGuardar } from '../lib/qa.mjs';
 
 export const escenarios = {
