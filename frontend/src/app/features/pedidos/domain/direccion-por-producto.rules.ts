@@ -76,3 +76,24 @@ export function direccionVisible(direccion: DireccionEnvio): string {
   const referencia = direccion.reference?.trim();
   return referencia ? `${texto} (${referencia})` : texto;
 }
+
+/** El campo de la dirección de una línea que el BFF rechazó: el producto de la línea y sus campos (lote 18). */
+export interface DireccionRechazada {
+  readonly productId: string;
+  readonly fields: readonly (typeof CAMPOS_DEL_DESTINO)[number][];
+}
+
+/**
+ * Con una dirección por producto, un `VALIDATION_ERROR` del BFF trae `details.productId` si es la dirección de una
+ * línea (lote 18, ADR-0021): la tienda marca esos campos en esa línea, no en la dirección de entrega. Cualquier otro
+ * rechazo, null.
+ */
+export function direccionRechazada(code: string | undefined, details: unknown): DireccionRechazada | null {
+  if (code !== 'VALIDATION_ERROR' || typeof details !== 'object' || details === null) return null;
+  const { productId, fields } = details as { productId?: unknown; fields?: unknown };
+  if (typeof productId !== 'string' || !productId) return null;
+  const campos = Array.isArray(fields)
+    ? CAMPOS_DEL_DESTINO.filter((campo) => fields.includes(campo))
+    : [...CAMPOS_DEL_DESTINO];
+  return { productId, fields: campos };
+}

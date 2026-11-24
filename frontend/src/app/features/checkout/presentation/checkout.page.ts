@@ -588,6 +588,21 @@ export class CheckoutPage {
           if (!this.porProducto.contains(id)) this.porProducto.addControl(id, nuevaDireccionDeLinea());
       });
     });
+    // Lote 18 (ADR-0021): si el BFF rechazó la dirección de una línea (por ejemplo, una dirección hecha solo de
+    // espacios), se marcan sus campos en esa línea; el error se va al corregirlos.
+    effect(() => {
+      const rechazada = this.checkout.direccionDeLineaRechazada();
+      if (!rechazada) return;
+      untracked(() => {
+        const grupo = this.porProducto.controls[rechazada.productId];
+        if (!grupo?.controls.otra.value) return;
+        for (const campo of rechazada.fields) {
+          const control = grupo.controls[campo];
+          control.setErrors({ ...control.errors, rechazadaPorLaTienda: true });
+          control.markAsTouched();
+        }
+      });
+    });
     // Lote 17 (PBI-0178): al llegar la primera fecha (o al cambiar, tras un rechazo del BFF), se propone ella, salvo
     // que el comprador ya haya elegido una válida.
     effect(() => {

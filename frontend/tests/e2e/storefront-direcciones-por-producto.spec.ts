@@ -1,7 +1,9 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
 
 import { enviarCambios } from './apoyo/catalogo';
-import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
+import { correoUnico, fechaDeEntrega } from './apoyo/entorno';
+import { esperarFotos } from './apoyo/fotos';
+import { cancelarLosPedidosDelNavegador as cancelarPedidos, conservarElStock } from './apoyo/pedidos';
 
 /**
  * Lote 19 (ADR-0021, PBI-0006; provisional, por confirmar con Daniel): la configuración de la tienda elige una dirección
@@ -10,6 +12,8 @@ import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
  * estaba en un `finally`: las suites van en serie.
  */
 const CARRITO = 'webstore-cart-v1';
+
+conservarElStock();
 
 async function conCarrito(page: Page): Promise<void> {
   await page.addInitScript(
@@ -53,21 +57,6 @@ async function soundbarAOtraDireccion(page: Page): Promise<void> {
   await page.getByRole('option', { name: 'Miraflores', exact: true }).click();
   await linea.getByRole('textbox', { name: 'Dirección', exact: true }).fill('Calle Regalo 456');
   await linea.getByRole('textbox', { name: 'Referencia' }).fill('Portón verde');
-}
-
-/**
- * Cancela los pedidos de invitado que la prueba hizo en este navegador, con el token que guarda la tienda, para devolver
- * su stock: las demás suites crean pedidos con los mismos productos.
- */
-async function cancelarPedidos(page: Page): Promise<void> {
-  const accesos = await page
-    .evaluate(() => localStorage.getItem('webstore-order-access-v1'))
-    .catch(() => null);
-  for (const [id, token] of Object.entries(JSON.parse(accesos ?? '{}') as Record<string, string>))
-    await page.request.patch(`${urls.bff}/bff/orders/${id}/cancel`, {
-      headers: { 'x-order-token': token },
-      data: {},
-    });
 }
 
 /** La fila «Envío» del resumen del pedido, con su monto. */
@@ -125,10 +114,21 @@ test('con una por producto, cada producto puede ir a otra dirección y el envío
 
     // El detalle del pedido del cliente dice a dónde va la barra de sonido.
     const id = new URL(page.url()).pathname.split('/').pop();
+    const grandes: string[] = [];
+    page.on('console', (mensaje) => {
+      if (mensaje.text().includes('NG02960')) grandes.push(mensaje.text().slice(0, 160));
+    });
     await page.goto(`/pedidos/${id}`);
     await expect(
       page.getByText('Se entrega en: Calle Regalo 456, Miraflores, Lima, Lima (Portón verde)'),
     ).toBeVisible();
+    // Lote 18: la foto de 96 × 72 px carga la miniatura, no la foto grande (NG02960).
+    await expect(page.getByRole('img', { name: 'Soundbar Cinema 500' })).toHaveAttribute(
+      'src',
+      /soundbar-studio-480\.jpg/,
+    );
+    await esperarFotos(page);
+    expect(grandes).toEqual([]);
   } finally {
     await cancelarPedidos(page);
     await modo('per-order');
@@ -150,6 +150,42 @@ test('si la tienda vuelve a una por pedido mientras se compra, avisa y quita las
     await expect(page.getByRole('heading', { name: 'Dirección de cada producto' })).toHaveCount(0);
     await expect(envio(page)).toContainText('S/ 12.00');
     // Ahora se compra con una sola dirección.
+    await page.getByRole('button', { name: 'Finalizar compra' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Gracias por tu compra' })).toBeVisible();
+  } finally {
+    await cancelarPedidos(page);
+    await modo('per-order');
+  }
+});
+
+test('si el BFF rechaza la dirección de un producto, la tienda marca el campo de esa línea', async ({
+  page,
+}) => {
+  // Lote 18 (ADR-0021): el rechazo trae `details.productId`. Una dirección hecha solo de espacios pasa la validación
+  // de la tienda, pero el BFF la recorta y la rechaza.
+  await modo('per-product');
+  try {
+    await conCarrito(page);
+    await page.goto('/checkout');
+    await llenarCheckout(page);
+    await soundbarAOtraDireccion(page);
+    const linea = page.getByRole('group', { name: 'Soundbar Cinema 500' });
+    const direccion = linea.getByRole('textbox', { name: 'Dirección', exact: true });
+    await direccion.fill('      ');
+    await page.getByRole('button', { name: 'Finalizar compra' }).click();
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'Completa los campos obligatorios' }),
+    ).toBeVisible();
+    await expect(direccion).toHaveAttribute('aria-invalid', 'true');
+    await expect(linea.getByText('Ingresa una dirección válida.')).toBeVisible();
+    // La dirección de entrega no se marca.
+    await expect(page.getByRole('textbox', { name: 'Dirección', exact: true }).first()).toHaveAttribute(
+      'aria-invalid',
+      'false',
+    );
+    // Al corregirla, el error se va y la compra sale.
+    await direccion.fill('Calle Regalo 456');
+    await expect(direccion).toHaveAttribute('aria-invalid', 'false');
     await page.getByRole('button', { name: 'Finalizar compra' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Gracias por tu compra' })).toBeVisible();
   } finally {

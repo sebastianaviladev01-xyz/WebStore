@@ -13,12 +13,12 @@ export function bffHeaders(sessionToken?: string | null, orderToken?: string | n
   return headers;
 }
 
-/** Traduce el problema HTTP del BFF ({ error: { code, message } }) a un error de dominio. */
+/** Traduce el problema HTTP del BFF ({ error: { code, message, details? } }) a un error de dominio. */
 export function toBffRequestError(error: unknown, fallback: string): BffRequestError {
   if (!(error instanceof HttpErrorResponse)) return new BffRequestError(fallback);
   if (error.status === 0) return new BffRequestError(OFFLINE_MESSAGE, 'OFFLINE', 0);
   const problem = error.error?.error ?? error.error;
-  return new BffRequestError(problem?.message ?? fallback, problem?.code, error.status);
+  return new BffRequestError(problem?.message ?? fallback, problem?.code, error.status, problem?.details);
 }
 
 /** Ejecuta una llamada al BFF y convierte cualquier fallo en BffRequestError. */
