@@ -1,6 +1,7 @@
 /**
- * Qué colecciones del snapshot puede guardar cada rol (lote 02, PBI-0102). La tabla de permisos de los roles
- * (provisional, lote 07, PBI-0013) está en `rol.rules.test.mjs`; aquí, su traducción a `INSUFFICIENT_ROLE`.
+ * Qué colecciones del snapshot puede guardar cada rol (lote 02, PBI-0102). La tabla de permisos de los roles (lote 07,
+ * PBI-0013, confirmada por Daniel el 2026-11-18) está en `rol.rules.test.mjs`; aquí, su traducción a
+ * `INSUFFICIENT_ROLE`.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

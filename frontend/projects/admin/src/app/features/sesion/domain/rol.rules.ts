@@ -1,9 +1,9 @@
 /**
- * Roles fijos acordados el 05/11: no se crean ni se editan, solo se asignan a usuarios.
- * Replica la tabla del BFF (backend/src/domain/sesion/rol.rules.mjs) solo para mostrar u ocultar opciones;
- * el BFF vuelve a validar cada operación. Permisos de la reunión del 11/11 (lote 07, PBI-0013; provisional, por
- * confirmar con Daniel). Lote 11 (ADR-0021, PBI-0170; provisional): el vendedor también gestiona Inventario y ve
- * Pedidos (`orders.view`) sin cambiar su estado (`orders.manage`).
+ * Roles fijos acordados el 05/11: no se crean ni se editan, solo se asignan a usuarios. Replica la tabla del BFF
+ * (backend/src/domain/sesion/rol.rules.mjs) solo para mostrar u ocultar opciones; el BFF vuelve a validar cada
+ * operación. Permisos de la reunión del 11/11 (lote 07, PBI-0013; confirmados por Daniel el 2026-11-18, con un cambio).
+ * Lote 11 (ADR-0021, PBI-0170; provisional): el vendedor también gestiona Inventario y ve Pedidos (`orders.view`) sin
+ * cambiar su estado (`orders.manage`).
  */
 export type Rol = 'superadmin' | 'admin' | 'vendedor';
 

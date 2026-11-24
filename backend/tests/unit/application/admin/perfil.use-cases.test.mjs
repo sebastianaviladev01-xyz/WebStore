@@ -1,7 +1,7 @@
 /**
- * Perfil propio del Admin (lote 07b, ADR-0017, PBI-0034; provisional, por confirmar con Daniel): los tres roles editan
- * su nombre y su correo (único) y cambian su contraseña pidiendo la actual; al cambiarla se cierran sus demás
- * sesiones. Una ruta propia, sin pasar por el snapshot.
+ * Perfil propio del Admin (lote 07b, ADR-0017, PBI-0034; el correo verificado que pidió Daniel es PBI-0161): los tres
+ * roles editan su nombre y su correo (único) y cambian su contraseña pidiendo la actual; al cambiarla se cierran sus
+ * demás sesiones. Una ruta propia, sin pasar por el snapshot.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

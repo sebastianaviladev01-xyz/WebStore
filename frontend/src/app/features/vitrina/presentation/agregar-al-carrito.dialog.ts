@@ -38,7 +38,7 @@ interface DatosDelDialogo extends ResultadoAgregarAlCarrito {
           ya está en tu carrito.
         </p>
       }
-      <!-- PBI-0039 (provisional, por confirmar con Daniel): hasta tres de la misma categoría, con stock. -->
+      <!-- PBI-0039 (confirmado por Daniel el 2026-11-20): hasta tres de la misma categoría, con stock. -->
       @if (sugeridos().length) {
         <div class="mt-5 border-t border-line pt-4">
           <h3 id="ws-sugeridos-titulo" class="text-sm font-semibold text-ink">También te puede interesar</h3>

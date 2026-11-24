@@ -2,7 +2,7 @@ import { DomainError } from '../comun/domain-error.mjs';
 import { can } from '../sesion/rol.rules.mjs';
 
 /**
- * Notificaciones del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel): los pedidos nuevos
+ * Notificaciones del Admin (lote 07b, ADR-0017, PBI-0033; confirmadas por Daniel el 2026-11-18): los pedidos nuevos
  * (estado «confirmado») creados después de la última vez que la persona abrió el menú de la campana. «Visto» se guarda
  * por usuario en `adminNotificationsSeen` (`[{ userId, seenAt }]`).
  *

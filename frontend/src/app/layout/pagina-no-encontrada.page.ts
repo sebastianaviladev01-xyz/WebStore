@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-/** Página 404 (PBI-0020; provisional, por confirmar con Daniel): título, una frase y enlaces al inicio y al catálogo. */
+/** Página 404 (PBI-0020; confirmada por Daniel el 2026-11-20): título, una frase y enlaces al inicio y al catálogo. */
 @Component({
   selector: 'ws-not-found-page',
   imports: [RouterLink],

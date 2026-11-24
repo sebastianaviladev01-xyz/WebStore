@@ -17,10 +17,10 @@ test('los roles anteriores se traducen a los roles fijos', () => {
 });
 
 /**
- * Tabla de roles fijos (05/11), con los permisos de la reunión del 11/11 (lote 07, PBI-0013, provisional por
- * confirmar con Daniel): el superadministrador tiene la configuración de la tienda (temas, contenido y reinicio) y
- * todo lo demás; el administrador opera la tienda, elimina productos y gestiona a los vendedores; el vendedor crea
- * productos y los modifica, sin eliminarlos. La feature 002 añadió `themes.manage` al superadministrador.
+ * Tabla de roles fijos (05/11), con los permisos de la reunión del 11/11 (lote 07, PBI-0013, confirmados por Daniel el
+ * 2026-11-18, con el cambio de PBI-0170): el superadministrador tiene la configuración de la tienda (temas, contenido y
+ * reinicio) y todo lo demás; el administrador opera la tienda, elimina productos y gestiona a los vendedores; el
+ * vendedor crea productos y los modifica, sin eliminarlos. La feature 002 añadió `themes.manage` al superadministrador.
  */
 const OPERACION = [
   'dashboard.view',

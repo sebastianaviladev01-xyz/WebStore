@@ -2,7 +2,8 @@
  * Roles fijos del Admin acordados el 05/11: no se crean ni se editan desde el panel, solo se asignan.
  * El BFF es la autoridad; el Admin replica esta tabla únicamente para mostrar u ocultar opciones.
  *
- * Permisos de la reunión del 11/11 (lote 07, ADR-0017, PBI-0013; provisional, por confirmar con Daniel): el
+ * Permisos de la reunión del 11/11 (lote 07, ADR-0017, PBI-0013; confirmados por Daniel el 2026-11-18, con el
+ * cambio del lote 11): el
  * superadministrador tiene la configuración de la tienda (temas, contenido y reinicio) y todo lo demás; el
  * administrador opera la tienda, elimina productos y gestiona a los vendedores; el vendedor crea productos y
  * modifica todos sus campos, sin eliminarlos.

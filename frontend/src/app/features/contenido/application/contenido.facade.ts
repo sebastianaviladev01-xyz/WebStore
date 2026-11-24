@@ -5,10 +5,10 @@ import { ContenidoGateway } from '../domain/contenido.gateway';
 import { bannersDeZona, bannersVigentes } from '../domain/banner.rules';
 
 /**
- * Contenido mientras no llega el del BFF (PBI-0111; provisional, por confirmar con Daniel): sin datos de contacto ni
- * avisos de la demo y con las páginas informativas cerradas, porque no se sabe si el Admin las desactivó. Los accesos
- * del pie son los de la semilla, para que el pie no salte al llegar el contenido. Si nunca llega, la tienda muestra el
- * aviso de mantenimiento (PBI-0182).
+ * Contenido mientras no llega el del BFF (PBI-0111; Daniel pidió el 2026-11-20 el aviso de mantenimiento): sin datos de
+ * contacto ni avisos de la demo y con las páginas informativas cerradas, porque no se sabe si el Admin las desactivó.
+ * Los accesos del pie son los de la semilla, para que el pie no salte al llegar el contenido. Si nunca llega, la tienda
+ * muestra el aviso de mantenimiento (PBI-0182).
  */
 const FALLBACK: ConfiguracionTienda = {
   storeName: 'WebStore',

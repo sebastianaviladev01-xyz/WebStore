@@ -699,9 +699,9 @@ try {
       body: JSON.stringify(update),
     });
 
-  // Permisos de los roles (lote 07, PBI-0013, provisional): el vendedor crea y modifica productos sin eliminarlos;
-  // el administrador gestiona solo a los vendedores y no tiene Contenido. Lote 11 (PBI-0170, provisional): el vendedor
-  // gestiona el inventario y ve los pedidos (`orders.view`) sin cambiar su estado.
+  // Permisos de los roles (lote 07, PBI-0013, confirmados por Daniel el 2026-11-18): el vendedor crea y modifica
+  // productos sin eliminarlos; el administrador gestiona solo a los vendedores y no tiene Contenido. Lote 11 (PBI-0170,
+  // provisional): el vendedor gestiona el inventario y ve los pedidos (`orders.view`) sin cambiar su estado.
   const seller = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
   let sellerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(seller.token) });
   if (

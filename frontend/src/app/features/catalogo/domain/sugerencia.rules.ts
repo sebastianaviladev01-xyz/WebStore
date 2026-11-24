@@ -1,6 +1,6 @@
 import type { Producto } from './producto.model';
 
-/** Cuántos productos sugiere el diálogo «Producto agregado» (PBI-0039; provisional, por confirmar con Daniel). */
+/** Cuántos productos sugiere el diálogo «Producto agregado» (PBI-0039; confirmado por Daniel el 2026-11-20). */
 export const MAXIMO_SUGERIDOS = 3;
 
 /** Hasta `MAXIMO_SUGERIDOS` productos de la misma categoría que el agregado, con stock y en el orden del catálogo. */

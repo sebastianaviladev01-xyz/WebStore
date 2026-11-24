@@ -73,8 +73,9 @@ export function requireOrderLines(items) {
 }
 
 /**
- * Aceptación de los términos y condiciones (PBI-0040, lote 04): solo el booleano `true` cuenta. Provisional, por
- * confirmar con Daniel (PENDING-DECISIONS, «Aceptación de los términos y condiciones en el checkout»).
+ * Aceptación de los términos y condiciones (PBI-0040, lote 04): solo el booleano `true` cuenta. Daniel no pidió
+ * cambios en la casilla el 2026-11-20; pidió guardar la versión aceptada, que el pedido guarda desde el lote 17
+ * (PBI-0177, `requireTermsVersion` de `terminos.rules.mjs`).
  */
 export function requireTermsAccepted(value) {
   if (value !== true)

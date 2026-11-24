@@ -2,7 +2,7 @@ import type { Permiso } from '../../sesion/domain/rol.rules';
 import { Aviso, ConteoDeAvisos, PresentacionDelAviso } from './notificacion.model';
 
 /**
- * Campana de notificaciones del Admin (lote 07b, ADR-0017, PBI-0033; provisional, por confirmar con Daniel): cuántos
+ * Campana de notificaciones del Admin (lote 07b, ADR-0017, PBI-0033; confirmada por Daniel el 2026-11-18): cuántos
  * avisos nuevos hay desde la última vez que la persona abrió el menú y hasta cuál se vieron. Lote 13 (ADR-0021,
  * PBI-0173; provisional): además de los pedidos nuevos, los reclamos nuevos y los errores de compra.
  */

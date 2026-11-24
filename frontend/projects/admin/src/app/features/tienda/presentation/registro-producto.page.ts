@@ -253,8 +253,8 @@ export class RegistroProductoPage {
   /** Marca del producto al abrirlo: sigue en la lista aunque esté inactiva. */
   private readonly marcaActual = signal<string | null>(null);
   /**
-   * PBI-0131 (decisión provisional): una marca inactiva no se ofrece para los productos; solo sigue en la lista la
-   * que ya tenía el producto en edición.
+   * PBI-0131 (confirmado por Daniel el 2026-11-18): una marca inactiva no se ofrece para los productos; solo sigue en
+   * la lista la que ya tenía el producto en edición.
    */
   protected readonly marcasElegibles = computed(() =>
     this.admin.brands().filter((marca) => marca.active || marca.id === this.marcaActual()),
