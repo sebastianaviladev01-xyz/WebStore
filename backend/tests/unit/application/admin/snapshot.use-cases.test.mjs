@@ -218,6 +218,32 @@ test('lote 15: config guarda las listas de Contenido normalizadas y avisa qué c
   });
 });
 
+// Lote 30 (ADR-0027, PBI-0244; provisional): el guardado de Contenido conserva el «Desde» y el «Hasta» de cada aviso y
+// rechaza un «Hasta» que no va después del «Desde», con el campo que falló.
+test('PBI-0244: config guarda los avisos con su «Desde» y su «Hasta» y rechaza un «Hasta» anterior', () => {
+  const programado = {
+    text: 'Black Friday',
+    url: '/catalogo',
+    startAt: '2026-11-27T00:00:00.000-05:00',
+    endAt: '2026-11-27T23:59:59.999-05:00',
+  };
+  const { store, resultado } = guardar(superadmin, {
+    config: { announcements: [programado, { text: 'Siempre', url: '', startAt: '', endAt: '' }] },
+  });
+  resultado();
+  assert.deepEqual(store.state.config.announcements, [programado, { text: 'Siempre', url: '' }]);
+
+  const fallido = guardar(superadmin, {
+    config: { announcements: [{ ...programado, endAt: '2026-11-26T23:59:59.999-05:00' }] },
+  });
+  assert.throws(fallido.resultado, (error) => {
+    assert.equal(error.code, 'INVALID_COLLECTION');
+    assert.deepEqual(error.details, { collection: 'config', field: 'announcements' });
+    assert.match(error.message, /«Hasta» del aviso «Black Friday» debe ser posterior a su «Desde»/);
+    return true;
+  });
+});
+
 test('lote 15: la semilla ya no tiene el correo, el teléfono, el mensaje ni la navegación de texto', () => {
   for (const campo of ['contactEmail', 'contactPhone', 'headerMessage', 'topNavigation'])
     assert.equal(campo in seed.config, false, campo);

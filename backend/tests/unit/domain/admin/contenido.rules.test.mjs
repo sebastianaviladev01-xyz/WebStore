@@ -112,6 +112,65 @@ test('PBI-0175: un aviso sin texto, demasiado largo o con un enlace que no es de
     assert.match(error('announcements', [{ text: 'Aviso', url }]), /enlace/, url);
 });
 
+// --- PBI-0244 (lote 30, ADR-0027; provisional): avisos programados ---
+
+test('PBI-0244: cada aviso puede llevar un «Desde» y un «Hasta» con fecha, hora y zona; vacíos, no se guardan', () => {
+  assert.deepEqual(
+    valida('announcements', [
+      {
+        text: 'Black Friday',
+        url: '/catalogo',
+        startAt: ' 2026-11-27T00:00:00.000-05:00 ',
+        endAt: '2026-11-27T23:59:59.999-05:00',
+      },
+      { text: 'Solo desde', url: '', startAt: '2026-12-01T08:00:00.000-05:00', endAt: '' },
+      { text: 'Solo hasta', url: '', endAt: '2026-12-24T23:59:59.999Z' },
+      { text: 'Siempre', url: '', startAt: '', endAt: '   ' },
+    ]),
+    [
+      {
+        text: 'Black Friday',
+        url: '/catalogo',
+        startAt: '2026-11-27T00:00:00.000-05:00',
+        endAt: '2026-11-27T23:59:59.999-05:00',
+      },
+      { text: 'Solo desde', url: '', startAt: '2026-12-01T08:00:00.000-05:00' },
+      { text: 'Solo hasta', url: '', endAt: '2026-12-24T23:59:59.999Z' },
+      // Sin fechas, el aviso queda como antes del lote: se muestra siempre.
+      { text: 'Siempre', url: '' },
+    ],
+  );
+});
+
+test('PBI-0244: un «Desde» o un «Hasta» sin hora, sin zona o que no es una fecha se rechaza con su motivo', () => {
+  for (const valor of ['2026-11-27', '2026-11-27T10:00', 'mañana', '2026-02-30T10:00:00-05:00', 5]) {
+    assert.match(
+      error('announcements', [{ text: 'Oferta', url: '', startAt: valor }]),
+      /«Desde» del aviso «Oferta» necesita una fecha y una hora válidas/,
+      String(valor),
+    );
+    assert.match(
+      error('announcements', [{ text: 'Oferta', url: '', endAt: valor }]),
+      /«Hasta» del aviso «Oferta» necesita una fecha y una hora válidas/,
+      String(valor),
+    );
+  }
+});
+
+test('PBI-0244: «Hasta» tiene que ser posterior a «Desde»', () => {
+  const aviso = (startAt, endAt) => [{ text: 'Cierre', url: '', startAt, endAt }];
+  const mensaje = /«Hasta» del aviso «Cierre» debe ser posterior a su «Desde»/;
+  assert.match(
+    error('announcements', aviso('2026-11-27T10:00:00.000-05:00', '2026-11-27T09:00:00.000-05:00')),
+    mensaje,
+  );
+  assert.match(
+    error('announcements', aviso('2026-11-27T10:00:00.000-05:00', '2026-11-27T15:00:00.000Z')),
+    mensaje,
+  );
+  valida('announcements', aviso('2026-11-27T10:00:00.000-05:00', '2026-11-27T10:00:59.999-05:00'));
+});
+
 // --- PBI-0185: accesos inferiores del pie ---
 
 test('PBI-0185: cada acceso del pie lleva su grupo, su texto y su destino', () => {

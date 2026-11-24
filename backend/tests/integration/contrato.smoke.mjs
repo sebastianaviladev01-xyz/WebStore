@@ -718,6 +718,62 @@ try {
     if (JSON.stringify(conListas[clave]) !== JSON.stringify(valor))
       throw new Error(`Contenido no publica ${clave} tal como se guardó`);
 
+  // Lote 30 (ADR-0027, PBI-0244; provisional): cada aviso lleva un «Desde» (`startAt`) y un «Hasta» (`endAt`)
+  // opcionales. El snapshot del Admin los trae todos; los ajustes públicos, solo los vigentes en ese momento.
+  const avisosProgramados = [
+    { text: 'Siempre', url: '' },
+    {
+      text: 'Vigente',
+      url: '/catalogo',
+      startAt: '2020-01-01T00:00:00.000-05:00',
+      endAt: '2099-12-31T23:59:59.999-05:00',
+    },
+    { text: 'Programado', url: '', startAt: '2099-01-01T00:00:00.000-05:00' },
+    { text: 'Vencido', url: '', endAt: '2020-01-01T23:59:59.999-05:00' },
+  ];
+  const hastaAnterior = await raw('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      config: {
+        announcements: [
+          {
+            text: 'Cierre',
+            url: '',
+            startAt: '2026-11-27T10:00:00.000-05:00',
+            endAt: '2026-11-27T09:59:59.999-05:00',
+          },
+        ],
+      },
+    }),
+  });
+  const problemaDeVigencia = await esperarError(
+    hastaAnterior,
+    400,
+    'INVALID_COLLECTION',
+    'Hasta antes del Desde',
+  );
+  if (problemaDeVigencia.details?.field !== 'announcements')
+    throw new Error('El rechazo de la vigencia de un aviso debe nombrar announcements en details.field');
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: { announcements: avisosProgramados } }),
+  });
+  if (JSON.stringify(snapshot.config.announcements) !== JSON.stringify(avisosProgramados))
+    throw new Error('El snapshot del Admin debe traer todos los avisos, con su startAt y su endAt');
+  const avisosPublicos = (await request('/bff/content/settings')).announcements;
+  if (JSON.stringify(avisosPublicos) !== JSON.stringify(avisosProgramados.slice(0, 2)))
+    throw new Error(
+      'Los ajustes públicos solo deben traer los avisos vigentes (sin los programados ni los vencidos)',
+    );
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: { announcements: listas.announcements } }),
+  });
+
   // Lote 16 (ADR-0021, PBI-0179): dónde van los sugeridos al agregar al carrito. Por defecto, el diálogo.
   if (conListas.addToCartDisplay !== 'dialog')
     throw new Error('Contenido debe publicar addToCartDisplay, con «dialog» por defecto');
