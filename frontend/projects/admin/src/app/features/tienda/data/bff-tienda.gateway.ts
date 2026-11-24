@@ -13,8 +13,12 @@ import { bearer } from '../../../core/bff-http';
 import { ServicioNoDisponibleError, SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 
 const SNAPSHOT_URL = '/bff/admin/snapshot';
+/**
+ * Lote 27 (PBI-0234): las fotos que el Admin carga ya se reducen y un guardado lleva un solo registro, así que solo
+ * pasa de 2 MB con fotos guardadas antes de reducirlas. Desde el lote 25 solo el logo admite una URL: no se sugiere.
+ */
 const MENSAJE_DEMASIADO_GRANDE =
-  'Lo que intentas guardar pesa demasiado (más de 2 MB). Usa imágenes más livianas o una URL.';
+  'Lo que intentas guardar pesa demasiado (más de 2 MB). Quita algunas fotos o vuelve a cargarlas desde su archivo, para que se reduzcan.';
 
 /** De `data/` no sale un `HttpErrorResponse` (PBI-0134): un fallo sin traducir es del servicio. */
 const errorDelDominio = (error: HttpErrorResponse): ServicioNoDisponibleError =>

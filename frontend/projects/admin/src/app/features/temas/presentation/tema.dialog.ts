@@ -6,6 +6,7 @@ import {
   ReactiveFormsModule,
   ValidationErrors,
 } from '@angular/forms';
+import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -92,6 +93,7 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
 @Component({
   selector: 'ws-admin-tema-dialog',
   imports: [
+    CdkScrollable,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
@@ -101,7 +103,11 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
   template: `
     <h2 mat-dialog-title>{{ datos.tema ? 'Editar tema' : 'Nuevo tema' }}</h2>
     <form class="contents" [formGroup]="formulario" (ngSubmit)="guardar()">
-      <mat-dialog-content>
+      <!--
+        Lote 27 (PBI-0235): el contenido crece en alto hasta lo que deja la ventana (maxHeight al abrirla) y se desplaza
+        dentro; los botones quedan a la vista. No es mat-dialog-content, que fija su alto máximo en 65vh sin un token.
+      -->
+      <div class="ws-tema-dialog-contenido" cdkScrollable>
         @if (aviso()) {
           <div class="mb-4 rounded-lg bg-warning-soft p-3 text-sm text-warning" role="alert">
             {{ aviso() }}
@@ -120,7 +126,8 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
           class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
         >
           <div class="min-w-0">
-            <mat-form-field>
+            <!-- PBI-0237: un error de dos líneas (a 375 px) agranda el espacio de abajo y no tapa «Colores». -->
+            <mat-form-field subscriptSizing="dynamic">
               <mat-label>Nombre</mat-label>
               <input matInput maxlength="40" autocomplete="off" formControlName="nombre" />
               @if (nombre.errors?.['nombre']; as motivo) {
@@ -197,7 +204,7 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
             </p>
           </div>
         </div>
-      </mat-dialog-content>
+      </div>
       <mat-dialog-actions align="end">
         <button
           type="button"
@@ -215,6 +222,31 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
         </button>
       </mat-dialog-actions>
     </form>
+  `,
+  // Lote 27 (PBI-0235): lo que daba mat-dialog-content, con sus mismos tokens públicos, salvo el alto máximo de 65vh. En
+  // la columna flexible de la ventana, el contenido ocupa lo que dejan el título y los botones y se desplaza dentro.
+  styles: `
+    .ws-tema-dialog-contenido {
+      display: block;
+      flex: 1 1 auto;
+      min-height: 0;
+      box-sizing: border-box;
+      margin: 0;
+      overflow: auto;
+      padding: var(--mat-dialog-with-actions-content-padding, 20px 24px 0);
+      color: var(--mat-dialog-supporting-text-color, var(--mat-sys-on-surface-variant));
+      font-family: var(--mat-dialog-supporting-text-font, var(--mat-sys-body-medium-font, inherit));
+      line-height: var(
+        --mat-dialog-supporting-text-line-height,
+        var(--mat-sys-body-medium-line-height, 1.5rem)
+      );
+      font-size: var(--mat-dialog-supporting-text-size, var(--mat-sys-body-medium-size, 1rem));
+      font-weight: var(--mat-dialog-supporting-text-weight, var(--mat-sys-body-medium-weight, 400));
+      letter-spacing: var(
+        --mat-dialog-supporting-text-tracking,
+        var(--mat-sys-body-medium-tracking, 0.03125em)
+      );
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
