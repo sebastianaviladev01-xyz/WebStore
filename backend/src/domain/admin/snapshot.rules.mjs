@@ -12,6 +12,8 @@ export const WRITE_PERMISSIONS = {
   config: 'content.manage',
   users: 'users.manage',
   orders: 'orders.manage',
+  // Lote 17 (PBI-0183): el calendario es configuración de la tienda, como Contenido.
+  nonWorkingDates: 'content.manage',
 };
 
 /** Rechaza el guardado si incluye una colección que el rol no puede modificar. */

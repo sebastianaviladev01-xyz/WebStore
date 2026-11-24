@@ -1,33 +1,23 @@
+import { esFechaDeCalendario } from '../calendario/dias-no-laborables.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
 import { requireEmail, requireFields } from '../comun/validacion.rules.mjs';
 
 /** Métodos de pago que ofrece la tienda hoy (PBI-0096): tarjeta, Yape o Plin, y transferencia. */
 export const PAYMENT_METHODS = ['card', 'yape-plin', 'transfer'];
 
-const FECHA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/;
-
-/** `AAAA-MM-DD` que existe en el calendario (rechaza `2030-02-30`). */
-function isCalendarDate(value) {
-  const match = typeof value === 'string' ? FECHA_ISO.exec(value) : null;
-  if (!match) return false;
-  const [, year, month, day] = match.map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
-}
-
 /**
- * Fecha de entrega `AAAA-MM-DD` desde `today` (la fecha de Lima de hoy) en adelante. La regla exacta de la primera
- * fecha está pendiente de Daniel (PENDING-DECISIONS, «Fecha mínima de entrega del pedido»); provisionalmente, hoy.
- * `current` es la fecha que el pedido ya tiene: reenviarla sin cambios se acepta aunque ya haya pasado.
+ * Fecha de entrega `AAAA-MM-DD` desde `minimum` en adelante: la primera fecha de entrega que configura la tienda
+ * (`primeraFechaDeEntrega`, lote 17, PBI-0178). `current` es la fecha que el pedido ya tiene: reenviarla sin cambios
+ * se acepta aunque ya haya pasado.
  */
-export function requireDeliveryDate(value, today, current = undefined) {
+export function requireDeliveryDate(value, minimum, current = undefined) {
   if (current !== undefined && value === current) return value;
-  if (!isCalendarDate(value) || value < today)
+  if (!esFechaDeCalendario(value) || value < minimum)
     throw new DomainError(
       'validation',
       'INVALID_DELIVERY_DATE',
-      'Elige una fecha de entrega válida, desde hoy en adelante.',
-      { minimum: today },
+      `Elige una fecha de entrega válida, desde el ${minimum.split('-').reverse().join('/')}.`,
+      { minimum },
     );
   return value;
 }

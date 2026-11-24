@@ -1,4 +1,5 @@
 import { DomainError } from '../../domain/comun/domain-error.mjs';
+import { fechasNoLaborables } from '../../domain/calendario/dias-no-laborables.rules.mjs';
 import { limaDate } from '../../domain/comun/reloj.mjs';
 import { conEvento, eventoReclamoRegistrado } from '../../domain/admin/actividad.rules.mjs';
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
@@ -13,9 +14,10 @@ import {
 
 /**
  * Libro de reclamaciones: registro con código correlativo por año de Lima y plazo de respuesta en días hábiles.
- * `now` permite fijar el instante en las pruebas.
+ * `now` permite fijar el instante en las pruebas. Los días no laborables son los del estado (lote 17, PBI-0183), que
+ * el superadministrador edita en el Admin.
  */
-export function createReclamosUseCases({ store, nonWorkingDates, now = () => new Date() }) {
+export function createReclamosUseCases({ store, now = () => new Date() }) {
   function register(command) {
     requireFields(command, [
       'name',
@@ -55,7 +57,11 @@ export function createReclamosUseCases({ store, nonWorkingDates, now = () => new
       providerResponse: '',
       createdAt,
       updatedAt: createdAt,
-      dueAt: addPeruBusinessDays(createdAt, COMPLAINT_DUE_BUSINESS_DAYS, nonWorkingDates),
+      dueAt: addPeruBusinessDays(
+        createdAt,
+        COMPLAINT_DUE_BUSINESS_DAYS,
+        fechasNoLaborables(state.nonWorkingDates),
+      ),
     };
     state.complaints.unshift(complaint);
     // PBI-0028: la actividad reciente del Resumen.

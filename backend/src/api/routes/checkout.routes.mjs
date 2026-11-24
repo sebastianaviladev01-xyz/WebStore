@@ -6,6 +6,8 @@ import { bearerToken, created, idempotencyKey, ok, readJsonBody } from '../http.
  * búsqueda y la creación son síncronas: dos peticiones con la misma clave no pueden crear dos pedidos.
  */
 export const checkoutRoutes = (checkout) => [
+  // Lote 17 (ADR-0021, PBI-0178): la primera fecha de entrega que el comprador puede elegir ahora.
+  { method: 'GET', path: '/bff/checkout/delivery-dates', handle: () => ok(checkout.firstDeliveryDate()) },
   {
     method: 'POST',
     path: '/bff/checkout/orders',

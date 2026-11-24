@@ -8,6 +8,16 @@ import {
 } from '../../domain/admin/contenido.rules.mjs';
 import { normalizarErroresDeCompra } from '../../domain/admin/errores-de-compra.rules.mjs';
 import { normalizarVistos } from '../../domain/admin/notificaciones.rules.mjs';
+import { normalizarVersionesDeTerminos } from '../../domain/admin/terminos.rules.mjs';
+import {
+  diasNoLaborablesIniciales,
+  normalizarDiasNoLaborables,
+} from '../../domain/calendario/dias-no-laborables.rules.mjs';
+import {
+  ENTREGA_POR_DEFECTO,
+  esHoraDeCorte,
+  esReglaDePrimeraEntrega,
+} from '../../domain/pedidos/primera-fecha-de-entrega.rules.mjs';
 import { nowIso } from '../../domain/comun/reloj.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { migrateRole } from '../../domain/sesion/rol.rules.mjs';
@@ -212,9 +222,12 @@ function migrarListasDeContenido(next, guardado) {
 
 /**
  * Completa con la semilla lo que falte en data.json, descarta sesiones vencidas y aplica migraciones. `avisar`
- * recibe un texto por cada dato que se repara o se descarta al cargar (hoy, los temas propios: PBI-0068).
+ * recibe un texto por cada dato que se repara o se descarta al cargar (hoy, los temas propios: PBI-0068). `opciones`
+ * (lote 17): `fechasNoLaborablesIniciales`, las de `WEBSTORE_NON_WORKING_DATES`, que solo cuentan si el estado no tiene
+ * calendario, y `ahora`, la fecha con que se registra una versión de los términos que cambió fuera del BFF.
  */
-export function normalizeState(input, demoPasswords, avisar = () => {}) {
+export function normalizeState(input, demoPasswords, avisar = () => {}, opciones = {}) {
+  const { fechasNoLaborablesIniciales = new Set(), ahora = nowIso() } = opciones;
   const next = { ...structuredClone(seed), ...input };
   next.config = { ...seed.config, ...(input.config ?? {}) };
   next.products = (input.products ?? seed.products).map((product) => {
@@ -264,6 +277,18 @@ export function normalizeState(input, demoPasswords, avisar = () => {}) {
   // Lote 16 (PBI-0179): sin el campo lo completa la semilla; un valor desconocido vuelve al diálogo, sin migración.
   if (!esModoDeSugeridos(next.config.addToCartDisplay))
     next.config.addToCartDisplay = MODO_DE_SUGERIDOS_POR_DEFECTO;
+  // Lote 17 (ADR-0021), sin migración ni cambio de versión. PBI-0178: la primera fecha de entrega, la de por defecto si
+  // falta o no se conoce. PBI-0183: sin calendario guardado, el de `WEBSTORE_NON_WORKING_DATES`. PBI-0177: sin
+  // versiones de los términos, el texto vigente es la versión 1.
+  if (!esReglaDePrimeraEntrega(next.config.firstDeliveryDay))
+    next.config.firstDeliveryDay = ENTREGA_POR_DEFECTO.firstDeliveryDay;
+  if (!esHoraDeCorte(next.config.deliveryCutoffTime))
+    next.config.deliveryCutoffTime = ENTREGA_POR_DEFECTO.deliveryCutoffTime;
+  next.nonWorkingDates = normalizarDiasNoLaborables(
+    input.nonWorkingDates,
+    diasNoLaborablesIniciales(fechasNoLaborablesIniciales),
+  );
+  next.termsVersions = normalizarVersionesDeTerminos(input.termsVersions, next.config.termsContent, ahora);
   for (const clave of CAMPOS_ANTERIORES_DE_CONTENIDO) delete next.config[clave];
   next.appearance.activeThemeId = temaActivoExistente(next.appearance, avisar);
   next.schemaVersion = SCHEMA_VERSION;

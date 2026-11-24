@@ -1,3 +1,4 @@
+import { terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
 import { ADMIN_ROLES, can, managedUserRoles } from '../../domain/sesion/rol.rules.mjs';
 
 export const adminUserToPublic = (user) => ({
@@ -23,6 +24,8 @@ const orderToAdmin = (order) => ({
   paymentMethod: order.paymentMethod ?? '',
   // PBI-0145: cuándo aceptó el comprador los términos (lote 04); null en pedidos anteriores a esa casilla.
   termsAcceptedAt: order.termsAcceptedAt ?? null,
+  // PBI-0177 (lote 17): la versión de los términos aceptada; null en pedidos anteriores al registro de versiones.
+  termsVersion: order.termsVersion ?? null,
   subtotal: order.subtotal ?? order.total,
   shippingCost: order.shippingCost ?? 0,
   total: order.total,
@@ -56,7 +59,10 @@ export function buildAdminSnapshot(state, role) {
     rates: visible('shipping.manage', state.rates),
     complaints: visible('complaints.manage', state.complaints),
     orders: visible('orders.view', state.orders.map(orderToAdmin)),
-    config: state.config,
+    // Lote 17 (PBI-0177): con la versión vigente de los términos, que calcula el BFF (no es una clave que se guarde).
+    config: { ...state.config, ...terminosVigentes(state.termsVersions) },
     activity: visible('orders.manage', state.activity ?? []),
+    // Lote 17 (PBI-0183): el calendario de días no laborables, configuración de la tienda.
+    nonWorkingDates: visible('content.manage', state.nonWorkingDates ?? []),
   };
 }

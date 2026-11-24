@@ -26,8 +26,7 @@ const formulario = (cambios = {}) => ({
 
 const crear = (complaints, now) =>
   createReclamosUseCases({
-    store: { state: { revision: 0, complaints }, save() {} },
-    nonWorkingDates: new Set(),
+    store: { state: { revision: 0, complaints, nonWorkingDates: [] }, save() {} },
     now,
   });
 
@@ -70,7 +69,8 @@ test('sin monto, el reclamo se guarda con 0', () => {
 
 const creacion = () => {
   const store = {
-    state: { revision: 4, complaints: [] },
+    // Lote 17 (PBI-0183): los días no laborables vienen del estado, no del arranque.
+    state: { revision: 4, complaints: [], nonWorkingDates: [{ id: 'f', date: '2027-06-02', name: '' }] },
     guardados: 0,
     save() {
       this.guardados += 1;
@@ -78,7 +78,6 @@ const creacion = () => {
   };
   const reclamos = createReclamosUseCases({
     store,
-    nonWorkingDates: new Set(['2027-06-02']),
     now: () => new Date('2027-06-01T15:00:00Z'),
   });
   return { store, reclamos };

@@ -8,11 +8,13 @@ import {
   requireValidCustomers,
   requireValidOrderStatuses,
   requireValidProducts,
+  requireValidNonWorkingDates,
   requireValidRates,
   requireValidUserShapes,
   resolveCollectionChanges,
 } from '../../domain/admin/colecciones.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
+import { conTextoDeTerminos } from '../../domain/admin/terminos.rules.mjs';
 import { requireWritableCollections } from '../../domain/admin/snapshot.rules.mjs';
 import { requireUsersInScope, requireValidAdminUsers } from '../../domain/admin/usuario-admin.rules.mjs';
 import {
@@ -105,10 +107,12 @@ const REPLACEABLE = {
   customers: requireValidCustomers,
   banners: requireValidBanners,
   rates: requireValidRates,
+  // Lote 17 (PBI-0183): el calendario de días no laborables, del superadministrador.
+  nonWorkingDates: requireValidNonWorkingDates,
 };
 
 /** Aplica los cambios sobre `state`, que es una copia: si algo falla, el estado vigente no se toca (PBI-0089). */
-function applyAdminChanges(state, next, user, security) {
+function applyAdminChanges(state, next, user, security, ahora) {
   requireWritableCollections(next, user.role);
   const previous = { brands: state.brands, categories: state.categories };
   if (next.products !== undefined) applyProducts(state, next.products, user.role);
@@ -126,20 +130,24 @@ function applyAdminChanges(state, next, user, security) {
     state.complaints = applyComplaintUpdates(
       state.complaints,
       resolveCollectionChanges('complaints', state.complaints, next.complaints),
-      nowIso(),
+      ahora,
     );
   // Contenido ya no guarda colores (D3): si un Admin anterior los envía, se descartan sin error (AC-22).
-  if (next.config !== undefined)
+  if (next.config !== undefined) {
     state.config = requireValidConfig(
       sinColoresDeContenido(next.config),
       sinColoresDeContenido(state.config),
     );
+    // Lote 17 (PBI-0177): un texto nuevo de los términos es la versión siguiente, publicada ahora. El número lo pone el
+    // BFF: `termsVersion` no es una clave de la configuración, así que si el Admin lo envía, se descarta.
+    state.termsVersions = conTextoDeTerminos(state.termsVersions ?? [], state.config.termsContent, ahora);
+  }
   if (next.users !== undefined) applyUsers(state, next.users, user, security);
   if (next.orders !== undefined) applyOrderStatuses(state, next.orders);
 }
 
 /** Snapshot del Admin: lectura filtrada por rol, guardado parcial con control de revisión y reinicio. */
-export function createSnapshotUseCases({ store, security, resetEnabled = false }) {
+export function createSnapshotUseCases({ store, security, resetEnabled = false, now = () => new Date() }) {
   const vista = (user) => buildAdminSnapshot(store.state, user.role);
   function save(user, next) {
     // El Admin envía solo las colecciones que cambió, junto con la revisión sobre la que trabajó.
@@ -151,7 +159,7 @@ export function createSnapshotUseCases({ store, security, resetEnabled = false }
       );
     // Todo se aplica sobre una copia y se confirma solo si todo fue válido (PBI-0089).
     const draft = structuredClone(store.state);
-    applyAdminChanges(draft, next, user, security);
+    applyAdminChanges(draft, next, user, security, now().toISOString());
     bumpRevision(draft);
     store.state = draft;
     store.save();

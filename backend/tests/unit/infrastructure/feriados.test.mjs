@@ -1,26 +1,40 @@
 /**
- * Aviso al arrancar de que faltan los feriados del año en curso (lote 02, PBI-0010; provisional, por confirmar con
- * Daniel): `WEBSTORE_NON_WORKING_DATES` es la fuente del calendario y hay que renovarla cada año.
+ * Aviso de que faltan los feriados del año en curso (lote 02, PBI-0010; PBI-0163). Desde el lote 17 (ADR-0021,
+ * PBI-0183; provisional) el calendario de días no laborables se mantiene desde el Admin y vive en el estado del BFF:
+ * el aviso mira esa lista y dice dónde completarla. `WEBSTORE_NON_WORKING_DATES` solo da el valor inicial.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { avisoDeFeriados, crearVigiaDeFeriados, readConfig } from '../../../src/infrastructure/config.mjs';
 
-const fechas = (texto) => readConfig({ WEBSTORE_NON_WORKING_DATES: texto }).nonWorkingDates;
+const fechas = (texto) =>
+  new Set(
+    texto
+      .split(',')
+      .map((fecha) => fecha.trim())
+      .filter(Boolean),
+  );
+
+test('WEBSTORE_NON_WORKING_DATES se sigue leyendo, como el valor inicial del calendario', () => {
+  assert.deepEqual(
+    [...readConfig({ WEBSTORE_NON_WORKING_DATES: '2026-07-28, 2026-12-25' }).nonWorkingDates],
+    ['2026-07-28', '2026-12-25'],
+  );
+});
 
 test('con una fecha del año en curso no hay aviso', () => {
   assert.equal(avisoDeFeriados(fechas('2026-07-28,2026-12-25'), '2026'), null);
   assert.equal(avisoDeFeriados(fechas('2025-12-25, 2026-01-01'), '2026'), null);
 });
 
-test('sin ninguna fecha del año en curso, el aviso nombra la variable, el año y el formato', () => {
-  for (const lista of ['', '2025-12-25,2027-01-01', '2026', '03/11/2026,2026-7-28'])
-    assert.match(
-      avisoDeFeriados(fechas(lista), '2026'),
-      /WEBSTORE_NON_WORKING_DATES.*2026.*AAAA-MM-DD/,
-      JSON.stringify(lista),
-    );
+test('sin ninguna fecha del año en curso, el aviso nombra el año y dónde agregarlas en el Admin', () => {
+  for (const lista of ['', '2025-12-25,2027-01-01', '2026', '03/11/2026,2026-7-28']) {
+    const aviso = avisoDeFeriados(fechas(lista), '2026');
+    assert.match(aviso, /días no laborables.*2026/, JSON.stringify(lista));
+    assert.match(aviso, /Entregas y feriados/, JSON.stringify(lista));
+    assert.doesNotMatch(aviso, /WEBSTORE_NON_WORKING_DATES/, 'la variable ya no es la fuente');
+  }
 });
 
 test('el año se compara tal cual: una fecha de otro año con el mismo mes y día no cuenta', () => {
@@ -33,7 +47,7 @@ test('la vigía avisa al empezar y otra vez cuando cambia el año de Lima, no an
   let hoy = '2026-12-31';
   const avisos = [];
   const vigia = crearVigiaDeFeriados({
-    nonWorkingDates: fechas('2026-12-25'),
+    fechasNoLaborables: () => fechas('2026-12-25'),
     hoy: () => hoy,
     avisar: (texto) => avisos.push(texto),
   });
@@ -44,7 +58,7 @@ test('la vigía avisa al empezar y otra vez cuando cambia el año de Lima, no an
   hoy = '2027-01-01';
   vigia.comprobar();
   assert.equal(avisos.length, 1);
-  assert.match(avisos[0], /WEBSTORE_NON_WORKING_DATES.*2027.*AAAA-MM-DD/);
+  assert.match(avisos[0], /días no laborables.*2027/);
   hoy = '2027-01-02';
   vigia.comprobar();
   assert.equal(avisos.length, 1, 'el mismo año no se avisa dos veces');
@@ -54,10 +68,27 @@ test('la vigía avisa al empezar y otra vez cuando cambia el año de Lima, no an
   assert.match(avisos[1], /2028/);
 });
 
+test('la vigía lee el calendario vigente cada vez: lo que se agrega desde el Admin cuenta', () => {
+  let calendario = fechas('');
+  let hoy = '2026-12-31';
+  const avisos = [];
+  const vigia = crearVigiaDeFeriados({
+    fechasNoLaborables: () => calendario,
+    hoy: () => hoy,
+    avisar: (texto) => avisos.push(texto),
+  });
+  vigia.comprobar();
+  assert.equal(avisos.length, 1);
+  calendario = fechas('2027-01-01');
+  hoy = '2027-01-01';
+  vigia.comprobar();
+  assert.equal(avisos.length, 1, 'el año nuevo ya tiene feriados');
+});
+
 test('la vigía avisa al empezar si ya faltan los feriados del año en curso', () => {
   const avisos = [];
   crearVigiaDeFeriados({
-    nonWorkingDates: fechas(''),
+    fechasNoLaborables: () => fechas(''),
     hoy: () => '2026-03-01',
     avisar: (texto) => avisos.push(texto),
   }).comprobar();
@@ -68,7 +99,7 @@ test('la vigía avisa al empezar si ya faltan los feriados del año en curso', (
 test('la vigía programa su revisión sin mantener vivo el proceso y se puede detener', () => {
   const programadas = [];
   const vigia = crearVigiaDeFeriados({
-    nonWorkingDates: fechas(''),
+    fechasNoLaborables: () => fechas(''),
     hoy: () => '2026-03-01',
     avisar: () => {},
     cada: 1234,

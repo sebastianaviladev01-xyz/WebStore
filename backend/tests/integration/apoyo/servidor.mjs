@@ -97,5 +97,7 @@ export const pedidoValido = (cambios = {}) => ({
   paymentMethod: 'card',
   items: [{ productId: 'p-004', quantity: 1 }],
   termsAccepted: true,
+  // Lote 17 (PBI-0177): un estado nuevo tiene los términos en su versión 1.
+  termsVersion: 1,
   ...cambios,
 });

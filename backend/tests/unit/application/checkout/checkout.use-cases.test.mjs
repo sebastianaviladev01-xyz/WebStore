@@ -1,6 +1,7 @@
 /**
  * Validación del checkout y de los cambios del pedido (PBI-0096, parte del BFF; lote 01, ADR-0017), con un
- * almacén en memoria: fecha de entrega desde hoy en Lima, método de pago de los que ofrece la tienda, cantidad
+ * almacén en memoria: fecha de entrega desde la primera que permite la tienda (lote 17, PBI-0178: por defecto, el día
+ * calendario siguiente en Lima; la regla completa está en `entrega-y-terminos.use-cases.test.mjs`), método de pago de los que ofrece la tienda, cantidad
  * entera y positiva, y solo los campos conocidos de `customer` y `shipping`.
  */
 import { mock, test } from 'node:test';
@@ -51,6 +52,8 @@ const pedido = (cambios = {}) => ({
   paymentMethod: 'card',
   items: [{ productId: 'p-1', quantity: 1 }],
   termsAccepted: true,
+  // Lote 17 (PBI-0177): la versión de los términos que mostró la tienda; sin registro, la vigente es la 1.
+  termsVersion: 1,
   ...cambios,
 });
 
@@ -64,8 +67,12 @@ test('una fecha de entrega pasada, mal formada o ausente responde INVALID_DELIVE
     assert.throws(() => comprar({ deliveryDate }), { code: 'INVALID_DELIVERY_DATE' }, String(deliveryDate));
 });
 
-test('la fecha de entrega de hoy en Lima se acepta', () => {
-  assert.equal(comprar({ deliveryDate: fechaDeLima(0) }).deliveryDate, fechaDeLima(0));
+test('por defecto, la primera fecha de entrega es mañana en Lima: hoy ya no se acepta (lote 17, PBI-0178)', () => {
+  assert.throws(() => comprar({ deliveryDate: fechaDeLima(0) }), {
+    code: 'INVALID_DELIVERY_DATE',
+    details: { minimum: fechaDeLima(1) },
+  });
+  assert.equal(comprar({ deliveryDate: fechaDeLima(1) }).deliveryDate, fechaDeLima(1));
 });
 
 test('un método de pago que la tienda no ofrece responde INVALID_PAYMENT_METHOD', () => {
@@ -122,7 +129,7 @@ test('las líneas repetidas del mismo producto quedan como una sola en el pedido
   assert.equal(resultado.subtotal, 350);
 });
 
-test('cambiar la fecha del pedido exige hoy o después, salvo que se conserve la que ya tiene', () => {
+test('cambiar la fecha del pedido exige la primera fecha o después, salvo que se conserve la que ya tiene', () => {
   const store = crearAlmacen();
   const creado = createCheckoutUseCases({ store, security }).placeOrder(pedido(), '');
   const pedidos = createPedidosUseCases({ store, security });

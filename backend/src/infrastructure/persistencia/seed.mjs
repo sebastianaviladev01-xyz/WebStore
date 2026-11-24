@@ -266,5 +266,9 @@ export const seed = {
     termsPageEnabled: true,
     // Dónde van los sugeridos al agregar al carrito: el diálogo, salvo que la tienda elija el panel lateral (PBI-0179).
     addToCartDisplay: 'dialog',
+    // Primera fecha de entrega (lote 17, PBI-0178): el día calendario siguiente, sin hora de corte. Los días no
+    // laborables y las versiones de los términos no van en la semilla: los completa la normalización (PBI-0183, 0177).
+    firstDeliveryDay: 'next-calendar-day',
+    deliveryCutoffTime: '',
   },
 };
