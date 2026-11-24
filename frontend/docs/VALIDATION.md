@@ -35,7 +35,7 @@ El smoke test usa un puerto y archivo temporal aislados; no modifica `backend/da
 ## Pruebas adicionales
 
 - `npm run check:syntax` → **OK**.
-- `npm test` → **11/11 OK**: árbol de categorías (orden, jerarquía, ciclos), tarifas para varios distritos, ajuste porcentual, búsqueda sin tildes, orden natural y paginación de tarifas, y migración de `data.json` con roles anteriores.
+- `npm test` → **11/11 OK**: árbol de categorías (orden, jerarquía, ciclos), tarifas para varios distritos, ajuste porcentual, búsqueda sin tildes, orden natural y paginación de tarifas, y migración de `data.json` con roles anteriores. *Nota (lote 25):* el ajuste porcentual y su prueba se quitaron en el lote 21 ([ADR-0025](../../docs/adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md), PBI-0217); esta validación es la del 2026-11-05.
 - `npm run format:check` → **OK** (Prettier).
 - `node tools/qa/cdp-interaction-qa.mjs` → **OK**: hero, pausa, tabs, mega-menú, drawer móvil, filtros, foco, Escape y backdrop.
 - `node tools/qa/cdp-admin-qa.mjs` → **OK** (06/11): Superadministrador con Reclamaciones; Vendedor solo ve Resumen, Productos, Inventario y Pedidos, y al abrir `/usuarios` vuelve al inicio.

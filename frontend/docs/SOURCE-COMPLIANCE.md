@@ -26,7 +26,7 @@ Cuando una reunión posterior modifica una idea anterior, prevalece la decisión
 - Tipografía única para el MVP.
 - Login administrativo y roles fijos superadmin/admin/vendedor (asignables, no editables) con restricciones tanto en UI como en BFF.
 - Pedidos en el Admin con detalle (cliente, contacto, dirección, distrito, origen, líneas y totales) y cambio de estado.
-- Tarifas de envío: un mismo precio para varios distritos y ajuste porcentual por origen o global (inquietud de Walther sobre inflación y carga manual).
+- Tarifas de envío: un mismo precio para varios distritos y ajuste porcentual por origen o global (inquietud de Walther sobre inflación y carga manual). *Nota (lote 25):* el ajuste porcentual se quitó en el lote 21 ([ADR-0025](../../docs/adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md), PBI-0217): Daniel y Walther coincidieron en que no aplica y el precio se cambia tarifa por tarifa. El precio para varios distritos sigue vigente.
 - Contacto, envíos, privacidad y términos editables/activables/desactivables realmente (incluido acceso directo por URL), más libro de reclamaciones persistente y gestionable.
 - Identidad visual propia (paleta B azul cobalto, tipografía única, estructura de inicio distinta de LG), aplicada a la tienda y al Admin; ver `VISUAL-SYSTEM.md`.
 - Arquitectura Angular desacoplada y orientada a BFF.
