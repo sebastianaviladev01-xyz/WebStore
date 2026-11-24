@@ -71,6 +71,7 @@ const NOMBRES_DE_CAMPO: Readonly<Record<string, string>> = {
   categoryId: 'la categoría',
   brandId: 'la marca',
   active: 'el estado',
+  featured: 'la marca de destacado',
   parentId: 'la categoría padre',
   order: 'el orden',
   email: 'el correo',

@@ -42,8 +42,9 @@ function estadoAnterior(config = {}) {
 const normalizar = (estado) => normalizeState(estado, demoPasswords, () => {});
 
 test('no cambia schemaVersion', () => {
-  assert.equal(SCHEMA_VERSION, 4);
-  assert.equal(normalizar(estadoAnterior()).schemaVersion, 4);
+  // El lote no sube la versión: la 5 es la del lote 22 (productos destacados configurables).
+  assert.equal(SCHEMA_VERSION, 5);
+  assert.equal(normalizar(estadoAnterior()).schemaVersion, SCHEMA_VERSION);
 });
 
 test('sin el modo de dirección, o con uno desconocido, carga con una dirección por pedido', () => {

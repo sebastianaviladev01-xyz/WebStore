@@ -73,3 +73,21 @@ export function requireRemovedNotInUse(
       );
   }
 }
+
+/** Cuántos productos destacaba el BFF antes del lote 22: los primeros activos del catálogo. */
+const DESTACADOS_ANTERIORES = 4;
+
+/**
+ * Marca de destacado de cada producto (lote 22, ADR-0025, PBI-0215; provisional, por confirmar con Daniel). Con
+ * `migrar`, la de un estado guardado antes del lote: un producto sin marca booleana recibe la que le daba el BFF hasta
+ * entonces (`featured ?? posición < 4` entre los activos), así la tienda se ve igual. Sin `migrar`, un producto sin
+ * marca no es destacado.
+ */
+export function conMarcaDeDestacado(products, { migrar = false } = {}) {
+  let posicion = 0;
+  return products.map((product) => {
+    const anterior = product.active ? posicion++ < DESTACADOS_ANTERIORES : false;
+    if (typeof product.featured === 'boolean') return product;
+    return { ...product, featured: migrar && anterior };
+  });
+}

@@ -18,7 +18,7 @@ const categoryToPublic = (category) => ({
 export const toPublicProduct = (state) => {
   const brandName = (id) => state.brands.find((brand) => brand.id === id)?.name ?? 'Marca';
   const categoryName = (id) => state.categories.find((category) => category.id === id)?.name ?? 'Categoría';
-  return (product, index) => ({
+  return (product) => ({
     id: product.id,
     slug: slugify(product.name),
     sku: product.sku,
@@ -35,7 +35,8 @@ export const toPublicProduct = (state) => {
     imageUrl: product.imageUrl,
     thumbnailUrl: product.thumbnailUrl || product.imageUrl,
     badge: product.stock === 0 ? undefined : product.badge,
-    featured: product.featured ?? index < 4,
+    // Lote 22 (PBI-0215): la marca que elige el Admin; sin ella, no es destacado.
+    featured: product.featured === true,
     highlights: Array.isArray(product.highlights) ? product.highlights.filter(Boolean) : [],
     // Galería pública: la imagen principal siempre primero, seguida de las fotos adicionales.
     images: [product.imageUrl, ...galleryOf(product)].filter(

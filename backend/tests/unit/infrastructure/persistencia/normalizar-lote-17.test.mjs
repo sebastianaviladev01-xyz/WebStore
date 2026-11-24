@@ -41,8 +41,9 @@ const normalizar = (estado, extra = {}) =>
   normalizeState(estado, demoPasswords, () => {}, { ...opciones, ...extra });
 
 test('no cambia schemaVersion: las listas nuevas se completan sin migración', () => {
-  assert.equal(SCHEMA_VERSION, 4);
-  assert.equal(normalizar(estadoAnterior()).schemaVersion, 4);
+  // El lote no sube la versión: la 5 es la del lote 22 (productos destacados configurables).
+  assert.equal(SCHEMA_VERSION, 5);
+  assert.equal(normalizar(estadoAnterior()).schemaVersion, SCHEMA_VERSION);
 });
 
 test('sin días no laborables guardados, los iniciales salen de WEBSTORE_NON_WORKING_DATES', () => {

@@ -98,6 +98,59 @@ try {
   )
     throw new Error('La galería editada en Admin no llegó al Storefront');
 
+  // Lote 22 (ADR-0025, PBI-0215): los destacados son los que marca el Admin, sin tope; la semilla marca los cuatro
+  // primeros. Una marca que no es booleana se rechaza con 400 INVALID_COLLECTION.
+  const destacados = (lista) => lista.filter((product) => product.featured).map((product) => product.id);
+  if (destacados(products).join() !== 'p-001,p-002,p-003,p-004')
+    throw new Error('La semilla no marca como destacados los cuatro productos de la demo');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const marcaInvalida = await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({
+        revision: snapshot.revision,
+        products: { upsert: [{ id: 'p-005', featured: 'si' }] },
+      }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Una marca de destacado que no es booleana',
+  );
+  if (marcaInvalida.details?.field !== 'featured')
+    throw new Error('El rechazo de la marca de destacado no señala el campo featured');
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      products: {
+        upsert: [
+          { id: 'p-001', featured: false },
+          { id: 'p-005', featured: true },
+          { id: 'p-006', featured: true },
+        ],
+      },
+    }),
+  });
+  if (destacados(await request('/bff/catalog/products')).join() !== 'p-002,p-003,p-004,p-005,p-006')
+    throw new Error('Los destacados marcados en Admin no llegaron al Storefront');
+  snapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      products: {
+        upsert: [
+          { id: 'p-001', featured: true },
+          { id: 'p-005', featured: false },
+          { id: 'p-006', featured: false },
+        ],
+      },
+    }),
+  });
+
   const product = products[0];
   // CartItem sin productId, como lo envía el Storefront, con un precio manipulado en el cliente.
   const command = {

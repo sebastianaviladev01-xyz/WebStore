@@ -15,6 +15,11 @@ export interface Producto {
   readonly price: number;
   readonly stock: number;
   readonly active: boolean;
+  /**
+   * Lote 22 (ADR-0025, PBI-0215): la casilla «Es destacado». El inicio de la tienda muestra los destacados con stock, en
+   * un carrusel si son más de cuatro. Opcional: un producto sin ella no es destacado.
+   */
+  readonly featured?: boolean;
   readonly highlights: readonly string[];
   /** Fotos adicionales a la imagen principal, en el orden en que se muestran en la ficha. */
   readonly gallery: readonly string[];

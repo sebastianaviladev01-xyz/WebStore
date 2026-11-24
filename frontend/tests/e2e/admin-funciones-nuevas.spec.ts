@@ -584,8 +584,8 @@ test.describe('PBI-0052 y PBI-0176: imagen de la categoría', () => {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/categorias');
       const lista = page.getByRole('region', { name: 'Lista de categorías' });
-      const fila = (nombre: string) =>
-        lista.locator('div.border-b').filter({ has: page.getByText(nombre, { exact: true }) });
+      // Lote 22 (PBI-0220): cada categoría es una fila del árbol.
+      const fila = (nombre: string) => lista.getByRole('treeitem', { name: nombre, exact: true });
       await expect(fila('Electrohogar').locator('img')).toHaveAttribute('src', IMAGEN_100);
       await expect(fila('Electrohogar').locator('img')).toHaveAttribute('alt', '');
       await expect(fila('Cocina').locator('img')).toHaveCount(0);

@@ -22,6 +22,8 @@ export interface ProductoApi {
   price: number;
   stock: number;
   active: boolean;
+  /** Lote 22 (PBI-0215): la casilla «Es destacado». */
+  featured?: boolean;
   highlights: string[];
   gallery: string[];
 }
@@ -146,6 +148,8 @@ export interface MarcaApi {
   id: string;
   name: string;
   active: boolean;
+  /** Lote 22 (PBI-0215): la casilla «Es destacado». */
+  featured?: boolean;
 }
 
 /** Marcas del BFF en este momento. */
