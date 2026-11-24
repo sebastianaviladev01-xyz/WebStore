@@ -11,6 +11,10 @@ import {
   terminosAceptados,
   urls,
 } from './apoyo/entorno';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Lote 07b, Admin: funciones nuevas y lo que dejó el lote 07 (ADR-0017). Recorridos contra el BFF de prueba real:

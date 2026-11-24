@@ -4,6 +4,10 @@ import { leerProductos } from './apoyo/catalogo';
 import { interiorFrenteAlFondo } from './apoyo/campos';
 import { correoUnico, fechaDeEntrega, terminosAceptados, urls } from './apoyo/entorno';
 import { esperarFotos } from './apoyo/fotos';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Lote 05 (ADR-0017), tienda: cuenta y formularios. Verificar la cuenta con el reenvío del código, sin el código en

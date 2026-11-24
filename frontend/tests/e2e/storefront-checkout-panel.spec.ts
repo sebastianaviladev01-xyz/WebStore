@@ -2,6 +2,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { contornoDelCampo } from './apoyo/campos';
 import { activarTema, colorDelToken } from './apoyo/contraste';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Panel y campos del checkout (feature 004, D4 y D5). TEST-12 (AC-08, AC-09, AC-10, AC-12): los tres pasos van

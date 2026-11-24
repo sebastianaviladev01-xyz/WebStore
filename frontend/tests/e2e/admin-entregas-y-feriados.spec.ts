@@ -11,6 +11,10 @@ import {
   terminosAceptados,
   urls,
 } from './apoyo/entorno';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Lote 17 (ADR-0021; provisional, por confirmar con Daniel): «Entregas y feriados» del superadministrador, con la

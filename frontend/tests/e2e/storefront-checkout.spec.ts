@@ -10,6 +10,10 @@ import {
   urls,
 } from './apoyo/entorno';
 import { esperarFotos } from './apoyo/fotos';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Compra como invitado: el checkout cotiza el envío por distrito, crea el pedido en el BFF, lo muestra en
