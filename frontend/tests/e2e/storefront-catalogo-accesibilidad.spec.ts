@@ -196,19 +196,22 @@ test.describe('PBI-0108: el catálogo sigue a la URL', () => {
     await filtros(page).getByRole('combobox', { name: 'Categoría' }).click();
     await page.getByRole('option', { name: 'Electrohogar', exact: true }).click();
     await expect(page).toHaveURL('/catalogo?categoria=cat-home');
-    await filtros(page).getByRole('combobox', { name: 'Precio máximo' }).click();
-    await page.getByRole('option', { name: 'S/ 2,000', exact: true }).click();
-    await expect(page).toHaveURL('/catalogo?categoria=cat-home&precio=2000');
+    await filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' }).fill('2000');
+    await filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' }).press('Enter');
+    await expect(page).toHaveURL('/catalogo?categoria=cat-home&precioMax=2000');
     await expect(productos(page)).toHaveCount(1);
 
     await filtros(page).getByRole('button', { name: 'Limpiar filtros' }).click();
     await expect(page).toHaveURL('/catalogo');
     await expect(productos(page)).toHaveCount(6);
 
+    await expect(filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' })).toHaveValue('');
+
     await page.goBack();
-    await expect(page).toHaveURL('/catalogo?categoria=cat-home&precio=2000');
+    await expect(page).toHaveURL('/catalogo?categoria=cat-home&precioMax=2000');
     await expect(productos(page)).toHaveCount(1);
     await expect(filtros(page).getByRole('combobox', { name: 'Categoría' })).toHaveText(/Electrohogar/);
+    await expect(filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' })).toHaveValue('2000');
   });
 });
 
@@ -300,13 +303,11 @@ test.describe('PBI-0115: precio y tildes', () => {
       await page.goto('/catalogo');
       await expect(productos(page)).toHaveCount(6);
       await expect(page.getByRole('heading', { level: 3, name: 'OLED Vision 55” 4K' })).toBeVisible();
-      await expect(filtros(page).getByRole('combobox', { name: 'Precio máximo' })).toHaveText(
-        /Todos los precios/,
-      );
+      await expect(filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' })).toHaveValue('');
       await expect(filtros(page).getByRole('button', { name: 'Limpiar filtros' })).toHaveCount(0);
 
-      await filtros(page).getByRole('combobox', { name: 'Precio máximo' }).click();
-      await page.getByRole('option', { name: 'S/ 5,000', exact: true }).click();
+      await filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' }).fill('5000');
+      await filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' }).press('Enter');
       await expect(productos(page)).toHaveCount(5);
       await expect(filtros(page).getByRole('button', { name: 'Limpiar filtros' })).toBeVisible();
 
@@ -316,6 +317,67 @@ test.describe('PBI-0115: precio y tildes', () => {
     } finally {
       await actualizarProducto(oled.id, { price: oled.price });
     }
+  });
+});
+
+test.describe('PBI-0181: rango de precio (lote 16, ADR-0021)', () => {
+  test('filtra con mínimo y máximo, lo escribe en la URL, avisa un rango que no vale y lee el tope anterior', async ({
+    page,
+  }) => {
+    await page.goto('/catalogo');
+    const minimo = filtros(page).getByRole('textbox', { name: 'Precio mínimo (S/)' });
+    const maximo = filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' });
+    // Los límites del catálogo orientan el rango: en la ayuda y como ejemplo en cada campo.
+    await expect(filtros(page).getByText('En el catálogo: de S/ 449 a S/ 3,299.')).toBeVisible();
+    await expect(minimo).toHaveAttribute('placeholder', '449');
+    await expect(maximo).toHaveAttribute('placeholder', '3,299');
+
+    await minimo.fill('1000');
+    await minimo.press('Tab');
+    await expect(page).toHaveURL('/catalogo?precioMin=1000');
+    await maximo.fill('2,000');
+    await maximo.press('Enter');
+    await expect(page).toHaveURL('/catalogo?precioMin=1000&precioMax=2000');
+    await expect(productos(page)).toHaveCount(2);
+    await expect(page.getByRole('heading', { level: 3, name: 'Lavadora SmartWash 18 kg' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 3, name: 'Monitor UltraWide 34”' })).toBeVisible();
+
+    // Un mínimo mayor que el máximo no se aplica: el máximo dice por qué y la URL no cambia.
+    await minimo.fill('3000');
+    await minimo.press('Enter');
+    await expect(maximo).toHaveAttribute('aria-invalid', 'true');
+    await expect(filtros(page).getByText('El máximo no puede ser menor que el mínimo.')).toBeVisible();
+    await expect(page).toHaveURL('/catalogo?precioMin=1000&precioMax=2000');
+    await minimo.fill('-5');
+    await minimo.press('Enter');
+    await expect(filtros(page).getByText('El precio no puede ser negativo.')).toBeVisible();
+    await expect(minimo).toHaveAttribute('aria-invalid', 'true');
+
+    await filtros(page).getByRole('button', { name: 'Limpiar filtros' }).click();
+    await expect(page).toHaveURL('/catalogo');
+    await expect(minimo).toHaveValue('');
+    await expect(minimo).not.toHaveAttribute('aria-invalid', 'true');
+
+    // Un enlace guardado con el tope anterior (`precio`, lote 05) sigue filtrando, como precio máximo.
+    await page.goto('/catalogo?precio=1000');
+    await expect(maximo).toHaveValue('1000');
+    await expect(productos(page)).toHaveCount(2);
+  });
+
+  test('en el celular, el rango va en el panel de filtros y se aplica al ver los productos', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/catalogo');
+    await page.getByRole('button', { name: 'Filtros' }).click();
+    const maximo = filtros(page).getByRole('textbox', { name: 'Precio máximo (S/)' });
+    await expect(maximo).toBeVisible();
+    await maximo.fill('700');
+    await filtros(page)
+      .getByRole('button', { name: /^Ver \d+ productos?$/ })
+      .click();
+    await expect(page).toHaveURL('/catalogo?precioMax=700');
+    await expect(productos(page)).toHaveCount(2);
   });
 });
 

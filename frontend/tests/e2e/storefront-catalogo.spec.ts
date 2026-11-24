@@ -30,7 +30,8 @@ test('los filtros por nombre, categoría y precio acotan el catálogo', async ({
 
   await page.getByRole('button', { name: 'Limpiar filtros' }).click();
   await expect(productos(page)).toHaveCount(6);
-  await elegir(page, 'Precio máximo', 'S/ 1,000');
+  await page.getByRole('textbox', { name: 'Precio máximo (S/)' }).fill('1000');
+  await page.getByRole('textbox', { name: 'Precio máximo (S/)' }).press('Enter');
   await expect(productos(page)).toHaveCount(2);
   await expect(page.getByRole('heading', { level: 3, name: 'Soundbar Cinema 500' })).toBeVisible();
   await expect(page.getByRole('heading', { level: 3, name: 'Microondas EasyCook 30 L' })).toBeVisible();
