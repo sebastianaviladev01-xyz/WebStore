@@ -129,6 +129,13 @@ test('con una por producto, cada producto puede ir a otra dirección y el envío
     );
     await esperarFotos(page);
     expect(grandes).toEqual([]);
+
+    // Lote 25 (ADR-0026): si la foto ya no se sirve (el producto se eliminó: 404), la caja muestra un icono neutro.
+    await page.route('**/soundbar-studio-480.jpg', (ruta) => ruta.fulfill({ status: 404 }));
+    await page.reload();
+    await expect(page.getByRole('img', { name: 'Foto de Soundbar Cinema 500 no disponible' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Soundbar Cinema 500', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { level: 2, name: 'Soundbar Cinema 500' })).toBeVisible();
   } finally {
     await cancelarPedidos(page);
     await modo('per-order');

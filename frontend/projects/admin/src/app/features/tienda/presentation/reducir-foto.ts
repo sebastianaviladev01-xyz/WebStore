@@ -16,8 +16,11 @@ import { TonoDeFoto, tonoDeLaZona, zonaDeLosControles } from '../domain/tono-de-
 /** Peso máximo del archivo que se acepta para reducir (lo que pesa en el disco, antes de reducirlo). */
 export const BYTES_MAXIMOS_ARCHIVO = LIMITE_ARCHIVO_FOTO;
 
-/** Motivo por el que una foto no se pudo usar, listo para mostrarse. */
+/** Motivo por el que el logo no se pudo usar, listo para mostrarse (el logo aún admite una URL). */
 export const MENSAJE_FOTO_NO_CABE = `No pudimos reducir la foto a ${Math.round(BYTES_MAXIMOS_FOTO / 1024)} KB. Usa otra más simple o una URL.`;
+
+/** Lote 25 (ADR-0026): lo mismo para una foto de la galería, que ya no admite una URL. */
+export const MENSAJE_FOTO_DE_GALERIA_NO_CABE = `No pudimos reducir la foto a ${Math.round(BYTES_MAXIMOS_FOTO / 1024)} KB. Usa otra más simple.`;
 
 /**
  * Reduce y comprime una foto en el navegador antes de guardarla como Data URL (lote 06, PBI-0119): lado mayor de

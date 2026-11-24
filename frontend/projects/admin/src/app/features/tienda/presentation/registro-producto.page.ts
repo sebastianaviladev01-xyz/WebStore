@@ -22,12 +22,7 @@ import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena, motivoParaNoUsarFoto } from
 import { productoDeLaFicha } from '../domain/inventario.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
-import {
-  BYTES_MAXIMOS_ARCHIVO,
-  MENSAJE_FOTO_NO_CABE,
-  reducirFoto,
-  versionesDelProducto,
-} from './reducir-foto';
+import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } from './reducir-foto';
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -138,8 +133,13 @@ import {
           </fieldset>
           <fieldset class="min-w-0 rounded-xl border border-line p-4">
             <legend class="px-1 text-sm font-semibold">Galería de fotos</legend>
+            <!--
+              Lote 25 (ADR-0026; provisional): las fotos se cargan como archivo, como la imagen principal; ya no se
+              escribe una URL (Daniel: «no adjuntas como URL»).
+            -->
             <p class="text-xs text-muted">
-              La imagen principal va primero; estas fotos se muestran después en la ficha.
+              La imagen principal va primero; estas fotos se muestran después en la ficha. PNG, JPG o WebP de
+              hasta 15 MB.
             </p>
             @if (gallery().length) {
               <ul class="mt-3 grid grid-cols-3 gap-2">
@@ -170,23 +170,6 @@ import {
                 }
               </ul>
             }
-            <div class="mt-3 flex gap-2">
-              <mat-form-field class="min-w-0 flex-1" subscriptSizing="dynamic">
-                <mat-label>URL de foto</mat-label>
-                <input
-                  matInput
-                  [formControl]="photoUrl"
-                  (keydown.enter)="$event.preventDefault(); addPhotoUrl()"
-                />
-              </mat-form-field>
-              <button
-                type="button"
-                class="min-h-11 self-start rounded-xl border border-line px-4 text-sm font-semibold"
-                (click)="addPhotoUrl()"
-              >
-                Agregar
-              </button>
-            </div>
             <label
               class="mt-3 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
             >
@@ -346,7 +329,6 @@ export class RegistroProductoPage {
   }
   /** Fotos adicionales del producto en edición; se guardan junto con el resto del formulario. */
   protected readonly gallery = signal<readonly string[]>([]);
-  protected readonly photoUrl = new FormControl('', { nonNullable: true });
   protected readonly photoError = signal<string | null>(null);
   /** Lote 24 (PBI-0214): mientras se generan la imagen de la ficha y la miniatura, no se guarda. */
   protected readonly preparandoImagen = signal(false);
@@ -376,12 +358,6 @@ export class RegistroProductoPage {
       this.form.markAsDirty();
     });
   }
-  protected addPhotoUrl() {
-    const url = this.photoUrl.value.trim();
-    if (!url) return;
-    this.addPhoto(url);
-    this.photoUrl.setValue('');
-  }
   protected removePhoto(index: number) {
     this.gallery.update((items) => items.filter((_, i) => i !== index));
   }
@@ -390,18 +366,15 @@ export class RegistroProductoPage {
     const file = input.files?.[0];
     input.value = '';
     if (!file) return;
-    if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
-      this.photoError.set('Usa una imagen PNG, JPG o WebP.');
-      return;
-    }
-    if (file.size > BYTES_MAXIMOS_ARCHIVO) {
-      this.photoError.set('La foto pesa más de 15 MB. Usa una más liviana o una URL.');
-      return;
-    }
-    // PBI-0119: la foto viaja como Data URL dentro del producto; se reduce y se comprime antes de agregarla.
+    // Lote 25: las mismas reglas que la imagen principal (tipo y 15 MB), sin ofrecer una URL.
+    const motivo = motivoParaNoUsarFoto(file);
+    this.photoError.set(motivo);
+    if (motivo) return;
+    // PBI-0119: la foto se reduce y se comprime antes de agregarla; el BFF la guarda y la tienda la pide por su
+    // dirección (lote 25, ADR-0026).
     void reducirFoto(file).then((url) => {
       if (url) this.addPhoto(url);
-      else this.photoError.set(MENSAJE_FOTO_NO_CABE);
+      else this.photoError.set(MENSAJE_FOTO_DE_GALERIA_NO_CABE);
     });
   }
   private addPhoto(url: string) {

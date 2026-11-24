@@ -194,7 +194,6 @@ test.describe('Filtros y registro de productos del Admin', () => {
         ['textbox', 'Nombre'],
         ['textbox', 'SKU'],
         ['textbox', 'Descripción'],
-        ['textbox', 'URL de foto'],
         ['textbox', 'Características (una por línea)'],
         ['spinbutton', 'Precio'],
         ['combobox', 'Categoría'],
@@ -204,6 +203,9 @@ test.describe('Filtros y registro de productos del Admin', () => {
         await expect(formulario.getByRole(rol, { name: campo, exact: true })).toBeVisible();
       }
       await expect(formulario.getByRole('group', { name: 'Galería de fotos' })).toBeVisible();
+      // Lote 25 (ADR-0026): las fotos de la galería solo se cargan como archivo; ya no hay «URL de foto».
+      await expect(formulario.getByRole('textbox', { name: 'URL de foto' })).toHaveCount(0);
+      await expect(formulario.getByLabel('Cargar foto', { exact: true })).toHaveCount(1);
       // Lote 24 (ADR-0026, PBI-0214; provisional): la imagen principal se carga como archivo; ya no hay URL ni miniatura.
       await expect(formulario.getByRole('group', { name: 'Imagen principal' })).toBeVisible();
       await expect(formulario.getByLabel('Cargar imagen', { exact: true })).toHaveCount(1);
