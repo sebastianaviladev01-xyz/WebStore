@@ -1,5 +1,5 @@
 /**
- * Contraste del contador del carrusel del inicio sobre una foto (lote 10, PBI-0167). Con «Tono de la foto: Oscura»,
+ * Contraste del contador del carrusel del inicio sobre una foto (lote 10, PBI-0167). Con los controles oscuros (`imageTone: dark`; en el admin, «Controles del carrusel sobre la foto: Oscuros»),
  * los controles son una cápsula de vidrio (`--ws-ink` con una opacidad) con el texto en `--ws-surface`; como no se
  * sabe qué foto subirá el Admin, se calcula el peor caso, una foto blanca (el desenfoque de fondo no cambia un
  * blanco uniforme). La prueba lee la opacidad de `home.css` y el `--ws-ink` y el `--ws-surface` de los tres temas

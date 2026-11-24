@@ -17,24 +17,37 @@ import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import {
+  aHoraDeLima,
   errorDeBoton,
   finAntesDelInicio,
-  finDelDiaEnLima,
   heroesQueCoinciden,
-  inicioDelDiaEnLima,
+  instanteDeLaVigencia,
   MAXIMO_HEROES_ACTIVOS,
   MAXIMO_TEXTO_DE_BOTON,
 } from '../domain/banner.rules';
+import {
+  LADO_IMAGEN_BANNER,
+  LADO_IMAGEN_MOVIL_BANNER,
+  MAX_CARACTERES_IMAGEN_BANNER,
+  MAX_CARACTERES_IMAGEN_MOVIL_BANNER,
+  motivoParaNoUsarFoto,
+} from '../domain/foto.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { Banner, ETIQUETAS_UBICACION_BANNER, UbicacionBanner } from '../domain/tienda.model';
+import { TonoDeFoto } from '../domain/tono-de-foto.rules';
 import { conservarBorrador } from './borrador';
+import { imagenDelBanner } from './reducir-foto';
+
+/** Las dos imágenes del banner (lote 24, PBI-0214): la de escritorio, obligatoria, y la del celular, opcional. */
+type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
 
 /**
  * Interfaz de registro de un banner (lote 21, ADR-0025, PBI-0211): `/banners/nuevo` y `/banners/:id`. Tiene más de
- * tres campos, así que tiene su propia página, como «Nuevo producto». Es el formulario que antes estaba al costado de
- * la lista, con los mismos campos y validaciones (los rediseña el lote 24). Al editar trae los datos actuales con
- * `refresh()`; al guardar, al cancelar y con «Volver a banners» vuelve al listado con sus filtros y su página
- * (`queryParamsHandling: 'preserve'`).
+ * tres campos, así que tiene su propia página, como «Nuevo producto». Desde el lote 24 (PBI-0214 y PBI-0221;
+ * provisional), las imágenes se cargan como archivo, el tono de los controles del carrusel se calcula al cargar la de
+ * escritorio, los campos tienen nombres y ayudas claras y la vigencia lleva fecha y hora de Lima. Al editar trae los
+ * datos actuales con `refresh()`; al guardar, al cancelar y con «Volver a banners» vuelve al listado con sus filtros y
+ * su página (`queryParamsHandling: 'preserve'`).
  */
 @Component({
   selector: 'ws-banner-form-page',
@@ -108,39 +121,96 @@ import { conservarBorrador } from './borrador';
             <!-- En el celular, uno debajo del otro: en dos columnas, la etiqueta del campo no cabe. -->
             <div class="grid items-start gap-3 sm:grid-cols-2">
               <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ boton.nombre }}: texto</mat-label>
+                <mat-label>{{ boton.nombre }}: lo que dice</mat-label>
                 <input matInput [formControlName]="boton.texto" [maxlength]="maximoTextoDeBoton" />
-                <mat-hint>{{ boton.paleta }}</mat-hint>
+                <mat-hint>{{ boton.ayuda }}</mat-hint>
                 <mat-error>{{ mensajeDeBoton(form.controls[boton.texto].errors) }}</mat-error>
               </mat-form-field>
               <mat-form-field subscriptSizing="dynamic">
-                <mat-label>{{ boton.nombre }}: enlace</mat-label>
+                <mat-label>{{ boton.nombre }}: adónde lleva</mat-label>
                 <input matInput [formControlName]="boton.enlace" />
-                <mat-hint>/catalogo o https://…</mat-hint>
+                <mat-hint>
+                  Una página de la tienda (/catalogo) o una web (https://…), que se abre en otra pestaña.
+                </mat-hint>
                 <mat-error>{{ mensajeDeBoton(form.controls[boton.enlace].errors) }}</mat-error>
               </mat-form-field>
             </div>
           }
-          <mat-form-field>
-            <mat-label>Imagen desktop</mat-label>
-            <input matInput formControlName="imageUrl" />
-            <mat-error>{{ mensaje(form.controls.imageUrl.errors) }}</mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Presentación de imagen</mat-label>
+          <!--
+            Lote 24 (ADR-0026, PBI-0214; provisional): las imágenes se cargan como archivo, ya no como URL. Una guardada
+            antes se ve y se conserva hasta que se reemplace.
+          -->
+          @for (imagen of imagenes; track imagen.campo) {
+            <fieldset
+              class="min-w-0 rounded-xl border border-line p-4"
+              [attr.aria-describedby]="'ayuda-' + imagen.campo"
+            >
+              <legend class="px-1 text-sm font-semibold">{{ imagen.nombre }}</legend>
+              <p [id]="'ayuda-' + imagen.campo" class="text-xs text-muted">{{ imagen.ayuda }}</p>
+              @if (form.controls[imagen.campo].value; as actual) {
+                <img
+                  [src]="actual"
+                  [alt]="imagen.nombre + ', la actual'"
+                  class="mt-3 max-h-40 max-w-full rounded-lg border border-line bg-subtle object-contain"
+                />
+              }
+              <div class="mt-3 flex flex-wrap gap-2">
+                <label
+                  class="inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+                >
+                  {{ form.controls[imagen.campo].value ? 'Reemplazar' : 'Cargar' }} {{ imagen.accion }}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    class="sr-only"
+                    (change)="onImageSelected($event, imagen.campo)"
+                  />
+                </label>
+                @if (imagen.opcional && form.controls[imagen.campo].value) {
+                  <button
+                    type="button"
+                    class="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-danger"
+                    (click)="quitarImagen(imagen.campo)"
+                  >
+                    Quitar {{ imagen.accion }}
+                  </button>
+                }
+              </div>
+              @if (preparando() === imagen.campo) {
+                <p class="mt-2 text-xs text-muted" role="status">Preparando la imagen…</p>
+              }
+              @if (errorDeImagen()[imagen.campo]; as motivo) {
+                <p class="mt-2 text-xs font-semibold text-danger" role="alert">{{ motivo }}</p>
+              } @else if (form.controls[imagen.campo].touched && form.controls[imagen.campo].invalid) {
+                <p class="mt-2 text-xs font-semibold text-danger" role="alert">
+                  Carga la {{ imagen.accion }}.
+                </p>
+              }
+            </fieldset>
+          }
+          <!-- PBI-0221 (lote 24): nombres y ayudas que dicen qué hace cada opción. -->
+          <mat-form-field subscriptSizing="dynamic">
+            <mat-label>Cómo se ajusta la foto</mat-label>
             <mat-select formControlName="imageFit">
-              <mat-option value="contain">Producto completo</mat-option>
-              <mat-option value="cover">Fotografía de ambiente</mat-option>
+              <mat-option value="contain">Completa, con espacio alrededor</mat-option>
+              <mat-option value="cover">Llena todo el espacio</mat-option>
             </mat-select>
+            <mat-hint>
+              «Completa» muestra la foto entera, para fotos de producto. «Llena todo el espacio» puede
+              recortar los bordes, para fotos de ambiente.
+            </mat-hint>
           </mat-form-field>
-          <mat-form-field>
-            <mat-label>Tono de la foto</mat-label>
-            <mat-select formControlName="imageTone">
-              <mat-option value="light">Clara (controles claros)</mat-option>
-              <mat-option value="dark">Oscura (controles oscuros)</mat-option>
-            </mat-select>
-            <mat-hint>Elige "Oscura" si la esquina inferior derecha de la foto es oscura.</mat-hint>
-          </mat-form-field>
+          <!-- El tono solo cambia los controles del carrusel del inicio, que llevan los banners principales. -->
+          @if (form.controls.placement.value === 'hero') {
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>Controles del carrusel sobre la foto</mat-label>
+              <mat-select formControlName="imageTone">
+                <mat-option value="light">Claros, para fotos claras</mat-option>
+                <mat-option value="dark">Oscuros, para fotos oscuras</mat-option>
+              </mat-select>
+              <mat-hint>{{ ayudaDelTono() }}</mat-hint>
+            </mat-form-field>
+          }
           @if (form.controls.imageFit.value === 'cover') {
             <mat-form-field>
               <mat-label>Posición vertical de la foto (%)</mat-label>
@@ -149,14 +219,12 @@ import { conservarBorrador } from './borrador';
               <mat-hint>0 muestra la parte de arriba y 100 la de abajo. Vacío: 31,5 (como la sala).</mat-hint>
             </mat-form-field>
           }
-          <mat-form-field>
-            <mat-label>Imagen móvil (opcional)</mat-label>
-            <input matInput formControlName="mobileImageUrl" />
-          </mat-form-field>
-          <div class="grid grid-cols-2 gap-3">
+          <!-- PBI-0221 (lote 24): la vigencia lleva fecha y hora de Lima. En el celular, una debajo de la otra. -->
+          <div class="grid gap-3 sm:grid-cols-2">
             <mat-form-field>
               <mat-label>Inicio</mat-label>
-              <input matInput type="date" formControlName="startAt" />
+              <input matInput type="datetime-local" formControlName="startAt" />
+              <mat-hint>Fecha y hora de Lima.</mat-hint>
               <mat-error>{{ mensaje(form.controls.startAt.errors) }}</mat-error>
             </mat-form-field>
             <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
@@ -164,11 +232,12 @@ import { conservarBorrador } from './borrador';
               [subscriptSizing]="form.controls.endAt.hasError('antesDelInicio') ? 'dynamic' : 'fixed'"
             >
               <mat-label>Fin</mat-label>
-              <input matInput type="date" formControlName="endAt" />
+              <input matInput type="datetime-local" formControlName="endAt" />
+              <mat-hint>Fecha y hora de Lima.</mat-hint>
               <mat-error>
                 {{
                   form.controls.endAt.hasError('antesDelInicio')
-                    ? 'Debe ser el día del inicio o después.'
+                    ? 'Debe ser igual o posterior al inicio.'
                     : mensaje(form.controls.endAt.errors)
                 }}
               </mat-error>
@@ -185,7 +254,7 @@ import { conservarBorrador } from './borrador';
           <button
             class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
-            [disabled]="admin.saving()"
+            [disabled]="admin.saving() || preparando() !== null"
           >
             {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
@@ -225,17 +294,52 @@ export class RegistroBannerPage {
   protected readonly botones = [
     {
       nombre: 'Botón principal',
-      paleta: 'Opcional. Color principal del tema.',
+      ayuda: 'Opcional. El texto que ve el comprador, con el color principal del tema.',
       texto: 'cta',
       enlace: 'ctaUrl',
     },
     {
       nombre: 'Botón secundario',
-      paleta: 'Opcional. Color secundario del tema.',
+      ayuda: 'Opcional. El texto que ve el comprador, con el color secundario del tema.',
       texto: 'secondaryCta',
       enlace: 'secondaryCtaUrl',
     },
   ] as const;
+  /**
+   * Las dos imágenes del banner (lote 24, ADR-0026, PBI-0214; provisional), con el lado y el peso máximos que acepta el
+   * BFF. Solo la de escritorio da el tono de los controles del carrusel (PBI-0221): en el celular, los controles van
+   * sobre el fondo del texto, no sobre la foto.
+   */
+  protected readonly imagenes = [
+    {
+      campo: 'imageUrl',
+      nombre: 'Imagen de escritorio',
+      accion: 'imagen de escritorio',
+      ayuda: 'Se ve en computadoras y tablets. PNG, JPG o WebP de hasta 15 MB; la reducimos para la tienda.',
+      opcional: false,
+      medidas: { ladoMaximo: LADO_IMAGEN_BANNER, maximo: MAX_CARACTERES_IMAGEN_BANNER },
+    },
+    {
+      campo: 'mobileImageUrl',
+      nombre: 'Imagen del celular (opcional)',
+      accion: 'imagen del celular',
+      ayuda: 'Se ve en pantallas de celular. Sin ella, el celular usa la de escritorio.',
+      opcional: true,
+      medidas: { ladoMaximo: LADO_IMAGEN_MOVIL_BANNER, maximo: MAX_CARACTERES_IMAGEN_MOVIL_BANNER },
+    },
+  ] as const;
+  /** La imagen que se está preparando (reducir y comprimir), o `null`: mientras tanto, no se guarda. */
+  protected readonly preparando = signal<ImagenDelBanner | null>(null);
+  protected readonly errorDeImagen = signal<Partial<Record<ImagenDelBanner, string>>>({});
+  /** El tono calculado al cargar la imagen de escritorio en esta edición, o `null` si no se cargó ninguna. */
+  protected readonly tonoCalculado = signal<TonoDeFoto | null>(null);
+  protected readonly ayudaDelTono = computed(() => {
+    const tono = this.tonoCalculado();
+    if (!tono)
+      return 'Se elige solo al cargar la imagen de escritorio, según lo clara u oscura que sea su esquina inferior derecha, donde van los controles. Cámbialo solo si no se leen bien.';
+    const esquina = tono === 'dark' ? 'oscura' : 'clara';
+    return `Lo elegimos al cargar la imagen: su esquina inferior derecha, donde van los controles, es ${esquina}. Cámbialo solo si no se leen bien.`;
+  });
   protected readonly form = new FormGroup({
     eyebrow: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -250,10 +354,7 @@ export class RegistroBannerPage {
       validators: [Validators.maxLength(MAXIMO_TEXTO_DE_BOTON)],
     }),
     secondaryCtaUrl: new FormControl('', { nonNullable: true }),
-    imageUrl: new FormControl('assets/brand/hero.svg', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
+    imageUrl: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     imageFit: new FormControl<'cover' | 'contain'>('contain', { nonNullable: true }),
     imageTone: new FormControl<'light' | 'dark'>('light', { nonNullable: true }),
     imageFocusY: new FormControl<number | null>(null, [Validators.min(0), Validators.max(100)]),
@@ -280,6 +381,46 @@ export class RegistroBannerPage {
       if (id) untracked(() => void this.edit(id));
       else untracked(() => this.borrador.aplicar());
     });
+  }
+
+  /**
+   * PBI-0214 y PBI-0221 (lote 24): la imagen se reduce y se comprime en el navegador; la de escritorio, además, da el
+   * tono de los controles del carrusel, que la persona puede cambiar después.
+   */
+  protected onImageSelected(event: Event, campo: ImagenDelBanner): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const motivo = motivoParaNoUsarFoto(file);
+    this.errorDeImagen.update((errores) => ({ ...errores, [campo]: motivo ?? undefined }));
+    if (motivo) return;
+    const imagen = this.imagenes.find((candidata) => candidata.campo === campo);
+    if (!imagen) return;
+    this.preparando.set(campo);
+    void imagenDelBanner(file, imagen.medidas).then((resultado) => {
+      this.preparando.set(null);
+      if (!resultado) {
+        this.errorDeImagen.update((errores) => ({
+          ...errores,
+          [campo]: 'No pudimos preparar la imagen. Usa otra foto.',
+        }));
+        return;
+      }
+      this.form.controls[campo].setValue(resultado.imagen);
+      this.form.controls[campo].markAsTouched();
+      if (campo === 'imageUrl') {
+        this.form.controls.imageTone.setValue(resultado.tono);
+        this.tonoCalculado.set(resultado.tono);
+      }
+      this.form.markAsDirty();
+    });
+  }
+
+  /** La imagen del celular es opcional: sin ella, el celular usa la de escritorio. */
+  protected quitarImagen(campo: ImagenDelBanner): void {
+    this.form.controls[campo].setValue('');
+    this.form.markAsDirty();
   }
 
   /** El error de un campo de botón: lo que le falta o, si no, el mensaje general del campo. */
@@ -325,8 +466,9 @@ export class RegistroBannerPage {
       imageFocusY: banner.imageFocusY ?? null,
       mobileImageUrl: banner.mobileImageUrl,
       placement: banner.placement,
-      startAt: banner.startAt.slice(0, 10),
-      endAt: banner.endAt.slice(0, 10),
+      // PBI-0221 (lote 24): en hora de Lima, con la hora.
+      startAt: aHoraDeLima(banner.startAt),
+      endAt: aHoraDeLima(banner.endAt),
       active: banner.active,
     });
   }
@@ -369,8 +511,6 @@ export class RegistroBannerPage {
       return;
     }
     this.error.set(null);
-    // PBI-0128: un banner que no se cambió de fecha conserva las suyas; uno nuevo o con fechas nuevas, en días de Lima.
-    const mismaFecha = (guardada: string | undefined, dia: string) => guardada?.slice(0, 10) === dia;
     const saved = await this.admin.guardarBanner(base, {
       id,
       ...value,
@@ -378,9 +518,9 @@ export class RegistroBannerPage {
       ctaUrl: value.ctaUrl.trim(),
       secondaryCta: value.secondaryCta.trim(),
       secondaryCtaUrl: value.secondaryCtaUrl.trim(),
-      startAt:
-        mismaFecha(base?.startAt, value.startAt) && base ? base.startAt : inicioDelDiaEnLima(value.startAt),
-      endAt: mismaFecha(base?.endAt, value.endAt) && base ? base.endAt : finDelDiaEnLima(value.endAt),
+      // PBI-0128 y PBI-0221: un extremo que no se cambió conserva el instante guardado; uno nuevo, en hora de Lima.
+      startAt: instanteDeLaVigencia(base?.startAt, value.startAt, 'inicio'),
+      endAt: instanteDeLaVigencia(base?.endAt, value.endAt, 'fin'),
     });
     if (saved) {
       await this.router.navigate(['/banners'], { queryParamsHandling: 'preserve' });

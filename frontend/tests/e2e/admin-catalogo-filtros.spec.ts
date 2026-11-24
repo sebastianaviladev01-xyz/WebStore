@@ -17,6 +17,7 @@ import {
 } from './apoyo/catalogo';
 import { TEMAS, activarTema, restablecerTemas } from './apoyo/contraste';
 import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
+import { cargarImagenPrincipal } from './apoyo/fotos';
 
 /**
  * Filtros y registro del catálogo del Admin (feature 008). Productos (⚠ TASK-08):
@@ -193,8 +194,6 @@ test.describe('Filtros y registro de productos del Admin', () => {
         ['textbox', 'Nombre'],
         ['textbox', 'SKU'],
         ['textbox', 'Descripción'],
-        ['textbox', 'Imagen principal'],
-        ['textbox', 'Miniatura optimizada'],
         ['textbox', 'URL de foto'],
         ['textbox', 'Características (una por línea)'],
         ['spinbutton', 'Precio'],
@@ -205,6 +204,11 @@ test.describe('Filtros y registro de productos del Admin', () => {
         await expect(formulario.getByRole(rol, { name: campo, exact: true })).toBeVisible();
       }
       await expect(formulario.getByRole('group', { name: 'Galería de fotos' })).toBeVisible();
+      // Lote 24 (ADR-0026, PBI-0214; provisional): la imagen principal se carga como archivo; ya no hay URL ni miniatura.
+      await expect(formulario.getByRole('group', { name: 'Imagen principal' })).toBeVisible();
+      await expect(formulario.getByLabel('Cargar imagen', { exact: true })).toHaveCount(1);
+      for (const campo of ['Imagen principal', 'Miniatura optimizada'])
+        await expect(formulario.getByRole('textbox', { name: campo, exact: true })).toHaveCount(0);
       // Lote 23 (ADR-0025, PBI-0226; provisional): el stock sale del registro y se gestiona solo en Inventario.
       await expect(formulario.getByRole('spinbutton', { name: 'Stock' })).toHaveCount(0);
       await expect(formulario).toContainText('Empieza sin stock: se carga en Inventario');
@@ -223,9 +227,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await formulario.getByRole('textbox', { name: 'Nombre', exact: true }).fill(nombre);
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VENT-008');
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Tres velocidades.');
-      await formulario
-        .getByRole('textbox', { name: 'Imagen principal', exact: true })
-        .fill('assets/products/washer-studio.jpg');
+      await cargarImagenPrincipal(formulario);
       await formulario
         .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
         .fill('Tres velocidades\nTemporizador');
@@ -339,9 +341,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await nuevo.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Parlante del vendedor');
       await nuevo.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VEND-07');
       await nuevo.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Portátil.');
-      await nuevo
-        .getByRole('textbox', { name: 'Imagen principal', exact: true })
-        .fill('assets/products/washer-studio.jpg');
+      await cargarImagenPrincipal(nuevo);
       await nuevo
         .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
         .fill('Batería');

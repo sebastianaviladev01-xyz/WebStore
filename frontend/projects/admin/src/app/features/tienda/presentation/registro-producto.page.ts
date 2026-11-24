@@ -18,11 +18,16 @@ import { Router, RouterLink } from '@angular/router';
 import { TiendaFacade } from '../application/tienda.facade';
 import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
-import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena } from '../domain/foto.rules';
+import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena, motivoParaNoUsarFoto } from '../domain/foto.rules';
 import { productoDeLaFicha } from '../domain/inventario.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
-import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
+import {
+  BYTES_MAXIMOS_ARCHIVO,
+  MENSAJE_FOTO_NO_CABE,
+  reducirFoto,
+  versionesDelProducto,
+} from './reducir-foto';
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -91,16 +96,46 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
             <textarea matInput rows="3" formControlName="description"></textarea>
             <mat-error>{{ mensaje(form.controls.description.errors) }}</mat-error>
           </mat-form-field>
-          <mat-form-field>
-            <mat-label>Imagen principal</mat-label>
-            <input matInput formControlName="imageUrl" />
-            <mat-error>{{ mensaje(form.controls.imageUrl.errors) }}</mat-error>
-          </mat-form-field>
-          <mat-form-field subscriptSizing="dynamic">
-            <mat-label>Miniatura optimizada</mat-label>
-            <input matInput formControlName="thumbnailUrl" />
-            <mat-hint>Opcional. Si la dejas vacía se usa la imagen principal.</mat-hint>
-          </mat-form-field>
+          <!--
+            Lote 24 (ADR-0026, PBI-0214; provisional): la imagen se carga como archivo una sola vez y el Admin genera la
+            versión de la ficha y la miniatura de los listados; ya no se escribe una URL.
+          -->
+          <fieldset
+            class="min-w-0 rounded-xl border border-line p-4"
+            aria-describedby="ayuda-imagen-principal"
+          >
+            <legend class="px-1 text-sm font-semibold">Imagen principal</legend>
+            <p id="ayuda-imagen-principal" class="text-xs text-muted">
+              Cárgala una sola vez: se guarda una versión para la ficha y una miniatura para los listados.
+              PNG, JPG o WebP de hasta 15 MB.
+            </p>
+            @if (form.controls.imageUrl.value; as imagen) {
+              <img
+                [src]="imagen"
+                alt="Imagen principal actual"
+                class="mt-3 aspect-[4/3] w-48 max-w-full rounded-lg border border-line bg-subtle object-contain p-1"
+              />
+            }
+            <label
+              class="mt-3 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+            >
+              {{ form.controls.imageUrl.value ? 'Reemplazar imagen' : 'Cargar imagen' }}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                class="sr-only"
+                (change)="onMainImageSelected($event)"
+              />
+            </label>
+            @if (preparandoImagen()) {
+              <p class="mt-2 text-xs text-muted" role="status">Preparando la imagen…</p>
+            }
+            @if (imageError()) {
+              <p class="mt-2 text-xs font-semibold text-danger" role="alert">{{ imageError() }}</p>
+            } @else if (form.controls.imageUrl.touched && form.controls.imageUrl.invalid) {
+              <p class="mt-2 text-xs font-semibold text-danger" role="alert">Carga la imagen principal.</p>
+            }
+          </fieldset>
           <fieldset class="min-w-0 rounded-xl border border-line p-4">
             <legend class="px-1 text-sm font-semibold">Galería de fotos</legend>
             <p class="text-xs text-muted">
@@ -229,7 +264,7 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
           <button
             class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
-            [disabled]="admin.saving()"
+            [disabled]="admin.saving() || preparandoImagen()"
           >
             {{ admin.saving() ? 'Guardando…' : 'Guardar producto' }}
           </button>
@@ -313,6 +348,34 @@ export class RegistroProductoPage {
   protected readonly gallery = signal<readonly string[]>([]);
   protected readonly photoUrl = new FormControl('', { nonNullable: true });
   protected readonly photoError = signal<string | null>(null);
+  /** Lote 24 (PBI-0214): mientras se generan la imagen de la ficha y la miniatura, no se guarda. */
+  protected readonly preparandoImagen = signal(false);
+  protected readonly imageError = signal<string | null>(null);
+  /**
+   * PBI-0214 (lote 24): la imagen principal se carga como archivo. Se genera la versión de la ficha y su miniatura
+   * (`versionesDelProducto`); las dos se guardan juntas. Una imagen ya guardada (una ruta de `assets/`) se conserva
+   * hasta que se reemplace.
+   */
+  protected onMainImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    const motivo = motivoParaNoUsarFoto(file);
+    this.imageError.set(motivo);
+    if (motivo) return;
+    this.preparandoImagen.set(true);
+    void versionesDelProducto(file).then((versiones) => {
+      this.preparandoImagen.set(false);
+      if (!versiones) {
+        this.imageError.set('No pudimos preparar la imagen. Usa otra foto.');
+        return;
+      }
+      this.form.patchValue({ imageUrl: versiones.imagen, thumbnailUrl: versiones.miniatura });
+      this.form.controls.imageUrl.markAsTouched();
+      this.form.markAsDirty();
+    });
+  }
   protected addPhotoUrl() {
     const url = this.photoUrl.value.trim();
     if (!url) return;
@@ -376,6 +439,7 @@ export class RegistroProductoPage {
     this.marcaActual.set(p.brandId);
     this.gallery.set(p.gallery ?? []);
     this.photoError.set(null);
+    this.imageError.set(null);
     this.form.setValue({
       name: p.name,
       sku: p.sku,
@@ -404,7 +468,8 @@ export class RegistroProductoPage {
         .split(/\r?\n/)
         .map((item) => item.trim())
         .filter(Boolean),
-      thumbnailUrl: value.thumbnailUrl.trim() || value.imageUrl,
+      // PBI-0214 (lote 24): la miniatura es la que se generó con la imagen; una guardada antes se conserva.
+      thumbnailUrl: value.thumbnailUrl,
       gallery: this.gallery(),
     };
     // PBI-0226 (lote 23): la ficha no cambia el stock; conserva el del producto, y uno nuevo empieza sin stock.

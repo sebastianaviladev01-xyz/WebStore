@@ -95,14 +95,21 @@ export const actualizarProducto = (id: string, campos: Partial<ProductoApi>) =>
     actuales.map((producto) => (producto.id === id ? { ...producto, ...campos } : producto)),
   );
 
+/**
+ * Lote 24 (ADR-0026, PBI-0214): un producto nuevo llega con su imagen cargada, no con una ruta de `assets/`. Un PNG gris
+ * de 4 × 3 px sirve de imagen principal y de miniatura (la reducción a 480 px no lo agranda).
+ */
+const IMAGEN_DE_PRUEBA =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAADCAIAAAA7ljmRAAAADklEQVR4nGNoQAIMODkAXzYSAY5zHKsAAAAASUVORK5CYII=';
+
 /** Un producto válido para el BFF, de «TV y audio» y «Nova», con los campos que se indiquen. */
 export function productoDePrueba(
   campos: Pick<ProductoApi, 'id' | 'sku' | 'name'> & Partial<ProductoApi>,
 ): ProductoApi {
   return {
     description: 'Producto de una prueba e2e.',
-    imageUrl: 'assets/products/tv-studio.jpg',
-    thumbnailUrl: 'assets/products/tv-studio-480.jpg',
+    imageUrl: IMAGEN_DE_PRUEBA,
+    thumbnailUrl: IMAGEN_DE_PRUEBA,
     brandId: 'b-nova',
     categoryId: 'cat-tv',
     price: 199,

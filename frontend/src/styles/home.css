@@ -1021,7 +1021,7 @@
   }
 
   /*
-   * Banner con foto oscura (Tono de la foto: Oscura en el admin): la cápsula pasa a vidrio oscuro con
+   * Banner con foto oscura («Controles del carrusel sobre la foto: Oscuros» en el admin, `imageTone: dark`): la cápsula pasa a vidrio oscuro con
    * íconos blancos, como en LG. Solo en escritorio: en celular los controles van sobre el fondo claro
    * del texto, no sobre la foto. El 62 % es lo justo para que el contador (14 px) llegue a 4,5:1 sobre una foto
    * blanca, el peor caso, con el `--ws-ink` más claro de los temas predefinidos (C); lo comprueba

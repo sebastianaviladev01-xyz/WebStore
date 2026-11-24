@@ -20,7 +20,8 @@ const quieto = async (page) => {
 const pagina = (ruta) => ({ ruta, rol: 'superadmin', tema: 'b', antes: sinGuardar });
 
 const tienda = {};
-for (const tema of ['a', 'b', 'c']) tienda[`tienda-inicio-${tema}`] = { tienda: true, ruta: '/', tema, antes: quieto };
+for (const tema of ['a', 'b', 'c'])
+  tienda[`tienda-inicio-${tema}`] = { tienda: true, ruta: '/', tema, antes: quieto };
 
 export const escenarios = {
   'nuevo-producto': pagina('/productos/nuevo'),

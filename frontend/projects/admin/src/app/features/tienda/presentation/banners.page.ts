@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
+import { vigenciaVisible } from '../domain/banner.rules';
 import { ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
 import {
   FILTROS_BANNERS_VACIOS,
@@ -85,7 +86,8 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
               </span>
             </div>
             <p class="mt-1 text-xs text-muted">
-              {{ banner.startAt.slice(0, 10) }} → {{ banner.endAt.slice(0, 10) }} ·
+              <!-- PBI-0221 (lote 24): la vigencia, con la hora, en hora de Lima. -->
+              {{ vigencia(banner.startAt, banner.endAt) }} ·
               {{ banner.active ? 'Activo' : 'Inactivo' }}
             </p>
           </div>
@@ -128,6 +130,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
 export class BannersPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly placementLabels = ETIQUETAS_UBICACION_BANNER;
+  protected readonly vigencia = vigenciaVisible;
   protected readonly filtros = filtrosDeListado({
     leer: leerFiltrosBanners,
     escribir: parametrosDeFiltrosBanners,

@@ -69,3 +69,33 @@ export const MAXIMO_FOTOS_DE_GALERIA = 6;
 export const hayLugarEnLaGaleria = (cantidad: number): boolean => cantidad < MAXIMO_FOTOS_DE_GALERIA;
 
 export const mensajeDeGaleriaLlena = (): string => `Máximo ${MAXIMO_FOTOS_DE_GALERIA} fotos adicionales.`;
+
+/**
+ * Imágenes cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; provisional). La imagen principal del
+ * producto se carga una vez: el Admin genera la de la ficha (`LADO_MAXIMO_FOTO`, `BYTES_MAXIMOS_FOTO`) y, a partir de
+ * ella, la miniatura de los listados. El banner tiene su imagen de escritorio y, opcional, la del celular. Los lados y
+ * pesos (caracteres de la Data URL) son los que valida el BFF; la prueba los compara.
+ */
+export const LADO_MINIATURA = 480;
+export const MAX_CARACTERES_MINIATURA = 60 * 1024;
+export const LADO_IMAGEN_BANNER = 2560;
+export const MAX_CARACTERES_IMAGEN_BANNER = 550 * 1024;
+export const LADO_IMAGEN_MOVIL_BANNER = 1200;
+export const MAX_CARACTERES_IMAGEN_MOVIL_BANNER = 200 * 1024;
+
+/** Medidas de la miniatura: la imagen principal reducida a `LADO_MINIATURA` px de lado mayor, sin agrandarla. */
+export const medidasDeMiniatura = (ancho: number, alto: number): { ancho: number; alto: number } =>
+  medidasReducidas(ancho, alto, LADO_MINIATURA);
+
+/** Peso máximo del archivo que se elige (antes de reducirlo): el mismo que el de las fotos de la galería. */
+export const LIMITE_ARCHIVO_FOTO = 15 * 1024 * 1024;
+
+/** Por qué no se puede usar el archivo elegido como imagen del producto o del banner, o `null` si se puede. */
+export function motivoParaNoUsarFoto(archivo: {
+  readonly type: string;
+  readonly size: number;
+}): string | null {
+  if (!TIPOS_FOTO_CATEGORIA.includes(archivo.type)) return 'Usa una foto PNG, JPG o WebP.';
+  if (archivo.size > LIMITE_ARCHIVO_FOTO) return 'La foto pesa más de 15 MB. Usa una más liviana.';
+  return null;
+}

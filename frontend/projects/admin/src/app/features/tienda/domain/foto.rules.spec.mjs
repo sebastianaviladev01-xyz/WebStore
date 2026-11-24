@@ -93,3 +93,52 @@ test('PBI-0119: la galería llena y la foto principal, con el resto del producto
   );
   assert.ok((MAXIMO_FOTOS_DE_GALERIA + 1) * BYTES_MAXIMOS_FOTO < 2 * 1024 * 1024 - 64 * 1024);
 });
+
+// Lote 24 (ADR-0025 y ADR-0026, PBI-0214; provisional): la imagen principal y la miniatura del producto y las imágenes
+// del banner se cargan como archivo. El Admin genera cada versión con los mismos lados y pesos máximos que valida el BFF.
+test('PBI-0214: cada versión tiene el lado y el peso máximos que acepta el BFF', async () => {
+  const foto = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+  const bff = await import('../../../../../../../../backend/src/domain/catalogo/imagen.rules.mjs');
+  assert.equal(foto.LADO_MAXIMO_FOTO, bff.LADO_IMAGEN_DE_PRODUCTO);
+  assert.equal(foto.BYTES_MAXIMOS_FOTO, bff.MAX_IMAGEN_DE_PRODUCTO);
+  assert.equal(foto.LADO_MINIATURA, 480);
+  assert.equal(foto.LADO_MINIATURA, bff.LADO_MINIATURA_DE_PRODUCTO);
+  assert.equal(foto.MAX_CARACTERES_MINIATURA, bff.MAX_MINIATURA_DE_PRODUCTO);
+  assert.equal(foto.LADO_IMAGEN_BANNER, bff.LADO_IMAGEN_DE_BANNER);
+  assert.equal(foto.MAX_CARACTERES_IMAGEN_BANNER, bff.MAX_IMAGEN_DE_BANNER);
+  assert.equal(foto.LADO_IMAGEN_MOVIL_BANNER, bff.LADO_IMAGEN_MOVIL_DE_BANNER);
+  assert.equal(foto.MAX_CARACTERES_IMAGEN_MOVIL_BANNER, bff.MAX_IMAGEN_MOVIL_DE_BANNER);
+});
+
+test('PBI-0214: la miniatura es la reducción de la imagen principal, sin agrandarla', async () => {
+  const { medidasDeMiniatura } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  assert.deepEqual(medidasDeMiniatura(1600, 1200), { ancho: 480, alto: 360 });
+  assert.deepEqual(medidasDeMiniatura(1448, 1086), { ancho: 480, alto: 360 });
+  assert.deepEqual(medidasDeMiniatura(300, 200), { ancho: 300, alto: 200 });
+});
+
+test('PBI-0214: la foto es PNG, JPG o WebP de hasta 15 MB, como la de la galería; si no, se dice por qué', async () => {
+  const { LIMITE_ARCHIVO_FOTO, motivoParaNoUsarFoto } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  assert.equal(LIMITE_ARCHIVO_FOTO, 15 * 1024 * 1024);
+  for (const type of ['image/png', 'image/jpeg', 'image/webp'])
+    assert.equal(motivoParaNoUsarFoto({ type, size: LIMITE_ARCHIVO_FOTO }), null, type);
+  for (const type of ['image/svg+xml', 'image/gif', 'application/pdf', ''])
+    assert.equal(motivoParaNoUsarFoto({ type, size: 10 }), 'Usa una foto PNG, JPG o WebP.', type);
+  assert.equal(
+    motivoParaNoUsarFoto({ type: 'image/jpeg', size: LIMITE_ARCHIVO_FOTO + 1 }),
+    'La foto pesa más de 15 MB. Usa una más liviana.',
+  );
+});
+
+test('PBI-0214: el producto con la galería llena y la miniatura, y el banner con sus dos imágenes, caben en un guardado', async () => {
+  const foto = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+  const limite = 2 * 1024 * 1024 - 64 * 1024;
+  assert.ok(
+    (foto.MAXIMO_FOTOS_DE_GALERIA + 1) * foto.BYTES_MAXIMOS_FOTO + foto.MAX_CARACTERES_MINIATURA < limite,
+  );
+  assert.ok(foto.MAX_CARACTERES_IMAGEN_BANNER + foto.MAX_CARACTERES_IMAGEN_MOVIL_BANNER < limite);
+});
