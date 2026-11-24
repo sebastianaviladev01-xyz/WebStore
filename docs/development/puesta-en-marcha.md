@@ -80,21 +80,25 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 
 ## 5. Calendario de días no laborables
 
-El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles. El BFF excluye sábados y domingos y, además, las fechas de `WEBSTORE_NON_WORKING_DATES`. Esa variable es la **única fuente de feriados**: no hay pantalla en el Admin ni una lista de feriados en el código. El 2026-11-20 Daniel pidió una pantalla en el backoffice para editarlos (PBI-0183; [decisiones pendientes](../planning/PENDING-DECISIONS.md), «Calendario de días no laborables»); hasta que se construya, la variable sigue siendo la única fuente.
+El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles, y la primera fecha de entrega puede ser «el siguiente día hábil». En los dos casos el BFF excluye sábados, domingos y los **días no laborables** de la tienda. Desde el lote 17 ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), PBI-0183; provisional, por confirmar con Daniel) se mantienen en el Admin, en **Tienda › Entregas y feriados**, que solo ve el superadministrador. El BFF los guarda en su archivo de estado.
 
-1. Cada año, antes de que empiece, arma la lista con los feriados nacionales de Perú de ese año, en formato `AAAA-MM-DD` y separados por coma. De referencia: 1 de enero, Jueves y Viernes Santo (cambian cada año), 1 de mayo, 29 de junio, 28 y 29 de julio, 6 y 30 de agosto, 8 de octubre, 1 de noviembre, 8 y 9 de diciembre y 25 de diciembre. Confírmalos con el calendario oficial del año y añade los días no laborables que decrete el Gobierno (los «feriados puente»), porque cambian de un año a otro.
-2. Defínela como variable de entorno del host o del servicio que arranca el BFF, con las fechas de uno o más años (la lista puede conservar las de años anteriores):
+1. Cada año, antes de que empiece, entra al Admin como superadministrador y abre «Entregas y feriados».
+2. En «Días no laborables», agrega cada feriado nacional de Perú del año, con su fecha y, si quieres, su nombre. De referencia: 1 de enero, Jueves y Viernes Santo (cambian cada año), 1 de mayo, 29 de junio, 28 y 29 de julio, 6 y 30 de agosto, 8 de octubre, 1 de noviembre, 8 y 9 de diciembre y 25 de diciembre. Confírmalos con el calendario oficial del año y añade los días no laborables que decrete el Gobierno (los «feriados puente») y los días en que la tienda no atiende.
+3. Con el filtro «Año», revisa que estén todos. Una fecha que no existe o repetida no se guarda, y «Quitar» la saca de la lista.
 
-   ```powershell
-   $env:WEBSTORE_NON_WORKING_DATES = "2027-01-01,2027-03-25,2027-03-26,2027-05-01,2027-06-29,2027-07-28,2027-07-29,2027-08-06,2027-08-30,2027-10-08,2027-11-01,2027-12-08,2027-12-09,2027-12-25"
-   ```
+Los cambios valen desde que se guardan, sin reiniciar el BFF. Los reclamos ya registrados conservan su fecha de vencimiento (`dueAt`): cambiar la lista solo afecta a los reclamos nuevos y a la primera fecha de entrega que se calcula desde entonces.
 
-   Las fechas de ejemplo son de 2027 y hay que confirmarlas con el calendario oficial. En Bash: `export WEBSTORE_NON_WORKING_DATES="..."`.
-3. Reinicia el BFF: la variable se lee al arrancar.
+**Calendario inicial:** `WEBSTORE_NON_WORKING_DATES` (fechas `AAAA-MM-DD` separadas por coma) solo carga el calendario de un archivo de estado que todavía no tiene uno, por ejemplo el de una instalación nueva o el de una versión anterior al lote 17. Después no cuenta: lo que vale es lo que se edita en el Admin.
 
-Los reclamos ya registrados conservan su fecha de vencimiento (`dueAt`): cambiar la lista solo afecta a los reclamos nuevos.
+```powershell
+$env:WEBSTORE_NON_WORKING_DATES = "2027-01-01,2027-03-25,2027-03-26,2027-05-01,2027-06-29,2027-07-28,2027-07-29,2027-08-06,2027-08-30,2027-10-08,2027-11-01,2027-12-08,2027-12-09,2027-12-25"
+```
 
-**Aviso de feriados:** si la lista no tiene ninguna fecha del año en curso (Lima), el BFF escribe en su log «Aviso: WEBSTORE_NON_WORKING_DATES no tiene ninguna fecha de AAAA…» y sigue arrancando. Lo escribe al arrancar y otra vez cuando cambia el año de Lima con el BFF en marcha (se revisa cada hora), una sola vez por año. Si lo ves a comienzos de año, renueva la lista. La variable se lee al arrancar: reinicia el BFF cuando cambies la lista.
+Las fechas de ejemplo son de 2027 y hay que confirmarlas con el calendario oficial. En Bash: `export WEBSTORE_NON_WORKING_DATES="..."`.
+
+**Aviso de feriados:** si el calendario no tiene ninguna fecha del año en curso (Lima), el BFF escribe en su log «Aviso: el calendario de días no laborables no tiene ninguna fecha de AAAA…», con dónde completarlo en el Admin, y sigue arrancando. Lo escribe al arrancar y otra vez cuando cambia el año de Lima con el BFF en marcha (se revisa cada hora), una sola vez por año. Si lo ves a comienzos de año, agrega los feriados de ese año.
+
+**Primera fecha de entrega:** en la misma página, «Primera fecha de entrega» elige desde cuándo puede pedir la entrega el comprador: el día calendario siguiente (por defecto), el siguiente día hábil o el mismo día, con una hora de corte opcional en hora de Lima (PBI-0178; provisional). Elige la que use la tienda antes de abrirla.
 
 **Comprobación:** registra un reclamo de prueba en una copia de datos y revisa que `dueAt` salte los feriados de la lista; o arranca el BFF y comprueba que su log no trae el aviso.
 
@@ -110,5 +114,5 @@ Los reclamos ya registrados conservan su fecha de vencimiento (`dueAt`): cambiar
 - [ ] Las tres cuentas sembradas tienen contraseñas propias, o están desactivadas.
 - [ ] El logo de la tienda está cargado en Contenido.
 - [ ] El tema activo es el de la tienda: C para Ecom.
-- [ ] `WEBSTORE_NON_WORKING_DATES` trae los feriados del año en curso y el log del BFF no avisa de que faltan.
+- [ ] «Entregas y feriados» del Admin tiene los feriados del año en curso, el log del BFF no avisa de que faltan y la primera fecha de entrega es la de la tienda.
 - [ ] `WEBSTORE_EXPOSE_TEST_CODES`, `WEBSTORE_ALLOW_STORE_RESET` y `WEBSTORE_SHOW_TEST_CREDENTIALS` no están definidas, y `WEBSTORE_ALLOWED_ORIGINS` lleva los orígenes de la instalación.
