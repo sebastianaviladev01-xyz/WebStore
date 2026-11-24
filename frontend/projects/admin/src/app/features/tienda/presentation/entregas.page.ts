@@ -14,11 +14,17 @@ import {
   esHoraDeCorte,
   explicacionDeLaRegla,
   MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE,
+  MODOS_DE_DIRECCION,
   motivoParaNoAgregarDia,
   REGLAS_DE_PRIMERA_ENTREGA,
 } from '../domain/entrega.rules';
 import { fechaDeEntrega } from '../domain/pedido.rules';
-import { ConfiguracionTienda, DiaNoLaborable, ReglaDePrimeraEntrega } from '../domain/tienda.model';
+import {
+  ConfiguracionTienda,
+  DiaNoLaborable,
+  ModoDeDireccion,
+  ReglaDePrimeraEntrega,
+} from '../domain/tienda.model';
 
 const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',
@@ -30,7 +36,8 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
 /**
  * «Entregas y feriados» (lote 17, ADR-0021; provisional, por confirmar con Daniel), del superadministrador, como
  * Contenido: la primera fecha de entrega que puede elegir el comprador (PBI-0178) y el calendario de días no laborables
- * (PBI-0183), que usan esa fecha con «el siguiente día hábil» y el plazo de los reclamos. El BFF valida y decide.
+ * (PBI-0183), que usan esa fecha con «el siguiente día hábil» y el plazo de los reclamos. Desde el lote 19 (PBI-0006),
+ * también si el pedido lleva una sola dirección de entrega o una por producto. El BFF valida y decide.
  */
 @Component({
   selector: 'ws-admin-deliveries-page',
@@ -43,54 +50,105 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
     </p>
 
     <div class="mt-7 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-      <form [formGroup]="entrega" (ngSubmit)="guardarEntrega()" class="admin-card h-fit min-w-0 p-6">
-        <fieldset>
-          <legend id="ws-primera-entrega" class="text-lg font-semibold">Primera fecha de entrega</legend>
-          <p id="ws-primera-entrega-ayuda" class="mt-1 text-sm leading-6 text-muted">
-            La primera fecha que el comprador puede elegir en el checkout. La tienda la propone y no acepta
-            una anterior.
-          </p>
-          <mat-radio-group
-            formControlName="firstDeliveryDay"
-            class="mt-4 grid gap-2"
-            aria-labelledby="ws-primera-entrega"
-            aria-describedby="ws-primera-entrega-ayuda"
-          >
-            @for (regla of reglas; track regla.valor) {
-              <mat-radio-button [value]="regla.valor">{{ regla.etiqueta }}</mat-radio-button>
+      <div class="grid h-fit min-w-0 gap-6">
+        <form [formGroup]="entrega" (ngSubmit)="guardarEntrega()" class="admin-card h-fit min-w-0 p-6">
+          <fieldset>
+            <legend id="ws-primera-entrega" class="text-lg font-semibold">Primera fecha de entrega</legend>
+            <p id="ws-primera-entrega-ayuda" class="mt-1 text-sm leading-6 text-muted">
+              La primera fecha que el comprador puede elegir en el checkout. La tienda la propone y no acepta
+              una anterior.
+            </p>
+            <mat-radio-group
+              formControlName="firstDeliveryDay"
+              class="mt-4 grid gap-2"
+              aria-labelledby="ws-primera-entrega"
+              aria-describedby="ws-primera-entrega-ayuda"
+            >
+              @for (regla of reglas; track regla.valor) {
+                <mat-radio-button [value]="regla.valor">{{ regla.etiqueta }}</mat-radio-button>
+              }
+            </mat-radio-group>
+          </fieldset>
+          <mat-form-field class="mt-5 w-full sm:max-w-80">
+            <mat-label>Hora de corte (opcional)</mat-label>
+            <input matInput type="time" formControlName="deliveryCutoffTime" />
+            <mat-hint>En hora de Lima. Vacía: sin hora de corte.</mat-hint>
+            @if (entrega.controls.deliveryCutoffTime.invalid) {
+              <mat-error>Usa una hora de 24 horas, como 14:00, o déjala vacía.</mat-error>
             }
-          </mat-radio-group>
-        </fieldset>
-        <mat-form-field class="mt-5 w-full sm:max-w-80">
-          <mat-label>Hora de corte (opcional)</mat-label>
-          <input matInput type="time" formControlName="deliveryCutoffTime" />
-          <mat-hint>En hora de Lima. Vacía: sin hora de corte.</mat-hint>
-          @if (entrega.controls.deliveryCutoffTime.invalid) {
-            <mat-error>Usa una hora de 24 horas, como 14:00, o déjala vacía.</mat-error>
-          }
-        </mat-form-field>
-        <p class="mt-4 rounded-xl bg-subtle p-3 text-sm leading-6" aria-live="polite">{{ explicacion() }}</p>
-        @if (errorDeEntrega()) {
-          <p
-            class="mt-4 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
-            role="alert"
-          >
-            {{ errorDeEntrega() }}
+          </mat-form-field>
+          <p class="mt-4 rounded-xl bg-subtle p-3 text-sm leading-6" aria-live="polite">
+            {{ explicacion() }}
           </p>
-        }
-        <div class="mt-5 flex flex-wrap items-center gap-4">
-          <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
-            type="submit"
-            [disabled]="admin.saving()"
-          >
-            {{ admin.saving() ? 'Guardando…' : 'Guardar primera fecha' }}
-          </button>
-          @if (entregaGuardada()) {
-            <p class="text-sm text-on-primary-soft" role="status">La tienda ya usa esta regla.</p>
+          @if (errorDeEntrega()) {
+            <p
+              class="mt-4 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+              role="alert"
+            >
+              {{ errorDeEntrega() }}
+            </p>
           }
-        </div>
-      </form>
+          <div class="mt-5 flex flex-wrap items-center gap-4">
+            <button
+              class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+              type="submit"
+              [disabled]="admin.saving()"
+            >
+              {{ admin.saving() ? 'Guardando…' : 'Guardar primera fecha' }}
+            </button>
+            @if (entregaGuardada()) {
+              <p class="text-sm text-on-primary-soft" role="status">La tienda ya usa esta regla.</p>
+            }
+          </div>
+        </form>
+
+        <!-- Lote 19 (ADR-0021, PBI-0006; provisional): una dirección por pedido o una por producto. -->
+        <form
+          [formGroup]="direcciones"
+          (ngSubmit)="guardarDirecciones()"
+          class="admin-card h-fit min-w-0 p-6"
+        >
+          <fieldset>
+            <legend id="ws-direccion-entrega" class="text-lg font-semibold">Dirección de entrega</legend>
+            <p id="ws-direccion-entrega-ayuda" class="mt-1 text-sm leading-6 text-muted">
+              Si cada pedido va a una sola dirección o si el comprador puede enviar cada producto a otra.
+            </p>
+            <mat-radio-group
+              formControlName="deliveryAddressMode"
+              class="mt-4 grid gap-2"
+              aria-labelledby="ws-direccion-entrega"
+              aria-describedby="ws-direccion-entrega-ayuda"
+            >
+              @for (modo of modos; track modo.valor) {
+                <mat-radio-button [value]="modo.valor">{{ modo.etiqueta }}</mat-radio-button>
+              }
+            </mat-radio-group>
+          </fieldset>
+          <p class="mt-4 rounded-xl bg-subtle p-3 text-sm leading-6" aria-live="polite">
+            {{ explicacionDelModo() }}
+          </p>
+          @if (errorDeDirecciones()) {
+            <p
+              class="mt-4 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+              role="alert"
+            >
+              {{ errorDeDirecciones() }}
+            </p>
+          }
+          <div class="mt-5 flex flex-wrap items-center gap-4">
+            <button
+              class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+              type="submit"
+              [disabled]="admin.saving()"
+            >
+              {{ admin.saving() ? 'Guardando…' : 'Guardar dirección de entrega' }}
+            </button>
+            @if (direccionesGuardadas()) {
+              <p class="text-sm text-on-primary-soft" role="status">La tienda ya usa esta opción.</p>
+            }
+          </div>
+        </form>
+      </div>
 
       <section class="admin-card h-fit min-w-0 p-6" aria-labelledby="ws-dias-no-laborables">
         <h2 id="ws-dias-no-laborables" class="text-lg font-semibold">Días no laborables</h2>
@@ -212,6 +270,21 @@ export class EntregasPage {
   protected readonly errorDeEntrega = signal<string | null>(null);
   protected readonly entregaGuardada = signal(false);
 
+  protected readonly modos = MODOS_DE_DIRECCION;
+  protected readonly direcciones = new FormGroup({
+    deliveryAddressMode: new FormControl<ModoDeDireccion>('per-order', { nonNullable: true }),
+  });
+  private readonly modoElegido = toSignal(this.direcciones.controls.deliveryAddressMode.valueChanges, {
+    initialValue: this.direcciones.controls.deliveryAddressMode.value,
+  });
+  protected readonly explicacionDelModo = computed(
+    () => MODOS_DE_DIRECCION.find((modo) => modo.valor === this.modoElegido())?.explicacion ?? '',
+  );
+  /** La configuración tal como se cargó en el formulario de la dirección: solo viaja lo que cambió (PBI-0120). */
+  private baseDeDirecciones: ConfiguracionTienda | null = null;
+  protected readonly errorDeDirecciones = signal<string | null>(null);
+  protected readonly direccionesGuardadas = signal(false);
+
   protected readonly nuevoDia = new FormGroup({
     date: new FormControl('', { nonNullable: true }),
     name: new FormControl('', { nonNullable: true }),
@@ -235,6 +308,28 @@ export class EntregasPage {
         deliveryCutoffTime: config.deliveryCutoffTime ?? '',
       });
     });
+    effect(() => {
+      const config = this.admin.config();
+      if (!config || this.direcciones.dirty) return;
+      this.baseDeDirecciones = config;
+      this.direcciones.setValue({ deliveryAddressMode: config.deliveryAddressMode ?? 'per-order' });
+    });
+  }
+
+  protected async guardarDirecciones(): Promise<void> {
+    this.direccionesGuardadas.set(false);
+    this.errorDeDirecciones.set(null);
+    const base = this.baseDeDirecciones;
+    if (!base || this.admin.saving()) return;
+    if (!(await this.admin.guardarConfiguracion(base, { ...base, ...this.direcciones.getRawValue() }))) {
+      this.errorDeDirecciones.set(
+        this.admin.tomarError() ?? 'No pudimos guardar la dirección de entrega. Inténtalo de nuevo.',
+      );
+      return;
+    }
+    this.baseDeDirecciones = this.admin.config() ?? base;
+    this.direcciones.markAsPristine();
+    this.direccionesGuardadas.set(true);
   }
 
   protected async guardarEntrega(): Promise<void> {

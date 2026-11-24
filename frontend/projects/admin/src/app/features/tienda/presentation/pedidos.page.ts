@@ -7,7 +7,12 @@ import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/s
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import { clasesDeEstadoPedido } from './estado-pedido';
-import { fechaDeEntrega, versionDeTerminos, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
+import {
+  direccionVisible,
+  fechaDeEntrega,
+  versionDeTerminos,
+  ZONA_HORARIA_LIMA,
+} from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido, EstadoPedido } from '../domain/tienda.model';
 import {
   FILTROS_PEDIDOS_VACIOS,
@@ -156,7 +161,15 @@ const PAYMENT_LABELS: Record<string, string> = {
           <ul class="mt-2 divide-y divide-line text-sm">
             @for (item of order.items; track item.productId) {
               <li class="flex justify-between gap-3 py-2">
-                <span>{{ item.quantity }} × {{ item.name }}</span>
+                <span>
+                  {{ item.quantity }} × {{ item.name }}
+                  <!-- Lote 19 (PBI-0006): la línea que va a otra dirección (una por producto) la dice. -->
+                  @if (item.shipping; as direccion) {
+                    <span class="mt-0.5 block text-xs text-muted">
+                      Se entrega en otra dirección: {{ direccionVisible(direccion) }}
+                    </span>
+                  }
+                </span>
                 <span class="tabular-nums">
                   {{ item.quantity * item.unitPrice | currency: 'PEN' : 'symbol' : '1.2-2' }}
                 </span>
@@ -215,6 +228,7 @@ export class PedidosPage {
   protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly fechaDeEntrega = fechaDeEntrega;
   protected readonly versionDeTerminos = versionDeTerminos;
+  protected readonly direccionVisible = direccionVisible;
   /** Id del pedido que pide la URL (`?pedido=<id>`); si no está en la lista filtrada, el detalle es el primero de ella. */
   readonly pedido = input<string>();
   protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);

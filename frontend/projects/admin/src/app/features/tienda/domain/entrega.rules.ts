@@ -4,7 +4,7 @@
  * los días no laborables (PBI-0183, `backend/src/domain/calendario/dias-no-laborables.rules.mjs`). Estas reglas repiten
  * lo que hace falta para avisar antes de enviar y explicar la regla elegida; la prueba las compara con las del BFF.
  */
-import { DiaNoLaborable, ReglaDePrimeraEntrega } from './tienda.model';
+import { DiaNoLaborable, ModoDeDireccion, ReglaDePrimeraEntrega } from './tienda.model';
 
 /** Las reglas que puede elegir la tienda, con la de por defecto primero. */
 export const REGLAS_DE_PRIMERA_ENTREGA: readonly {
@@ -14,6 +14,28 @@ export const REGLAS_DE_PRIMERA_ENTREGA: readonly {
   { valor: 'next-calendar-day', etiqueta: 'El día calendario siguiente' },
   { valor: 'next-business-day', etiqueta: 'El siguiente día hábil' },
   { valor: 'same-day', etiqueta: 'El mismo día' },
+];
+
+/**
+ * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional, por confirmar con Daniel), con
+ * la de por defecto primero. El BFF decide (`backend/src/domain/pedidos/direcciones-por-producto.rules.mjs`).
+ */
+export const MODOS_DE_DIRECCION: readonly {
+  readonly valor: ModoDeDireccion;
+  readonly etiqueta: string;
+  readonly explicacion: string;
+}[] = [
+  {
+    valor: 'per-order',
+    etiqueta: 'Una dirección por pedido',
+    explicacion: 'Todo el pedido se entrega en la dirección que indica el comprador.',
+  },
+  {
+    valor: 'per-product',
+    etiqueta: 'Una dirección por producto',
+    explicacion:
+      'El comprador puede enviar cada producto a otra dirección. El envío se cobra una vez por cada dirección distinta.',
+  },
 ];
 
 /** Largo máximo del nombre de un día no laborable, el del BFF. */
