@@ -226,6 +226,16 @@ Feature 005, entregada con el [PR #35](https://github.com/sebastianaviladev01-xy
 
   Los enlaces sin utilidades, como «Olvidé mi contraseña», siguen heredando el color y sin subrayado. Las clases `ws-*` y el foco (`a:focus-visible`) siguen fuera de capa y no cambian.
 
+### Contenido de la tienda (lote 15)
+
+Lote 15 ([ADR-0021](../../docs/adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)). Con los datos de la semilla, la cabecera, el pie y Contacto se ven igual que antes (capturas iguales píxel a píxel en B y C, a 1440 y 375 px):
+
+- **Avisos de la franja superior** (`ws-store-announcements`, PBI-0175). Ocupan el lugar del mensaje superior, con el mismo texto de 12 px; un aviso con enlace se subraya al pasar el puntero, como «Ayuda». Con un solo aviso no hay controles. Con varios, a cada lado del texto van flechas de 24 px («Aviso anterior» y «Aviso siguiente») y, después, el botón de pausa, en `--ws-on-topbar` al 80 % (100 % al pasar el puntero o con el foco). Pasan cada 6 s, sin animación, y se detienen con el puntero o el foco en la franja; con «reducir movimiento» empiezan en pausa.
+- **Enlace a Envíos** junto a las categorías: queda fijo en la cabecera (si la página está activa), con su camión, como antes.
+- **Contacto y redes** (PBI-0169). En el pie, cada correo y cada teléfono en su línea, con «Etiqueta: » delante si la tienen, y las redes en una fila de textos debajo, con `footer-text` y `footer-heading` al pasar el puntero. En Contacto, «Correos» o «Teléfonos» en plural si hay varios, cada uno en negrita con su etiqueta en `muted` («· Ventas»), y las redes en `link` a todo el ancho de la tarjeta. Las redes se abren en otra pestaña.
+- **Columnas del pie** (PBI-0185): las de los accesos inferiores, con los mismos estilos (`ws-footer-title` y `ws-footer-links`).
+- **Aviso de mantenimiento** (`ws-maintenance-notice`, PBI-0182). En lugar de toda la tienda, una `ws-card` centrada en el lienzo (hasta 576 px), con el título en 30 px (36 px desde `sm:`), el texto en `muted` y «Reintentar» como `ws-btn-primary`; debajo, en `muted`, «La tienda todavía no responde.» si el reintento falló.
+
 ### Controles del carrusel sobre fotos
 
 Con «Tono de la foto: Oscura» en el banner (Admin, solo en escritorio), los controles del carrusel del inicio (contador «1 / N», barra de progreso y flechas) pasan a una cápsula de vidrio: `--ws-ink` al **62 %** sobre la foto, con el texto y los íconos en `--ws-surface`. Desde el lote 10 (PBI-0167) la opacidad es el 62 % y no el 50 %: es lo justo para que el contador, de 14 px, llegue a 4,5:1 (WCAG 1.4.3) sobre una foto blanca, el peor caso, con el `--ws-ink` más claro de los temas predefinidos (el de C: 3,16:1 con el 50 % y 4,52:1 con el 62 %; A pasa de 3,43:1 a 5,06:1 y B de 3,41:1 a 5,02:1). Lo comprueba `src/styles/controles-sobre-fotos.spec.mjs`, que lee la opacidad de `home.css` y el `--ws-ink` y el `--ws-surface` de los tres temas, y falla si el vidrio se aclara. Un tema propio con `--ws-ink` más claro que el de C no está cubierto por esa prueba.
@@ -272,6 +282,7 @@ La versión anterior a esta alineación sigue disponible en `/inicio-anterior` p
 - Las interfaces de registro (`/productos/nuevo`, `/productos/:id` y sus pares de categorías y marcas) muestran «← Volver a …» encima del título de la página (`h1`: «Nuevo producto», «Editar producto» y sus pares), y debajo el formulario de siempre en una `admin-card` de `max-w-2xl`, con «Cancelar» (enlace con borde) junto a «Guardar». Mientras traen los datos, «Cargando…»; si el registro ya no existe, una tarjeta «Este producto ya no existe» (o categoría, marca); si la consulta falla, un aviso en `bg-warning-soft`; y si el guardado falla, el motivo junto al botón. En el menú lateral sigue marcado el módulo de su listado.
 - Para cambiar solo el móvil se añaden clases `max-md:` (y `md:hidden` para lo que solo se ve en móvil) a las de escritorio, sin cambiar ni quitar ninguna, de modo que el escritorio queda igual.
 - Los mensajes de error del BFF (por ejemplo, "Debe quedar al menos un superadministrador activo") se muestran tal cual en el aviso del panel.
+- Las listas de Contenido (`ws-content-list`, lote 15: correos, teléfonos, redes, avisos y accesos inferiores) son un `fieldset` con borde `line` y radio de 16 px, a todo el ancho del formulario: cada fila tiene sus campos en columnas iguales desde `sm:` (una debajo de otra en móvil) y los botones «Subir» y «Quitar» con borde `line`; la pista de cada campo solo va en la primera fila. «Agregar …» va al final y se desactiva al llegar al máximo.
 
 ## Recursos
 
