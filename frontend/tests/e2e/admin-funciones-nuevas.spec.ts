@@ -2,6 +2,7 @@ import { expect, request as nuevoRequest, test, type Page } from '@playwright/te
 
 import { actualizarProducto, enviarCambios, leerProductos, leerSnapshot } from './apoyo/catalogo';
 import {
+  comprobarEnlacesDelMenu,
   correoUnico,
   cuentasAdmin,
   fechaDeEntrega,
@@ -477,9 +478,9 @@ test.describe('PBI-0044: menú lateral', () => {
     await reducir.click();
     const expandir = page.getByRole('button', { name: 'Expandir el menú' });
     await expect(expandir).toHaveAttribute('aria-expanded', 'false');
-    // Sin títulos de grupo y con los 14 enlaces a la vista (lote 17: «Entregas y feriados»), con su nombre.
+    // Sin títulos de grupo y con todos los enlaces a la vista, cada uno con su nombre (lote 20: por nombre).
     await expect(menuAdmin(page).getByRole('button')).toHaveCount(0);
-    await expect(menuAdmin(page).getByRole('link')).toHaveCount(14);
+    await comprobarEnlacesDelMenu(page, 'superadmin');
     const productos = menuAdmin(page).getByRole('link', { name: 'Productos', exact: true });
     await expect(productos).toHaveAttribute('title', 'Productos');
     const caja = (await menuAdmin(page).boundingBox())!;
@@ -506,7 +507,7 @@ test.describe('PBI-0044: menú lateral', () => {
       await abrir.click();
       const panel = page.getByRole('dialog', { name: 'Menú de administración' });
       await expect(panel).toBeVisible();
-      await expect(menuAdmin(page).getByRole('link')).toHaveCount(14);
+      await comprobarEnlacesDelMenu(page, 'superadmin');
       await page.keyboard.press('Escape');
       await expect(panel).toHaveCount(0);
       await expect(abrir).toBeFocused();

@@ -1,6 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { cerrarSesionAdmin, cuentasAdmin, desplegarTodos, ingresarAlAdmin } from './apoyo/entorno';
+import {
+  cerrarSesionAdmin,
+  comprobarEnlacesDelMenu,
+  cuentasAdmin,
+  desplegarTodos,
+  ingresarAlAdmin,
+} from './apoyo/entorno';
 
 /**
  * Acceso al Admin y roles fijos: el superadministrador entra y recorre cada módulo desde el menú; el vendedor
@@ -50,7 +56,7 @@ test('el superadministrador recorre todos los módulos del panel', async ({ page
   await expect(page.getByRole('banner')).toContainText(cuentasAdmin.superadmin.nombre);
   // Con los grupos plegados (feature 003) sus enlaces no se ven; el recorrido los conserva desplegados.
   await desplegarTodos(page);
-  await expect(menu(page).getByRole('link')).toHaveCount(modulos.length);
+  await comprobarEnlacesDelMenu(page, 'superadmin');
 
   for (const { enlace, titulo, encabezado } of modulos) {
     await menu(page).getByRole('link', { name: enlace, exact: true }).click();
@@ -71,7 +77,7 @@ test('el vendedor ve el Dashboard, Productos, Inventario y Pedidos (PBI-0013, PB
   // Las ausencias se comprueban con todo desplegado: con un grupo plegado pasarían siempre.
   await desplegarTodos(page);
 
-  await expect(menu(page).getByRole('link')).toHaveText(['Dashboard', 'Productos', 'Inventario', 'Pedidos']);
+  await comprobarEnlacesDelMenu(page, 'vendedor');
 
   // PBI-0170 (lote 11, provisional): gestiona el inventario y ve los pedidos, sin cambiar su estado.
   await page.goto('/inventario');

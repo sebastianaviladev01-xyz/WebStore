@@ -2,6 +2,7 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import {
   cerrarSesionAdmin,
+  comprobarEnlacesDelMenu,
   correoUnico,
   cuentasAdmin,
   desplegarGrupo,
@@ -224,7 +225,7 @@ test.describe('Menú lateral en móvil (375 px)', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   // Lote 07b (PBI-0044): la tira horizontal pasa a un panel lateral que se abre con la hamburguesa.
-  test('el panel lateral tiene los 14 enlaces, sin títulos de grupo plegables ni desborde horizontal', async ({
+  test('el panel lateral tiene todos los enlaces, sin títulos de grupo plegables ni desborde horizontal', async ({
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -232,8 +233,8 @@ test.describe('Menú lateral en móvil (375 px)', () => {
 
     await expect(menuAdmin(page).getByRole('button')).toHaveCount(0);
     const enlaces = menuAdmin(page).getByRole('link');
-    // Lote 17: «Entregas y feriados» es el enlace 14.
-    await expect(enlaces).toHaveCount(14);
+    // Lote 20: los enlaces del superadministrador por su nombre, no por un número fijo.
+    await comprobarEnlacesDelMenu(page, 'superadmin');
     for (const nodo of await enlaces.all()) await expect(nodo).toBeVisible();
 
     const desborde = await page.evaluate(
