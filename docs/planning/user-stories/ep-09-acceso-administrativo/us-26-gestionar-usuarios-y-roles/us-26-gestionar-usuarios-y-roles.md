@@ -55,6 +55,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013), con lo que dijo Daniel el 11/11 («gestiona a los usuarios a nivel vendedor»). Que el administrador no elimine vendedores (solo los desactiva) es la opción más conservadora. Daniel lo confirmó el 2026-11-18 ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-permisos.spec.ts` y `permisos-roles.use-cases.test.mjs`. La lista de usuarios tiene el panel de filtros (PBI-0139).
 
+### Escenario 07 – Registro propio y roles sin conteo
+
+- **Dado** que el superadministrador o el administrador está en Usuarios y roles
+- **Cuando** pulsa «Agregar» o «Editar», o mira las tarjetas de los roles
+- **Entonces** el usuario se registra en su propia interfaz (`/usuarios/nuevo` o `/usuarios/:id`), con «Volver a usuarios» que conserva los filtros, en vez del formulario al costado de la lista; las tarjetas de los roles dicen nombre y descripción, sin el conteo de usuarios.
+
+> Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211 y PBI-0213; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: mantenimientos»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-mantenimientos.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - Daniel confirmó el 2026-11-18 los permisos de los roles con un cambio en el vendedor, que también gestiona Inventario y ve Pedidos (PBI-0170 del [backlog](../../../backlog.md)), construido en el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)).

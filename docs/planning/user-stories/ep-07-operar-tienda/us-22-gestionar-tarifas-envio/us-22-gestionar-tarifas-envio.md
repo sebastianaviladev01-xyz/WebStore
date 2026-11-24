@@ -24,14 +24,16 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ### Escenario 02 – Un precio para varios distritos
 
 - **Dado** que el administrador elige una tienda de origen
-- **Cuando** asigna un mismo precio a varios distritos a la vez
+- **Cuando** asigna un mismo precio a varios distritos a la vez, elegidos de una lista (desde el lote 21, PBI-0216)
 - **Entonces** todas esas tarifas quedan con ese precio.
 
-### Escenario 03 – Ajuste porcentual
+### Escenario 03 – Sin ajuste porcentual
 
 - **Dado** que el administrador quiere subir o bajar las tarifas
-- **Cuando** aplica un ajuste porcentual a una tienda de origen o a todas
-- **Entonces** las tarifas afectadas cambian en ese porcentaje.
+- **Cuando** abre Tarifas de envío
+- **Entonces** cambia el precio tarifa por tarifa: no hay ajuste porcentual.
+
+> Cambiado el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0217; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: tarifas»): antes, un ajuste porcentual cambiaba las tarifas de una tienda de origen o de todas. Lo prueban `tarifa-envio.rules.spec.mjs` y `admin-mantenimientos.spec.ts`.
 
 ### Escenario 04 – Búsqueda y páginas
 
@@ -43,6 +45,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el administrador busca tarifas o tiene un formulario a medias
 - **Cuando** usa el panel de filtros, o la sesión vence y vuelve a ingresar
-- **Entonces** la búsqueda y el origen quedan en la URL con «Buscar» y «Limpiar filtros», como en los demás listados; y lo escrito vuelve, con su modo (una tarifa, varios distritos o el ajuste porcentual).
+- **Entonces** la búsqueda y el origen quedan en la URL con «Buscar» y «Limpiar filtros», como en los demás listados; y lo escrito vuelve, con su modo (una tarifa o varios distritos; el ajuste porcentual se quitó en el lote 21).
 
 > Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0155 y PBI-0157), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
+
+### Escenario 06 – Distrito de una lista, en una ventana
+
+- **Dado** que el administrador registra o edita una tarifa
+- **Cuando** pulsa «Agregar» o «Editar»
+- **Entonces** lo hace en una ventana emergente y elige el distrito de una lista (los 43 de Lima Metropolitana y los 7 del Callao, más los que ya tienen tarifa): varios al crear y uno al editar. Sin distrito, la ventana no guarda y lo dice.
+
+> Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211 y PBI-0216; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: tarifas»), sin especificación propia: lo prueban `distrito.rules.spec.mjs` y `frontend/tests/e2e/admin-mantenimientos.spec.ts`.

@@ -48,3 +48,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el backoffice acepta un PNG, JPG o WebP de menos de 1 MB y guarda una sola versión de 100 × 100 px (desde el lote 11, PBI-0176), que el BFF comprueba; la imagen se ve en la lista de Categorías, en los menús de la tienda, en el filtro del catálogo y en «Compra por categoría» (PBI-0162) y, si se quita, todo se ve como antes.
 
 > Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0052; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-19 Daniel pidió que el Admin adjunte una foto de menos de 1 MB y que el servicio backend de la tienda, hoy el BFF, la optimice en una sola versión de 100 × 100 px, PBI-0176), sin especificación propia. Cambiado el 2026-11-23 por el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); provisional, por confirmar con Daniel). Lo prueban `frontend/tests/e2e/admin-funciones-nuevas.spec.ts` y `storefront-categoria-imagen.spec.ts`.
+
+### Escenario 06 – Árbol de categorías
+
+- **Dado** que la tienda tiene categorías con subcategorías
+- **Cuando** el administrador abre Categorías
+- **Entonces** las ve como un árbol que empieza cerrado y se abre por niveles, con el puntero o con el teclado; los filtros, la paginación (por categorías de primer nivel), la miniatura y las acciones se conservan, y el filtro de nombre muestra también las categorías que contienen a las que coinciden. El registro de la categoría no cambia.
+
+> Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0220; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueban `arbol-categorias.rules.spec.mjs` y `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts`. Cambia el Escenario 01: la lista jerárquica es ahora este árbol.

@@ -51,8 +51,16 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-23 por el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0162; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-categoria-imagen.spec.ts`.
 
+### Escenario 06 – Productos destacados
+
+- **Dado** que el backoffice marcó productos como destacados
+- **Cuando** el comprador abre el inicio
+- **Entonces** ve todos los destacados que tienen stock; si son más de cuatro, en un carrusel que se recorre con botones con nombre y respeta el movimiento reducido; si no hay ninguno con stock, la sección no sale.
+
+> Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0215; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueban `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts` y `destacados.rules.spec.mjs`. Los datos de ejemplo marcan los cuatro de siempre, así que la demo se ve igual.
+
 ## Fuera de alcance y pendientes
 
 - Queda el inicio actual (Daniel, 2026-11-20, PBI-0019); `/inicio-anterior` se quitó en el lote 16 (PBI-0193).
 - Las imágenes del inicio se quedan (Daniel, 2026-11-20, PBI-0016).
-- Productos destacados configurables (Daniel, revisión de la demo del 2026-11-17; PBI-0215): el registro del producto tendrá una casilla «Es destacado», sin tope; con más de cuatro, el inicio los muestra en un carrusel. Así no dependen de las ventas cuando la tienda abre. Hoy se destacan los cuatro primeros del catálogo.
+- Productos destacados configurables (Daniel, revisión de la demo del 2026-11-17; PBI-0215): construidos en el lote 22 (Escenario 06). Los destacados «por periodo», que Daniel mencionó sin pedirlo, no entran.

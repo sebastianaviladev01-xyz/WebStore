@@ -27,6 +27,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** cambia su estado y registra la respuesta
 - **Entonces** el sistema guarda el estado y la respuesta.
 
+### Escenario 03 – Reclamo abierto a la vista
+
+- **Dado** que el administrador abre un reclamo de la lista
+- **Cuando** mira la lista o trabaja en una pantalla de menos de 1280 px
+- **Entonces** la lista marca el reclamo abierto (también para un lector de pantalla) y, en la pantalla angosta, la vista baja al detalle y el foco pasa a su título.
+
+> Añadido el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0223 y PBI-0232; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: reclamaciones»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-listados.spec.ts`. La gestión de reclamaciones se queda como estaba (lote 23).
+
 ## Fuera de alcance y pendientes
 
 - El envío de la respuesta por correo, con evidencia de entrega, está pendiente (PBI-0012 del [backlog](../../../backlog.md)).

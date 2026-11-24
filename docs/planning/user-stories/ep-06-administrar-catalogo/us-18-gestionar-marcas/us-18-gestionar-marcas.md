@@ -41,6 +41,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0121 y PBI-0131; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md), confirmadas por Daniel el 2026-11-18), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
 
+### Escenario 05 – Registro en una ventana
+
+- **Dado** que el administrador está en Marcas
+- **Cuando** pulsa «Agregar» o «Editar»
+- **Entonces** registra la marca en una ventana emergente con título, que atrapa el foco y se cierra con Escape; cerrarla descarta lo escrito. Antes, Marcas registraba en su propia interfaz.
+
+> Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: mantenimientos»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-mantenimientos.spec.ts`.
+
 ## Notas
 
 - Las fuentes no detallan más reglas de las marcas.
