@@ -11,8 +11,9 @@ const categoryToPublic = (category) => ({
   description: `Explora productos de ${category.name}.`,
   parentId: category.parentId,
   order: category.order,
-  // Lote 07b (PBI-0052): imagen pequeña opcional; sin ella, `null` y la tienda se ve como antes.
-  imageUrl: category.imageUrl ?? null,
+  // Lote 07b (PBI-0052): imagen pequeña opcional; sin ella, `null` y la tienda se ve como antes. Desde el lote 25
+  // (ADR-0026), la cargada llega como dirección del BFF, no como Data URL.
+  imageUrl: direccionDeImagen('categories', category.id, 'image', category.imageUrl) ?? null,
 });
 
 /** Ficha pública de un producto; marca y categoría se resuelven con el estado vigente. */
@@ -46,12 +47,25 @@ export const toPublicProduct = (state) => {
       featured: product.featured === true,
       highlights: Array.isArray(product.highlights) ? product.highlights.filter(Boolean) : [],
       // Galería pública: la imagen principal siempre primero, seguida de las fotos adicionales.
-      images: [imageUrl, ...galleryOf(product).filter((url) => url !== product.imageUrl)].filter(
-        (url, index, all) => url && all.indexOf(url) === index,
-      ),
+      images: [imageUrl, ...fotosDeLaGaleria(product)].filter(Boolean),
     };
   };
 };
+
+/**
+ * Fotos adicionales públicas, sin repetir ni repetir la principal. Lote 25 (ADR-0026): cada foto cargada llega como
+ * dirección del BFF por su posición en `galleryOf` (`gallery/{n}`), la misma con la que el BFF la sirve.
+ */
+function fotosDeLaGaleria(product) {
+  const vistas = new Set([product.imageUrl]);
+  const fotos = [];
+  galleryOf(product).forEach((url, posicion) => {
+    if (vistas.has(url)) return;
+    vistas.add(url);
+    fotos.push(direccionDeImagen('products', product.id, `gallery/${posicion}`, url));
+  });
+  return fotos;
+}
 
 /** Consultas públicas del catálogo: solo productos activos. */
 export function createCatalogoQueries({ store }) {
