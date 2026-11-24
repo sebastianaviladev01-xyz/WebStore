@@ -739,9 +739,10 @@
 }
 
 /* El panel de los tres pasos del checkout tiene el aspecto del resumen del pedido, sin su sticky (feature 004,
-   D4). */
+   D4); el bloque de «Finalizar compra», debajo de los pasos, también (lote 16, PBI-0190). */
 .ws-order-summary,
-.ws-checkout-panel {
+.ws-checkout-panel,
+.ws-checkout-confirm {
   padding: 28px;
   border: 1px solid var(--ws-border);
   border-radius: 14px;
@@ -766,8 +767,8 @@
 
 /* Resumen del carrito y del checkout: acompaña al scroll desde escritorio, a la misma distancia de
    la cabecera que los filtros (antes se metía 11 px debajo de ella). En pantallas bajas se
-   desplaza por dentro para que su botón principal ("Confirmar pedido" en el carrito y "Finalizar
-   compra" en el checkout) nunca quede fuera de la vista. */
+   desplaza por dentro para que su contenido nunca quede fuera de la vista ("Confirmar pedido" en el
+   carrito; en el checkout, "Finalizar compra" va debajo de los pasos desde el lote 16, PBI-0190). */
 @media (min-width: 1024px) {
   .ws-order-summary {
     position: sticky;
@@ -1187,7 +1188,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
   .ws-order-summary,
-  .ws-checkout-panel {
+  .ws-checkout-panel,
+  .ws-checkout-confirm {
     padding: 22px;
   }
 }

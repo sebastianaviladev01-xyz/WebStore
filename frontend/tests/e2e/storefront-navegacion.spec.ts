@@ -8,8 +8,9 @@ const rutas = [
   { ruta: '/', titulo: 'WebStore | Inicio', encabezado: 'El cine, en tu sala.' },
   { ruta: '/catalogo', titulo: 'WebStore | Productos', encabezado: 'Todos los productos' },
   { ruta: '/carrito', titulo: 'WebStore | Carrito', encabezado: 'Carrito' },
-  // Feature 004 (D1, TEST-16): la ruta no cambia; el título y el encabezado dicen «Finalizar compra».
-  { ruta: '/checkout', titulo: 'WebStore | Finalizar compra', encabezado: 'Finalizar compra' },
+  // Lote 16 (PBI-0190): la ruta no cambia; el título y el encabezado dicen «Datos de tu compra», y «Finalizar
+  // compra» queda solo para el botón del final.
+  { ruta: '/checkout', titulo: 'WebStore | Datos de tu compra', encabezado: 'Datos de tu compra' },
   { ruta: '/pedidos', titulo: 'WebStore | Mis pedidos', encabezado: 'Mis pedidos' },
   { ruta: '/cuenta/login', titulo: 'WebStore | Iniciar sesión', encabezado: 'Iniciar sesión' },
   { ruta: '/cuenta/registro', titulo: 'WebStore | Registro', encabezado: 'Crear cuenta' },

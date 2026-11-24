@@ -48,7 +48,7 @@ const desdeHoyEnLima =
   template: `
     <section class="ws-container py-10 sm:py-14">
       <div class="mb-9">
-        <h1 class="ws-title">Finalizar compra</h1>
+        <h1 class="ws-title">Datos de tu compra</h1>
       </div>
       @if (cart.cargando()) {
         <div class="ws-card p-8 text-center text-muted" role="status">Cargando tu carrito…</div>
@@ -226,7 +226,7 @@ const desdeHoyEnLima =
               </p>
             </section>
           </div>
-          <aside class="ws-order-summary">
+          <aside class="ws-order-summary lg:col-start-2 lg:row-span-2 lg:row-start-1">
             <h2 class="text-xl font-semibold tracking-[-0.025em]">Resumen del pedido</h2>
             <div class="mt-6 grid gap-4 text-sm">
               <div class="flex justify-between">
@@ -275,38 +275,47 @@ const desdeHoyEnLima =
                 <p class="mt-2">Revisa el total antes de finalizar la compra.</p>
               </div>
             }
-            <div class="mt-6">
-              <mat-checkbox formControlName="termsAccepted" aria-describedby="ws-terms-error">
-                Acepto los términos y condiciones
-              </mat-checkbox>
-              <p id="ws-terms-error" class="text-xs text-danger" aria-live="polite">
-                @if (form.controls.termsAccepted.touched && form.controls.termsAccepted.invalid) {
-                  Acepta los términos y condiciones para finalizar la compra.
-                }
-              </p>
-              <a
-                routerLink="/info/terminos"
-                target="_blank"
-                rel="noopener"
-                class="mt-1 inline-block text-sm font-semibold text-link underline-offset-4 hover:underline"
-              >
-                Leer los términos y condiciones
-              </a>
-            </div>
+            <a routerLink="/carrito" class="ws-btn-secondary mt-6 w-full">Volver al carrito</a>
+          </aside>
+          <!--
+            Lote 16 (ADR-0021, PBI-0190; provisional): «Finalizar compra» es el último paso, después de los datos de pago
+            y de la casilla de términos. En escritorio va debajo de los pasos, con el resumen al lado; en el celular,
+            después del resumen, para que el total se vea antes de pagar.
+          -->
+          <div class="ws-checkout-confirm lg:col-start-1">
             @if (checkout.error()) {
-              <p class="mt-4 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
+              <p class="mb-5 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
                 {{ checkout.error() }}
               </p>
             }
-            <button
-              type="submit"
-              class="ws-btn-primary mt-6 w-full disabled:opacity-50"
-              [disabled]="checkout.submitting() || quoting() || shippingCost() === null"
-            >
-              {{ checkout.submitting() ? 'Procesando…' : 'Finalizar compra' }}
-            </button>
-            <a routerLink="/carrito" class="ws-btn-secondary mt-3 w-full">Volver al carrito</a>
-          </aside>
+            <div class="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <mat-checkbox formControlName="termsAccepted" aria-describedby="ws-terms-error">
+                  Acepto los términos y condiciones
+                </mat-checkbox>
+                <p id="ws-terms-error" class="text-xs text-danger" aria-live="polite">
+                  @if (form.controls.termsAccepted.touched && form.controls.termsAccepted.invalid) {
+                    Acepta los términos y condiciones para finalizar la compra.
+                  }
+                </p>
+                <a
+                  routerLink="/info/terminos"
+                  target="_blank"
+                  rel="noopener"
+                  class="mt-1 inline-block text-sm font-semibold text-link underline-offset-4 hover:underline"
+                >
+                  Leer los términos y condiciones
+                </a>
+              </div>
+              <button
+                type="submit"
+                class="ws-btn-primary w-full shrink-0 disabled:opacity-50 sm:w-auto sm:min-w-60"
+                [disabled]="checkout.submitting() || quoting() || shippingCost() === null"
+              >
+                {{ checkout.submitting() ? 'Procesando…' : 'Finalizar compra' }}
+              </button>
+            </div>
+          </div>
         </form>
       }
     </section>

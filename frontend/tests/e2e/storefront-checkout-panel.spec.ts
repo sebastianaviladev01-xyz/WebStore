@@ -21,7 +21,9 @@ async function abrirCheckout(page: Page): Promise<void> {
   await page.getByRole('main').getByRole('button', { name: 'Agregar al carrito' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Seguir comprando' }).click();
   await page.goto('/checkout');
-  await expect(page.getByRole('heading', { level: 1, name: 'Finalizar compra', exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Datos de tu compra', exact: true }),
+  ).toBeVisible();
 }
 
 const campo = (page: Page, etiqueta: string): Locator =>
@@ -156,7 +158,7 @@ test('el Tab recorre los campos, el método de pago y los botones en el orden de
   await page.getByRole('textbox', { name: 'Nombres y apellidos' }).focus();
 
   const recorrido: string[] = [];
-  for (let i = 0; i < 20 && recorrido.at(-1) !== 'Volver al carrito'; i++) {
+  for (let i = 0; i < 20 && recorrido.at(-1) !== 'Leer los términos y condiciones'; i++) {
     const actual = await page.evaluate(() => {
       const el = document.activeElement as HTMLElement;
       return (
@@ -173,8 +175,9 @@ test('el Tab recorre los campos, el método de pago y los botones en el orden de
     if (recorrido.at(-1) !== actual) recorrido.push(actual);
     await page.keyboard.press('Tab');
   }
-  // «Finalizar compra» está deshabilitado sin envío cotizado, así que el Tab lo salta. Lote 04 (PBI-0040): la
-  // casilla de los términos y su enlace van justo antes, en el resumen.
+  // «Finalizar compra» está deshabilitado sin envío cotizado, así que el Tab lo salta. Lote 16 (PBI-0190): el
+  // resumen, con «Volver al carrito», va antes que la casilla de los términos y su enlace, que ahora van con
+  // «Finalizar compra» al final, después del método de pago.
   expect(recorrido).toEqual([
     'fullName',
     'email',
@@ -187,9 +190,9 @@ test('el Tab recorre los campos, el método de pago y los botones en el orden de
     'deliveryDate',
     'reference',
     'pago:card',
+    'Volver al carrito',
     'termsAccepted',
     'Leer los términos y condiciones',
-    'Volver al carrito',
   ]);
 });
 

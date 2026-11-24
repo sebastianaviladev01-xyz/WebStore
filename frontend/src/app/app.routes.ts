@@ -39,7 +39,7 @@ export const routes: Routes = [
         path: 'checkout',
         loadComponent: () =>
           import('./features/checkout/presentation/checkout.page').then((m) => m.CheckoutPage),
-        title: 'WebStore | Finalizar compra',
+        title: 'WebStore | Datos de tu compra',
       },
       {
         path: 'pedido/:orderId',
