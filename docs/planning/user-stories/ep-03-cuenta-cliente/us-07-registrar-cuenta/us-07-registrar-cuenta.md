@@ -41,6 +41,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0098, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-20 Daniel pidió que diga «te enviamos un código» y «Verificar cuenta», PBI-0180), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-cuenta-formularios.spec.ts`.
 
+### Escenario 05 – Textos de la verificación
+
+- **Dado** que el cliente abre `/cuenta/verificar`
+- **Cuando** lee la página
+- **Entonces** se titula «Verificar cuenta» y dice que le enviaron un código. Hasta que haya correo real, la demo lo muestra en la respuesta.
+
+> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0180), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-cuenta.spec.ts` y `storefront-cuenta-formularios.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - La demo entrega el código en la respuesta; el correo transaccional real está pendiente (PBI-0008 del [backlog](../../../backlog.md)).

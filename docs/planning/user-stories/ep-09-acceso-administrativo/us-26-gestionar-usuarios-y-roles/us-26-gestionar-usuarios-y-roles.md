@@ -57,5 +57,5 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ## Fuera de alcance y pendientes
 
-- Daniel confirmó el 2026-11-18 los permisos de los roles con un cambio en el vendedor, que también gestiona Inventario y ve Pedidos (PBI-0170 del [backlog](../../../backlog.md)).
+- Daniel confirmó el 2026-11-18 los permisos de los roles con un cambio en el vendedor, que también gestiona Inventario y ve Pedidos (PBI-0170 del [backlog](../../../backlog.md)), construido en el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)).
 - La edición de los datos propios (perfil) se entregó en el lote 07b (PBI-0034) como escenario de [US25](../us-25-iniciar-sesion-admin/us-25-iniciar-sesion-admin.md): no pasa por Usuarios.

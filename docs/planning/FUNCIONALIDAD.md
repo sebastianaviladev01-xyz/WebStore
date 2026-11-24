@@ -1,6 +1,6 @@
 # Funcionalidad — WebStore MVP
 
-Implementación funcional del alcance **WebStore** consolidado a partir de las sesiones/reuniones adjuntas al proyecto. El workspace contiene dos aplicaciones Angular independientes y un Mock BFF compartido para demostrar la arquitectura final sin exigir un backend productivo.
+Implementación funcional del alcance **WebStore** consolidado a partir de las sesiones y reuniones del proyecto, con los cambios que pidió Daniel entregados el 2026-11-23 por lotes ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); detalle en la [trazabilidad](TRACEABILITY.md#respuestas-de-daniel-lotes-11-a-20-2026-11-23)). El workspace contiene dos aplicaciones Angular independientes, el storefront y el backoffice ([glosario](../architecture/glosario.md#aplicaciones)), y un BFF de prueba compartido para demostrar la arquitectura final sin exigir un backend productivo.
 
 Cómo levantarlo y verificarlo: [README](../../README.md). Arquitectura: [docs/architecture](../architecture/README.md).
 
@@ -25,55 +25,64 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 
 ## Storefront
 
-- Home y banners con vigencia.
+- Home y banners con vigencia, cada uno con hasta dos botones (paleta primaria y secundaria); los enlaces externos se abren en otra pestaña.
+- Avisos para los clientes en la parte superior, con enlace opcional, que rotan si hay varios.
 - Categorías jerárquicas por nombre, sin dependencia de iconografía.
-- Catálogo con filtros acordados: nombre, categoría y precio.
+- Catálogo con filtros acordados: nombre, categoría (con su imagen, si la tiene) y un rango de precio con mínimo y máximo.
+- Comparador de hasta 4 productos (`/comparar`), con la lista en la URL.
 - PDP con precio, descripción, características y stock.
 - Compra bloqueada cuando no hay stock.
-- Confirmación al añadir: seguir comprando o finalizar.
+- Confirmación al añadir: seguir comprando o ver el carrito, con productos sugeridos en un diálogo o, si la tienda lo elige, en un panel lateral.
 - Carrito: agregar, cambiar cantidad, eliminar, valor de venta, IGV y subtotal.
-- Checkout guest; crear cuenta no es obligatorio.
+- Checkout guest («Datos de tu compra»); crear cuenta no es obligatorio. «Finalizar compra» va al final, después de los datos de pago y de aceptar la versión vigente de los términos, que el pedido guarda con fecha y hora.
+- Primera fecha de entrega según la configuración de la tienda (el mismo día, el día calendario siguiente o el siguiente día hábil, con hora de corte opcional), sin días no laborables.
+- Una dirección por pedido o, si la tienda lo elige, una por producto, con el envío cobrado una vez por destino distinto.
 - Datos de cliente y documento.
 - Envíos por tabla origen → destino mantenida desde Admin.
 - Métodos de pago demostrativos; proveedor definitivo permanece pendiente según las sesiones.
 - Pedido transaccional: valida y descuenta stock en el BFF y registra cliente/pedido.
 - Registro, login, verificación por código, recuperación, edición y eliminación de cuenta.
 - Historial/detalle de pedidos, cancelación y cambio de dirección/fecha durante la ventana de 24 h.
-- Contacto, información de envíos, privacidad y términos administrables, además de libro de reclamaciones persistente con código de recepción.
-- Estados vacíos, sin resultados, sin stock y 404.
+- Contacto (varios correos, teléfonos y redes), información de envíos, privacidad y términos (con su versión vigente) administrables, pie armado con los accesos inferiores, además de libro de reclamaciones persistente con código de recepción.
+- Estados vacíos, sin resultados, sin stock y 404, y un aviso de mantenimiento si el contenido nunca llega del BFF.
+- Sin tuerca de temas: el tema solo se configura en el backoffice.
 
-## Admin
+## Backoffice (proyecto `admin`)
 
-- Dashboard.
+- Dashboard con cifras plegables (ventas sin el envío), últimos pedidos, alertas y actividad reciente.
+- Campana de avisos: pedidos nuevos, reclamos nuevos y errores de compra.
 - Productos.
 - Inventario único compartido con Storefront.
-- Categorías jerárquicas y ordenables (orden explícito; fallback alfabético).
+- Categorías jerárquicas y ordenables (orden explícito; fallback alfabético), con una imagen opcional de 100 × 100 px.
 - Marcas.
 - Clientes, incluidos los creados por checkout guest.
 - Usuarios administrativos, login y roles aplicados en frontend y BFF.
 - Reclamos con estado y respuesta del proveedor.
 - Pedidos y estados.
-- Banners con fecha de inicio/fin.
-- CMS: logo gráfico cargable/configurable, color, contacto, mensaje superior, navegación superior/lateral y footer.
+- Banners con fecha de inicio/fin y hasta dos botones.
+- CMS: logo gráfico cargable/configurable, contacto múltiple, avisos para los clientes, navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
 - Contacto, Envíos, Privacidad y Términos con activación/desactivación efectiva mediante guards; al desactivarlas, tampoco son accesibles por URL directa.
 - Tipografía única bloqueada en el MVP.
 - Tabla configurable origen → destino.
+- «Entregas y feriados» (superadministrador): días no laborables, primera fecha de entrega y una dirección por pedido o por producto.
+- Listados con panel de filtros estándar: «Buscar», «Limpiar» y «Agregar», a la derecha.
+- Tuerca de temas solo en el modo demo, con los tres temas predefinidos.
 
 ### Roles
 
-Roles fijos acordados el 05/11 (se asignan, no se editan), con los permisos de la reunión del 11/11 que aplicó el lote 07 (Daniel los confirmó el 2026-11-18 con un cambio por construir: el vendedor también gestiona Inventario y ve Pedidos, PBI-0170; [decisiones pendientes](PENDING-DECISIONS.md), «Permisos de los roles»):
+Roles fijos acordados el 05/11 (se asignan, no se editan), con los permisos de la reunión del 11/11 que aplicó el lote 07 y que Daniel confirmó el 2026-11-18 con un cambio, construido en el lote 11: el vendedor también gestiona Inventario y ve Pedidos (PBI-0170; [decisiones pendientes](PENDING-DECISIONS.md), «Permisos de los roles»):
 
-- `superadmin`: todo, incluidos temas, contenido, el reinicio de la demo y la gestión de todos los usuarios.
+- `superadmin`: todo, incluidos temas, contenido, entregas y feriados, el reinicio de la demo y la gestión de todos los usuarios.
 - `admin`: toda la operación de la tienda (catálogo, inventario, clientes, pedidos, banners, tarifas y reclamaciones), elimina productos y gestiona a los vendedores sin eliminarlos. No configura temas ni contenido.
-- `vendedor`: resumen y productos. Crea productos y modifica todos sus campos, sin eliminarlos. No gestiona inventario ni pedidos.
+- `vendedor`: Dashboard, productos, inventario y pedidos. Crea productos y modifica todos sus campos, sin eliminarlos; gestiona el inventario y ve los pedidos sin cambiar su estado.
 
 Los datos de versiones anteriores se migran solos: `owner` → `superadmin` y `catalog-maintainer` → `vendedor`.
 
-Los guards del frontend mejoran la UX; el Mock BFF repite autenticación y autorización. Para producción aún corresponde integrar identidad gestionada, rate limiting, auditoría y persistencia transaccional.
+Los guards del frontend mejoran la UX; el BFF de prueba repite autenticación y autorización. Para producción aún corresponde integrar identidad gestionada, rate limiting, auditoría y persistencia transaccional.
 
 ## Decisiones no cerradas
 
-No se resolvieron arbitrariamente los asuntos que las reuniones dejaron abiertos. Ver [PENDING-DECISIONS.md](PENDING-DECISIONS.md).
+Lo que las fuentes no respondían se construyó con la opción más apegada a lo que dijo Daniel o con la más conservadora, y está marcado «Provisional, por confirmar con Daniel». Siguen abiertas las decisiones de terceros, de Daniel o de una persona. Ver [PENDING-DECISIONS.md](PENDING-DECISIONS.md).
 
 
 ## Evidencia

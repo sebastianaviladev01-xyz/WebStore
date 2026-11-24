@@ -53,14 +53,46 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ### Escenario 07 – Datos de entrega
 
-- **Dado** que el comprador deja vacíos la provincia, el departamento o la fecha, o elige una fecha anterior a hoy en Lima
+- **Dado** que el comprador deja vacíos la provincia, el departamento o la fecha, o elige una fecha anterior a la primera permitida
 - **Cuando** intenta finalizar la compra
-- **Entonces** cada campo muestra su mensaje y el pedido no se envía. La fecha propuesta es dos días después de hoy, contados con la fecha de Lima.
+- **Entonces** cada campo muestra su mensaje y el pedido no se envía. La fecha propuesta es la primera fecha de entrega de la tienda (desde el lote 17, escenario 08).
 
 > Añadido el 2026-11-14 por el lote 04 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0040, PBI-0063, PBI-0086 y PBI-0096; los términos son una decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-20 Daniel pidió guardar también la versión aceptada, PBI-0177), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-carrito-checkout.spec.ts`.
+
+### Escenario 08 – Primera fecha de entrega
+
+- **Dado** que la tienda configuró la primera fecha de entrega (el mismo día, el día calendario siguiente o el siguiente día hábil, con hora de corte opcional en hora de Lima)
+- **Cuando** el comprador abre el checkout o elige una fecha anterior
+- **Entonces** el campo propone la primera fecha permitida y no acepta una anterior; el BFF la vuelve a validar sin contar sábados, domingos ni días no laborables cuando la regla es de días hábiles.
+
+> Añadido el 2026-11-23 por el lote 17 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0178; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-carrito-checkout.spec.ts` y `admin-entregas-y-feriados.spec.ts`.
+
+### Escenario 09 – Versión de los términos
+
+- **Dado** que el comprador acepta los términos en el checkout
+- **Cuando** finaliza la compra
+- **Entonces** el pedido guarda la versión aceptada y la fecha y hora con segundos; si los términos cambiaron mientras compraba, la tienda avisa, desmarca la casilla y pide aceptarlos otra vez.
+
+> Añadido el 2026-11-23 por el lote 17 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0177; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-checkout.spec.ts`.
+
+### Escenario 10 – «Finalizar compra» al final
+
+- **Dado** que el comprador está en el checkout («Datos de tu compra»)
+- **Cuando** llena sus datos, la entrega y el pago
+- **Entonces** la casilla de términos y «Finalizar compra» quedan al final, después del método de pago; en el celular, después del resumen con el total.
+
+> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0190; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-checkout.spec.ts`.
+
+### Escenario 11 – Una dirección por producto
+
+- **Dado** que la configuración de la tienda eligió una dirección por producto
+- **Cuando** el comprador envía algún producto a otra dirección
+- **Entonces** el envío se cobra una vez por cada dirección distinta y el resumen lo desglosa; el pedido guarda la dirección de cada línea. Si una dirección de línea no es válida, el campo de esa línea se marca. Con una dirección por pedido, el checkout es el de siempre.
+
+> Añadido el 2026-11-23 por el lote 19 y el 18 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0006 y PBI-0209; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-direcciones-por-producto.spec.ts`.
 
 ## Fuera de alcance y pendientes
 
 - Los métodos de pago son demostrativos: la pasarela definitiva está pendiente (PBI-0002 del [backlog](../../../backlog.md)).
 - La facturación electrónica está pendiente (PBI-0003 del [backlog](../../../backlog.md)).
-- El MVP usa una dirección por pedido (PBI-0006 del [backlog](../../../backlog.md)).
+- Por defecto, una dirección por pedido; la configuración de la tienda puede elegir una por producto (escenario 11, PBI-0006).

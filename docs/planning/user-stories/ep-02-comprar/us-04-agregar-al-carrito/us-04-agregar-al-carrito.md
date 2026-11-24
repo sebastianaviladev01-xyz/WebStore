@@ -38,3 +38,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** la tienda le sugiere, bajo «También te puede interesar», hasta tres productos de la misma categoría con stock, que llevan a su ficha.
 
 > Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0039, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md), confirmada por Daniel el 2026-11-20; el panel lateral es PBI-0179), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-catalogo-accesibilidad.spec.ts`.
+
+### Escenario 04 – Sugeridos en un panel lateral
+
+- **Dado** que la configuración de la tienda eligió «En un panel lateral»
+- **Cuando** el comprador agrega un producto
+- **Entonces** la confirmación y los sugeridos se muestran en un panel lateral en lugar del diálogo; por defecto sigue el diálogo.
+
+> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0179; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-checkout-panel.spec.ts` y `admin-contenido.spec.ts`.

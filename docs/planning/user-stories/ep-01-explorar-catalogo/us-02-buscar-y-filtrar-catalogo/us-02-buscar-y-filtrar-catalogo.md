@@ -37,16 +37,32 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el comprador filtró el catálogo
 - **Cuando** busca desde la cabecera, elige una categoría del menú o del pie, vuelve atrás o comparte la dirección
-- **Entonces** el catálogo muestra lo que dice la dirección (`buscar`, `categoria` y `precio`); «Limpiar filtros» la deja sin filtros.
+- **Entonces** el catálogo muestra lo que dice la dirección (`buscar`, `categoria`, `precioMin` y `precioMax`; desde el lote 16); «Limpiar filtros» la deja sin filtros.
 
 ### Escenario 05 – Sin tope de precio y sin tildes
 
-- **Dado** que el comprador no eligió un precio máximo
+- **Dado** que el comprador no eligió un rango de precio
 - **Cuando** abre el catálogo o busca un nombre con o sin tildes
 - **Entonces** ve todos los productos, también los de más de S/ 5,000, y la búsqueda no distingue tildes ni mayúsculas.
 
 > Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0108 y PBI-0115, decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-20 Daniel pidió un rango con mínimo y máximo, PBI-0181), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-catalogo-accesibilidad.spec.ts`.
 
+### Escenario 06 – Rango de precio
+
+- **Dado** que el comprador está en el catálogo
+- **Cuando** escribe un precio mínimo, un máximo o los dos y sale del campo o pulsa Enter
+- **Entonces** el catálogo muestra los productos de ese rango y la dirección guarda `precioMin` y `precioMax`; un rango al revés se avisa en el campo, y la ayuda muestra el precio más bajo y el más alto del catálogo. Un enlace antiguo con `precio` se lee como máximo.
+
+> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0181; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-catalogo.spec.ts`.
+
+### Escenario 07 – Comparar productos
+
+- **Dado** que el comprador marca «Comparar» en la tarjeta o en la ficha de hasta 4 productos
+- **Cuando** abre «Comparar (N)» de la cabecera
+- **Entonces** ve en `/comparar` una tabla con la imagen, el nombre, la marca, la categoría, el precio, la disponibilidad y las características de cada uno, con «Agregar al carrito» y «Quitar»; la dirección guarda la lista y se puede compartir.
+
+> Añadido el 2026-11-23 por el lote 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0001; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-comparador.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
-- El comparador de productos está pendiente de evaluar (PBI-0001 del [backlog](../../../backlog.md)).
+- El comparador se construyó en el lote 19 (escenario 07, PBI-0001). Su lista no se guarda en el navegador: vive en memoria y en la dirección.
