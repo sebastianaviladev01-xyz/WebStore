@@ -44,7 +44,6 @@ export const escenarios = {
   'pedidos-vendedor': { ruta: '/pedidos', rol: 'vendedor' },
   'tienda-inicio': { tienda: true, ruta: '/', antes: sinRotar },
   'tienda-inicio-compra-por-categoria': { tienda: true, ruta: '/', antes: sinAparicion },
-  'tienda-inicio-anterior': { tienda: true, ruta: '/inicio-anterior', antes: sinRotar },
   'tienda-catalogo': { tienda: true, ruta: '/catalogo' },
   'tienda-catalogo-filtro-categoria': {
     tienda: true,

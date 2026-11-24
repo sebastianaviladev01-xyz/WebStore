@@ -1,10 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { hijosDeCategoria, descendientesDeCategoria } from '../../catalogo/domain/categoria.rules';
-import { VarianteInicio } from '../../contenido/domain/contenido.model';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { CarruselBannersComponent } from './carrusel-banners.component';
 import { BotonesBannerComponent } from './botones-banner.component';
@@ -26,11 +25,7 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
   ],
   template: `
     @if (content.heroBanners().length) {
-      <ws-hero-carousel
-        [banners]="content.heroBanners()"
-        [variant]="variant()"
-        [highlights]="heroHighlights()"
-      />
+      <ws-hero-carousel [banners]="content.heroBanners()" [highlights]="heroHighlights()" />
     } @else {
       <section class="ws-home-intro ws-container">
         <h1>Tecnología para disfrutar en casa.</h1>
@@ -38,11 +33,9 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
       </section>
     }
 
-    @if (variant() === 'actual') {
-      <ws-service-shortcuts />
-    }
+    <ws-service-shortcuts />
 
-    <ws-quick-access [categories]="categoryAccess()" [variant]="variant()" />
+    <ws-quick-access [categories]="categoryAccess()" />
 
     <section id="destacados" class="ws-section ws-featured" aria-labelledby="featured-title">
       <div class="ws-container">
@@ -50,11 +43,7 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
           <div>
             <h2 id="featured-title" class="ws-heading">Productos destacados</h2>
             <p class="ws-section-copy">
-              @if (variant() === 'anterior') {
-                Tecnología elegida por su diseño, desempeño y disponibilidad inmediata.
-              } @else {
-                Tecnología elegida por su diseño y desempeño, con precios que ya incluyen IGV.
-              }
+              Tecnología elegida por su diseño y desempeño, con precios que ya incluyen IGV.
             </p>
           </div>
           <a routerLink="/catalogo" class="ws-text-link">Ver todos los productos</a>
@@ -209,15 +198,9 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
       </div>
     </section>
   `,
-  host: { '[class.ws-home-previous]': "variant() === 'anterior'" },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class InicioPage {
-  /** Viene de los datos de la ruta: /inicio-anterior publica la versión previa para compararla. */
-  // El router asigna undefined cuando la ruta no trae el dato: eso es la versión actual.
-  readonly variant = input<VarianteInicio, VarianteInicio | undefined>('actual', {
-    transform: (value) => value ?? 'actual',
-  });
   protected readonly catalog = inject(CatalogoFacade);
   protected readonly content = inject(ContenidoFacade);
   protected readonly selectedCategory = signal('');

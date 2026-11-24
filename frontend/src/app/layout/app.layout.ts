@@ -1,16 +1,13 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ActivatedRouteSnapshot, NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
-import { filter, map } from 'rxjs';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { CuentaFacade } from '../features/cuenta/application/cuenta.facade';
 import { CarritoFacade } from '../features/carrito/application/carrito.facade';
 import { CatalogoFacade } from '../features/catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../features/contenido/application/contenido.facade';
 import { descendientesDeCategoria } from '../features/catalogo/domain/categoria.rules';
-import { VarianteInicio } from '../features/contenido/domain/contenido.model';
 import { avisosVisibles } from '../features/contenido/domain/aviso.rules';
 import {
   EnlaceNavegacion,
@@ -34,7 +31,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
     RouterOutlet,
   ],
   template: `
-    <div class="min-h-screen bg-store-canvas" [class.ws-shell-previous]="isPrevious()">
+    <div class="min-h-screen bg-store-canvas">
       <!-- PBI-0182: si el contenido nunca llegó del BFF, el aviso de mantenimiento en lugar de una tienda a medias. -->
       @if (content.enMantenimiento()) {
         <ws-maintenance-notice />
@@ -51,9 +48,6 @@ import { PieTiendaComponent } from './pie-tienda.component';
             <!-- PBI-0175: los avisos de Contenido, en el lugar del mensaje superior. -->
             <ws-store-announcements [avisos]="avisos()" />
             <div class="hidden items-center gap-5 sm:flex">
-              @if (isPrevious()) {
-                <a routerLink="/pedidos" class="hover:underline">Seguimiento de pedidos</a>
-              }
               @if (content.settings().contactPageEnabled) {
                 <a routerLink="/info/contacto" class="hover:underline">Ayuda</a>
               }
@@ -164,13 +158,8 @@ import { PieTiendaComponent } from './pie-tienda.component';
                   class="h-5 w-5 fill-none stroke-current"
                   stroke-width="1.7"
                 >
-                  @if (isPrevious()) {
-                    <path d="M5 7h14v13H5zM8 4h8v3H8z" />
-                    <path d="M8 11h8M8 15h5" />
-                  } @else {
-                    <path d="M4 8l8-4 8 4v9l-8 4-8-4V8Z" />
-                    <path d="M4 8l8 4 8-4M12 12v9" />
-                  }
+                  <path d="M4 8l8-4 8 4v9l-8 4-8-4V8Z" />
+                  <path d="M4 8l8 4 8-4M12 12v9" />
                 </svg>
                 <span class="hidden xl:block">Pedidos</span>
               </a>
@@ -204,7 +193,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
                 <input
                   type="search"
                   class="h-11 w-full rounded-full border border-line bg-canvas pl-4 pr-12 text-sm outline-none focus:border-link focus:bg-surface"
-                  [placeholder]="isPrevious() ? 'Buscar en la tienda' : 'Buscar productos'"
+                  placeholder="Buscar productos"
                   [value]="searchTerm()"
                   (input)="updateSearch($event)"
                 />
@@ -227,11 +216,10 @@ import { PieTiendaComponent } from './pie-tienda.component';
             </form>
           </div>
 
-          <div class="ws-header-nav-row" [class.border-t]="isPrevious()" [class.border-line]="isPrevious()">
+          <div class="ws-header-nav-row">
             <ws-category-mega-menu
               [categories]="catalog.categories()"
               [supplementalLinks]="supplementalLinks()"
-              [allLabel]="isPrevious() ? 'Tienda online' : 'Todas las categorías'"
             />
           </div>
         </header>
@@ -361,15 +349,6 @@ export class AppLayout {
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   protected readonly sideOpen = signal(false);
-  /** /inicio-anterior conserva la cabecera previa para comparar; el resto de la tienda usa la actual. */
-  private readonly variant = toSignal(
-    this.router.events.pipe(
-      filter((event) => event instanceof NavigationEnd),
-      map(() => this.variantOf(this.router.routerState.snapshot.root)),
-    ),
-    { initialValue: this.variantOf(this.router.routerState.snapshot.root) },
-  );
-  protected readonly isPrevious = computed(() => this.variant() === 'anterior');
   protected readonly searchTerm = signal('');
 
   protected readonly topCategories = computed(() =>
@@ -380,31 +359,10 @@ export class AppLayout {
   );
   /** Avisos de la barra superior (PBI-0175). */
   protected readonly avisos = computed(() => avisosVisibles(this.content.settings().announcements));
-  /**
-   * A la derecha de las categorías: Envíos, fijo desde el lote 15 (PBI-0175), si su página está activa. La versión
-   * anterior conserva su lista original.
-   */
+  /** A la derecha de las categorías: Envíos, fijo desde el lote 15 (PBI-0175), si su página está activa. */
   protected readonly supplementalLinks = computed<readonly EnlaceNavegacion[]>(() =>
-    this.isPrevious() ? this.previousSupplementalLinks() : enlacesDeLaCabecera(this.content.settings()),
+    enlacesDeLaCabecera(this.content.settings()),
   );
-
-  /**
-   * Enlaces tal como los mostraba la cabecera anterior con la navegación de la semilla («Inicio, Productos, Pedidos,
-   * Envíos»), que hasta el lote 15 salían de la «Navegación superior» de Contenido.
-   */
-  private previousSupplementalLinks(): readonly EnlaceNavegacion[] {
-    return [
-      { label: 'Inicio', route: '/' },
-      { label: 'Pedidos', route: '/pedidos' },
-      ...(this.content.settings().shippingPageEnabled ? [{ label: 'Envíos', route: '/info/envios' }] : []),
-    ];
-  }
-
-  private variantOf(route: ActivatedRouteSnapshot): VarianteInicio {
-    let current = route;
-    while (current.firstChild) current = current.firstChild;
-    return current.data['variant'] === 'anterior' ? 'anterior' : 'actual';
-  }
 
   protected descendantsFor(parentId: string) {
     return descendientesDeCategoria(this.catalog.categories(), parentId);

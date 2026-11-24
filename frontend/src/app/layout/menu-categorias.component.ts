@@ -27,7 +27,7 @@ import { EnlaceNavegacion } from '../features/contenido/domain/navegacion.rules'
     >
       <div class="ws-container ws-navigation-row">
         <a routerLink="/catalogo" class="ws-navigation-all" (click)="activeCategory.set(null)">
-          {{ allLabel() }}
+          Todas las categorías
         </a>
         @for (category of topCategories(); track category.id) {
           @if (childrenFor(category.id).length) {
@@ -128,7 +128,6 @@ import { EnlaceNavegacion } from '../features/contenido/domain/navegacion.rules'
 export class MenuCategoriasComponent {
   readonly categories = input.required<readonly Categoria[]>();
   readonly supplementalLinks = input<readonly EnlaceNavegacion[]>([]);
-  readonly allLabel = input('Todas las categorías');
   protected readonly activeCategory = signal<string | null>(null);
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly topCategories = computed(() => hijosDeCategoria(this.categories()));

@@ -1,8 +1,5 @@
 export type UbicacionBanner = 'hero' | 'promotion' | 'secondary';
 
-/** Versión del inicio: la actual o la previa a la alineación con la propuesta B, publicada aparte para comparar. */
-export type VarianteInicio = 'actual' | 'anterior';
-
 export interface Banner {
   readonly id: string;
   readonly eyebrow: string;

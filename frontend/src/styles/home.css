@@ -152,56 +152,6 @@
   background: color-mix(in srgb, var(--ws-surface) 70%, transparent);
 }
 
-.ws-hero-pagination {
-  display: flex;
-  margin-right: 4px;
-}
-
-/* Cada punto mantiene un área táctil de 44 px; el indicador visible es la píldora interior. */
-.ws-hero-page {
-  position: relative;
-  width: 20px;
-  height: 44px;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  transition: width 220ms ease;
-}
-
-.ws-hero-page.is-active {
-  width: 42px;
-}
-
-.ws-hero-page::after,
-.ws-hero-page::before {
-  content: '';
-  position: absolute;
-  top: 19px;
-  left: 7px;
-  right: 7px;
-  height: 6px;
-  border-radius: 3px;
-}
-
-.ws-hero-page::after {
-  background: var(--ws-dot);
-}
-
-.ws-hero-page::before {
-  z-index: 1;
-  background: var(--ws-primary);
-  transform: scaleX(0);
-  transform-origin: left center;
-}
-
-.ws-hero-page.is-active::before {
-  animation: ws-hero-progress 8s linear both;
-}
-
-.ws-hero.is-paused .ws-hero-page.is-active::before {
-  animation-play-state: paused;
-}
-
 .ws-home-intro {
   width: min(1280px, calc(100% - 64px));
   margin: 24px auto 0;
@@ -929,8 +879,8 @@
 }
 
 /*
- * Lote 11 (PBI-0162): la imagen de la categoría (su versión de 100 × 100 px) en la tarjeta, solo si tiene una. En el
- * inicio actual va a la izquierda del texto, que toma el ancho libre; en /inicio-anterior, encima del nombre.
+ * Lote 11 (PBI-0162): la imagen de la categoría (su versión de 100 × 100 px) en la tarjeta, solo si tiene una. Va a
+ * la izquierda del texto, que toma el ancho libre.
  */
 .ws-category-access-image {
   width: 44px;
@@ -938,10 +888,6 @@
   flex: none;
   border-radius: 10px;
   object-fit: contain;
-}
-
-.ws-quick-access:not(.is-current) .ws-category-access-image {
-  margin-bottom: 6px;
 }
 
 .ws-category-access-image + .ws-category-access-text {
@@ -1122,24 +1068,24 @@
 }
 
 /* Destacados del inicio actual: el texto de la sección cabe en una línea en escritorio. */
-ws-home-page:not(.ws-home-previous) .ws-featured .ws-section-copy {
+ws-home-page .ws-featured .ws-section-copy {
   max-width: 640px;
 }
 
 /* Beneficios del inicio actual: las tarjetas llenan el ancho de la cabecera, hasta 4 por fila
    en escritorio y 2 en tablet; el número de columnas sigue a la cantidad de beneficios. */
-ws-home-page:not(.ws-home-previous) .ws-benefits-grid {
+ws-home-page .ws-benefits-grid {
   grid-template-columns: repeat(var(--ws-benefit-columns, 4), minmax(0, 1fr));
 }
 
 @media (max-width: 1199px) {
-  ws-home-page:not(.ws-home-previous) .ws-benefits-grid {
+  ws-home-page .ws-benefits-grid {
     grid-template-columns: repeat(var(--ws-benefit-columns-md, 2), minmax(0, 1fr));
   }
 }
 
 @media (max-width: 600px) {
-  ws-home-page:not(.ws-home-previous) .ws-benefits-grid {
+  ws-home-page .ws-benefits-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

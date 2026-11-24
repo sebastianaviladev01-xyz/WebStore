@@ -41,15 +41,11 @@ const CLASE_DE_PALETA: Readonly<Record<BotonBanner['paleta'], string>> = {
 })
 export class BotonesBannerComponent {
   readonly banner = input.required<Banner>();
-  /** Solo el botón principal: para la versión anterior del inicio (`/inicio-anterior`), que no tenía secundario. */
-  readonly soloPrincipal = input(false);
   private readonly router = inject(Router);
   protected readonly clase = CLASE_DE_PALETA;
   protected readonly esEnlaceExterno = esEnlaceExterno;
   protected readonly abreEnOtraPestana = abreEnOtraPestana;
-  protected readonly botones = computed(() =>
-    botonesDelBanner(this.banner()).filter((boton) => !this.soloPrincipal() || boton.paleta === 'primaria'),
-  );
+  protected readonly botones = computed(() => botonesDelBanner(this.banner()));
 
   protected linkFor(url: string): UrlTree {
     return this.router.parseUrl(url);

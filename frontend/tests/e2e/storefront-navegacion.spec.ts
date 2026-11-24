@@ -33,11 +33,12 @@ for (const { ruta, titulo, encabezado } of rutas) {
   });
 }
 
-test('el inicio anterior sigue publicado y no aparece en el menú', async ({ page }) => {
+test('PBI-0193: /inicio-anterior ya no existe y muestra la página 404 (lote 16, ADR-0021)', async ({
+  page,
+}) => {
   await page.goto('/inicio-anterior');
-  await expect(page).toHaveTitle('WebStore | Inicio (versión anterior)');
-  await expect(page.getByRole('region', { name: 'Promociones principales' })).toBeVisible();
-  await expect(page.getByRole('region', { name: 'Productos destacados' })).toBeVisible();
+  await expect(page).toHaveTitle('WebStore | Página no encontrada');
+  await expect(page.getByRole('heading', { level: 1, name: 'Página no encontrada' })).toBeVisible();
   await expect(page.locator('a[href="/inicio-anterior"]')).toHaveCount(0);
 });
 

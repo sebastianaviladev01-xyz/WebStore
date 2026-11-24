@@ -115,7 +115,7 @@
 
 /*
  * Enlaces de servicio a la derecha (Envíos): mismo color y peso que las categorías, con ícono, para que se
- * lean como enlace y no como un dato suelto. La cabecera anterior conserva su gris en home-previous.css.
+ * lean como enlace y no como un dato suelto.
  */
 .ws-navigation-secondary .ws-navigation-trigger {
   gap: 7px;

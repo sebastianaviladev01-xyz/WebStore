@@ -8,7 +8,7 @@ import {
   signal,
 } from '@angular/core';
 
-import { VarianteInicio, Banner } from '../../contenido/domain/contenido.model';
+import { Banner } from '../../contenido/domain/contenido.model';
 import { BotonesBannerComponent } from './botones-banner.component';
 
 @Component({
@@ -17,8 +17,7 @@ import { BotonesBannerComponent } from './botones-banner.component';
   template: `
     @if (banners().length) {
       <section
-        class="ws-hero"
-        [class.is-wide]="variant() === 'actual'"
+        class="ws-hero is-wide"
         [class.is-paused]="paused() || hovered() || focusWithin()"
         [class.is-dark-tone]="activeBanner()?.imageTone === 'dark'"
         aria-roledescription="carrusel"
@@ -39,19 +38,16 @@ import { BotonesBannerComponent } from './botones-banner.component';
             >
               <div class="ws-hero-layout">
                 <div class="ws-hero-copy">
-                  @if (variant() === 'actual' && banner.eyebrow) {
+                  @if (banner.eyebrow) {
                     <p class="ws-hero-eyebrow">{{ banner.eyebrow }}</p>
                   }
                   <h1>{{ banner.title }}</h1>
                   <p class="ws-hero-description">{{ banner.description }}</p>
                   <div class="ws-hero-action-row">
                     <!-- PBI-0184: los dos botones configurables; el secundario reemplaza al fijo «Ver todos los productos». -->
-                    <ws-banner-buttons [banner]="banner" [soloPrincipal]="variant() === 'anterior'" />
-                    @if (variant() === 'anterior') {
-                      <span>{{ banner.eyebrow }}</span>
-                    }
+                    <ws-banner-buttons [banner]="banner" />
                   </div>
-                  @if (variant() === 'actual' && highlights().length) {
+                  @if (highlights().length) {
                     <ul class="ws-hero-highlights">
                       @for (highlight of highlights(); track highlight; let position = $index) {
                         <li>
@@ -97,38 +93,20 @@ import { BotonesBannerComponent } from './botones-banner.component';
 
         @if (banners().length > 1) {
           <div class="ws-hero-controls">
-            @if (variant() === 'anterior') {
-              <span class="ws-hero-counter" aria-live="polite">
-                {{ activeIndex() + 1 }} / {{ banners().length }}
-              </span>
-              <div class="ws-hero-pagination" aria-label="Seleccionar promoción">
-                @for (item of banners(); track item.id; let index = $index) {
-                  <button
-                    type="button"
-                    class="ws-hero-page"
-                    [class.is-active]="activeIndex() === index"
-                    [attr.aria-pressed]="activeIndex() === index"
-                    [attr.aria-label]="'Mostrar promoción ' + (index + 1)"
-                    (click)="goTo(index)"
-                  ></button>
-                }
-              </div>
-            } @else {
-              <!-- Contador y una sola barra de progreso: sirven igual con 2 que con 10 banners. -->
-              <p class="sr-only" aria-live="polite">
-                Promoción {{ activeIndex() + 1 }} de {{ banners().length }}
-              </p>
-              <span class="ws-hero-count" aria-hidden="true">
-                <strong>{{ activeIndex() + 1 }}</strong>
-                / {{ banners().length }}
-              </span>
-              <span class="ws-hero-progress" aria-hidden="true">
-                <!-- Se vuelve a crear en cada cambio para que la barra arranque de cero. -->
-                @for (slide of [activeIndex()]; track slide) {
-                  <span></span>
-                }
-              </span>
-            }
+            <!-- Contador y una sola barra de progreso: sirven igual con 2 que con 10 banners. -->
+            <p class="sr-only" aria-live="polite">
+              Promoción {{ activeIndex() + 1 }} de {{ banners().length }}
+            </p>
+            <span class="ws-hero-count" aria-hidden="true">
+              <strong>{{ activeIndex() + 1 }}</strong>
+              / {{ banners().length }}
+            </span>
+            <span class="ws-hero-progress" aria-hidden="true">
+              <!-- Se vuelve a crear en cada cambio para que la barra arranque de cero. -->
+              @for (slide of [activeIndex()]; track slide) {
+                <span></span>
+              }
+            </span>
             <button
               type="button"
               class="ws-carousel-control"
@@ -168,9 +146,7 @@ import { BotonesBannerComponent } from './botones-banner.component';
 })
 export class CarruselBannersComponent {
   readonly banners = input.required<readonly Banner[]>();
-  /** 'anterior' muestra el hero previo a la alineación con la propuesta B (solo para /inicio-anterior). */
-  readonly variant = input<VarianteInicio>('actual');
-  /** Beneficios cortos del CMS que acompañan al banner (solo en la versión actual). */
+  /** Beneficios cortos del CMS que acompañan al banner. */
   readonly highlights = input<readonly string[]>([]);
   private readonly destroyRef = inject(DestroyRef);
   protected readonly currentIndex = signal(0);
