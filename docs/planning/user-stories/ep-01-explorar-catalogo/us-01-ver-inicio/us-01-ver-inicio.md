@@ -55,3 +55,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - Queda el inicio actual (Daniel, 2026-11-20, PBI-0019); `/inicio-anterior` se quitó en el lote 16 (PBI-0193).
 - Las imágenes del inicio se quedan (Daniel, 2026-11-20, PBI-0016).
+- Productos destacados configurables (Daniel, revisión de la demo del 2026-11-17; PBI-0215): el registro del producto tendrá una casilla «Es destacado», sin tope; con más de cuatro, el inicio los muestra en un carrusel. Así no dependen de las ventas cuando la tienda abre. Hoy se destacan los cuatro primeros del catálogo.
