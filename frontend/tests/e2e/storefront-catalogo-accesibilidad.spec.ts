@@ -227,7 +227,7 @@ test.describe('PBI-0109: saltar al contenido', () => {
   });
 });
 
-test.describe('PBI-0111: el contenido no vuelve al de la demo ante un fallo', () => {
+test.describe('PBI-0111 y PBI-0182: el contenido ante un fallo del BFF', () => {
   const ajustes = async (page: Page) => (await page.request.get(`${urls.bff}/bff/content/settings`)).json();
 
   test('un fallo al recargar conserva el contenido que ya llegó', async ({ page }) => {
@@ -253,16 +253,40 @@ test.describe('PBI-0111: el contenido no vuelve al de la demo ante un fallo', ()
     await expect(pie.getByRole('link', { name: 'Envíos' })).toHaveCount(0);
   });
 
-  test('si el contenido nunca llega, no muestra los datos de contacto de la demo ni abre las páginas', async ({
+  // Lote 15 (ADR-0021), PBI-0182: si nunca llega, la tienda muestra un aviso de mantenimiento con «Reintentar», sin
+  // cabecera, pie ni datos de contacto de la demo; al reintentar con el BFF de vuelta, aparece la tienda.
+  test('PBI-0182: si el contenido nunca llega, muestra el aviso de mantenimiento y «Reintentar» trae la tienda', async ({
     page,
   }) => {
-    await page.route('**/bff/content/settings', (r) => r.fulfill({ status: 503, body: '{}' }));
+    let fallar = true;
+    await page.route('**/bff/content/settings', (r) =>
+      fallar ? r.fulfill({ status: 503, body: '{}' }) : r.fallback(),
+    );
     await page.goto('/');
-    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Estamos haciendo mantenimiento' }),
+    ).toBeVisible();
+    await expect(page.getByText('Vuelve a intentarlo en unos minutos.')).toBeVisible();
+    await expect(page.getByRole('banner')).toHaveCount(0);
+    await expect(page.getByRole('contentinfo')).toHaveCount(0);
+    await expect(page.getByRole('search')).toHaveCount(0);
     await expect(page.getByText('contacto@webstore.demo')).toHaveCount(0);
     await expect(page.getByText('+51 999 000 000')).toHaveCount(0);
-    await page.goto('/info/envios');
-    await expect(page).toHaveURL('/');
+
+    const reintentar = page.getByRole('button', { name: 'Reintentar' });
+    await reintentar.click();
+    await expect(page.getByRole('status')).toHaveText('La tienda todavía no responde.');
+    await expect(
+      page.getByRole('heading', { level: 1, name: 'Estamos haciendo mantenimiento' }),
+    ).toBeVisible();
+
+    fallar = false;
+    await reintentar.click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Estamos haciendo mantenimiento' })).toHaveCount(
+      0,
+    );
+    await expect(page.getByRole('contentinfo').getByText('contacto@webstore.demo')).toBeVisible();
+    await expect(page.getByRole('search').first()).toBeVisible();
   });
 });
 

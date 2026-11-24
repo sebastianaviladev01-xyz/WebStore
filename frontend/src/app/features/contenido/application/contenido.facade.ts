@@ -5,21 +5,34 @@ import { ContenidoGateway } from '../domain/contenido.gateway';
 import { bannersDeZona, bannersVigentes } from '../domain/banner.rules';
 
 /**
- * Contenido mientras no llega el del BFF, o si nunca llega (PBI-0111; provisional, por confirmar con Daniel): sin datos
- * de contacto de la demo y con las páginas informativas cerradas, porque no se sabe si el Admin las desactivó.
+ * Contenido mientras no llega el del BFF (PBI-0111; provisional, por confirmar con Daniel): sin datos de contacto ni
+ * avisos de la demo y con las páginas informativas cerradas, porque no se sabe si el Admin las desactivó. Los accesos
+ * del pie son los de la semilla, para que el pie no salte al llegar el contenido. Si nunca llega, la tienda muestra el
+ * aviso de mantenimiento (PBI-0182).
  */
 const FALLBACK: ConfiguracionTienda = {
   storeName: 'WebStore',
   logoText: 'W',
   logoUrl: '',
-  contactEmail: '',
-  contactPhone: '',
+  contactEmails: [],
+  contactPhones: [],
+  socialLinks: [],
   fontFamily: 'Source Sans 3 Variable',
-  headerMessage: 'Despachos en Lima. Consulta cobertura y tarifas.',
+  announcements: [],
   footerText: 'Tecnología y electrohogar para tu casa.',
-  topNavigation: 'Inicio, Productos, Pedidos, Envíos',
   sideNavigation: 'TV y audio, Electrohogar, Monitores, Cocina',
-  quickLinks: 'Contacto, Envíos, Privacidad, Términos, Libro de reclamaciones',
+  quickLinks: [
+    { group: 'Mi cuenta', label: 'Ingresar', url: '/cuenta/login' },
+    { group: 'Mi cuenta', label: 'Mi perfil', url: '/cuenta/perfil' },
+    { group: 'Mi cuenta', label: 'Mis pedidos', url: '/pedidos' },
+    { group: 'Mi cuenta', label: 'Recuperar acceso', url: '/cuenta/recuperar' },
+    { group: 'Información', label: 'Envíos', url: '/info/envios' },
+    { group: 'Información', label: 'Privacidad', url: '/info/privacidad' },
+    { group: 'Información', label: 'Términos', url: '/info/terminos' },
+    { group: 'Ayuda', label: 'Contacto', url: '/info/contacto' },
+    { group: 'Ayuda', label: 'Libro de reclamaciones', url: '/libro-reclamaciones' },
+    { group: 'Ayuda', label: 'Carrito', url: '/carrito' },
+  ],
   benefits:
     'Compra como invitado|No necesitas crear una cuenta para hacer tu pedido.;Envío según tu distrito|El costo depende de tu distrito y despachamos desde la tienda más cercana.;Stock a la vista|Cada producto muestra cuántas unidades quedan.;Libro de reclamaciones|Te respondemos en un máximo de 15 días hábiles.',
   contactContent:
@@ -36,20 +49,32 @@ const FALLBACK: ConfiguracionTienda = {
   termsPageEnabled: false,
 };
 
+/**
+ * Estado del contenido (PBI-0182): `cargando` hasta la primera respuesta, `listo` desde que llegó una vez y
+ * `sin-contenido` si el primer intento falló. Un fallo al recargar no deja de estar `listo` (PBI-0111).
+ */
+export type EstadoContenido = 'cargando' | 'listo' | 'sin-contenido';
+
 @Injectable({ providedIn: 'root' })
 export class ContenidoFacade {
   private readonly gateway = inject(ContenidoGateway);
   private readonly settingsState = signal<ConfiguracionTienda>(FALLBACK);
   private readonly bannersState = signal<readonly Banner[]>([]);
+  private readonly estadoState = signal<EstadoContenido>('cargando');
+  private readonly reintentandoState = signal(false);
   private loadPromise: Promise<void> | null = null;
 
   readonly settings = this.settingsState.asReadonly();
+  readonly estado = this.estadoState.asReadonly();
+  /** El contenido nunca llegó: la tienda muestra el aviso de mantenimiento en lugar de una tienda a medias. */
+  readonly enMantenimiento = computed(() => this.estadoState() === 'sin-contenido');
+  /** «Reintentar» está pidiendo el contenido otra vez. */
+  readonly reintentando = this.reintentandoState.asReadonly();
   readonly activeBanners = computed(() => bannersVigentes(this.bannersState(), new Date()));
   readonly heroBanners = computed(() => bannersDeZona(this.activeBanners(), ['hero']));
   readonly promotionalBanners = computed(() =>
     bannersDeZona(this.activeBanners(), ['promotion', 'secondary']),
   );
-  readonly topNavigation = computed(() => this.parseList(this.settings().topNavigation));
   readonly sideNavigation = computed(() => this.parseList(this.settings().sideNavigation));
   readonly benefits = computed(() =>
     this.settings()
@@ -74,12 +99,23 @@ export class ContenidoFacade {
     return this.loadPromise;
   }
 
+  /** Botón «Reintentar» del aviso de mantenimiento (PBI-0182). */
+  async reintentar(): Promise<void> {
+    this.reintentandoState.set(true);
+    try {
+      await this.load(true);
+    } finally {
+      this.reintentandoState.set(false);
+    }
+  }
+
   private async fetchContent(): Promise<void> {
     try {
       const [settings, banners] = await Promise.all([this.gateway.getSettings(), this.gateway.getBanners()]);
       const resolved = { ...FALLBACK, ...settings };
       this.settingsState.set(resolved);
       this.bannersState.set(banners);
+      this.estadoState.set('listo');
       // Contenido ya no trae colores (D3): el color de la tienda lo aplica el tema activo.
       if (typeof document !== 'undefined') {
         // Un nombre de familia con dígitos (p. ej. 'Source Sans 3') solo es válido en CSS entre comillas.
@@ -89,7 +125,9 @@ export class ContenidoFacade {
         );
       }
     } catch {
-      // Un fallo pasajero no reemplaza el contenido que ya llegó por el de respaldo (PBI-0111).
+      // Un fallo pasajero no reemplaza el contenido que ya llegó por el de respaldo (PBI-0111); si nunca llegó, la
+      // tienda queda en mantenimiento (PBI-0182).
+      if (this.estadoState() !== 'listo') this.estadoState.set('sin-contenido');
     }
   }
 

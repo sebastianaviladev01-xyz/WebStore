@@ -1,8 +1,7 @@
 /**
- * Navegación de la cabecera de la tienda (PBI-0118, lote 05, ADR-0017). Las reglas salen de `app.layout.ts` sin
- * cambiar de comportamiento: la «Navegación superior» del CMS es una lista de textos y la ruta de cada uno se deduce
- * de sus palabras. Por eso un texto que no se reconoce no lleva a ninguna parte; la advertencia en el Admin al
- * renombrar un enlace es PBI-0153, del lote 07.
+ * Navegación de la cabecera de la tienda (PBI-0118, lote 05, ADR-0017): el orden de las categorías sigue la
+ * «Navegación lateral» del CMS. Desde el lote 15 (PBI-0175), la «Navegación superior» es una lista de avisos
+ * (`aviso.rules.ts`) y la cabecera ya no deduce rutas de las palabras.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -13,7 +12,7 @@ const source = await readFile(new URL('./navegacion.rules.ts', import.meta.url),
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { normalizarEtiqueta, enlaceDeNavegacion, ordenarPorNavegacion } = await import(
+const { normalizarEtiqueta, enlacesDeLaCabecera, ordenarPorNavegacion } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -34,31 +33,12 @@ test('normalizarEtiqueta quita tildes, espacios de los extremos y mayúsculas', 
   assert.equal(normalizarEtiqueta('  Envíos y Términos '), 'envios y terminos');
 });
 
-test('cada texto conocido lleva a su página, si está habilitada', () => {
-  assert.deepEqual(enlaceDeNavegacion('Envíos', todas), {
-    label: 'Envíos',
-    route: '/info/envios',
-    icon: 'truck',
-  });
-  assert.deepEqual(enlaceDeNavegacion('Ayuda', todas), { label: 'Ayuda', route: '/info/contacto' });
-  assert.deepEqual(enlaceDeNavegacion('Contacto', todas), { label: 'Contacto', route: '/info/contacto' });
-  assert.deepEqual(enlaceDeNavegacion('Privacidad', todas), {
-    label: 'Privacidad',
-    route: '/info/privacidad',
-  });
-  assert.deepEqual(enlaceDeNavegacion('Términos', todas), { label: 'Términos', route: '/info/terminos' });
-  assert.deepEqual(enlaceDeNavegacion('Libro de reclamaciones', ninguna), {
-    label: 'Libro de reclamaciones',
-    route: '/libro-reclamaciones',
-  });
-  assert.deepEqual(enlaceDeNavegacion('Mi cuenta', ninguna), { label: 'Mi cuenta', route: '/cuenta/login' });
-  for (const etiqueta of ['Envíos', 'Contacto', 'Privacidad', 'Términos'])
-    assert.equal(enlaceDeNavegacion(etiqueta, ninguna), null, etiqueta);
-});
-
-test('lo que la cabecera ya ofrece y lo que no se reconoce no se muestra', () => {
-  for (const etiqueta of ['Inicio', 'Productos', 'Pedidos', 'Despachos', 'Ofertas'])
-    assert.equal(enlaceDeNavegacion(etiqueta, todas), null, etiqueta);
+// Lote 15 (ADR-0021), PBI-0175: la «Navegación superior» de Contenido pasa a ser una lista de avisos y la tienda deja
+// de deducir rutas de las palabras. El enlace «Envíos» que esa navegación ponía junto a las categorías queda fijo en
+// la cabecera, como «Ayuda» en la barra superior, y solo se muestra si la página Envíos está activa.
+test('PBI-0175: junto a las categorías, la cabecera ofrece Envíos si su página está activa', () => {
+  assert.deepEqual(enlacesDeLaCabecera(todas), [{ label: 'Envíos', route: '/info/envios', icon: 'truck' }]);
+  assert.deepEqual(enlacesDeLaCabecera(ninguna), []);
 });
 
 test('las categorías siguen el orden de la navegación lateral y, después, su orden y su nombre', () => {

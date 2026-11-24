@@ -1,8 +1,9 @@
-import type { ConfiguracionTienda } from './contenido.model';
+import type { PaginasHabilitadas } from './contenido.model';
 
 /**
- * Navegación de la cabecera de la tienda a partir del CMS (PBI-0118, lote 05). La «Navegación superior» es una lista
- * de textos: la ruta de cada uno se deduce de sus palabras, y lo que no se reconoce no se muestra.
+ * Navegación de la cabecera de la tienda (PBI-0118, lote 05): el orden de las categorías sigue la «Navegación lateral»
+ * del CMS. Desde el lote 15 (PBI-0175) la «Navegación superior» es una lista de avisos (`aviso.rules.ts`) y la tienda
+ * ya no deduce rutas de las palabras.
  */
 export interface EnlaceNavegacion {
   readonly label: string;
@@ -10,11 +11,6 @@ export interface EnlaceNavegacion {
   /** Ícono opcional delante del texto (por ahora, el camión de Envíos). */
   readonly icon?: 'truck';
 }
-
-export type PaginasHabilitadas = Pick<
-  ConfiguracionTienda,
-  'contactPageEnabled' | 'shippingPageEnabled' | 'privacyPageEnabled' | 'termsPageEnabled'
->;
 
 /** Sin tildes, sin espacios en los extremos y en minúsculas. */
 export function normalizarEtiqueta(valor: string): string {
@@ -25,26 +21,12 @@ export function normalizarEtiqueta(valor: string): string {
     .toLocaleLowerCase('es-PE');
 }
 
-function rutaDeEtiqueta(clave: string, paginas: PaginasHabilitadas): string | null {
-  if (clave.includes('envio')) return paginas.shippingPageEnabled ? '/info/envios' : null;
-  if (clave.includes('contacto') || clave.includes('ayuda'))
-    return paginas.contactPageEnabled ? '/info/contacto' : null;
-  if (clave.includes('privacidad')) return paginas.privacyPageEnabled ? '/info/privacidad' : null;
-  if (clave.includes('termino')) return paginas.termsPageEnabled ? '/info/terminos' : null;
-  if (clave.includes('reclamacion')) return '/libro-reclamaciones';
-  if (clave.includes('cuenta')) return '/cuenta/login';
-  return null;
-}
-
 /**
- * El enlace de un texto de la «Navegación superior», o `null` si la cabecera ya lo ofrece (Inicio, Productos,
- * Pedidos), si su página está desactivada o si no se reconoce.
+ * Enlaces fijos junto a las categorías (lote 15, PBI-0175): Envíos, si su página está activa. Hasta el lote 15 salía
+ * de la «Navegación superior» de Contenido, que ahora es una lista de avisos.
  */
-export function enlaceDeNavegacion(etiqueta: string, paginas: PaginasHabilitadas): EnlaceNavegacion | null {
-  const clave = normalizarEtiqueta(etiqueta);
-  const route = rutaDeEtiqueta(clave, paginas);
-  if (route === null) return null;
-  return clave.includes('envio') ? { label: etiqueta, route, icon: 'truck' } : { label: etiqueta, route };
+export function enlacesDeLaCabecera(paginas: PaginasHabilitadas): readonly EnlaceNavegacion[] {
+  return paginas.shippingPageEnabled ? [{ label: 'Envíos', route: '/info/envios', icon: 'truck' }] : [];
 }
 
 /**
