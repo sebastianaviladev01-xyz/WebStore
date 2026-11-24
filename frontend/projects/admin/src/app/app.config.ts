@@ -1,6 +1,7 @@
 import { IMAGE_CONFIG } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { ApplicationConfig, inject, LOCALE_ID } from '@angular/core';
+import { MAT_FORM_FIELD_DEFAULT_OPTIONS, MatFormFieldDefaultOptions } from '@angular/material/form-field';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 
 import { adminRoutes } from './app.routes';
@@ -22,6 +23,12 @@ export const adminConfig: ApplicationConfig = {
     { provide: LOCALE_ID, useValue: 'es-PE' },
     // El Admin muestra miniaturas de las fotos que se suben (banners, productos) en tamaño reducido; que la foto
     // sea más grande que la miniatura es lo esperado aquí, así que se apaga ese aviso de desarrollo (NG0913).
+    // Lote 25 (ADR-0025, PBI-0212): los campos del Admin son de contorno, como los de la tienda (PBI-0081), sin relleno;
+    // los colores salen de .ws-outline-fields, que lleva <body>. Se dice una vez aquí y no en cada `mat-form-field`.
+    {
+      provide: MAT_FORM_FIELD_DEFAULT_OPTIONS,
+      useValue: { appearance: 'outline' } satisfies MatFormFieldDefaultOptions,
+    },
     { provide: IMAGE_CONFIG, useValue: { disableImageSizeWarning: true } },
     { provide: SesionGateway, useClass: BffSesionGateway },
     { provide: TiendaGateway, useClass: BffTiendaGateway },
