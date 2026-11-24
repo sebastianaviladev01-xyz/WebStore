@@ -59,7 +59,7 @@ Un tema es un nombre y cinco colores: principal, secundario (el acento), fondo p
 | `--ws-on-primary` | Texto e íconos sobre el principal y el principal fuerte |
 | `--ws-on-primary-soft` | Texto sobre el tinte del principal |
 | `--ws-on-accent` | Texto sobre el acento |
-| `--ws-accent-line` | Borde de lo que se rellena con el acento: la insignia «Oferta», el contador del carrito, `ws-btn-accent`, las barras de «Clientes nuevos» y la vista previa de Temas (lote 14, [ADR-0023](../../docs/adrs/0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md)) |
+| `--ws-accent-line` | Borde de lo que se rellena con el acento: la insignia «Oferta», el contador del carrito, `ws-btn-accent`, las barras de «Clientes web nuevos» y la vista previa de Temas (lote 14, [ADR-0023](../../docs/adrs/0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md)) |
 | `--ws-link` | Enlaces y texto en el color de marca |
 | `--ws-on-link` | Texto y marcas que Material pinta sobre el color de los enlaces (`--mat-sys-on-primary`): la marca de las casillas marcadas (feature 005) |
 | `--ws-focus-ring` | Contorno del foco |
