@@ -303,6 +303,27 @@ test.describe('Temas del Admin', () => {
     await expect(fila(propios(page), original)).toHaveCount(0);
   });
 
+  test('PBI-0235: en una pantalla baja, la ventana del tema crece hasta casi todo el alto y se desplaza dentro', async ({
+    page,
+  }) => {
+    // Lote 27: antes, el contenido se quedaba en el 65 % del alto y la ventana, muy por debajo de la pantalla.
+    await page.setViewportSize({ width: 1440, height: 640 });
+    await abrirTemas(page);
+    await nuevoTema(page).click();
+    const formulario = dialogo(page);
+    await expect(formulario.getByRole('heading', { name: 'Nuevo tema' })).toBeVisible();
+    const caja = (await formulario.boundingBox())!;
+    expect(caja.height).toBeGreaterThanOrEqual(640 - 32 - 1);
+    expect(caja.y + caja.height).toBeLessThanOrEqual(640);
+    // Los botones siguen a la vista y lo de abajo se alcanza desplazando el contenido, no la página.
+    await expect(formulario.getByRole('button', { name: 'Guardar tema' })).toBeInViewport();
+    const nota = formulario.getByText('Solo cambia aquí.', { exact: false });
+    await nota.scrollIntoViewIfNeeded();
+    await expect(nota).toBeInViewport();
+    await expect(formulario.getByRole('button', { name: 'Guardar tema' })).toBeInViewport();
+    await expect(formulario.getByRole('heading', { name: 'Nuevo tema' })).toBeInViewport();
+  });
+
   test('borrar un tema propio que no es el activo lo quita de la lista', async ({ page }) => {
     const nombre = nombreUnico('borrar');
     await conApi((api) => api.crear(nombre));

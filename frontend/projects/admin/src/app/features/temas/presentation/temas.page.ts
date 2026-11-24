@@ -221,6 +221,8 @@ export class TemasPage {
         // Lote 25 (ADR-0025, PBI-0224): más ancha (antes 960 px) para que la vista previa se vea mejor.
         width: '1200px',
         maxWidth: 'calc(100vw - 32px)',
+        // Lote 27 (PBI-0235): también más alta, hasta casi toda la pantalla; el contenido se desplaza dentro.
+        maxHeight: 'calc(100dvh - 32px)',
         autoFocus: 'first-tabbable',
       })
       .afterClosed()
