@@ -1616,8 +1616,17 @@ try {
     }),
   });
   const publicas07b = await request('/bff/catalog/categories');
-  if (publicas07b.find((item) => item.id === categoria07b.id).imageUrl !== imagen100)
-    throw new Error('El catálogo no publica la imagen de la categoría');
+  // Lote 25 (ADR-0026): el catálogo publica la dirección de la imagen, no su Data URL, y el BFF la sirve.
+  const direccion07b = publicas07b.find((item) => item.id === categoria07b.id).imageUrl;
+  if (!/^\/bff\/images\/categories\/[^/]+\/image\?v=[A-Za-z0-9_-]{12}$/.test(direccion07b ?? ''))
+    throw new Error('El catálogo no publica la dirección de la imagen de la categoría');
+  const servida07b = await raw(direccion07b);
+  if (
+    servida07b.status !== 200 ||
+    `data:${servida07b.headers.get('content-type')};base64,${Buffer.from(await servida07b.arrayBuffer()).toString('base64')}` !==
+      imagen100
+  )
+    throw new Error('Lote 25: GET /bff/images no sirve la imagen de la categoría');
   if (publicas07b.some((item) => !('imageUrl' in item)))
     throw new Error('Cada categoría pública trae imageUrl');
 
