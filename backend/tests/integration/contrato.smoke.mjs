@@ -348,6 +348,8 @@ try {
           upsert: [
             {
               ...conCambio.products[0],
+              // Lote 24 (PBI-0214): un producto nuevo llega con sus imágenes cargadas.
+              ...imagenesDeProducto(),
               id: 'p-smoke-slug',
               sku: 'SMOKE-SLUG',
               name: conCambio.products[0].name.toUpperCase(),
@@ -428,7 +430,16 @@ try {
     body: JSON.stringify({
       revision: conCambio.revision,
       products: {
-        upsert: [{ ...plantilla, id: 'p-smoke-stock', sku: 'SMOKE-STOCK', name: 'Producto sin stock' }],
+        upsert: [
+          {
+            ...plantilla,
+            // Lote 24 (PBI-0214): un producto nuevo llega con sus imágenes cargadas.
+            ...imagenesDeProducto(),
+            id: 'p-smoke-stock',
+            sku: 'SMOKE-STOCK',
+            name: 'Producto sin stock',
+          },
+        ],
       },
     }),
   });
