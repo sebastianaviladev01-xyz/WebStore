@@ -34,6 +34,24 @@ export const mismaDireccion = (a, b) =>
 const idDeLaLinea = (item) => String(item?.productId ?? item?.product?.id ?? '');
 
 /**
+ * La dirección de una línea, validada y recortada como la principal. Su `VALIDATION_ERROR` lleva además
+ * `details.productId` (lote 18, ADR-0021), para que la tienda marque el campo de esa línea y no el de la principal.
+ */
+function direccionDeLaLinea(shipping, productId) {
+  try {
+    if (typeof shipping !== 'object' || Array.isArray(shipping))
+      throw new DomainError('validation', 'VALIDATION_ERROR', 'Completa los campos obligatorios.', {
+        fields: CAMPOS_DEL_DESTINO,
+      });
+    return pickShipping(shipping);
+  } catch (error) {
+    if (error instanceof DomainError && error.code === 'VALIDATION_ERROR')
+      throw new DomainError(error.kind, error.code, error.message, { ...error.details, productId });
+    throw error;
+  }
+}
+
+/**
  * Las direcciones propias de las líneas del checkout (`items[].shipping`), por producto. Con `per-order` (o un modo
  * desconocido), una línea con dirección responde `409 PER_PRODUCT_ADDRESS_DISABLED`: la tienda cambió de modo mientras
  * el comprador llenaba el formulario. Con `per-product`, cada dirección se valida y recorta como la principal
@@ -53,11 +71,7 @@ export function direccionesDeLasLineas(items, modo, principal) {
           'PER_PRODUCT_ADDRESS_DISABLED',
           'La tienda entrega cada pedido en una sola dirección. Revisa la dirección de entrega y vuelve a finalizar la compra.',
         );
-      if (typeof item.shipping !== 'object' || Array.isArray(item.shipping))
-        throw new DomainError('validation', 'VALIDATION_ERROR', 'Completa los campos obligatorios.', {
-          fields: CAMPOS_DEL_DESTINO,
-        });
-      const direccion = pickShipping(item.shipping);
+      const direccion = direccionDeLaLinea(item.shipping, productId);
       if (!mismaDireccion(direccion, principal)) propia = direccion;
     }
     if (vistas.has(productId)) {

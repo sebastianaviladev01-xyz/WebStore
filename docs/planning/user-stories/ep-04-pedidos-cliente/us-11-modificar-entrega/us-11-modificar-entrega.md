@@ -50,11 +50,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ### Escenario 06 – Fecha de entrega en el detalle
 
 - **Dado** que el cliente cambia la fecha de entrega de su pedido
-- **Cuando** elige una fecha anterior a hoy en Lima o deja un campo vacío
+- **Cuando** elige una fecha anterior a la primera fecha de entrega de la tienda (desde el lote 17, PBI-0178) o deja un campo vacío
 - **Entonces** la tienda le dice qué falta en ese campo y no envía el cambio; la fecha que el pedido ya tiene sigue valiendo.
 
 > Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0113 y PBI-0146), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-cuenta-formularios.spec.ts`.
 
 ## Fuera de alcance y pendientes
 
-- El MVP usa una dirección por pedido (PBI-0006 del [backlog](../../../backlog.md)).
+- Con una dirección por producto (lote 19, PBI-0006), cambiar la dirección cambia solo la principal: las líneas con otra dirección la conservan y el envío se recalcula.

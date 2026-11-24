@@ -2,6 +2,10 @@ import { expect, test, type Page, type Request } from '@playwright/test';
 
 import { actualizarProducto, leerProductos } from './apoyo/catalogo';
 import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Lote 04, tienda: carrito y checkout (ADR-0017). Cada prueba cita el elemento del backlog que cubre. Las que

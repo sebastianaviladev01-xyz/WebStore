@@ -75,10 +75,13 @@ import { direccionVisible } from '../domain/direccion-por-producto.rules';
             </section>
             @for (item of o.items; track item.product.id) {
               <article class="ws-card flex gap-4 p-4">
-                <!-- La caja conserva su tamaño; la foto va dentro con su proporción 4:3 (NG02952, PBI-0026). -->
+                <!--
+                  La caja conserva su tamaño; la foto va dentro con su proporción 4:3 (NG02952, PBI-0026). Se pinta a 96 px:
+                  carga la miniatura, no la foto grande (NG02960, lote 18); un pedido antiguo sin miniatura usa la foto.
+                -->
                 <span class="grid h-20 w-28 shrink-0 place-items-center rounded-xl bg-soft p-2">
                   <img
-                    [ngSrc]="item.product.imageUrl"
+                    [ngSrc]="item.product.thumbnailUrl || item.product.imageUrl"
                     [alt]="item.product.name"
                     width="96"
                     height="72"

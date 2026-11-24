@@ -2,6 +2,10 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { cantidadEnCarrito, enlaceDelCarrito, urls } from './apoyo/entorno';
 import { COOKIE_VISTA_PREVIA, PRIMARIO, primario } from './apoyo/modo-demo';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Carrito: confirmación al agregar, cambio de cantidad, totales con valor de venta e IGV explícitos, persistencia

@@ -16,7 +16,7 @@ Historias de usuario del Storefront y del Admin, derivadas de los documentos de 
 - Las historias se derivan de [`SCOPE.md`](../SCOPE.md), [`TRACEABILITY.md`](../TRACEABILITY.md) y [`FUNCIONALIDAD.md`](../FUNCIONALIDAD.md), que consolidan los acuerdos de las sesiones con el cliente, y del [contrato del BFF](../../../backend/docs/BFF-CONTRACT.md) cuando precisa una regla. Cada historia cita sus fuentes.
 - Los criterios de aceptación solo recogen lo que esas fuentes dicen. No inventan reglas: lo que las fuentes dejan abierto aparece como pendiente, con su elemento del [backlog](../backlog.md).
 - Todas describen lo que la demo ya implementa: su evidencia está en la [trazabilidad](../TRACEABILITY.md) y en la [validación](../../../frontend/docs/VALIDATION.md). No tienen capturas de prototipo.
-- La priorización de alcance y precio está pendiente y puede cambiar estas historias (PBI-0021).
+- Daniel confirmó el 2026-11-20 el orden de prioridad de la reunión del 11/11 (PBI-0021). Los cambios que pidió se entregaron el 2026-11-23 por lotes, sin features nuevas ([ADR-0021](../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)): cada historia afectada tiene sus escenarios nuevos, marcados «Añadido el 2026-11-23», y sus decisiones provisionales están en las [decisiones pendientes](../PENDING-DECISIONS.md).
 - Sin complejidad ni sprint asignados: las fuentes no los definen.
 
 ## Actores
@@ -29,9 +29,9 @@ Los roles del Admin son fijos ([glosario](../../architecture/glosario.md#rol-rol
 | Cliente | Storefront | Comprador que ya compró. Puede tener una cuenta opcional, con la que consulta sus pedidos |
 | Superadministrador | Admin | Configura la tienda (temas y contenido) y gestiona a todos los usuarios. Puede hacerlo todo |
 | Administrador | Admin | Opera la tienda día a día y gestiona a los vendedores, sin eliminarlos; no configura temas ni contenido |
-| Vendedor | Admin | Crea productos y modifica todos sus campos (también precio, stock, categoría y marca), sin eliminarlos; no entra a Inventario ni a Pedidos |
+| Vendedor | Admin | Crea productos y modifica todos sus campos (también precio, stock, categoría y marca), sin eliminarlos; gestiona Inventario y ve Pedidos sin cambiar su estado |
 
-Daniel confirmó el 2026-11-18 los permisos de los tres roles con un cambio por construir: el vendedor también gestiona Inventario y ve Pedidos (PBI-0170; [decisiones pendientes](../PENDING-DECISIONS.md), «Permisos de los roles»; feature 006, entregada con el lote 07).
+Daniel confirmó el 2026-11-18 los permisos de los tres roles con un cambio, construido en el lote 11: el vendedor también gestiona Inventario y ve Pedidos (PBI-0170; [decisiones pendientes](../PENDING-DECISIONS.md), «Permisos de los roles»; feature 006, entregada con el lote 07).
 
 ## Matriz de trazabilidad
 
@@ -88,8 +88,8 @@ Cada épica y cada historia tiene su propio archivo. Las historias viven dentro 
 
 | Tema | Motivo |
 |---|---|
-| Resumen (Dashboard) del Admin | Las fuentes lo nombran, pero no dicen qué muestra. Daniel lo definió el 06/11 (la estructura del dashboard de OpenCart) y se especificó como la feature [001](../../specs/features/001-reorganizar-resumen-del-admin/specification.md), no como historia |
+| Resumen (Dashboard) del Admin | Las fuentes lo nombran, pero no dicen qué muestra. Daniel lo definió el 06/11 (la estructura del dashboard de OpenCart) y se especificó como la feature [001](../../specs/features/001-reorganizar-resumen-del-admin/specification.md), no como historia. Desde el lote 13 se llama «Dashboard», sus ventas no suman el envío y sus cifras se pliegan (PBI-0168, PBI-0186 y PBI-0187) |
 | Página 404 | Se mencionó sin detalle. El lote 05 la implementó con una decisión provisional, que Daniel confirmó el 2026-11-20 (PBI-0020, [decisiones pendientes](../PENDING-DECISIONS.md)); no es un comportamiento de negocio |
-| Comparador de productos, pasarela de pago, facturación electrónica, correo transaccional, multi-tenant y SSR/SEO | Decisiones abiertas ([`PENDING-DECISIONS.md`](../PENDING-DECISIONS.md) y [backlog](../backlog.md)) |
+| Pasarela de pago, facturación electrónica, correo transaccional, multi-tenant y SSR/SEO | Decisiones abiertas ([`PENDING-DECISIONS.md`](../PENDING-DECISIONS.md) y [backlog](../backlog.md)) |
 | Identidad visual, fotografía eficiente y rendimiento | Son requisitos de diseño y calidad, no de comportamiento: viven en el [sistema visual](../../../frontend/docs/VISUAL-SYSTEM.md) y en la [validación](../../../frontend/docs/VALIDATION.md) |
 | Separación Storefront/Admin, fuente única y orientación a BFF | Son decisiones de arquitectura: viven en la [vista de sistema](../../architecture/README.md) y en los ADR |

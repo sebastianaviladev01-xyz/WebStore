@@ -12,8 +12,14 @@ const source = await readFile(new URL('./direccion-por-producto.rules.ts', impor
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { modoDeDireccion, mismaDireccion, destinosDelPedido, envioPorDestinos, direccionVisible } =
-  await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+const {
+  modoDeDireccion,
+  mismaDireccion,
+  destinosDelPedido,
+  envioPorDestinos,
+  direccionVisible,
+  direccionRechazada,
+} = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 const bff = await import(
   new URL('../../../../../../backend/src/domain/pedidos/direcciones-por-producto.rules.mjs', import.meta.url)
 );
@@ -90,4 +96,30 @@ test('la dirección se muestra en una línea, con la referencia si la trae', () 
     direccionVisible({ ...otra, reference: 'Portón verde' }),
     'Calle Regalo 456, Miraflores, Lima, Lima (Portón verde)',
   );
+});
+
+test('el rechazo del BFF a la dirección de una línea dice qué producto y qué campos marcar (lote 18)', () => {
+  let error;
+  try {
+    bff.direccionesDeLasLineas(
+      [{ productId: 'p-2', quantity: 1, shipping: { ...otra, addressLine: '     ' } }],
+      'per-product',
+      principal,
+    );
+  } catch (rechazo) {
+    error = rechazo;
+  }
+  assert.deepEqual(direccionRechazada(error.code, error.details), {
+    productId: 'p-2',
+    fields: ['addressLine'],
+  });
+  // Solo los campos de una dirección; sin producto, o con otro código, no es de una línea.
+  assert.deepEqual(
+    direccionRechazada('VALIDATION_ERROR', { productId: 'p-1', fields: ['district', 'email', 7] }),
+    { productId: 'p-1', fields: ['district'] },
+  );
+  assert.equal(direccionRechazada('VALIDATION_ERROR', { fields: ['district'] }), null);
+  assert.equal(direccionRechazada('INSUFFICIENT_STOCK', { productId: 'p-1' }), null);
+  assert.equal(direccionRechazada(undefined, undefined), null);
+  assert.equal(direccionRechazada('VALIDATION_ERROR', { productId: 3, fields: ['district'] }), null);
 });

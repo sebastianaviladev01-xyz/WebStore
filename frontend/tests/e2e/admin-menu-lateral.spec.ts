@@ -13,6 +13,10 @@ import {
   terminosAceptados,
   urls,
 } from './apoyo/entorno';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Menú lateral plegable del Admin (feature 003). TEST-04: en escritorio, cada grupo se pliega desde su título

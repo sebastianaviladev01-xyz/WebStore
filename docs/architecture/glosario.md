@@ -2,15 +2,15 @@
 
 Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las historias de usuario, las especificaciones y el código. Los nombres en código siguen [ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md): la parte de negocio va en español y los términos técnicos en inglés.
 
-- La columna «Código» da el identificador real en el frontend (Storefront en `frontend/src/app/`, Admin en `frontend/projects/admin/src/app/`) y, si existe, la carpeta del BFF (`backend/src/<capa>/<capacidad>/`).
-- La columna «Contrato y estado del BFF» da el nombre en el [contrato HTTP](../../backend/docs/BFF-CONTRACT.md) y en el archivo de estado. Esos nombres, y los métodos, propiedades y signals de las clases, siguen en inglés, pendientes de migrar (PBI-0022 del [backlog](../planning/backlog.md)). No se toman como ejemplo para código nuevo.
+- La columna «Código» da el identificador real en el frontend (el storefront en `frontend/src/app/`, el backoffice en `frontend/projects/admin/src/app/`) y, si existe, la carpeta del BFF (`backend/src/<capa>/<capacidad>/`).
+- La columna «Contrato y estado del BFF» da el nombre en el [contrato HTTP](../../backend/docs/BFF-CONTRACT.md) y en el archivo de estado. Esos nombres, y los métodos, propiedades y signals de las clases, se quedan en inglés ([ADR-0024](../adrs/0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md), PBI-0022). No se toman como ejemplo para código nuevo.
 
 ## Aplicaciones
 
 | Término | Definición | Código | Contrato y estado del BFF |
 |---|---|---|---|
-| Tienda (Storefront) | Aplicación pública donde el comprador navega, compra y consulta sus pedidos. | Proyecto Angular `storefront`, en `frontend/src/` | — |
-| Admin | Panel privado donde el equipo de la tienda opera catálogo, pedidos, contenido y usuarios. | Proyecto Angular `admin`, en `frontend/projects/admin/`; su feature de operación es `tienda` (`TiendaFacade`) | — |
+| Storefront | Aplicación pública donde el comprador navega, compra y consulta sus pedidos. Es el término de producto que pidió Daniel el 2026-11-20 (PBI-0192): «la tienda» sigue valiendo en los textos para el comprador y para hablar del negocio del cliente. Los documentos anteriores al 2026-11-23 la llaman «Tienda (Storefront)». | Proyecto Angular `storefront`, en `frontend/src/`; scripts `start:storefront` y e2e `storefront-*.spec.ts` | — |
+| Backoffice | Panel privado donde el equipo de la tienda opera catálogo, pedidos, contenido y usuarios. Es el término de producto que pidió Daniel el 2026-11-20 (PBI-0192). «Admin» sigue siendo el nombre del proyecto en el código, en los scripts, en la ruta `/admin/` de la demo publicada y en los documentos técnicos que hablan del proyecto; los documentos anteriores al 2026-11-23 llaman «Admin» al backoffice. | Proyecto Angular `admin`, en `frontend/projects/admin/`; su feature de operación es `tienda` (`TiendaFacade`); scripts `start:admin` y e2e `admin-*.spec.ts` | Rutas `/bff/admin/*` |
 | BFF de prueba | Sustituto de demostración del BFF productivo: única fuente de datos de las dos aplicaciones. Los documentos anteriores lo llaman «Mock BFF». | `backend/`; adaptadores `Bff<Concepto>Gateway` en el frontend | Base `/bff`; estado en `backend/data.json` |
 | Snapshot de la tienda | Estado completo que el Admin lee y guarda de una vez, filtrado por rol. | `SnapshotTienda`, `TiendaGateway`, `CambiosTienda` | `/bff/admin/snapshot` |
 | Revisión | Número del estado que impide guardar sobre datos desactualizados. | `SnapshotDesactualizadoError`; `domain/comun/revision.rules.mjs` | `revision`; `409 STALE_SNAPSHOT` |
@@ -162,5 +162,5 @@ Los permisos exactos de cada rol están en el [contrato](../../backend/docs/BFF-
 
 | Término | Situación |
 |---|---|
-| Nombres en inglés del contrato y de las clases | Pendientes de migrar al español (PBI-0022 del [backlog](../planning/backlog.md)). Cambiar el contrato exige cambiar a la vez el BFF y sus pruebas ([ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md)). |
+| Nombres en inglés del contrato y de las clases | Se quedan en inglés y no se migran ([ADR-0024](../adrs/0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md), PBI-0022; provisional, por confirmar con Sebastián Avila y Daniel Avila): los métodos, propiedades y signals de las clases, las funciones y constantes internas y los campos y rutas del contrato HTTP. El código nuevo usa el término de este glosario. |
 | Diferencia legal entre reclamo y queja | El código solo distingue el tipo. La revisión legal está pendiente ([decisiones pendientes](../planning/PENDING-DECISIONS.md)). |

@@ -4,7 +4,7 @@ Guía operativa para agentes de IA y desarrolladores. Este archivo **no** descri
 
 ## Proyecto
 
-WebStore es una tienda en línea: Storefront (tienda pública) y Admin (backoffice) en Angular, en `frontend/`, y un BFF de prueba en Node.js, en `backend/`, que es la única fuente de datos de ambos.
+WebStore es una tienda en línea: el storefront (tienda pública, proyecto `storefront`) y el backoffice (panel privado, proyecto `admin`) en Angular, en `frontend/`, y un BFF de prueba en Node.js, en `backend/`, que es la única fuente de datos de ambos.
 
 ## Leer antes de cambiar código
 
@@ -53,7 +53,7 @@ WebStore es una tienda en línea: Storefront (tienda pública) y Admin (backoffi
 
 | Carpeta | Contenido |
 |---|---|
-| `frontend/` | Workspace Angular: Storefront (`src/`) y Admin (`projects/admin/`) |
+| `frontend/` | Workspace Angular: storefront (`src/`) y backoffice (`projects/admin/`) |
 | `backend/` | BFF de prueba en Node.js, sin dependencias |
 | `docs/` | Arquitectura de sistema, ADR, proceso, planificación, especificaciones e historial de cambios |
 | `tools/` | Validación de la estructura del repositorio y de la configuración de agentes |
@@ -70,8 +70,8 @@ Todo se ejecuta en el host con npm, desde la raíz ([entorno local](docs/develop
 ```bash
 npm run setup              # dependencias de la raíz y de frontend/ (npm ci); el BFF no tiene
 npm run start:bff          # BFF de prueba: http://localhost:3000
-npm run start:storefront   # Storefront: http://localhost:4200
-npm run start:admin        # Admin: http://localhost:4300
+npm run start:storefront   # storefront: http://localhost:4200
+npm run start:admin        # backoffice: http://localhost:4300
 npm run verify             # agentes, sintaxis, formato, lint, tipos, arquitectura, build, pruebas y contrato
 npm run test:e2e           # e2e con Playwright (unos minutos; en segundo plano si la herramienta limita la duración)
 npm run audit:all          # npm audit de la raíz y de frontend/

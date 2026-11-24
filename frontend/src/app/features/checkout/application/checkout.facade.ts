@@ -8,6 +8,7 @@ import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { CarritoFacade } from '../../carrito/application/carrito.facade';
 import { PedidosFacade } from '../../pedidos/application/pedidos.facade';
 import { ContenidoFacade } from '../../contenido/application/contenido.facade';
+import { DireccionRechazada, direccionRechazada } from '../../pedidos/domain/direccion-por-producto.rules';
 
 /** Fallos que significan que el catálogo o el envío que ve el comprador ya no son los vigentes (PBI-0064, 0106). */
 const DATOS_DESACTUALIZADOS = new Set([
@@ -36,6 +37,7 @@ export class CheckoutFacade {
   private readonly terminosCambiaronState = signal(false);
   private readonly errorState = signal<string | null>(null);
   private readonly outdatedState = signal(false);
+  private readonly direccionRechazadaState = signal<DireccionRechazada | null>(null);
   /** Un intento de compra: se renueva al entrar al checkout y tras comprar (PBI-0086). */
   private attemptKey = nuevaClaveDeIntento();
 
@@ -48,6 +50,11 @@ export class CheckoutFacade {
    * la casilla para que los vuelva a aceptar.
    */
   readonly terminosCambiaron = this.terminosCambiaronState.asReadonly();
+  /**
+   * La dirección de una línea que el BFF rechazó, con una dirección por producto (lote 18): la página marca sus campos
+   * en esa línea. null si el último envío no falló por eso.
+   */
+  readonly direccionDeLineaRechazada = this.direccionRechazadaState.asReadonly();
 
   /**
    * Al entrar al checkout: sin el error de un intento anterior (PBI-0064), con un intento nuevo y con el catálogo
@@ -57,6 +64,7 @@ export class CheckoutFacade {
     this.errorState.set(null);
     this.outdatedState.set(false);
     this.terminosCambiaronState.set(false);
+    this.direccionRechazadaState.set(null);
     this.attemptKey = nuevaClaveDeIntento();
     this.cart.descartarCambios();
     void this.catalog.load();
@@ -75,6 +83,7 @@ export class CheckoutFacade {
     this.errorState.set(null);
     this.outdatedState.set(false);
     this.terminosCambiaronState.set(false);
+    this.direccionRechazadaState.set(null);
 
     try {
       const placed = await this.gateway.placeOrder(
@@ -105,6 +114,8 @@ export class CheckoutFacade {
       // Se recarga el contenido; la página quita las direcciones de los productos y vuelve a calcular el envío.
       if (error instanceof BffRequestError && error.code === 'PER_PRODUCT_ADDRESS_DISABLED')
         await this.contenido.load(true);
+      if (error instanceof BffRequestError)
+        this.direccionRechazadaState.set(direccionRechazada(error.code, error.details));
       // La primera fecha cambió mientras tanto (por ejemplo, pasó la hora de corte): se vuelve a pedir.
       if (error instanceof BffRequestError && error.code === 'INVALID_DELIVERY_DATE')
         await this.orders.cargarPrimeraFechaDeEntrega();

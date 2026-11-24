@@ -4,6 +4,8 @@ export class BffRequestError extends Error {
     message: string,
     readonly code?: string,
     readonly status?: number,
+    /** `error.details` del problema del BFF, si lo trae (por ejemplo, `fields` y `productId`). */
+    readonly details?: unknown,
   ) {
     super(message);
   }

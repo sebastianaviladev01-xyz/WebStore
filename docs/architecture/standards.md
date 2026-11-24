@@ -36,7 +36,7 @@ Una desviación requiere una [excepción registrada por ADR](../development/exce
 
 ## Contratos y políticas por feature
 
-El contrato vigente es el del BFF de prueba ([`BFF-CONTRACT.md`](../../backend/docs/BFF-CONTRACT.md)). Sus rutas y campos siguen en inglés, pendientes de migrar ([ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md)). Nombres de recursos, errores de negocio, paginación y límites nuevos se fijan en la especificación de cada feature: este documento no inventa entidades ni endpoints.
+El contrato vigente es el del BFF de prueba ([`BFF-CONTRACT.md`](../../backend/docs/BFF-CONTRACT.md)). Sus rutas y campos se quedan en inglés ([ADR-0024](../adrs/0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md)), y los nuevos siguen esa convención. Nombres de recursos, errores de negocio, paginación y límites nuevos se fijan en la especificación de cada feature: este documento no inventa entidades ni endpoints.
 
 Una operación que se pueda reintentar (por ejemplo, el checkout) declara qué identifica la petición y cómo se tratan los duplicados antes de permitir un reintento automático.
 

@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** administrador (desde el lote 07, el vendedor no tiene Pedidos: PBI-0013; el 2026-11-18 Daniel pidió que el vendedor vea Pedidos, PBI-0170, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
+- **Como** administrador (desde el lote 11, el vendedor también ve Pedidos sin cambiar su estado: PBI-0170, escenario 08; antes, desde el lote 07, no los tenía: PBI-0013; [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
 - **Quiero** ver los pedidos con su detalle y cambiar su estado
 - **Para** despacharlos
 
@@ -54,3 +54,19 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el estado queda en la URL; la campana dice cuántos pedidos confirmados llegaron desde la última vez que la abrió, los lista y lleva a cada uno.
 
 > Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0155 y PBI-0033; decisiones provisionales en [decisiones pendientes](../../../PENDING-DECISIONS.md): Daniel confirmó la campana el 2026-11-18 y el 2026-11-20 pidió alinear a la derecha los botones del panel de filtros, en el orden «Buscar», «Limpiar» y «Agregar» y cada uno con su ícono, PBI-0171), sin especificación propia: lo prueban `frontend/tests/e2e/admin-funciones-nuevas.spec.ts` y `admin-guardado-y-datos.spec.ts`.
+
+### Escenario 07 – Avisos de la campana
+
+- **Dado** que llega un pedido, un reclamo o un checkout rechazado porque la tienda cambió (error de compra)
+- **Cuando** una persona del equipo abre la campana de la cabecera
+- **Entonces** ve los avisos que le corresponden por su rol (pedidos con `orders.view`, reclamos con `complaints.manage`, errores de compra con `orders.manage`), cada uno lleva a su página, y el número cuenta los que llegaron desde la última vez que la abrió.
+
+> Añadido el 2026-11-23 por el lote 13 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0173; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
+
+### Escenario 08 – El vendedor ve los pedidos
+
+- **Dado** que un vendedor abre Pedidos
+- **Cuando** mira un pedido
+- **Entonces** ve su detalle, también la dirección de cada línea que va a otra, pero no puede cambiar su estado.
+
+> Añadido el 2026-11-23 por el lote 11 y el 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0170 y PBI-0006; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-permisos.spec.ts` y `admin-direcciones-por-producto.spec.ts`.

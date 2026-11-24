@@ -14,12 +14,11 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-| Excepción | Ámbito | Vigencia |
-|---|---|---|
-| [ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md): aplicar por lotes los cambios que pidió Daniel, sin las etapas SDD por elemento | PBI-0168 a PBI-0194 y el resto del backlog que no depende de terceros (ampliación del 2026-11-23), y los hallazgos de sus lotes, en el Storefront, el Admin y el BFF | Hasta fusionar el lote 18 o hasta que la retire Sebastián Avila. Aprobada por Sebastián Avila el 2026-11-23 |
+Ninguna.
 
 ## Excepciones cerradas
 
 | Excepción | Ámbito | Cierre |
 |---|---|---|
+| [ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md): aplicar por lotes los cambios que pidió Daniel, sin las etapas SDD por elemento | PBI-0168 a PBI-0194, el resto del backlog que no depende de terceros (ampliación del 2026-11-23) y los hallazgos de sus lotes (PBI-0195 a PBI-0210), en el storefront, el backoffice y el BFF | 2026-11-23, al fusionar el PR del lote 18 ([cierre](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0017](../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md): cerrar el backlog por lotes, sin las etapas SDD por elemento | Backlog abierto el 2026-11-14 y sus hallazgos, en el Storefront, el Admin y el BFF | 2026-11-15, con el PR del lote 09 ([cierre](../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md#cierre)). Responsable: Sebastián Avila |

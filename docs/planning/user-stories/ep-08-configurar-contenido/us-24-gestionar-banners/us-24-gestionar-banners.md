@@ -31,6 +31,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 - **Dado** que el administrador registra un banner con fechas y un enlace
 - **Cuando** lo guarda
-- **Entonces** las fechas son días de Lima; un fin anterior al inicio se rechaza en el campo «Fin»; el tope de tres principales activos cuenta solo los que coinciden en fechas; y un enlace externo (`https://…`) lleva a esa dirección en la tienda.
+- **Entonces** las fechas son días de Lima; un fin anterior al inicio se rechaza en el campo «Fin»; el tope de tres principales activos cuenta solo los que coinciden en fechas; y un enlace externo (`https://…`) lleva a esa dirección en otra pestaña (desde el lote 12, PBI-0174).
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0128; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md): el 2026-11-18 Daniel pidió abrir los enlaces externos en otra pestaña, PBI-0174, sin cambios en el tope), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts` y `frontend/tests/e2e/storefront-banners.spec.ts`.
+
+### Escenario 04 – Dos botones
+
+- **Dado** que el administrador edita un banner
+- **Cuando** completa el texto y el enlace de uno o de los dos botones
+- **Entonces** el principal usa el color principal del tema y el secundario, el secundario; un botón a medias o con más de 40 caracteres se rechaza, y un enlace externo se abre en otra pestaña.
+
+> Añadido el 2026-11-23 por el lote 12 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0184 y PBI-0174; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-guardado-y-datos.spec.ts` y `storefront-banners.spec.ts`.

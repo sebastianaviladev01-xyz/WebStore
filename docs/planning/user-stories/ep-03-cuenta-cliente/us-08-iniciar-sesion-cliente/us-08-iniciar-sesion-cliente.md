@@ -41,6 +41,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-15 por el lote 05 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0114), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-cuenta-formularios.spec.ts`.
 
+### Escenario 05 – Recuperar la contraseña sin errores antes de escribir
+
+- **Dado** que el cliente pidió el código de recuperación
+- **Cuando** aparecen los campos del código y de la nueva contraseña
+- **Entonces** no se muestran en rojo hasta que sale del campo o intenta actualizar la contraseña; los textos dicen que le enviaron el código.
+
+> Añadido el 2026-11-23 por el lote 16 y el 20 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0180 y PBI-0201), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-cuenta-formularios.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - El correo transaccional real está pendiente (PBI-0008 del [backlog](../../../backlog.md)).

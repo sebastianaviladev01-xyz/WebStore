@@ -23,15 +23,15 @@ En la demo, el BFF de prueba de [`backend/`](../../backend/) reemplaza al BFF pr
 
 | Contenedor | Carpeta | Stack | Puerto local |
 |---|---|---|---|
-| Storefront (tienda pública) | `frontend/src/` | Angular standalone, signals, Angular Material/CDK, Tailwind CSS | 4200 |
-| Admin (backoffice) | `frontend/projects/admin/` | El mismo workspace Angular | 4300 |
+| Storefront (tienda pública; proyecto `storefront`) | `frontend/src/` | Angular standalone, signals, Angular Material/CDK, Tailwind CSS | 4200 |
+| Backoffice (panel privado; proyecto `admin`) | `frontend/projects/admin/` | El mismo workspace Angular | 4300 |
 | BFF de prueba | `backend/` | Node.js sin dependencias, estado en `backend/data.json` | 3000 |
 
 Las versiones exactas viven solo en los manifiestos: [`frontend/package.json`](../../frontend/package.json) y [`backend/package.json`](../../backend/package.json).
 
 ## Principios
 
-- Separación Storefront/Admin: dos aplicaciones del mismo workspace, sin código compartido entre ellas.
+- Separación storefront/backoffice: dos aplicaciones del mismo workspace, sin código compartido entre ellas.
 - Frontend organizado por features con capas internas (`domain`, `application`, `data`, `presentation`), con los límites comprobados por Sheriff ([ADR-0006](../adrs/0006-organizar-el-frontend-por-features-y-capas.md)).
 - BFF en Clean Architecture simplificada (`domain`, `application`, `infrastructure`, `api`) ([ADR-0007](../adrs/0007-organizar-el-bff-en-capas.md)).
 - HTTP solo en los adaptadores `Bff*Gateway` de la capa `data/`; la aplicación depende de puertos del dominio.
@@ -42,12 +42,12 @@ Las versiones exactas viven solo en los manifiestos: [`frontend/package.json`](.
 
 ## Una sola fuente de datos
 
-El Admin modifica la misma fuente que usa el Storefront. Por ello:
+El backoffice modifica la misma fuente que usa el storefront. Por ello:
 
 - cambiar stock cambia el catálogo público;
-- el checkout descuenta el inventario que administra el Admin;
-- el checkout crea o actualiza clientes visibles en el Admin;
-- los pedidos públicos aparecen en el Admin;
+- el checkout descuenta el inventario que administra el backoffice;
+- el checkout crea o actualiza clientes visibles en el backoffice;
+- los pedidos públicos aparecen en el backoffice;
 - CMS, banners y tarifas de envío se publican desde la misma fuente.
 
 ## Roles

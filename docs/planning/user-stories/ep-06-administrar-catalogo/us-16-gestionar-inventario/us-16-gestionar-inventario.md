@@ -43,8 +43,8 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 ### Escenario 05 – Quién entra en Inventario
 
-- **Dado** que un vendedor abre el Admin
+- **Dado** que una persona del equipo abre el backoffice
 - **Cuando** busca Inventario en el menú o escribe `/inventario`
-- **Entonces** no lo ve y la ruta lo lleva al Resumen; el stock lo cambia en la ficha del producto. El superadministrador y el administrador entran en Inventario, que tiene el panel de filtros (por nombre o SKU y por estado del stock).
+- **Entonces** entra si es superadministrador, administrador o, desde el lote 11 (PBI-0170), vendedor; Inventario tiene el panel de filtros (por nombre o SKU y por estado del stock).
 
-> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013 y PBI-0139). El 2026-11-18 Daniel pidió que el vendedor también gestione Inventario (PBI-0170; [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Lo prueban `admin-acceso.spec.ts` y `admin-listados.spec.ts`.
+> Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013 y PBI-0139). El 2026-11-18 Daniel pidió que el vendedor también gestione Inventario (PBI-0170; [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Cambiado el 2026-11-23 por el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)). Lo prueban `admin-acceso.spec.ts`, `admin-permisos.spec.ts` y `admin-listados.spec.ts`.

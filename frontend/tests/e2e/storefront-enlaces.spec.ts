@@ -11,6 +11,10 @@ import {
   restablecerTemas,
 } from './apoyo/contraste';
 import { correoUnico } from './apoyo/entorno';
+import { conservarElStock } from './apoyo/pedidos';
+
+// Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
+conservarElStock();
 
 /**
  * Enlaces de la tienda con los temas (feature 005, D1). La regla `a { color: inherit; text-decoration: none; }`
