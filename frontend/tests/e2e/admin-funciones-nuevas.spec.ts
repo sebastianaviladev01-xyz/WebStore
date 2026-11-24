@@ -572,7 +572,8 @@ test.describe('PBI-0052 y PBI-0176: imagen de la categoría', () => {
           await api.dispose();
         }
       };
-      expect(await publica()).toMatch(/^data:image\/(webp|jpeg);base64,/);
+      // Lote 25 (ADR-0026, PBI-0228): la tienda recibe la dirección del BFF con su versión, no la Data URL.
+      expect(await publica()).toMatch(/^\/bff\/images\/categories\/cat-home\/image\?v=[\w-]+$/);
 
       await page.goto('/categorias/cat-home');
       await page.getByRole('button', { name: 'Quitar imagen' }).click();
