@@ -1,5 +1,9 @@
 import { normalizarActividad } from '../../domain/admin/actividad.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
+import {
+  CAMPOS_ANTERIORES_DE_CONTENIDO,
+  listasDesdeContenidoAnterior,
+} from '../../domain/admin/contenido.rules.mjs';
 import { normalizarErroresDeCompra } from '../../domain/admin/errores-de-compra.rules.mjs';
 import { normalizarVistos } from '../../domain/admin/notificaciones.rules.mjs';
 import { nowIso } from '../../domain/comun/reloj.mjs';
@@ -15,8 +19,9 @@ import { seed } from './seed.mjs';
 /**
  * 2: roles fijos superadmin/admin/vendedor (antes owner/catalog-maintainer).
  * 3: temas (`appearance`); los colores de Contenido pasan a un tema propio y se retiran de `config` (D3).
+ * 4: listas de Contenido (lote 15, ADR-0021): correos, teléfonos, avisos y accesos inferiores.
  */
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const COLORES_DE_B = TEMAS_PREDEFINIDOS.find((tema) => tema.id === TEMA_POR_DEFECTO).colors;
 const NOMBRE_DEL_TEMA_MIGRADO = 'Colores de Contenido';
@@ -189,6 +194,21 @@ function botonSecundarioAnterior(banner) {
 }
 
 /**
+ * Migración única a la versión 4 (lote 15, ADR-0021; PBI-0169, PBI-0175 y PBI-0185): los campos de texto de Contenido
+ * pasan a sus listas (`listasDesdeContenidoAnterior`) y se quitan. Cada lista se toma de lo guardado solo si estaba el
+ * campo anterior; si no, queda la que ya hay (la de la semilla).
+ */
+function migrarListasDeContenido(next, guardado) {
+  const listas = listasDesdeContenidoAnterior(guardado);
+  if ('contactEmail' in guardado) next.config.contactEmails = listas.contactEmails;
+  if ('contactPhone' in guardado) next.config.contactPhones = listas.contactPhones;
+  if ('headerMessage' in guardado || 'topNavigation' in guardado)
+    next.config.announcements = listas.announcements;
+  // Los accesos de texto no los usaba la tienda: pasan a ser el pie que se veía.
+  if (!Array.isArray(guardado.quickLinks)) next.config.quickLinks = listas.quickLinks;
+}
+
+/**
  * Completa con la semilla lo que falte en data.json, descarta sesiones vencidas y aplica migraciones. `avisar`
  * recibe un texto por cada dato que se repara o se descarta al cargar (hoy, los temas propios: PBI-0068).
  */
@@ -237,7 +257,9 @@ export function normalizeState(input, demoPasswords, avisar = () => {}) {
   const versionGuardada = input.schemaVersion ?? 1;
   if (versionGuardada < 2) migrateAdminRoles(next, demoPasswords);
   if (versionGuardada < 3) migrarColoresDeContenido(next);
+  if (versionGuardada < 4) migrarListasDeContenido(next, input.config ?? {});
   next.config = sinColoresDeContenido(next.config);
+  for (const clave of CAMPOS_ANTERIORES_DE_CONTENIDO) delete next.config[clave];
   next.appearance.activeThemeId = temaActivoExistente(next.appearance, avisar);
   next.schemaVersion = SCHEMA_VERSION;
   return next;

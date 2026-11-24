@@ -1,3 +1,4 @@
+import { ACCESOS_DEL_PIE } from '../../domain/admin/contenido.rules.mjs';
 import { TEMA_POR_DEFECTO } from '../../domain/temas/temas-predefinidos.mjs';
 
 /** Datos de demostración: estado inicial de la tienda y base para normalizar y migrar data.json. */
@@ -238,14 +239,17 @@ export const seed = {
     storeName: 'WebStore',
     logoText: 'W',
     logoUrl: '',
-    contactEmail: 'contacto@webstore.demo',
-    contactPhone: '+51 999 000 000',
+    // Lote 15 (ADR-0021): varios correos y teléfonos (el primero es el principal) y redes (PBI-0169).
+    contactEmails: [{ value: 'contacto@webstore.demo', label: '' }],
+    contactPhones: [{ value: '+51 999 000 000', label: '' }],
+    socialLinks: [],
     fontFamily: 'Source Sans 3 Variable',
-    headerMessage: 'Despachos en Lima. Consulta cobertura y tarifas.',
     footerText: 'Tecnología y electrohogar para tu casa.',
-    topNavigation: 'Inicio, Productos, Pedidos, Envíos',
+    // Avisos de la barra superior, con un enlace opcional (PBI-0175).
+    announcements: [{ text: 'Despachos en Lima. Consulta cobertura y tarifas.', url: '' }],
     sideNavigation: 'TV y audio, Electrohogar, Monitores, Cocina',
-    quickLinks: 'Contacto, Envíos, Privacidad, Términos, Libro de reclamaciones',
+    // Los accesos del pie, por columna (PBI-0185).
+    quickLinks: ACCESOS_DEL_PIE.map((acceso) => ({ ...acceso })),
     benefits:
       'Compra como invitado|No necesitas crear una cuenta para hacer tu pedido.;Envío según tu distrito|El costo depende de tu distrito y despachamos desde la tienda más cercana.;Stock a la vista|Cada producto muestra cuántas unidades quedan.;Libro de reclamaciones|Te respondemos en un máximo de 15 días hábiles.',
     contactContent:

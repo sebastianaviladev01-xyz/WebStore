@@ -107,6 +107,20 @@ const invalidos = [
   ['config con un texto que no es texto', { config: { ...seed.config, storeName: 7 } }],
   ['config sin nombre de tienda', { config: { ...seed.config, storeName: '  ' } }],
   ['config con una casilla que no es booleana', { config: { ...seed.config, termsPageEnabled: 'sí' } }],
+  // Lote 15 (ADR-0021): las listas de Contenido se validan en el BFF (PBI-0169, PBI-0175 y PBI-0185).
+  ['config con un correo no válido', { config: { contactEmails: [{ value: 'no-es-correo', label: '' }] } }],
+  ['config con correos que no son una lista', { config: { contactEmails: 'a@b.pe' } }],
+  ['config con un teléfono no válido', { config: { contactPhones: [{ value: 'llámanos', label: '' }] } }],
+  ['config con una red sin https', { config: { socialLinks: [{ label: 'X', url: 'http://x.com/t' }] } }],
+  ['config con un aviso sin texto', { config: { announcements: [{ text: ' ', url: '' }] } }],
+  [
+    'config con un aviso hacia otra web sin https',
+    { config: { announcements: [{ text: 'A', url: '//x.com' }] } },
+  ],
+  [
+    'config con un acceso inferior sin destino',
+    { config: { quickLinks: [{ group: 'A', label: 'B', url: '' }] } },
+  ],
   ['precio negativo', { products: seed.products.map((p, i) => (i ? p : { ...p, price: -1 })) }],
   ['precio no numérico', { products: seed.products.map((p, i) => (i ? p : { ...p, price: '10' })) }],
   ['stock negativo', { products: seed.products.map((p, i) => (i ? p : { ...p, stock: -1 })) }],
@@ -170,6 +184,47 @@ test('PBI-0095: config descarta las claves que no conoce', () => {
   assert.equal(store.state.config.storeName, 'Nueva');
   assert.equal('script' in store.state.config, false);
   assert.equal('primaryColor' in store.state.config, false);
+});
+
+test('lote 15: config guarda las listas de Contenido normalizadas y avisa qué campo falló', () => {
+  const { store, resultado } = guardar(superadmin, {
+    config: {
+      contactEmails: [{ value: ' ventas@tienda.pe ', label: 'Ventas', otro: 1 }],
+      contactPhones: [{ value: '+51 999 111 222', label: '' }],
+      socialLinks: [{ label: 'Instagram', url: 'https://www.instagram.com/tienda' }],
+      announcements: [{ text: 'Mantenimiento el domingo', url: '' }],
+      quickLinks: [{ group: 'Ayuda', label: 'Contacto', url: '/info/contacto' }],
+    },
+  });
+  resultado();
+  assert.deepEqual(store.state.config.contactEmails, [{ value: 'ventas@tienda.pe', label: 'Ventas' }]);
+  assert.deepEqual(store.state.config.socialLinks, [
+    { label: 'Instagram', url: 'https://www.instagram.com/tienda' },
+  ]);
+  assert.deepEqual(store.state.config.announcements, [{ text: 'Mantenimiento el domingo', url: '' }]);
+  assert.deepEqual(store.state.config.quickLinks, [
+    { group: 'Ayuda', label: 'Contacto', url: '/info/contacto' },
+  ]);
+
+  const fallido = guardar(superadmin, { config: { contactPhones: [{ value: 'x' }] } });
+  assert.throws(fallido.resultado, (error) => {
+    assert.equal(error.code, 'INVALID_COLLECTION');
+    assert.deepEqual(error.details, { collection: 'config', field: 'contactPhones' });
+    assert.match(error.message, /^Revisa el contenido de la tienda: el teléfono «x» no es válido/);
+    return true;
+  });
+});
+
+test('lote 15: la semilla ya no tiene el correo, el teléfono, el mensaje ni la navegación de texto', () => {
+  for (const campo of ['contactEmail', 'contactPhone', 'headerMessage', 'topNavigation'])
+    assert.equal(campo in seed.config, false, campo);
+  assert.deepEqual(seed.config.contactEmails, [{ value: 'contacto@webstore.demo', label: '' }]);
+  assert.deepEqual(seed.config.contactPhones, [{ value: '+51 999 000 000', label: '' }]);
+  assert.deepEqual(seed.config.socialLinks, []);
+  assert.deepEqual(seed.config.announcements, [
+    { text: 'Despachos en Lima. Consulta cobertura y tarifas.', url: '' },
+  ]);
+  assert.equal(seed.config.quickLinks.length, 10);
 });
 
 test('PBI-0095: el Admin cambia el estado y la respuesta del reclamo, no su monto ni su detalle', () => {

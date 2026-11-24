@@ -535,6 +535,59 @@ try {
   )
     throw new Error('Configuración pública incompleta');
 
+  // Lote 15 (ADR-0021): listas de Contenido. La semilla ya no trae los campos de texto de antes.
+  if (
+    ['contactEmail', 'contactPhone', 'headerMessage', 'topNavigation'].some(
+      (campo) => campo in publicSettings,
+    ) ||
+    !Array.isArray(publicSettings.contactEmails) ||
+    !Array.isArray(publicSettings.contactPhones) ||
+    !Array.isArray(publicSettings.socialLinks) ||
+    !Array.isArray(publicSettings.announcements) ||
+    !Array.isArray(publicSettings.quickLinks)
+  )
+    throw new Error(
+      'Contenido debe publicar correos, teléfonos, redes, avisos y accesos inferiores como listas',
+    );
+  const listas = {
+    contactEmails: [
+      { value: 'contacto@webstore.demo', label: '' },
+      { value: 'ventas@webstore.demo', label: 'Ventas' },
+    ],
+    contactPhones: [{ value: '+51 999 000 000', label: '' }],
+    socialLinks: [{ label: 'Instagram', url: 'https://www.instagram.com/webstore' }],
+    announcements: [
+      { text: 'Mantenimiento el domingo', url: '' },
+      { text: 'Ofertas de verano', url: '/catalogo' },
+    ],
+    quickLinks: [{ group: 'Ayuda', label: 'Contacto', url: '/info/contacto' }],
+  };
+  for (const [clave, invalida] of [
+    ['contactEmails', [{ value: 'no-es-correo', label: '' }]],
+    ['contactPhones', [{ value: 'llámanos', label: '' }]],
+    ['socialLinks', [{ label: 'X', url: 'http://x.com/webstore' }]],
+    ['announcements', [{ text: 'Aviso', url: 'javascript:alert(1)' }]],
+    ['quickLinks', [{ group: 'Ayuda', label: 'Contacto', url: '' }]],
+  ]) {
+    const rechazo = await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ revision: snapshot.revision, config: { [clave]: invalida } }),
+    });
+    const problema = await esperarError(rechazo, 400, 'INVALID_COLLECTION', `Lista ${clave} no válida`);
+    if (problema.details?.field !== clave)
+      throw new Error(`El rechazo de ${clave} debe nombrar el campo en details.field`);
+  }
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: listas }),
+  });
+  const conListas = await request('/bff/content/settings');
+  for (const [clave, valor] of Object.entries(listas))
+    if (JSON.stringify(conListas[clave]) !== JSON.stringify(valor))
+      throw new Error(`Contenido no publica ${clave} tal como se guardó`);
+
   snapshot.banners[0] = {
     ...snapshot.banners[0],
     title: 'Campaña de prueba',
