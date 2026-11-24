@@ -34,7 +34,7 @@ const PRINCIPAL_CLARO = { primary: '#FFFFBB', secondary: '#F97316', ...BASE_OSCU
  * seleccionada cuando no es la activa. Devuelve la seleccionada y la última, que no está seleccionada ni activa.
  */
 async function abrirUbicacion(page: Page) {
-  await page.goto('/banners');
+  await page.goto('/banners/nuevo');
   await page.getByRole('combobox', { name: 'Ubicación' }).click();
   const seleccionada = page.getByRole('option', { selected: true });
   await expect(seleccionada).toBeVisible();

@@ -27,7 +27,9 @@ test('el administrador ve y gestiona solo a los vendedores, sin eliminarlos', as
     await expect(listaDeUsuarios(page)).not.toContainText('Administración Demo');
     await expect(listaDeUsuarios(page).getByRole('button', { name: /Eliminar/ })).toHaveCount(0);
 
-    // El rol solo puede ser «Vendedor».
+    // Lote 21 (PBI-0211): el usuario se registra en su propia interfaz. El rol solo puede ser «Vendedor».
+    await page.getByRole('link', { name: 'Agregar usuario' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Nuevo usuario' })).toBeVisible();
     await page.getByRole('combobox', { name: 'Rol', exact: true }).click();
     await expect(page.getByRole('option')).toHaveText(['Vendedor']);
     await page.keyboard.press('Escape');
@@ -39,7 +41,8 @@ test('el administrador ve y gestiona solo a los vendedores, sin eliminarlos', as
     await expect(listaDeUsuarios(page)).toContainText('Vendedora del lote 07');
 
     // Desactivarla queda guardado en el BFF.
-    await listaDeUsuarios(page).getByRole('button', { name: 'Editar usuario Vendedora del lote 07' }).click();
+    await listaDeUsuarios(page).getByRole('link', { name: 'Editar usuario Vendedora del lote 07' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Editar usuario' })).toBeVisible();
     await page.getByRole('checkbox', { name: 'Activo' }).uncheck();
     await page.getByRole('button', { name: 'Guardar usuario' }).click();
     await expect(listaDeUsuarios(page)).toContainText('Vendedor · inactivo');
@@ -62,6 +65,7 @@ test('el superadministrador ve los tres roles y puede eliminar usuarios', async 
   await expect(
     listaDeUsuarios(page).getByRole('button', { name: 'Eliminar usuario Vendedor Demo' }),
   ).toBeVisible();
+  await page.goto('/usuarios/nuevo');
   await page.getByRole('combobox', { name: 'Rol', exact: true }).click();
   await expect(page.getByRole('option')).toHaveText(['Superadministrador', 'Administrador', 'Vendedor']);
 });
