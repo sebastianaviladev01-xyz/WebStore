@@ -66,7 +66,7 @@ test.describe('Componentes de Material del Admin con los temas', () => {
       exigir(tema, 'casilla marcada, relleno sobre la tarjeta', medida.relleno, medida.tarjeta, MINIMO.marca);
 
       // Lista desplegable abierta: el texto y la marca de la opción seleccionada sobre su fondo.
-      await page.goto('/banners');
+      await page.goto('/banners/nuevo');
       await page.getByRole('combobox', { name: 'Ubicación' }).click();
       const seleccionada = page.getByRole('option', { selected: true });
       await expect(seleccionada).toBeVisible();

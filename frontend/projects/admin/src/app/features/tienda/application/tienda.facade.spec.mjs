@@ -22,7 +22,6 @@ const computed = (calcular) => () => calcular();
 const Injectable = () => (clase) => clase;
 export class SesionFacade {}
 const ROLES = [];
-const ajustarPreciosTarifas = () => { throw new Error('no se usa en esta prueba'); };
 const asignarPrecioTarifa = () => { throw new Error('no se usa en esta prueba'); };
 export const dependencias = new Map();
 const inject = (token) => dependencias.get(token);
@@ -374,4 +373,10 @@ test('PBI-0085: «Actualizar» o «Buscar» con respuesta también quitan el avi
   assert.equal(facade.desactualizado(), true);
   assert.equal(await facade.refresh(), true);
   assert.equal(facade.desactualizado(), false);
+});
+
+test('PBI-0217: la facade ya no ajusta las tarifas por porcentaje; el precio se cambia tarifa por tarifa', () => {
+  assert.equal('adjustRatePrices' in TiendaFacade.prototype, false);
+  assert.equal(typeof TiendaFacade.prototype.assignRatePrice, 'function');
+  assert.equal(typeof TiendaFacade.prototype.guardarTarifa, 'function');
 });

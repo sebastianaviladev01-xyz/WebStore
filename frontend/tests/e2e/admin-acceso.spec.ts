@@ -86,7 +86,7 @@ test('el vendedor ve el Dashboard, Productos, Inventario y Pedidos (PBI-0013, PB
   await expect(page.getByRole('heading', { level: 1, name: 'Pedidos' })).toBeVisible();
   await expect(page.getByText('Cambiar estado')).toHaveCount(0);
 
-  for (const ruta of ['/usuarios', '/clientes', '/contenido', '/categorias']) {
+  for (const ruta of ['/usuarios', '/usuarios/nuevo', '/clientes', '/contenido', '/categorias']) {
     await page.goto(ruta);
     await expect(page).toHaveTitle('WebStore Admin | Dashboard');
     await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();

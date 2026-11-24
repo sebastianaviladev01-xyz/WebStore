@@ -14,7 +14,7 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-Ninguna.
+- [ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md): cerrar por lotes lo que salió de la revisión de la demo (PBI-0211 a PBI-0224 y PBI-0226). Responsable: Sebastián Avila, desde el 2026-11-24 hasta que se fusione el lote 26.
 
 ## Excepciones cerradas
 
