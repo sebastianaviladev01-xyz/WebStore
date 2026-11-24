@@ -213,6 +213,50 @@ function nuevaDireccionDeLinea(): DireccionDeLineaForm {
                   <input matInput formControlName="reference" />
                 </mat-form-field>
               </div>
+              @if (shipping.error()) {
+                <div
+                  class="rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+                  role="alert"
+                >
+                  <p>{{ shipping.error() }}</p>
+                  <button
+                    type="button"
+                    class="mt-2 font-semibold underline underline-offset-4"
+                    (click)="shipping.load()"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              }
+              @if (quoting()) {
+                <p class="rounded-xl bg-soft p-3 text-sm text-muted" role="status">
+                  Calculando costo de envío…
+                </p>
+              }
+              @if (shippingError()) {
+                <div
+                  class="rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+                  role="alert"
+                >
+                  <p>{{ shippingError() }}</p>
+                  <button
+                    type="button"
+                    class="mt-2 font-semibold underline underline-offset-4"
+                    (click)="refreshQuote()"
+                  >
+                    Reintentar
+                  </button>
+                </div>
+              }
+              @if (!quoting() && !shippingError() && shippingQuote(); as quote) {
+                <p class="rounded-xl bg-primary-soft p-3 text-sm font-semibold text-on-primary-soft">
+                  Envío cotizado:
+                  <span class="ws-price-numerals">
+                    {{ quote.price | currency: 'PEN' : 'symbol' : '1.2-2' }}
+                  </span>
+                  · despacho desde {{ quote.origin }}
+                </p>
+              }
               <!--
                 Lote 19 (ADR-0021, PBI-0006; provisional): con una dirección por producto, cada línea va a la dirección
                 de entrega o a otra. Con una por pedido (por defecto) no se muestra nada y el checkout es el de siempre.
@@ -290,50 +334,6 @@ function nuevaDireccionDeLinea(): DireccionDeLineaForm {
                     </fieldset>
                   }
                 </div>
-              }
-              @if (shipping.error()) {
-                <div
-                  class="rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
-                  role="alert"
-                >
-                  <p>{{ shipping.error() }}</p>
-                  <button
-                    type="button"
-                    class="mt-2 font-semibold underline underline-offset-4"
-                    (click)="shipping.load()"
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              }
-              @if (quoting()) {
-                <p class="rounded-xl bg-soft p-3 text-sm text-muted" role="status">
-                  Calculando costo de envío…
-                </p>
-              }
-              @if (shippingError()) {
-                <div
-                  class="rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
-                  role="alert"
-                >
-                  <p>{{ shippingError() }}</p>
-                  <button
-                    type="button"
-                    class="mt-2 font-semibold underline underline-offset-4"
-                    (click)="refreshQuote()"
-                  >
-                    Reintentar
-                  </button>
-                </div>
-              }
-              @if (!quoting() && !shippingError() && shippingQuote(); as quote) {
-                <p class="rounded-xl bg-primary-soft p-3 text-sm font-semibold text-on-primary-soft">
-                  Envío cotizado:
-                  <span class="ws-price-numerals">
-                    {{ quote.price | currency: 'PEN' : 'symbol' : '1.2-2' }}
-                  </span>
-                  · despacho desde {{ quote.origin }}
-                </p>
               }
             </section>
             <section class="ws-checkout-step">

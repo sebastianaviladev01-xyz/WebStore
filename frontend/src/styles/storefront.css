@@ -638,9 +638,16 @@
   display: grid;
   height: 120px;
   place-items: center;
+  overflow: hidden;
   border-radius: 10px;
   background: var(--ws-surface-soft);
   padding: 8px;
+}
+
+.ws-compare-image img {
+  width: 100%;
+  height: 104px;
+  object-fit: contain;
 }
 
 .ws-compare-table .ws-product-stock {

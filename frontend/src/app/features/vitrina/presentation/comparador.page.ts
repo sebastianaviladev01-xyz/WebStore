@@ -80,14 +80,7 @@ import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
                   <th scope="col">
                     <a [routerLink]="['/catalogo', producto.slug]" class="ws-compare-product">
                       <span class="ws-compare-image">
-                        <img
-                          [ngSrc]="producto.thumbnailUrl"
-                          alt=""
-                          width="640"
-                          height="480"
-                          priority
-                          class="h-auto max-h-full w-full object-contain"
-                        />
+                        <img [ngSrc]="producto.thumbnailUrl" alt="" width="640" height="480" priority />
                       </span>
                       <span>{{ producto.name }}</span>
                     </a>
