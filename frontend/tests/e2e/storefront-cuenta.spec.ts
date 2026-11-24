@@ -18,7 +18,7 @@ test('registrar, verificar, iniciar sesión y editar el perfil', async ({ page }
   await page.getByRole('textbox', { name: 'Contraseña' }).fill(contrasenia);
   await page.getByRole('button', { name: 'Registrar y verificar correo' }).click();
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Verifica tu cuenta' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Verificar cuenta' })).toBeVisible();
   // Lote 05 (PBI-0098): el correo llega a su campo y el código de demostración no viaja en la URL.
   await expect(page.getByRole('textbox', { name: 'Correo' })).toHaveValue(correo);
   const canal = page.getByText('Canal local de demostración:').locator('..');

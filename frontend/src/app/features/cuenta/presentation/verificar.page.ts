@@ -9,7 +9,9 @@ import { CuentaFacade } from '../application/cuenta.facade';
 /**
  * Verificar la cuenta (PBI-0098, lote 05). El correo llega por la URL o se escribe; el código de demostración solo
  * vive en memoria (`CuentaFacade.codigoDeDemostracion`), nunca en la URL; «Enviar un código nuevo» usa el reenvío del
- * BFF. Los textos no dicen que se envió un correo: no hay correo real (PBI-0008).
+ * BFF. Lote 16 (ADR-0021, PBI-0180): los textos dicen «te enviamos un código» y «Verificar cuenta», como pidió Daniel.
+ * Sin correo real (PBI-0008), el BFF de prueba entrega el código en la respuesta (`testCode`) y la página lo muestra en
+ * el «Canal local de demostración», que hace las veces del correo.
  */
 @Component({
   selector: 'ws-verify-page',
@@ -17,9 +19,9 @@ import { CuentaFacade } from '../application/cuenta.facade';
   template: `
     <section class="ws-container grid min-h-[60vh] place-items-center py-12">
       <form [formGroup]="form" (ngSubmit)="verify()" class="ws-card ws-outline-fields w-full max-w-lg p-8">
-        <h1 class="text-4xl font-semibold">Verifica tu cuenta</h1>
+        <h1 class="text-4xl font-semibold">Verificar cuenta</h1>
         <p class="mt-3 text-sm leading-6 text-muted">
-          Ingresa el correo de tu cuenta y el código de verificación de seis dígitos.
+          Te enviamos un código de seis dígitos. Ingresa el correo de tu cuenta y ese código.
         </p>
         @if (demoCode(); as code) {
           <p class="mt-4 rounded-xl bg-primary-soft p-3 text-sm text-on-primary-soft">
@@ -122,7 +124,7 @@ export class VerificarPage {
     this.error.set(result.error ?? null);
     if (result.ok)
       this.message.set(
-        'Si hay una cuenta sin verificar con ese correo, generamos un código nuevo y el anterior deja de valer.',
+        'Si hay una cuenta sin verificar con ese correo, te enviamos un código nuevo y el anterior deja de valer.',
       );
   }
 }
