@@ -1,7 +1,7 @@
 import { expect, test, type Page, type Request } from '@playwright/test';
 
 import { enviarCambios } from './apoyo/catalogo';
-import { correoUnico, fechaDeEntrega } from './apoyo/entorno';
+import { correoUnico, fechaDeEntrega, urls } from './apoyo/entorno';
 
 /**
  * Lote 19 (ADR-0021, PBI-0006; provisional, por confirmar con Daniel): la configuración de la tienda elige una dirección
@@ -53,6 +53,21 @@ async function soundbarAOtraDireccion(page: Page): Promise<void> {
   await page.getByRole('option', { name: 'Miraflores', exact: true }).click();
   await linea.getByRole('textbox', { name: 'Dirección', exact: true }).fill('Calle Regalo 456');
   await linea.getByRole('textbox', { name: 'Referencia' }).fill('Portón verde');
+}
+
+/**
+ * Cancela los pedidos de invitado que la prueba hizo en este navegador, con el token que guarda la tienda, para devolver
+ * su stock: las demás suites crean pedidos con los mismos productos.
+ */
+async function cancelarPedidos(page: Page): Promise<void> {
+  const accesos = await page
+    .evaluate(() => localStorage.getItem('webstore-order-access-v1'))
+    .catch(() => null);
+  for (const [id, token] of Object.entries(JSON.parse(accesos ?? '{}') as Record<string, string>))
+    await page.request.patch(`${urls.bff}/bff/orders/${id}/cancel`, {
+      headers: { 'x-order-token': token },
+      data: {},
+    });
 }
 
 /** La fila «Envío» del resumen del pedido, con su monto. */
@@ -115,6 +130,7 @@ test('con una por producto, cada producto puede ir a otra dirección y el envío
       page.getByText('Se entrega en: Calle Regalo 456, Miraflores, Lima, Lima (Portón verde)'),
     ).toBeVisible();
   } finally {
+    await cancelarPedidos(page);
     await modo('per-order');
   }
 });
@@ -137,6 +153,7 @@ test('si la tienda vuelve a una por pedido mientras se compra, avisa y quita las
     await page.getByRole('button', { name: 'Finalizar compra' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Gracias por tu compra' })).toBeVisible();
   } finally {
+    await cancelarPedidos(page);
     await modo('per-order');
   }
 });
