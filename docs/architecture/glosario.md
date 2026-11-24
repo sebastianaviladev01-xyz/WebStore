@@ -162,5 +162,5 @@ Los permisos exactos de cada rol están en el [contrato](../../backend/docs/BFF-
 
 | Término | Situación |
 |---|---|
-| Nombres en inglés del contrato y de las clases | Pendientes de migrar al español (PBI-0022 del [backlog](../planning/backlog.md)). Cambiar el contrato exige cambiar a la vez el BFF y sus pruebas ([ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md)). |
+| Nombres en inglés del contrato y de las clases | Se quedan en inglés y no se migran ([ADR-0024](../adrs/0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md), PBI-0022; provisional, por confirmar con Sebastián Avila y Daniel Avila): los métodos, propiedades y signals de las clases, las funciones y constantes internas y los campos y rutas del contrato HTTP. El código nuevo usa el término de este glosario. |
 | Diferencia legal entre reclamo y queja | El código solo distingue el tipo. La revisión legal está pendiente ([decisiones pendientes](../planning/PENDING-DECISIONS.md)). |

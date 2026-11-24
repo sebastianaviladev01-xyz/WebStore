@@ -26,3 +26,4 @@ Las carpetas de features, los archivos y los tipos y clases exportados usan el v
 
 - El renombrado se hizo con el servicio de lenguaje de TypeScript, no con búsqueda de texto: cada referencia la actualizó el compilador.
 - Quedan en inglés, pendientes de migrar: métodos, propiedades y signals de las clases, funciones y constantes internas, y los campos y rutas del contrato HTTP. Cambiar el contrato exige cambiar a la vez el BFF y sus pruebas.
+- **Nota del 2026-11-23:** ese pendiente se decidió en [ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md): se queda en inglés y no se migra (PBI-0022, provisional, por confirmar con Sebastián Avila y Daniel Avila).

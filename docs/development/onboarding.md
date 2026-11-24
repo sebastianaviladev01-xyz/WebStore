@@ -89,7 +89,7 @@ Los ADR, agrupados por tema:
 
 | Tema | ADR |
 |---|---|
-| Proceso y convenciones | [0001](../adrs/0001-registrar-decisiones-de-arquitectura.md), [0002](../adrs/0002-adoptar-sdd-y-tdd.md), [0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md), [0004](../adrs/0004-adoptar-la-estructura-de-repositorio-de-idshield.md), [0005](../adrs/0005-adoptar-convenciones-de-versionamiento-y-entrega.md) y [0008](../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md) |
+| Proceso y convenciones | [0001](../adrs/0001-registrar-decisiones-de-arquitectura.md), [0002](../adrs/0002-adoptar-sdd-y-tdd.md), [0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md), [0004](../adrs/0004-adoptar-la-estructura-de-repositorio-de-idshield.md), [0005](../adrs/0005-adoptar-convenciones-de-versionamiento-y-entrega.md), [0008](../adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md) y [0024](../adrs/0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md) |
 | Frontend | [0006](../adrs/0006-organizar-el-frontend-por-features-y-capas.md) |
 | Backend (BFF de prueba) | [0007](../adrs/0007-organizar-el-bff-en-capas.md) |
 | Pruebas | [0009](../adrs/0009-usar-node-test-y-playwright-para-las-pruebas.md) |
