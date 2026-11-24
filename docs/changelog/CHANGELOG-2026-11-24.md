@@ -13,7 +13,7 @@ Daniel y Walther revisaron la demo el 2026-11-17, y de esa revisión salieron PB
 
 - Cada lote: `npm run verify` y `npm run test:e2e` completos, ejecutados por la sesión del lote o por la sesión principal; capturas antes y después cuando tocaba la interfaz, guardadas en `frontend/output/visual-qa/lote-NN-*/` del checkout principal (no se versionan).
 - Con los lotes 21 a 24 juntos: 407 pruebas del frontend, 706 del BFF, 34 de arquitectura, el smoke test del contrato y 362 e2e, todo en verde.
-- Al terminar el lote 25: 402 pruebas del frontend (cinco menos, por las de `filtrarCategorias`), 713 del BFF, 34 de arquitectura y el smoke test, en verde. Su e2e completo lo informa su PR.
+- Al terminar el lote 25: 402 pruebas del frontend (cinco menos, por las de `filtrarCategorias`), 713 del BFF, 34 de arquitectura y el smoke test, en verde. La suite e2e completa dio 360 de 365: cinco pruebas aún esperaban la imagen de la categoría como Data URL y se corrigieron en el mismo lote (`5ff8a90`); esas dos specs pasan 23 de 23 y el CI repite la suite.
 
 ## Lo que queda abierto
 

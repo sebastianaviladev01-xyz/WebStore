@@ -86,7 +86,7 @@ Se ejecutaron seis lotes el 2026-11-24, cada uno con su rama y su PR en borrador
 | 23, Dashboard, reclamaciones e inventario | PBI-0222, 0223 y 0226 | [#82](https://github.com/sebastianaviladev01-xyz/WebStore/pull/82) |
 | 24, imágenes y banners ([ADR-0026](0026-guardar-las-imagenes-cargadas-en-el-bff-y-servirlas-por-direccion.md)) | PBI-0214 y 0221 | [#83](https://github.com/sebastianaviladev01-xyz/WebStore/pull/83) |
 | 25, campos, listado de productos y hallazgos | PBI-0212, 0218, 0219 y 0224, y los hallazgos de los lotes 21 a 24 | [#84](https://github.com/sebastianaviladev01-xyz/WebStore/pull/84) |
-| 26, cierre documental | Los registros y este cierre | PR del lote 26 |
+| 26, cierre documental | Los registros y este cierre | [PR #85](https://github.com/sebastianaviladev01-xyz/WebStore/pull/85) |
 
 El lote 25 reunió, además de sus cuatro elementos, los hallazgos que anotaron los PR de los lotes 21 a 24: la galería con «URL de foto», la galería y la imagen de la categoría como Data URL dentro del JSON, `NG02960` en la ficha, `filtrarCategorias` sin uso, escenarios de capturas rotos, dos mejoras de Reclamaciones y las notas del ajuste porcentual. Llevó la galería y la categoría a la forma de ADR-0026, que amplió. Todos tienen su PBI en el [backlog](../planning/backlog.md): PBI-0227 a PBI-0233, cerrados, y PBI-0234 a PBI-0236, los que el lote 25 dejó abiertos.
 
@@ -99,4 +99,4 @@ Los registros quedaron al día en el lote 26: el [backlog](../planning/backlog.m
 - **Hallazgos abiertos del lote 25:** la ventana del tema no crece en alto (PBI-0235) y los pedidos anteriores conservan Data URL de la galería (PBI-0236).
 - **Lo que ya estaba fuera:** terceros, una persona y el backend de producción, como al [cerrar ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md#cierre).
 
-Falta informar a Daniel Avila, como decía la aprobación. No queda ninguna excepción vigente: esta termina al fusionar el PR del lote 26, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
+Falta informar a Daniel Avila, como decía la aprobación. No queda ninguna excepción vigente: esta termina al fusionar el [PR #85](https://github.com/sebastianaviladev01-xyz/WebStore/pull/85), y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
