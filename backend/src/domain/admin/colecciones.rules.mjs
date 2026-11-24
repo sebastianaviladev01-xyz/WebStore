@@ -5,6 +5,7 @@ import {
 import { LADO_IMAGEN_DE_CATEGORIA, leerImagen } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
 import { LISTAS_DE_CONTENIDO, esModoDeSugeridos, validarListaDeContenido } from './contenido.rules.mjs';
+import { esModoDeDireccion } from '../pedidos/direcciones-por-producto.rules.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
 import { esHoraDeCorte, esReglaDePrimeraEntrega } from '../pedidos/primera-fecha-de-entrega.rules.mjs';
 import { COMPLAINT_STATUSES } from '../reclamos/reclamo.rules.mjs';
@@ -283,6 +284,9 @@ export function requireValidConfig(config, current) {
         key,
         'la primera fecha de entrega es el mismo día, el día calendario siguiente o el siguiente día hábil',
       );
+    // Lote 19 (ADR-0021, PBI-0006): una dirección por pedido o una por producto.
+    if (key === 'deliveryAddressMode' && !esModoDeDireccion(value))
+      throw invalid('config', key, 'el pedido lleva una dirección por pedido o una por producto');
     if (key === 'deliveryCutoffTime' && !esHoraDeCorte(value))
       throw invalid('config', key, 'la hora de corte va en formato de 24 horas (14:00) o vacía');
     const expected = typeof current[key];

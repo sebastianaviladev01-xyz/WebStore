@@ -270,5 +270,7 @@ export const seed = {
     // laborables y las versiones de los términos no van en la semilla: los completa la normalización (PBI-0183, 0177).
     firstDeliveryDay: 'next-calendar-day',
     deliveryCutoffTime: '',
+    // Una dirección por pedido o una por producto (lote 19, PBI-0006): por defecto, una por pedido.
+    deliveryAddressMode: 'per-order',
   },
 };

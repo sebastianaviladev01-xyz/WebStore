@@ -19,6 +19,10 @@ import {
   esReglaDePrimeraEntrega,
 } from '../../domain/pedidos/primera-fecha-de-entrega.rules.mjs';
 import { nowIso } from '../../domain/comun/reloj.mjs';
+import {
+  esModoDeDireccion,
+  MODO_DE_DIRECCION_POR_DEFECTO,
+} from '../../domain/pedidos/direcciones-por-producto.rules.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
 import { migrateRole } from '../../domain/sesion/rol.rules.mjs';
 import { isSessionAlive } from '../../domain/sesion/sesion.rules.mjs';
@@ -284,6 +288,10 @@ export function normalizeState(input, demoPasswords, avisar = () => {}, opciones
     next.config.firstDeliveryDay = ENTREGA_POR_DEFECTO.firstDeliveryDay;
   if (!esHoraDeCorte(next.config.deliveryCutoffTime))
     next.config.deliveryCutoffTime = ENTREGA_POR_DEFECTO.deliveryCutoffTime;
+  // Lote 19 (PBI-0006), sin migración ni cambio de versión: sin el modo de dirección, o con uno desconocido, una por
+  // pedido, que es lo que hacía la tienda; los pedidos sin direcciones por línea no cambian.
+  if (!esModoDeDireccion(next.config.deliveryAddressMode))
+    next.config.deliveryAddressMode = MODO_DE_DIRECCION_POR_DEFECTO;
   next.nonWorkingDates = normalizarDiasNoLaborables(
     input.nonWorkingDates,
     diasNoLaborablesIniciales(fechasNoLaborablesIniciales),

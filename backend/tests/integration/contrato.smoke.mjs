@@ -1612,6 +1612,120 @@ try {
   });
   console.log('✓ Lote 17: primera fecha de entrega, días no laborables y versiones de los términos');
 
+  // Lote 19 (ADR-0021, PBI-0006; provisional): una dirección por pedido (por defecto) o una por producto.
+  let snapshot19 = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  if (snapshot19.config.deliveryAddressMode !== 'per-order')
+    throw new Error('La configuración debe traer una dirección por pedido por defecto');
+  if ((await request('/bff/content/settings')).deliveryAddressMode !== 'per-order')
+    throw new Error('Los ajustes públicos deben traer deliveryAddressMode');
+  const otraDireccion = {
+    addressLine: 'Calle Regalo 456',
+    district: 'Miraflores',
+    province: 'Lima',
+    department: 'Lima',
+  };
+  const pedido19 = {
+    ...command,
+    deliveryDate: fechaDeLima(2),
+    termsVersion: 2,
+    items: [
+      { productId: 'p-004', quantity: 1 },
+      { productId: 'p-005', quantity: 1, shipping: otraDireccion },
+    ],
+  };
+  await esperarError(
+    await raw('/bff/checkout/orders', { method: 'POST', body: JSON.stringify(pedido19) }),
+    409,
+    'PER_PRODUCT_ADDRESS_DISABLED',
+    'Una dirección por producto con la tienda en una por pedido',
+  );
+  const modoInvalido = await esperarError(
+    await raw('/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: authorization(owner.token),
+      body: JSON.stringify({ revision: snapshot19.revision, config: { deliveryAddressMode: 'per-line' } }),
+    }),
+    400,
+    'INVALID_COLLECTION',
+    'Modo de dirección no válido',
+  );
+  if (modoInvalido.details?.field !== 'deliveryAddressMode')
+    throw new Error('El rechazo del modo de dirección debe nombrar el campo');
+  snapshot19 = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot19.revision, config: { deliveryAddressMode: 'per-product' } }),
+  });
+  if ((await request('/bff/content/settings')).deliveryAddressMode !== 'per-product')
+    throw new Error('La tienda debe recibir una dirección por producto tal como se guardó');
+  const precios19 = Object.fromEntries(
+    (await request('/bff/catalog/products')).map((item) => [item.id, item.price]),
+  );
+  const tarifa = async (destino) =>
+    (await request(`/bff/shipping/quote?destination=${encodeURIComponent(destino)}`)).price;
+  const envio19 = (await tarifa('San Isidro')) + (await tarifa('Miraflores'));
+  const total19 = precios19['p-004'] + precios19['p-005'] + envio19;
+  const cambiado19 = await esperarError(
+    await raw('/bff/checkout/orders', {
+      method: 'POST',
+      body: JSON.stringify({ ...pedido19, total: total19 - envio19 }),
+    }),
+    409,
+    'ORDER_TOTAL_CHANGED',
+    'Total sin el envío del segundo destino',
+  );
+  if (cambiado19.details?.shippingCost !== envio19)
+    throw new Error('El envío debe cobrarse una vez por cada destino distinto');
+  const clave19 = 'smoke-lote-19-direcciones';
+  const porProducto = await request('/bff/checkout/orders', {
+    method: 'POST',
+    headers: { 'idempotency-key': clave19 },
+    body: JSON.stringify({ ...pedido19, total: total19 }),
+  });
+  if (
+    porProducto.shipping.district !== 'San Isidro' ||
+    porProducto.items[0].shipping !== undefined ||
+    porProducto.items[1].shipping?.district !== 'Miraflores' ||
+    porProducto.shippingCost !== envio19
+  )
+    throw new Error('El pedido debe guardar la dirección de la línea y la principal en shipping');
+  const repetido19 = await request('/bff/checkout/orders', {
+    method: 'POST',
+    headers: { 'idempotency-key': clave19 },
+    body: JSON.stringify({ ...pedido19, total: total19 }),
+  });
+  if (repetido19.id !== porProducto.id) throw new Error('La misma clave debe devolver el mismo pedido');
+  const consultado19 = await request(`/bff/orders/${porProducto.id}`, {
+    headers: { 'x-order-token': repetido19.accessToken },
+  });
+  if (consultado19.items[1].shipping?.addressLine !== 'Calle Regalo 456')
+    throw new Error('La tienda debe ver la dirección de la línea en el pedido');
+  const pedidoAdmin19 = (
+    await request('/bff/admin/snapshot', { headers: authorization(owner.token) })
+  ).orders.find((item) => item.id === porProducto.id);
+  if (pedidoAdmin19.items[0].shipping !== null || pedidoAdmin19.items[1].shipping?.district !== 'Miraflores')
+    throw new Error('El Admin debe ver la dirección de cada línea que la tiene');
+  // Cambiar la principal a la misma dirección de la línea deja un solo destino.
+  const cambiadoA19 = await request(`/bff/orders/${porProducto.id}/shipping`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': repetido19.accessToken },
+    body: JSON.stringify({ shipping: otraDireccion }),
+  });
+  if (cambiadoA19.shippingCost !== (await tarifa('Miraflores')))
+    throw new Error('Cambiar la dirección principal debe recalcular el envío con las líneas');
+  await request(`/bff/orders/${porProducto.id}/cancel`, {
+    method: 'PATCH',
+    headers: { 'x-order-token': repetido19.accessToken },
+    body: '{}',
+  });
+  snapshot19 = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot19.revision, config: { deliveryAddressMode: 'per-order' } }),
+  });
+  console.log('✓ Lote 19: una dirección por pedido o una por producto, con el envío por destino distinto');
+
   console.log('✓ Admin autenticado → Storefront: catálogo/stock/características');
   console.log('✓ Storefront → Admin: pedido/cliente/inventario');
   console.log(
