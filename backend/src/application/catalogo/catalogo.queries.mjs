@@ -2,6 +2,7 @@ import { sortCategories } from '../../domain/catalogo/categoria.rules.mjs';
 import { galleryOf } from '../../domain/catalogo/producto.rules.mjs';
 import { slugify } from '../../domain/catalogo/slug.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
+import { direccionDeImagen } from './imagenes.queries.mjs';
 
 const categoryToPublic = (category) => ({
   id: category.id,
@@ -18,31 +19,38 @@ const categoryToPublic = (category) => ({
 export const toPublicProduct = (state) => {
   const brandName = (id) => state.brands.find((brand) => brand.id === id)?.name ?? 'Marca';
   const categoryName = (id) => state.categories.find((category) => category.id === id)?.name ?? 'Categoría';
-  return (product) => ({
-    id: product.id,
-    slug: slugify(product.name),
-    sku: product.sku,
-    name: product.name,
-    shortDescription: product.description,
-    description: product.description,
-    categoryId: product.categoryId,
-    categoryName: categoryName(product.categoryId),
-    brand: brandName(product.brandId),
-    price: product.price,
-    stock: product.stock,
-    rating: product.rating ?? 0,
-    reviewCount: product.reviewCount ?? 0,
-    imageUrl: product.imageUrl,
-    thumbnailUrl: product.thumbnailUrl || product.imageUrl,
-    badge: product.stock === 0 ? undefined : product.badge,
-    // Lote 22 (PBI-0215): la marca que elige el Admin; sin ella, no es destacado.
-    featured: product.featured === true,
-    highlights: Array.isArray(product.highlights) ? product.highlights.filter(Boolean) : [],
-    // Galería pública: la imagen principal siempre primero, seguida de las fotos adicionales.
-    images: [product.imageUrl, ...galleryOf(product)].filter(
-      (url, index, all) => url && all.indexOf(url) === index,
-    ),
-  });
+  return (product) => {
+    // Lote 24 (ADR-0026, PBI-0214): las imágenes cargadas llegan como dirección del BFF, no como Data URL.
+    const imageUrl = direccionDeImagen('products', product.id, 'image', product.imageUrl);
+    const thumbnailUrl = product.thumbnailUrl
+      ? direccionDeImagen('products', product.id, 'thumbnail', product.thumbnailUrl)
+      : imageUrl;
+    return {
+      id: product.id,
+      slug: slugify(product.name),
+      sku: product.sku,
+      name: product.name,
+      shortDescription: product.description,
+      description: product.description,
+      categoryId: product.categoryId,
+      categoryName: categoryName(product.categoryId),
+      brand: brandName(product.brandId),
+      price: product.price,
+      stock: product.stock,
+      rating: product.rating ?? 0,
+      reviewCount: product.reviewCount ?? 0,
+      imageUrl,
+      thumbnailUrl,
+      badge: product.stock === 0 ? undefined : product.badge,
+      // Lote 22 (PBI-0215): la marca que elige el Admin; sin ella, no es destacado.
+      featured: product.featured === true,
+      highlights: Array.isArray(product.highlights) ? product.highlights.filter(Boolean) : [],
+      // Galería pública: la imagen principal siempre primero, seguida de las fotos adicionales.
+      images: [imageUrl, ...galleryOf(product).filter((url) => url !== product.imageUrl)].filter(
+        (url, index, all) => url && all.indexOf(url) === index,
+      ),
+    };
+  };
 };
 
 /** Consultas públicas del catálogo: solo productos activos. */

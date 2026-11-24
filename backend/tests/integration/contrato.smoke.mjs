@@ -8,7 +8,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { dataUrl, png } from '../apoyo/imagenes.mjs';
+import { dataUrl, imagenesDeProducto, png, webp } from '../apoyo/imagenes.mjs';
 import { fechaDeLima } from './apoyo/servidor.mjs';
 
 const port = 3107;
@@ -348,6 +348,8 @@ try {
           upsert: [
             {
               ...conCambio.products[0],
+              // Lote 24 (PBI-0214): un producto nuevo llega con sus imágenes cargadas.
+              ...imagenesDeProducto(),
               id: 'p-smoke-slug',
               sku: 'SMOKE-SLUG',
               name: conCambio.products[0].name.toUpperCase(),
@@ -428,7 +430,16 @@ try {
     body: JSON.stringify({
       revision: conCambio.revision,
       products: {
-        upsert: [{ ...plantilla, id: 'p-smoke-stock', sku: 'SMOKE-STOCK', name: 'Producto sin stock' }],
+        upsert: [
+          {
+            ...plantilla,
+            // Lote 24 (PBI-0214): un producto nuevo llega con sus imágenes cargadas.
+            ...imagenesDeProducto(),
+            id: 'p-smoke-stock',
+            sku: 'SMOKE-STOCK',
+            name: 'Producto sin stock',
+          },
+        ],
       },
     }),
   });
@@ -706,10 +717,13 @@ try {
     body: JSON.stringify({ revision: snapshot.revision, config: { addToCartDisplay: 'dialog' } }),
   });
 
+  // Lote 24 (ADR-0026, PBI-0214; provisional): la imagen del banner se carga como archivo y la tienda la pide por la
+  // dirección del BFF, con su versión.
+  const imagenDeBanner = dataUrl('webp', webp(2560, 1024));
   snapshot.banners[0] = {
     ...snapshot.banners[0],
     title: 'Campaña de prueba',
-    imageUrl: 'assets/brand/living-room-v2.jpg',
+    imageUrl: imagenDeBanner,
     imageFit: 'cover',
     imageTone: 'dark',
     imageFocusY: 120,
@@ -728,12 +742,46 @@ try {
     campaign.imageTone !== 'dark' ||
     campaign.imageFocusY !== 100 ||
     campaign.ctaUrl !== '/catalogo?categoria=cat-tv' ||
-    campaign.imageUrl !== 'assets/brand/living-room-v2.jpg'
+    !/^\/bff\/images\/banners\/[^/]+\/image\?v=[A-Za-z0-9_-]{12}$/.test(campaign.imageUrl)
   )
     throw new Error('Banner o presentación de imagen no llegó al Storefront');
+  const imagenServida = await raw(campaign.imageUrl);
+  if (
+    imagenServida.status !== 200 ||
+    imagenServida.headers.get('content-type') !== 'image/webp' ||
+    dataUrl('webp', Buffer.from(await imagenServida.arrayBuffer())) !== imagenDeBanner
+  )
+    throw new Error('PBI-0214: GET /bff/images no sirve la imagen cargada del banner');
+  await esperarError(
+    await raw('/bff/images/banners/no-existe/image'),
+    404,
+    'IMAGE_NOT_FOUND',
+    'PBI-0214: la imagen de un banner que no existe',
+  );
+
+  // Lote 24 (PBI-0214 y PBI-0221; provisional): una URL nueva en lugar de la imagen y una vigencia sin hora se rechazan.
+  let bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  for (const [cambio, campo] of [
+    [{ imageUrl: 'https://example.com/banner.jpg' }, 'imageUrl'],
+    [{ startAt: '2026-12-01' }, 'startAt'],
+  ]) {
+    const rechazo = await esperarError(
+      await raw('/bff/admin/snapshot', {
+        method: 'PUT',
+        headers: { ...authorization(owner.token), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          revision: bannerSnapshot.revision,
+          banners: { upsert: [{ id: campaign.id, ...cambio }] },
+        }),
+      }),
+      400,
+      'INVALID_COLLECTION',
+      `PBI-0214 y PBI-0221: el banner con ${campo} no válido`,
+    );
+    if (rechazo.details?.field !== campo) throw new Error(`El rechazo debe señalar ${campo}`);
+  }
 
   // Lote 12 (PBI-0184, provisional): dos botones opcionales por banner, cada uno con su texto y su enlace.
-  let bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   const conBotones = await raw('/bff/admin/snapshot', {
     method: 'PUT',
     headers: { ...authorization(owner.token), 'content-type': 'application/json' },
@@ -833,6 +881,8 @@ try {
   );
   const sellerProduct = {
     ...sellerSnapshot.products[0],
+    // Lote 24 (PBI-0214): un producto nuevo llega con su imagen y su miniatura cargadas.
+    ...imagenesDeProducto(),
     id: 'p-smoke-vendedor',
     name: 'Producto creado por el vendedor',
     sku: 'SMOKE-VENDEDOR',

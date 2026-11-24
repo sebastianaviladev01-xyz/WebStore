@@ -10,8 +10,8 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * - TEST-01 (AC-01, AC-04): con A, B y C, a 360, 375 y 390 px, la página no desplaza en horizontal ni al entrar
  *   ni editando, y ningún elemento de `main` acaba a la derecha de `clientWidth`.
  * - TEST-02 (AC-02, AC-04): el formulario «Nuevo producto» tiene todos sus campos, la galería, «Agregar»,
- *   «Cargar foto» y «Guardar producto» dentro de su caja; la ayuda de «Miniatura optimizada» acaba por encima de
- *   la galería; al editar «OLED Vision 55” 4K» y añadir una foto, las miniaturas, sus botones y el aviso de foto
+ *   «Cargar foto» y «Guardar producto» dentro de su caja; el grupo «Imagen principal», con «Cargar imagen» (lote 24,
+ *   PBI-0214: ya no hay URL ni miniatura que escribir), dentro de su caja y por encima de la galería; al editar «OLED Vision 55” 4K» y añadir una foto, las miniaturas, sus botones y el aviso de foto
  *   repetida quedan dentro de la galería.
  * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea), el precio, el
  *   stock y las acciones se ven, caben en la lista y no se solapan; la cabecera se oculta o cabe; la celda del
@@ -19,7 +19,7 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * - TEST-04 (AC-01, AC-03): lo mismo con el vendedor y B a 375 px, sin «Eliminar» (desde el lote 07, con «Nuevo
  *   producto»: PBI-0013).
  * - TEST-05 (AC-05): con B, a 768 y 1440 px, el escritorio sigue igual (cabecera, una sola línea por fila, la
- *   celda solo con el número, la ayuda de la miniatura en una línea); a 767 px, la cabecera se oculta y la celda
+ *   celda solo con el número); a 767 px, la cabecera se oculta y la celda
  *   dice «Stock N».
  *
  * Desde la feature 008, el formulario está en su interfaz de registro: «Nuevo producto» en `/productos/nuevo` y
@@ -53,7 +53,6 @@ const STOCK_SOLO_NUMERO = /^\d+$/;
 
 const PRODUCTO_CON_GALERIA = PRODUCTOS[0].nombre;
 const FOTO_NUEVA = 'assets/products/washer-studio.jpg';
-const AYUDA_MINIATURA = 'Opcional. Si la dejas vacía se usa la imagen principal.';
 const AVISO_FOTO_REPETIDA = 'Esa foto ya está en el producto.';
 
 interface Caja {
@@ -145,16 +144,6 @@ async function lineasDelSku(fila: Locator, sku: string): Promise<number> {
     }
     throw new Error(`La línea del SKU no contiene «${buscado}»`);
   }, sku);
-}
-
-/** Cuántas líneas ocupa un texto: valores de `top` distintos (redondeados) de un `Range` sobre sus caracteres. */
-async function lineasDeTexto(elemento: Locator): Promise<number> {
-  return elemento.evaluate((nodo) => {
-    const rango = document.createRange();
-    rango.selectNodeContents(nodo);
-    const rectangulos = Array.from(rango.getClientRects()).filter((r) => r.width > 0);
-    return new Set(rectangulos.map((r) => Math.round(r.top))).size;
-  });
 }
 
 /** Carga `/productos` al ancho indicado y espera el título y las seis filas. */
@@ -324,8 +313,6 @@ const CAMPOS: readonly (readonly [RolDeCampo, string])[] = [
   ['textbox', 'Nombre'],
   ['textbox', 'SKU'],
   ['textbox', 'Descripción'],
-  ['textbox', 'Imagen principal'],
-  ['textbox', 'Miniatura optimizada'],
   ['textbox', 'URL de foto'],
   ['textbox', 'Características (una por línea)'],
   ['spinbutton', 'Precio'],
@@ -360,6 +347,8 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
 
   const galeria = formulario.getByRole('group', { name: 'Galería de fotos' });
   const piezas: [string, Locator][] = [
+    ['grupo «Imagen principal»', formulario.getByRole('group', { name: 'Imagen principal' })],
+    ['texto «Cargar imagen»', formulario.getByText('Cargar imagen', { exact: true })],
     ['grupo «Galería de fotos»', galeria],
     ['botón «Agregar»', formulario.getByRole('button', { name: 'Agregar', exact: true })],
     ['texto «Cargar foto»', formulario.getByText('Cargar foto', { exact: true })],
@@ -375,13 +364,13 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
       .toBe(true);
   }
 
-  const ayuda = await caja(formulario.getByText(AYUDA_MINIATURA));
+  const imagen = await caja(formulario.getByRole('group', { name: 'Imagen principal' }));
   const leyenda = await caja(formulario.getByText('Galería de fotos', { exact: true }));
   expect
     .soft(
-      ayuda.bottom <= leyenda.top + TOLERANCIA,
+      imagen.bottom <= leyenda.top + TOLERANCIA,
       que(
-        `ayuda de la miniatura (bottom ${ayuda.bottom.toFixed(1)}) sobre la leyenda (top ${leyenda.top.toFixed(1)})`,
+        `imagen principal (bottom ${imagen.bottom.toFixed(1)}) sobre la leyenda de la galería (top ${leyenda.top.toFixed(1)})`,
       ),
     )
     .toBe(true);
@@ -543,11 +532,6 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
         }
         expect.soft(stock.texto, que('celda del stock')).toMatch(STOCK_SOLO_NUMERO);
       }
-
-      await abrirNuevoProducto(page);
-      const formulario = page.getByRole('form', { name: 'Nuevo producto' });
-      const lineas = await lineasDeTexto(formulario.getByText(AYUDA_MINIATURA));
-      expect.soft(lineas, etiqueta(lugar, 'líneas de la ayuda de la miniatura')).toBe(1);
     }
   });
 

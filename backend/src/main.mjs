@@ -10,6 +10,7 @@ import { checkoutRoutes } from './api/routes/checkout.routes.mjs';
 import { contenidoRoutes } from './api/routes/contenido.routes.mjs';
 import { cuentasRoutes } from './api/routes/cuentas.routes.mjs';
 import { enviosRoutes } from './api/routes/envios.routes.mjs';
+import { imagenesRoutes } from './api/routes/imagenes.routes.mjs';
 import { pedidosRoutes } from './api/routes/pedidos.routes.mjs';
 import { reclamosRoutes } from './api/routes/reclamos.routes.mjs';
 import { saludRoutes } from './api/routes/salud.routes.mjs';
@@ -20,6 +21,7 @@ import { createNotificacionesUseCases } from './application/admin/notificaciones
 import { createPerfilUseCases } from './application/admin/perfil.use-cases.mjs';
 import { createSnapshotUseCases } from './application/admin/snapshot.use-cases.mjs';
 import { createCatalogoQueries } from './application/catalogo/catalogo.queries.mjs';
+import { createImagenesQueries } from './application/catalogo/imagenes.queries.mjs';
 import { createCheckoutUseCases } from './application/checkout/checkout.use-cases.mjs';
 import { createContenidoQueries } from './application/contenido/contenido.queries.mjs';
 import { createCuentasUseCases } from './application/cuentas/cuentas.use-cases.mjs';
@@ -69,6 +71,7 @@ const routes = [
   ...cuentasRoutes(cuentas),
   ...catalogoRoutes(createCatalogoQueries({ store })),
   ...contenidoRoutes(createContenidoQueries({ store })),
+  ...imagenesRoutes(createImagenesQueries({ store })),
   ...enviosRoutes(createEnviosQueries({ store })),
   ...reclamosRoutes(createReclamosUseCases({ store })),
   ...checkoutRoutes(createCheckoutUseCases({ store, security })),

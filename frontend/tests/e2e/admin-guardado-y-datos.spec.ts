@@ -18,6 +18,7 @@ import {
   terminosAceptados,
   urls,
 } from './apoyo/entorno';
+import { cargarImagenPrincipal } from './apoyo/fotos';
 import { conservarElStock } from './apoyo/pedidos';
 
 // Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
@@ -333,7 +334,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await nombre.fill('Televisor lote 06');
     await sku.fill('tv-oled-55-vsn');
     await page.getByRole('textbox', { name: 'Descripción' }).fill('Descripción');
-    await page.getByRole('textbox', { name: 'Imagen principal' }).fill('assets/products/tv-studio.jpg');
+    await cargarImagenPrincipal(page);
     await page.getByRole('textbox', { name: /Características/ }).fill('Una');
     await page.getByRole('combobox', { name: 'Categoría' }).click();
     await page.getByRole('option', { name: 'TV y audio' }).click();
@@ -360,15 +361,16 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await page.getByRole('textbox', { name: 'Antetítulo' }).fill('Campaña');
     await page.getByRole('textbox', { name: 'Título', exact: true }).fill('Banner lote 06');
     await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
-    await page.getByRole('textbox', { name: 'Botón principal: texto' }).fill('Ver');
-    await page.getByRole('textbox', { name: 'Botón principal: enlace' }).fill('/catalogo');
+    await page.getByRole('textbox', { name: 'Botón principal: lo que dice' }).fill('Ver');
+    await page.getByRole('textbox', { name: 'Botón principal: adónde lleva' }).fill('/catalogo');
     await page.getByRole('combobox', { name: 'Ubicación' }).click();
     await page.getByRole('option', { name: 'Promoción' }).click();
-    await page.getByLabel('Inicio').fill('2030-12-10');
+    // Lote 24 (PBI-0221): la vigencia lleva fecha y hora de Lima; el fin puede ir el mismo día, pero no antes.
+    await page.getByLabel('Inicio').fill('2030-12-10T09:30');
     const fin = page.getByLabel('Fin');
-    await fin.fill('2030-12-01');
+    await fin.fill('2030-12-10T09:29');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(fin).toHaveAccessibleDescription('Debe ser el día del inicio o después.');
+    await expect(fin).toHaveAccessibleDescription('Debe ser igual o posterior al inicio.');
     expect(guardados()).toBe(0);
   });
 
@@ -384,12 +386,14 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
     await page.getByRole('combobox', { name: 'Ubicación' }).click();
     await page.getByRole('option', { name: 'Promoción' }).click();
-    await page.getByLabel('Inicio').fill('2030-12-01');
-    await page.getByLabel('Fin').fill('2030-12-10');
-    const enlacePrincipal = page.getByRole('textbox', { name: 'Botón principal: enlace' });
-    const textoSecundario = page.getByRole('textbox', { name: 'Botón secundario: texto' });
-    await page.getByRole('textbox', { name: 'Botón principal: texto' }).fill('Ver');
-    await page.getByRole('textbox', { name: 'Botón secundario: enlace' }).fill('https://example.com/ofertas');
+    await page.getByLabel('Inicio').fill('2030-12-01T00:00');
+    await page.getByLabel('Fin').fill('2030-12-10T23:59');
+    const enlacePrincipal = page.getByRole('textbox', { name: 'Botón principal: adónde lleva' });
+    const textoSecundario = page.getByRole('textbox', { name: 'Botón secundario: lo que dice' });
+    await page.getByRole('textbox', { name: 'Botón principal: lo que dice' }).fill('Ver');
+    await page
+      .getByRole('textbox', { name: 'Botón secundario: adónde lleva' })
+      .fill('https://example.com/ofertas');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(enlacePrincipal).toHaveAccessibleDescription('Falta el enlace del botón.');
     await expect(textoSecundario).toHaveAccessibleDescription('Falta el texto del botón.');

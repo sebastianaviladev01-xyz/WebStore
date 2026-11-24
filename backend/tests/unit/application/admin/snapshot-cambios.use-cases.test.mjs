@@ -15,6 +15,7 @@ import assert from 'node:assert/strict';
 import { buildAdminSnapshot } from '../../../../src/application/admin/admin.views.mjs';
 import { createSnapshotUseCases } from '../../../../src/application/admin/snapshot.use-cases.mjs';
 import { seed } from '../../../../src/infrastructure/persistencia/seed.mjs';
+import { imagenesDeBanner, imagenesDeProducto } from '../../../apoyo/imagenes.mjs';
 
 const security = { hashPassword: (password) => ({ salt: 's', hash: `h:${password}` }) };
 
@@ -88,7 +89,13 @@ test('PBI-0119: guardar el stock de un producto no reenvía las fotos de ningún
 });
 
 test('PBI-0119: un producto nuevo se agrega completo y uno retirado se elimina, sin enviar la colección', () => {
-  const nuevo = { ...producto('p-004'), id: 'p-nuevo', sku: 'NUEVO-1', name: 'Parlante nuevo' };
+  const nuevo = {
+    ...producto('p-004'),
+    ...imagenesDeProducto(),
+    id: 'p-nuevo',
+    sku: 'NUEVO-1',
+    name: 'Parlante nuevo',
+  };
   const { resultado } = guardar(superadmin, { products: { upsert: [nuevo], remove: ['p-006'] } });
   const ids = resultado().products.map((item) => item.id);
   assert.deepEqual(ids, ['p-001', 'p-002', 'p-003', 'p-004', 'p-005', 'p-nuevo']);
@@ -114,6 +121,7 @@ test('PBI-0120: un producto nuevo incompleto se rechaza con INVALID_COLLECTION',
 test('PBI-0226 (lote 23): un producto nuevo sin stock se crea con 0 unidades, también en la lista completa', () => {
   const { stock, ...sinStock } = {
     ...producto('p-004'),
+    ...imagenesDeProducto(),
     id: 'p-nuevo',
     sku: 'NUEVO-1',
     name: 'Parlante nuevo',
@@ -236,7 +244,13 @@ test('PBI-0123 (caracterización): un usuario con el correo de otro, aunque camb
 });
 
 test('PBI-0129: un producto con el SKU de otro se rechaza diciendo cuál', () => {
-  const nuevo = { ...producto('p-004'), id: 'p-nuevo', sku: 'tv-oled-55-vsn', name: 'Televisor nuevo' };
+  const nuevo = {
+    ...producto('p-004'),
+    ...imagenesDeProducto(),
+    id: 'p-nuevo',
+    sku: 'tv-oled-55-vsn',
+    name: 'Televisor nuevo',
+  };
   assert.throws(guardar(superadmin, { products: { upsert: [nuevo] } }).resultado, (error) => {
     assert.equal(error.code, 'INVALID_COLLECTION');
     assert.equal(error.details.field, 'sku');
@@ -246,7 +260,13 @@ test('PBI-0129: un producto con el SKU de otro se rechaza diciendo cuál', () =>
 });
 
 test('PBI-0129: un producto con la dirección de ficha de otro se rechaza diciendo cuál', () => {
-  const nuevo = { ...producto('p-004'), id: 'p-nuevo', sku: 'OTRO-1', name: 'Oled Visión 55 4K' };
+  const nuevo = {
+    ...producto('p-004'),
+    ...imagenesDeProducto(),
+    id: 'p-nuevo',
+    sku: 'OTRO-1',
+    name: 'Oled Visión 55 4K',
+  };
   assert.throws(guardar(superadmin, { products: { upsert: [nuevo] } }).resultado, (error) => {
     assert.equal(error.code, 'INVALID_COLLECTION');
     assert.deepEqual(error.details, { collection: 'products', field: 'slug', id: 'p-nuevo' });
@@ -340,6 +360,7 @@ test('PBI-0131: una categoría que usan productos o que tiene subcategorías no 
 test('PBI-0128: un banner que termina antes de empezar se rechaza', () => {
   const banner = {
     ...structuredClone(seed.banners[0]),
+    ...imagenesDeBanner(),
     id: 'bn-nuevo',
     startAt: '2026-12-10T00:00:00.000-05:00',
     endAt: '2026-12-01T23:59:59.999-05:00',

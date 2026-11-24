@@ -84,3 +84,48 @@ export function leerImagen(valor) {
   const medidas = medidasDeImagen(Buffer.from(partes[2], 'base64'));
   return medidas?.tipo === partes[1] ? medidas : null;
 }
+
+/**
+ * Imágenes del producto y del banner cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; provisional). El
+ * backoffice genera cada versión y el BFF de prueba, sin dependencias, solo comprueba en los bytes el formato, el lado
+ * mayor y el peso (en caracteres de la Data URL; el archivo pesa unas tres cuartas partes). La imagen principal del
+ * producto es la de la ficha y la miniatura, su reducción, la de los listados.
+ */
+export const LADO_IMAGEN_DE_PRODUCTO = 1600;
+export const MAX_IMAGEN_DE_PRODUCTO = 250 * 1024;
+export const LADO_MINIATURA_DE_PRODUCTO = 480;
+export const MAX_MINIATURA_DE_PRODUCTO = 60 * 1024;
+/** Imagen de escritorio del banner: el lado de las fotos de ejemplo (2560 × 1024). */
+export const LADO_IMAGEN_DE_BANNER = 2560;
+export const MAX_IMAGEN_DE_BANNER = 550 * 1024;
+/** Imagen del celular del banner, opcional: las de ejemplo miden 1100 px de ancho. */
+export const LADO_IMAGEN_MOVIL_DE_BANNER = 1200;
+export const MAX_IMAGEN_MOVIL_DE_BANNER = 200 * 1024;
+
+/**
+ * Formato y medidas de una imagen cargada si es una Data URL PNG, JPEG o WebP cuyo lado mayor no pasa de `lado` y que
+ * cabe en `maximo` caracteres; si no, `null`.
+ */
+export function imagenCargada(valor, { lado, maximo }) {
+  if (typeof valor !== 'string' || valor.length > maximo) return null;
+  const imagen = leerImagen(valor);
+  return imagen && Math.max(imagen.ancho, imagen.alto) <= lado ? imagen : null;
+}
+
+/**
+ * ¿`miniatura` es la reducción de `principal` a un lado mayor de `lado` px (sin agrandar)? Se admite un píxel de
+ * diferencia por el redondeo.
+ */
+export function esReduccionDe(miniatura, principal, lado) {
+  const escala = Math.min(1, lado / Math.max(principal.ancho, principal.alto));
+  const ancho = Math.round(principal.ancho * escala);
+  const alto = Math.round(principal.alto * escala);
+  return Math.abs(miniatura.ancho - ancho) <= 1 && Math.abs(miniatura.alto - alto) <= 1;
+}
+
+/** Tipo y bytes de una Data URL PNG, JPEG o WebP válida, para servirla como archivo; si no lo es, `null`. */
+export function bytesDeImagen(valor) {
+  const partes = typeof valor === 'string' ? DATA_URL.exec(valor) : null;
+  if (!partes || !leerImagen(valor)) return null;
+  return { tipo: partes[1], bytes: Buffer.from(partes[2], 'base64') };
+}

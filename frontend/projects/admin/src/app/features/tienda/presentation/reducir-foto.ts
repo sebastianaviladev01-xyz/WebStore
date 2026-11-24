@@ -4,13 +4,17 @@ import {
   encajeEnCuadrado,
   LADO_IMAGEN_CATEGORIA,
   LADO_MAXIMO_FOTO,
+  LIMITE_ARCHIVO_FOTO,
   MAX_CARACTERES_IMAGEN_CATEGORIA,
+  MAX_CARACTERES_MINIATURA,
+  medidasDeMiniatura,
   medidasReducidas,
   primeraQueCabe,
 } from '../domain/foto.rules';
+import { TonoDeFoto, tonoDeLaZona, zonaDeLosControles } from '../domain/tono-de-foto.rules';
 
 /** Peso máximo del archivo que se acepta para reducir (lo que pesa en el disco, antes de reducirlo). */
-export const BYTES_MAXIMOS_ARCHIVO = 15 * 1024 * 1024;
+export const BYTES_MAXIMOS_ARCHIVO = LIMITE_ARCHIVO_FOTO;
 
 /** Motivo por el que una foto no se pudo usar, listo para mostrarse. */
 export const MENSAJE_FOTO_NO_CABE = `No pudimos reducir la foto a ${Math.round(BYTES_MAXIMOS_FOTO / 1024)} KB. Usa otra más simple o una URL.`;
@@ -93,4 +97,84 @@ export async function imagenDeCategoria(archivo: Blob): Promise<string | null> {
     CALIDADES_FOTO.map((calidad) => lienzo.toDataURL(tipo, calidad)),
     MAX_CARACTERES_IMAGEN_CATEGORIA,
   );
+}
+
+/** Lienzo de `ancho` × `alto` con `fuente` dibujada encima; sin WebP, sobre el fondo de la superficie del tema. */
+function dibujar(
+  fuente: CanvasImageSource,
+  ancho: number,
+  alto: number,
+): { lienzo: HTMLCanvasElement; tipo: string } | null {
+  const lienzo = document.createElement('canvas');
+  lienzo.width = ancho;
+  lienzo.height = alto;
+  const contexto = lienzo.getContext('2d');
+  if (!contexto) return null;
+  const webp = lienzo.toDataURL('image/webp').startsWith('data:image/webp');
+  if (!webp) {
+    // Fondo de la superficie del tema (los colores viven en los tokens, no en el código).
+    contexto.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--ws-surface').trim();
+    contexto.fillRect(0, 0, ancho, alto);
+  }
+  contexto.drawImage(fuente, 0, 0, ancho, alto);
+  return { lienzo, tipo: webp ? 'image/webp' : 'image/jpeg' };
+}
+
+/** La primera calidad de `CALIDADES_FOTO` con la que el lienzo cabe en `maximo` caracteres, o `null`. */
+const comprimir = ({ lienzo, tipo }: { lienzo: HTMLCanvasElement; tipo: string }, maximo: number) =>
+  primeraQueCabe(
+    CALIDADES_FOTO.map((calidad) => lienzo.toDataURL(tipo, calidad)),
+    maximo,
+  );
+
+/**
+ * Imagen principal y miniatura de un producto a partir de un solo archivo (lote 24, ADR-0026, PBI-0214; provisional):
+ * la de la ficha, con el lado mayor reducido a `LADO_MAXIMO_FOTO` px, y la miniatura de los listados, que es esa misma
+ * imagen reducida a `LADO_MINIATURA` px (el BFF comprueba que lo sea). Devuelve `null` si el archivo no se puede leer
+ * como imagen o si alguna versión no cabe ni con la menor calidad.
+ */
+export async function versionesDelProducto(
+  archivo: Blob,
+): Promise<{ imagen: string; miniatura: string } | null> {
+  let original: ImageBitmap;
+  try {
+    original = await createImageBitmap(archivo);
+  } catch {
+    return null;
+  }
+  const grande = medidasReducidas(original.width, original.height, LADO_MAXIMO_FOTO);
+  const principal = dibujar(original, grande.ancho, grande.alto);
+  original.close();
+  if (!principal) return null;
+  const chica = medidasDeMiniatura(grande.ancho, grande.alto);
+  const reducida = dibujar(principal.lienzo, chica.ancho, chica.alto);
+  const imagen = comprimir(principal, BYTES_MAXIMOS_FOTO);
+  const miniatura = reducida ? comprimir(reducida, MAX_CARACTERES_MINIATURA) : null;
+  return imagen && miniatura ? { imagen, miniatura } : null;
+}
+
+/**
+ * Imagen del banner a partir de un archivo (lote 24, ADR-0026, PBI-0214 y PBI-0221; provisional): reducida a
+ * `ladoMaximo` px de lado mayor y comprimida hasta caber en `maximo` caracteres, con el tono de la esquina inferior
+ * derecha, donde van los controles del carrusel (`tonoDeLaZona`). Devuelve `null` si el archivo no se puede leer como
+ * imagen o si no cabe ni con la menor calidad.
+ */
+export async function imagenDelBanner(
+  archivo: Blob,
+  { ladoMaximo, maximo }: { ladoMaximo: number; maximo: number },
+): Promise<{ imagen: string; tono: TonoDeFoto } | null> {
+  let original: ImageBitmap;
+  try {
+    original = await createImageBitmap(archivo);
+  } catch {
+    return null;
+  }
+  const medidas = medidasReducidas(original.width, original.height, ladoMaximo);
+  const dibujo = dibujar(original, medidas.ancho, medidas.alto);
+  original.close();
+  if (!dibujo) return null;
+  const zona = zonaDeLosControles(medidas.ancho, medidas.alto);
+  const pixeles = dibujo.lienzo.getContext('2d')?.getImageData(zona.x, zona.y, zona.ancho, zona.alto).data;
+  const imagen = comprimir(dibujo, maximo);
+  return imagen ? { imagen, tono: pixeles ? tonoDeLaZona(pixeles) : 'light' } : null;
 }

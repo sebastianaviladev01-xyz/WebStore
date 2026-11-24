@@ -1,28 +1,60 @@
 import { Banner } from './tienda.model';
 
 /**
- * Vigencia de los banners (lote 06, ADR-0017; PBI-0128). Los días del formulario son días de Lima (UTC-5, sin
- * horario de verano): un banner entra a las 00:00 y sale a las 23:59:59.999 de Lima, no cinco horas antes.
+ * Vigencia de los banners (lote 06, ADR-0017; PBI-0128), con fecha y hora desde el lote 24 (ADR-0025, PBI-0221;
+ * provisional). El formulario muestra y recibe la hora de Lima (UTC-5, sin horario de verano) como `AAAA-MM-DDTHH:mm`,
+ * el valor de un `datetime-local`, y se guarda como instante con su zona: el inicio al empezar ese minuto y el fin al
+ * terminarlo. Así, 00:00 y 23:59 son el día completo, como antes del lote.
  */
-export const inicioDelDiaEnLima = (dia: string): string => `${dia}T00:00:00.000-05:00`;
-export const finDelDiaEnLima = (dia: string): string => `${dia}T23:59:59.999-05:00`;
+const DESFASE_DE_LIMA_MS = -5 * 60 * 60 * 1000;
+export const inicioEnLima = (local: string): string => `${local}:00.000-05:00`;
+export const finEnLima = (local: string): string => `${local}:59.999-05:00`;
 
-/** El fin va antes del inicio (ambos `AAAA-MM-DD`); el mismo día vale. Sin alguno de los dos, no se compara. */
+/** Un instante guardado, en hora de Lima (`AAAA-MM-DDTHH:mm`); vacío si no es una fecha. */
+export function aHoraDeLima(instante: string): string {
+  const ms = Date.parse(instante);
+  return Number.isFinite(ms) ? new Date(ms + DESFASE_DE_LIMA_MS).toISOString().slice(0, 16) : '';
+}
+
+/** `DD/MM/AAAA HH:mm` en hora de Lima. */
+const fechaYHoraVisible = (instante: string): string => {
+  const local = aHoraDeLima(instante);
+  return local ? `${local.slice(8, 10)}/${local.slice(5, 7)}/${local.slice(0, 4)} ${local.slice(11)}` : '—';
+};
+
+/** La vigencia como la lee la lista de Banners: inicio y fin en hora de Lima. */
+export const vigenciaVisible = (inicio: string, fin: string): string =>
+  `${fechaYHoraVisible(inicio)} → ${fechaYHoraVisible(fin)}`;
+
+/**
+ * El instante que se guarda para un extremo de la vigencia: si la persona no cambió el minuto, el que ya estaba
+ * guardado (con sus segundos y su zona, aunque fuera UTC); si no, el elegido en hora de Lima.
+ */
+export function instanteDeLaVigencia(
+  guardado: string | undefined,
+  local: string,
+  extremo: 'inicio' | 'fin',
+): string {
+  if (guardado && aHoraDeLima(guardado) === local) return guardado;
+  return extremo === 'inicio' ? inicioEnLima(local) : finEnLima(local);
+}
+
+/** El fin va antes del inicio (ambos `AAAA-MM-DDTHH:mm`); el mismo minuto vale. Sin alguno de los dos, no se compara. */
 export const finAntesDelInicio = (inicio: string, fin: string): boolean => !!inicio && !!fin && fin < inicio;
 
 /** Máximo de banners principales activos que la tienda publica a la vez en el carrusel. */
 export const MAXIMO_HEROES_ACTIVOS = 3;
 
 /**
- * Banners principales activos, distintos del que se guarda, cuya vigencia coincide con la suya (`AAAA-MM-DD` de
- * Lima): los vencidos o los que empiezan después no cuentan para el tope.
+ * Banners principales activos, distintos del que se guarda, cuya vigencia coincide con la suya (`AAAA-MM-DDTHH:mm`
+ * de Lima): los vencidos o los que empiezan después no cuentan para el tope.
  */
 export function heroesQueCoinciden(
   banners: readonly Pick<Banner, 'id' | 'placement' | 'active' | 'startAt' | 'endAt'>[],
   vigencia: { readonly id: string | null; readonly startAt: string; readonly endAt: string },
 ): number {
-  const inicio = Date.parse(inicioDelDiaEnLima(vigencia.startAt));
-  const fin = Date.parse(finDelDiaEnLima(vigencia.endAt));
+  const inicio = Date.parse(inicioEnLima(vigencia.startAt));
+  const fin = Date.parse(finEnLima(vigencia.endAt));
   return banners.filter(
     (banner) =>
       banner.id !== vigencia.id &&

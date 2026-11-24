@@ -80,3 +80,15 @@ export function webp(ancho, alto, variante = 'VP8 ') {
 
 /** Data URL en base64 de `bytes` con el tipo `image/<tipo>`. */
 export const dataUrl = (tipo, bytes) => `data:image/${tipo};base64,${Buffer.from(bytes).toString('base64')}`;
+
+/**
+ * Lote 24 (PBI-0214): un producto o un banner nuevos llegan con sus imágenes cargadas como archivo, no con rutas de
+ * `assets/`. Estas son las cabeceras mínimas que acepta el BFF: la imagen principal de 1600 × 1200 con su miniatura de
+ * 480 × 360, y la imagen de escritorio del banner de 2560 × 1024 sin la del celular.
+ */
+export const imagenesDeProducto = () => ({
+  imageUrl: dataUrl('webp', webp(1600, 1200)),
+  thumbnailUrl: dataUrl('webp', webp(480, 360)),
+});
+
+export const imagenesDeBanner = () => ({ imageUrl: dataUrl('webp', webp(2560, 1024)), mobileImageUrl: '' });
