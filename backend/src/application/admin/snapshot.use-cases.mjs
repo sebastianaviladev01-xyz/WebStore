@@ -22,6 +22,7 @@ import {
   requireUniqueCategorySlugs,
   requireValidCategoryTree,
 } from '../../domain/catalogo/categoria.rules.mjs';
+import { conStockVigente } from '../../domain/catalogo/inventario.rules.mjs';
 import {
   requireNoRemovedProducts,
   requireRemovedNotInUse,
@@ -44,7 +45,8 @@ function applyProducts(state, value, role) {
   // (`products.edit` sin `products.manage`) se quitó: Daniel confirmó el 2026-11-18 que el vendedor modifica todo.
   if (!can(role, 'products.manage'))
     throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
-  const next = requireValidProducts(products);
+  // PBI-0226 (lote 23): el registro del producto no envía el stock; se conserva el de Inventario, o 0 si es nuevo.
+  const next = requireValidProducts(conStockVigente(products, state.products));
   // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
   if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
   requireUniqueSlugs(next, state.products);

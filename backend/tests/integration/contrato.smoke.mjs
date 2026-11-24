@@ -419,6 +419,38 @@ try {
   if ((await request('/bff/catalog/categories')).find((category) => category.id === 'cat-tv')?.parentId)
     throw new Error('Una jerarquía rechazada alteró las categorías');
 
+  // Lote 23 (ADR-0025, PBI-0226): el registro del producto no envía el stock, que se gestiona en Inventario. Un producto
+  // nuevo sin `stock` empieza en 0, y un cambio sin `stock` conserva el vigente.
+  const { stock: _stockDeLaPlantilla, ...plantilla } = conCambio.products[1];
+  const conNuevoSinStock = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: conCambio.revision,
+      products: {
+        upsert: [{ ...plantilla, id: 'p-smoke-stock', sku: 'SMOKE-STOCK', name: 'Producto sin stock' }],
+      },
+    }),
+  });
+  if (conNuevoSinStock.products.find((item) => item.id === 'p-smoke-stock')?.stock !== 0)
+    throw new Error('Un producto nuevo sin stock no empezó en 0 (PBI-0226)');
+  const sinNuevo = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: conNuevoSinStock.revision,
+      products: {
+        upsert: [{ ...plantilla, name: conCambio.products[1].name }],
+        remove: ['p-smoke-stock'],
+      },
+    }),
+  });
+  if (
+    sinNuevo.products.some((item) => item.id === 'p-smoke-stock') ||
+    sinNuevo.products[1].stock !== conCambio.products[1].stock
+  )
+    throw new Error('Un cambio sin stock no conservó el stock vigente (PBI-0226)');
+
   const registration = await request('/bff/accounts', {
     method: 'POST',
     body: JSON.stringify({

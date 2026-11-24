@@ -111,6 +111,44 @@ test('PBI-0120: un producto nuevo incompleto se rechaza con INVALID_COLLECTION',
   assert.equal(store.guardados, 0);
 });
 
+test('PBI-0226 (lote 23): un producto nuevo sin stock se crea con 0 unidades, también en la lista completa', () => {
+  const { stock, ...sinStock } = {
+    ...producto('p-004'),
+    id: 'p-nuevo',
+    sku: 'NUEVO-1',
+    name: 'Parlante nuevo',
+  };
+  assert.equal(typeof stock, 'number');
+  const conCambios = guardar(superadmin, { products: { upsert: [sinStock] } }).resultado();
+  assert.equal(conCambios.products.find((item) => item.id === 'p-nuevo').stock, 0);
+  const conLista = guardar(superadmin, { products: [...seed.products, sinStock] }).resultado();
+  assert.equal(conLista.products.find((item) => item.id === 'p-nuevo').stock, 0);
+});
+
+test('PBI-0226 (lote 23): guardar la ficha sin stock no pisa el que puso Inventario, ni con la lista completa', () => {
+  const store = crearAlmacen();
+  store.state.products = store.state.products.map((item) =>
+    item.id === 'p-001' ? { ...item, stock: 17 } : item,
+  );
+  // La lista completa, como la enviaría un Admin anterior a los cambios (lote 06), sin el campo `stock`.
+  const lista = seed.products.map(({ stock, ...item }) =>
+    item.id === 'p-001' ? { ...item, name: 'Televisor renombrado' } : item,
+  );
+  const snapshot = guardar(superadmin, { products: lista }, store).resultado();
+  const tv = snapshot.products.find((item) => item.id === 'p-001');
+  assert.equal(tv.name, 'Televisor renombrado');
+  assert.equal(tv.stock, 17, 'conserva el stock de Inventario');
+  for (const item of seed.products.filter(({ id }) => id !== 'p-001'))
+    assert.equal(snapshot.products.find(({ id }) => id === item.id).stock, item.stock, item.id);
+  // Un `null` en el cambio parcial quita el campo; el stock no se queda sin valor: conserva el vigente.
+  const conNull = guardar(
+    superadmin,
+    { products: { upsert: [{ id: 'p-001', stock: null }] } },
+    store,
+  ).resultado();
+  assert.equal(conNull.products.find((item) => item.id === 'p-001').stock, 17);
+});
+
 test('PBI-0120: los cambios con una forma desconocida se rechazan', () => {
   for (const products of [
     { upsert: 'p-001' },
