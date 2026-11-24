@@ -477,9 +477,9 @@ test.describe('PBI-0044: menú lateral', () => {
     await reducir.click();
     const expandir = page.getByRole('button', { name: 'Expandir el menú' });
     await expect(expandir).toHaveAttribute('aria-expanded', 'false');
-    // Sin títulos de grupo y con los 13 enlaces a la vista, cada uno con su nombre accesible.
+    // Sin títulos de grupo y con los 14 enlaces a la vista (lote 17: «Entregas y feriados»), con su nombre.
     await expect(menuAdmin(page).getByRole('button')).toHaveCount(0);
-    await expect(menuAdmin(page).getByRole('link')).toHaveCount(13);
+    await expect(menuAdmin(page).getByRole('link')).toHaveCount(14);
     const productos = menuAdmin(page).getByRole('link', { name: 'Productos', exact: true });
     await expect(productos).toHaveAttribute('title', 'Productos');
     const caja = (await menuAdmin(page).boundingBox())!;
@@ -506,7 +506,7 @@ test.describe('PBI-0044: menú lateral', () => {
       await abrir.click();
       const panel = page.getByRole('dialog', { name: 'Menú de administración' });
       await expect(panel).toBeVisible();
-      await expect(menuAdmin(page).getByRole('link')).toHaveCount(13);
+      await expect(menuAdmin(page).getByRole('link')).toHaveCount(14);
       await page.keyboard.press('Escape');
       await expect(panel).toHaveCount(0);
       await expect(abrir).toBeFocused();

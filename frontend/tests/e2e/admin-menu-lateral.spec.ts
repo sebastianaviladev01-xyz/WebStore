@@ -224,7 +224,7 @@ test.describe('Menú lateral en móvil (375 px)', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   // Lote 07b (PBI-0044): la tira horizontal pasa a un panel lateral que se abre con la hamburguesa.
-  test('el panel lateral tiene los 13 enlaces, sin títulos de grupo plegables ni desborde horizontal', async ({
+  test('el panel lateral tiene los 14 enlaces, sin títulos de grupo plegables ni desborde horizontal', async ({
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -232,7 +232,8 @@ test.describe('Menú lateral en móvil (375 px)', () => {
 
     await expect(menuAdmin(page).getByRole('button')).toHaveCount(0);
     const enlaces = menuAdmin(page).getByRole('link');
-    await expect(enlaces).toHaveCount(13);
+    // Lote 17: «Entregas y feriados» es el enlace 14.
+    await expect(enlaces).toHaveCount(14);
     for (const nodo of await enlaces.all()) await expect(nodo).toBeVisible();
 
     const desborde = await page.evaluate(
