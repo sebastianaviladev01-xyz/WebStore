@@ -72,3 +72,28 @@ test('la cabecera y el pie llevan a las secciones principales', async ({ page })
   await page.getByRole('link', { name: 'Ir al inicio' }).first().click();
   await expect(page).toHaveURL('/');
 });
+
+for (const ancho of [1440, 375]) {
+  test(`PBI-0191: a ${ancho} px, el buscador de la cabecera conserva su relleno al enfocarlo y al escribir`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: ancho, height: 800 });
+    await page.goto('/');
+    const buscador = page
+      .getByRole('banner')
+      .getByRole('searchbox', { name: 'Buscar productos' })
+      .filter({ visible: true });
+    const estilo = () =>
+      buscador.evaluate((el) => {
+        const css = getComputedStyle(el);
+        return { fondo: css.backgroundColor, contorno: css.outlineStyle };
+      });
+    const enReposo = await estilo();
+    await buscador.fill('oled');
+    await expect(buscador).toBeFocused();
+    const conFoco = await estilo();
+    expect(conFoco.fondo).toBe(enReposo.fondo);
+    // El foco se ve por el anillo de foco (input:focus-visible), no por el cambio de fondo.
+    expect(conFoco.contorno).toBe('solid');
+  });
+}

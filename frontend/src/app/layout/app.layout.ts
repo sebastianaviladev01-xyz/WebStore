@@ -96,6 +96,10 @@ import { PieTiendaComponent } from './pie-tienda.component';
               }
             </a>
 
+            <!--
+              Lote 16 (ADR-0021, PBI-0191; provisional): el buscador conserva su relleno también enfocado; el foco lo
+              marcan el borde del enlace y el anillo de foco (input:focus-visible), sin pasar a fondo blanco.
+            -->
             <form
               class="ws-header-search mx-auto hidden min-w-0 max-w-[560px] flex-1 md:block"
               role="search"
@@ -105,7 +109,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
                 <span class="sr-only">Buscar productos</span>
                 <input
                   type="search"
-                  class="h-12 w-full rounded-full border border-line bg-canvas pl-5 pr-14 text-sm outline-none transition placeholder:text-muted focus:border-link focus:bg-surface focus:ring-4 focus:ring-focus-ring/20"
+                  class="h-12 w-full rounded-full border border-line bg-canvas pl-5 pr-14 text-sm outline-none transition placeholder:text-muted focus:border-link focus:ring-4 focus:ring-focus-ring/20"
                   placeholder="Buscar productos"
                   [value]="searchTerm()"
                   (input)="updateSearch($event)"
@@ -192,7 +196,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
                 <span class="sr-only">Buscar productos</span>
                 <input
                   type="search"
-                  class="h-11 w-full rounded-full border border-line bg-canvas pl-4 pr-12 text-sm outline-none focus:border-link focus:bg-surface"
+                  class="h-11 w-full rounded-full border border-line bg-canvas pl-4 pr-12 text-sm outline-none focus:border-link"
                   placeholder="Buscar productos"
                   [value]="searchTerm()"
                   (input)="updateSearch($event)"
