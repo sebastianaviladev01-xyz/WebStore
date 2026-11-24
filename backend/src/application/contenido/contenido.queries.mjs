@@ -1,4 +1,5 @@
 import { terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
+import { direccionDeImagen } from '../catalogo/imagenes.queries.mjs';
 
 /** Banner público con valores por defecto para los campos que el Admin no completó. */
 const bannerToPublic = (banner) => ({
@@ -11,8 +12,9 @@ const bannerToPublic = (banner) => ({
   ctaUrl: banner.ctaUrl ?? '/catalogo',
   secondaryCtaLabel: banner.secondaryCta ?? '',
   secondaryCtaUrl: banner.secondaryCtaUrl ?? '',
-  imageUrl: banner.imageUrl ?? 'assets/brand/hero.svg',
-  mobileImageUrl: banner.mobileImageUrl ?? '',
+  // Lote 24 (ADR-0026, PBI-0214): las imágenes cargadas llegan como dirección del BFF, no como Data URL.
+  imageUrl: direccionDeImagen('banners', banner.id, 'image', banner.imageUrl ?? 'assets/brand/hero.svg'),
+  mobileImageUrl: direccionDeImagen('banners', banner.id, 'mobile-image', banner.mobileImageUrl ?? ''),
   placement: banner.placement ?? 'hero',
   imageFit: banner.imageFit ?? 'contain',
   imageTone: banner.imageTone === 'dark' ? 'dark' : 'light',

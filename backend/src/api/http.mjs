@@ -57,6 +57,26 @@ export function css(texto, req, { varyByCookie = false } = {}) {
     : { status: 200, headers, text: texto };
 }
 
+/**
+ * Imagen cargada en el Admin (lote 24, ADR-0026, PBI-0214): sus bytes con su tipo y `ETag` con su versión. Si la
+ * dirección trae la versión vigente (`?v=`), la caché es larga e inmutable, porque otra imagen tendrá otra dirección;
+ * sin ella, o con una anterior, se revalida en cada carga. Si `If-None-Match` coincide, `304` sin cuerpo. No lleva
+ * cabeceras CORS: se carga con `<img>`.
+ */
+export function imagen({ tipo, bytes, version }, req, url) {
+  const etag = `"${version}"`;
+  const headers = {
+    'content-type': `image/${tipo}`,
+    'cache-control':
+      url.searchParams.get('v') === version ? 'public, max-age=31536000, immutable' : 'no-cache',
+    'x-content-type-options': 'nosniff',
+    etag,
+  };
+  return coincideEtag(req.headers['if-none-match'], etag)
+    ? { status: 304, headers, text: '' }
+    : { status: 200, headers, text: bytes };
+}
+
 /** Valor de la cookie `nombre` de la petición, o `undefined` si no viene. */
 export function cookie(req, nombre) {
   for (const parte of String(req.headers.cookie ?? '').split(';')) {

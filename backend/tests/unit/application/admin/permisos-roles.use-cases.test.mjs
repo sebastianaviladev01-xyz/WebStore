@@ -12,6 +12,7 @@ import assert from 'node:assert/strict';
 
 import { createSnapshotUseCases } from '../../../../src/application/admin/snapshot.use-cases.mjs';
 import { seed } from '../../../../src/infrastructure/persistencia/seed.mjs';
+import { imagenesDeProducto } from '../../../apoyo/imagenes.mjs';
 
 const security = { hashPassword: (password) => ({ salt: 's', hash: `h:${password}` }) };
 
@@ -67,7 +68,13 @@ const rechazo =
 const producto = (id) => structuredClone(seed.products.find((item) => item.id === id));
 
 test('PBI-0013: el vendedor crea un producto completo', () => {
-  const nuevo = { ...producto('p-003'), id: 'p-vendedor', name: 'Producto del vendedor', sku: 'VEND-1' };
+  const nuevo = {
+    ...producto('p-003'),
+    ...imagenesDeProducto(),
+    id: 'p-vendedor',
+    name: 'Producto del vendedor',
+    sku: 'VEND-1',
+  };
   const snapshot = guardar(vendedor, { products: { upsert: [nuevo] } }).resultado();
   assert.deepEqual(
     snapshot.products.find((item) => item.id === 'p-vendedor'),

@@ -46,7 +46,8 @@ function applyProducts(state, value, role) {
   if (!can(role, 'products.manage'))
     throw new DomainError('forbidden', 'INSUFFICIENT_ROLE', 'Tu rol no permite realizar esta acción.');
   // PBI-0226 (lote 23): el registro del producto no envía el stock; se conserva el de Inventario, o 0 si es nuevo.
-  const next = requireValidProducts(conStockVigente(products, state.products));
+  // PBI-0214 (lote 24): las imágenes ya guardadas no se vuelven a medir.
+  const next = requireValidProducts(conStockVigente(products, state.products), state.products);
   // PBI-0013: el vendedor crea y modifica productos, pero no los elimina.
   if (!can(role, 'products.delete')) requireNoRemovedProducts(state.products, next);
   requireUniqueSlugs(next, state.products);

@@ -2,7 +2,20 @@ import {
   esFechaDeCalendario,
   MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE,
 } from '../calendario/dias-no-laborables.rules.mjs';
-import { LADO_IMAGEN_DE_CATEGORIA, leerImagen } from '../catalogo/imagen.rules.mjs';
+import {
+  esReduccionDe,
+  imagenCargada,
+  LADO_IMAGEN_DE_BANNER,
+  LADO_IMAGEN_DE_CATEGORIA,
+  LADO_IMAGEN_DE_PRODUCTO,
+  LADO_IMAGEN_MOVIL_DE_BANNER,
+  LADO_MINIATURA_DE_PRODUCTO,
+  leerImagen,
+  MAX_IMAGEN_DE_BANNER,
+  MAX_IMAGEN_DE_PRODUCTO,
+  MAX_IMAGEN_MOVIL_DE_BANNER,
+  MAX_MINIATURA_DE_PRODUCTO,
+} from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
 import { LISTAS_DE_CONTENIDO, esModoDeSugeridos, validarListaDeContenido } from './contenido.rules.mjs';
 import { esModoDeDireccion } from '../pedidos/direcciones-por-producto.rules.mjs';
@@ -72,9 +85,46 @@ const textList = (value) => Array.isArray(value) && value.every(isText);
 const oneOf = (values) => (value) => values.includes(value);
 const optionalText = (value) => value === undefined || value === null || isText(value);
 
-/** Productos completos (rol con `products.manage`): SKU único, precio y stock válidos. */
-export function requireValidProducts(products) {
+const IMAGEN_DE_PRODUCTO = { lado: LADO_IMAGEN_DE_PRODUCTO, maximo: MAX_IMAGEN_DE_PRODUCTO };
+const MINIATURA_DE_PRODUCTO = { lado: LADO_MINIATURA_DE_PRODUCTO, maximo: MAX_MINIATURA_DE_PRODUCTO };
+
+/**
+ * Lote 24 (ADR-0025 y ADR-0026, PBI-0214; provisional): la imagen principal y la miniatura se cargan como archivo. Una
+ * imagen principal nueva o cambiada es un PNG, un JPEG o un WebP de hasta `LADO_IMAGEN_DE_PRODUCTO` px por lado, y
+ * llega con su miniatura, la reducción a `LADO_MINIATURA_DE_PRODUCTO` px. Las que el producto ya tenía guardadas (rutas
+ * de `assets/`, de antes del lote) siguen valiendo mientras no cambien.
+ */
+function requireValidProductImages(product, anterior) {
+  const imagenCambio = product.imageUrl !== anterior?.imageUrl;
+  const miniaturaCambio = product.thumbnailUrl !== anterior?.thumbnailUrl;
+  const principal = imagenCambio ? imagenCargada(product.imageUrl, IMAGEN_DE_PRODUCTO) : null;
+  if (imagenCambio && !principal)
+    throw invalid(
+      'products',
+      'imageUrl',
+      `la imagen principal debe ser PNG, JPG o WebP de hasta ${LADO_IMAGEN_DE_PRODUCTO} px por lado; vuelve a cargarla`,
+      product.id,
+    );
+  // Sin cambios en la imagen, una miniatura que no cambia, o que se quita, no se mide: la tienda usa la principal.
+  if (!imagenCambio && (!miniaturaCambio || product.thumbnailUrl === undefined)) return;
+  const miniatura = imagenCargada(product.thumbnailUrl, MINIATURA_DE_PRODUCTO);
+  const base = principal ?? leerImagen(product.imageUrl);
+  if (!miniatura || (base && !esReduccionDe(miniatura, base, LADO_MINIATURA_DE_PRODUCTO)))
+    throw invalid(
+      'products',
+      'thumbnailUrl',
+      `la miniatura debe ser la reducción de la imagen principal, de hasta ${LADO_MINIATURA_DE_PRODUCTO} px por lado; vuelve a cargar la imagen`,
+      product.id,
+    );
+}
+
+/**
+ * Productos completos (rol con `products.manage`): SKU único, precio y stock válidos. `previous`, los productos
+ * vigentes: sus imágenes ya guardadas no se vuelven a medir (PBI-0214).
+ */
+export function requireValidProducts(products, previous = []) {
   requireItems(products, 'products');
+  const anteriores = new Map(previous.map((product) => [product.id, product]));
   const skus = new Map();
   for (const product of products) {
     check('products', product, [
@@ -93,6 +143,7 @@ export function requireValidProducts(products) {
       ['highlights', textList, 'las características no son válidas', { optional: true }],
       ['gallery', textList, 'la galería no es válida', { optional: true }],
     ]);
+    requireValidProductImages(product, anteriores.get(product.id));
     // PBI-0129: el mensaje dice qué producto ya usa el SKU.
     const sku = product.sku.trim().toLowerCase();
     if (skus.has(sku))
@@ -234,19 +285,78 @@ export function requireValidBanners(banners, previous = []) {
       ]),
     ]);
   for (const banner of banners) requireValidBannerButtons(banner, previous);
-  // PBI-0128: la vigencia termina el mismo día de inicio o después.
+  for (const banner of banners) requireValidBannerImages(banner, previous);
+  // PBI-0128 y PBI-0221 (lote 24): la vigencia lleva fecha y hora, y termina después de empezar.
   for (const banner of banners) {
+    requireValidBannerSchedule(banner, previous);
     const inicio = Date.parse(banner.startAt);
     const fin = Date.parse(banner.endAt);
-    if (Number.isFinite(inicio) && Number.isFinite(fin) && fin < inicio)
+    if (Number.isFinite(inicio) && Number.isFinite(fin) && fin <= inicio)
       throw invalid(
         'banners',
         'endAt',
-        'la fecha de fin debe ser igual o posterior a la de inicio',
+        'la fecha y la hora de fin deben ser posteriores a las de inicio',
         banner.id,
       );
   }
   return banners;
+}
+
+/** Las dos imágenes del banner (lote 24, PBI-0214): la de escritorio y la del celular, opcional. */
+const IMAGENES_DE_BANNER = [
+  {
+    campo: 'imageUrl',
+    medidas: { lado: LADO_IMAGEN_DE_BANNER, maximo: MAX_IMAGEN_DE_BANNER },
+    detalle: `la imagen de escritorio debe ser PNG, JPG o WebP de hasta ${LADO_IMAGEN_DE_BANNER} px por lado; vuelve a cargarla`,
+    opcional: false,
+  },
+  {
+    campo: 'mobileImageUrl',
+    medidas: { lado: LADO_IMAGEN_MOVIL_DE_BANNER, maximo: MAX_IMAGEN_MOVIL_DE_BANNER },
+    detalle: `la imagen del celular debe ser PNG, JPG o WebP de hasta ${LADO_IMAGEN_MOVIL_DE_BANNER} px por lado; vuelve a cargarla`,
+    opcional: true,
+  },
+];
+
+/**
+ * Lote 24 (ADR-0025 y ADR-0026, PBI-0214; provisional): una imagen del banner nueva o cambiada se cargó como archivo
+ * (PNG, JPEG o WebP dentro de su lado máximo y su peso); la del celular se puede quitar (`''`). Las que el banner ya
+ * tenía guardadas (rutas de `assets/`) siguen valiendo mientras no cambien.
+ */
+function requireValidBannerImages(banner, previous) {
+  const anterior = previous.find((item) => item?.id === banner.id);
+  for (const { campo, medidas, detalle, opcional } of IMAGENES_DE_BANNER) {
+    const valor = banner[campo];
+    if (valor === anterior?.[campo]) continue;
+    if (valor === undefined || (opcional && valor === '')) continue;
+    if (!imagenCargada(valor, medidas)) throw invalid('banners', campo, detalle, banner.id);
+  }
+}
+
+/** Instante ISO 8601 con fecha, hora y zona (`Z` o `±hh:mm`), como lo envía el backoffice en hora de Lima. */
+const INSTANTE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+const esInstante = (valor) => isText(valor) && INSTANTE.test(valor) && Number.isFinite(Date.parse(valor));
+
+/**
+ * Lote 24 (ADR-0025, PBI-0221; provisional): un inicio o un fin nuevos o cambiados son instantes con hora y zona. Una
+ * vigencia guardada antes que no cambia sigue valiendo, para no bloquear otros guardados.
+ */
+function requireValidBannerSchedule(banner, previous) {
+  const anterior = previous.find((item) => item?.id === banner.id);
+  for (const [campo, nombre] of [
+    ['startAt', 'el inicio'],
+    ['endAt', 'el fin'],
+  ]) {
+    const valor = banner[campo];
+    if (valor === undefined || valor === anterior?.[campo]) continue;
+    if (!esInstante(valor))
+      throw invalid(
+        'banners',
+        campo,
+        `${nombre} de la vigencia necesita una fecha y una hora válidas`,
+        banner.id,
+      );
+  }
 }
 
 export function requireValidRates(rates) {

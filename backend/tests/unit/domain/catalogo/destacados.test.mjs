@@ -48,13 +48,9 @@ test('un producto sin la marca no es destacado, aunque esté entre los cuatro pr
 });
 
 test('el guardado del Admin acepta la marca booleana o su ausencia', () => {
-  assert.doesNotThrow(() =>
-    requireValidProducts([
-      producto('a', { featured: true }),
-      producto('b', { featured: false }),
-      producto('c'),
-    ]),
-  );
+  // Productos ya guardados (lote 24): sus imágenes de `assets/` no cambian.
+  const guardados = [producto('a', { featured: true }), producto('b', { featured: false }), producto('c')];
+  assert.doesNotThrow(() => requireValidProducts(guardados, guardados));
 });
 
 test('el guardado del Admin rechaza una marca que no es booleana', () => {
