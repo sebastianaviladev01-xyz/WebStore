@@ -245,9 +245,24 @@ informar(
 // Lote 03 (PBI-0080): los roles del Admin, que Perfil y Usuarios muestran, tienen el mismo id, nombre y descripción
 // que los del BFF, en el mismo orden. El Admin no importa código del BFF: se leen del texto de su `rol.rules.ts`.
 const { ADMIN_ROLES } = await import(path('backend/src/domain/sesion/rol.rules.mjs'));
-const rolesDelAdmin = [
-  ...adminRoles.matchAll(/id: '([\w-]+)',\s*label: '([^']+)',\s*description: '([^']+)'/g),
-].map(([, id, label, description]) => ({ id, label, description }));
+const leerRoles = (texto) =>
+  [...texto.matchAll(/id: '([\w-]+)',\s*label: '([^']+)',\s*description:\s*'([^']+)'/g)].map(
+    ([, id, label, description]) => ({ id, label, description }),
+  );
+// Lote 20: Prettier parte `description:` en dos líneas cuando no cabe en una; el lector de roles debe aceptarlo.
+const rolPartido = [
+  "    id: 'vendedor',",
+  "    label: 'Vendedor',",
+  '    description:',
+  "      'Crea y modifica productos, gestiona el inventario, ve los pedidos y algo más que no cabe en la línea.',",
+].join('\n');
+informar(
+  'El lector de los roles del Admin acepta una descripción partida en dos líneas por Prettier',
+  leerRoles(rolPartido)[0]?.description?.startsWith('Crea y modifica')
+    ? []
+    : ['leerRoles no lee la descripción que empieza en la línea siguiente'],
+);
+const rolesDelAdmin = leerRoles(adminRoles);
 informar(
   'Roles del Admin con el mismo id, nombre y descripción que los del BFF',
   rolesDelAdmin.length === ADMIN_ROLES.length
