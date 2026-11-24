@@ -547,9 +547,46 @@ test('el texto sobre el acento se lee a 4.5:1 sobre el acento fuerte si se lee a
   }
 });
 
-test('si el texto no llega a 4.5:1 sobre la mezcla al 78 %, el acento fuerte es el acento; si llega, la mezcla', () => {
+// Lote 20 (ADR-0021, ADR-0023): el acento fuerte es el botón secundario con el puntero encima. Además de dejar el
+// texto a 4.5:1, se distingue del acento (al menos 1.3:1 entre los dos, como B, 1.37:1). La mezcla al 78 % con el
+// contraste sigue primero; si no sirve (un secundario igual al contraste, como el grafito de C, o un texto oscuro que
+// no llega sobre la mezcla), la primera mezcla con el blanco o el negro, de 10 en 10 %, que sirva.
+test('si el texto no llega a 4.5:1 sobre la mezcla al 78 % con el contraste, el acento fuerte se aclara; si llega, la mezcla', () => {
   const medio = tokensDelTema({ ...BASE_B, secondary: '#D97706' }, casos.predefinidos);
-  assert.equal(medio['--ws-accent-strong'], '#D97706');
+  assert.equal(medio['--ws-accent-strong'], 'color-mix(in srgb, #D97706 70%, #FFFFFF)');
   const claro = tokensDelTema({ ...BASE_B, secondary: '#FFB300' }, casos.predefinidos);
   assert.equal(claro['--ws-accent-strong'], 'color-mix(in srgb, #FFB300 78%, #0F172A)');
+});
+
+test('un secundario igual al contraste se aclara con el puntero encima, en lugar de quedar igual', () => {
+  const grafito = tokensDelTema({ ...BASE_B, secondary: '#1F2328', contrast: '#1F2328' }, casos.predefinidos);
+  assert.equal(grafito['--ws-accent-strong'], 'color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+  const pizarra = tokensDelTema({ ...BASE_B, secondary: '#0F172A' }, casos.predefinidos);
+  assert.equal(pizarra['--ws-accent-strong'], 'color-mix(in srgb, #0F172A 90%, #FFFFFF)');
+});
+
+test('con el puntero encima, el secundario cambia a la vista (1.3:1) y su texto se lee a 4.5:1, también en la base oscura', () => {
+  const secundarios = [
+    ...AMBARES,
+    '#C2410C',
+    '#2E90FA',
+    '#12B76A',
+    '#7A5AF8',
+    '#0F172A',
+    '#1F2328',
+    '#000000',
+    '#FFFFFF',
+    '#777777',
+  ];
+  const temas = [
+    ...secundarios.map((secondary) => ({ ...BASE_B, secondary })),
+    ...secundarios.map((secondary) => ({ ...caso('base oscura').colores, secondary })),
+  ];
+  for (const colores of temas) {
+    const calculados = coloresCalculados(tokensDelTema(colores, casos.predefinidos));
+    const fuerte = calculados['--ws-accent-strong'];
+    const nombre = `${colores.secondary} sobre ${colores.background}`;
+    assert.ok(relacionDeContraste(fuerte, calculados['--ws-accent']) >= 1.3, `${nombre}: no cambia`);
+    assert.ok(relacionDeContraste(calculados['--ws-on-accent'], fuerte) >= 4.5, `${nombre}: texto`);
+  }
 });

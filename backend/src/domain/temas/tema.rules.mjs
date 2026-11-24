@@ -71,8 +71,11 @@ const ESCALA_NEUTRA = Object.freeze([
 ]);
 
 const BLANCO = '#FFFFFF';
+const NEGRO = '#000000';
 const TEXTO_MINIMO = 4.5;
 const INTERFAZ_MINIMO = 3;
+/** Cuánto se distingue, como mínimo, el acento con el puntero encima del acento (lote 20). */
+const DIFERENCIA_AL_PASAR = 1.3;
 
 const mismoColor = (a, b) => String(a).toUpperCase() === String(b).toUpperCase();
 
@@ -154,6 +157,23 @@ function bordeDelAcento(S, F, Sf, C) {
   return C;
 }
 
+/**
+ * Acento fuerte: el botón secundario con el puntero encima (ADR-0023; lote 20). Sirve un color que deja el texto sobre
+ * el acento a 4.5:1 y que se distingue del acento (`DIFERENCIA_AL_PASAR`, como B, 1.37:1). Primero, la mezcla al 78 %
+ * con el contraste, la de siempre; si no sirve (un secundario igual al contraste, como el grafito de C, o un texto
+ * oscuro que no llega sobre la mezcla), la primera mezcla con el blanco o el negro, de 10 en 10 % (90 %, 80 %…), que
+ * sirva; con un secundario oscuro, el blanco. Si ninguna sirve, el acento, como antes.
+ */
+function acentoFuerte(S, C, texto) {
+  const sirve = (color) =>
+    relacionDeContraste(texto, color) >= TEXTO_MINIMO && relacionDeContraste(color, S) >= DIFERENCIA_AL_PASAR;
+  if (sirve(mezclarSrgb(S, 0.78, C))) return mezcla(S, 78, C);
+  for (let peso = 90; peso > 0; peso -= 10)
+    for (const polo of [BLANCO, NEGRO])
+      if (sirve(mezclarSrgb(S, peso / 100, polo))) return mezcla(S, peso, polo);
+  return S;
+}
+
 function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, contrast: C }) {
   // El más legible entre el blanco, el contraste y la superficie (ADR-0019): con un principal muy claro sobre una
   // base oscura, el blanco y el contraste son claros y solo la superficie se lee. A y C lo fijan con su literal.
@@ -168,10 +188,6 @@ function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, c
   const enlace = legibleSobreFondos(TEXTO_MINIMO) ? P : C;
   // Como el texto sobre el principal (ADR-0019): sobre un acento claro en una base oscura, solo la superficie se lee.
   const sobreAcento = textoMasLegible(S, [BLANCO, C, Sf]);
-  // Como el principal fuerte: si el texto sobre el acento no llega a 4.5:1 sobre la mezcla (el botón secundario con
-  // el puntero encima), el acento fuerte es el acento (ADR-0023).
-  const acentoFuerte =
-    relacionDeContraste(sobreAcento, mezclarSrgb(S, 0.78, C)) >= TEXTO_MINIMO ? mezcla(S, 78, C) : S;
   return {
     '--ws-primary': P,
     '--ws-primary-strong': principalFuerte,
@@ -180,7 +196,7 @@ function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, c
     '--ws-on-primary-soft':
       relacionDeContraste(colorFuerte, mezclarSrgb(P, 0.1, Sf)) >= TEXTO_MINIMO ? principalFuerte : C,
     '--ws-accent': S,
-    '--ws-accent-strong': acentoFuerte,
+    '--ws-accent-strong': acentoFuerte(S, C, sobreAcento),
     '--ws-accent-soft': mezcla(S, 9, Sf),
     '--ws-on-accent': sobreAcento,
     '--ws-accent-line': bordeDelAcento(S, F, Sf, C),

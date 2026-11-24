@@ -253,5 +253,18 @@ test('A, B y C tienen su borde del acento, que llega a 3:1 sobre el fondo princi
       assert.ok(relacionDeContraste(colores['--ws-accent-line'], colores[fondo]) >= 3, `${id} ${fondo}`);
   }
   assert.equal(tema('a').tokens['--ws-accent-strong'], 'color-mix(in srgb, #F5A524 78%, #17151C)');
-  assert.equal(tema('c').tokens['--ws-accent-strong'], 'color-mix(in srgb, #1F2328 78%, #1F2328)');
+});
+
+// Lote 20 (ADR-0021): con C, el botón secundario con el puntero encima era el mismo grafito (la mezcla del grafito con
+// el grafito); ahora se aclara hacia el blanco, cambia a la vista y su texto ámbar se sigue leyendo. A y B no cambian.
+test('con el puntero encima, el botón secundario de A, B y C cambia a la vista y su texto se lee a 4.5:1', () => {
+  assert.equal(tema('a').tokens['--ws-accent-strong'], 'color-mix(in srgb, #F5A524 78%, #17151C)');
+  assert.equal(tema('b').tokens['--ws-accent-strong'], 'color-mix(in srgb, var(--ws-accent) 78%, #0f172a)');
+  assert.equal(tema('c').tokens['--ws-accent-strong'], 'color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+  for (const id of ['a', 'b', 'c']) {
+    const colores = coloresCalculados(tema(id).tokens);
+    const fuerte = colores['--ws-accent-strong'];
+    assert.ok(relacionDeContraste(fuerte, colores['--ws-accent']) >= 1.3, `${id}: no cambia`);
+    assert.ok(relacionDeContraste(colores['--ws-on-accent'], fuerte) >= 4.5, `${id}: texto`);
+  }
 });

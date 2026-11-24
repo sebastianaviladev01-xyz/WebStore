@@ -138,8 +138,11 @@ const CAMPOS_DE_COLOR: readonly CampoDeColor[] = [
 ];
 
 const BLANCO = '#FFFFFF';
+const NEGRO = '#000000';
 const TEXTO_MINIMO = 4.5;
 const INTERFAZ_MINIMO = 3;
+/** Cuánto se distingue, como mínimo, el acento con el puntero encima del acento (lote 20). */
+const DIFERENCIA_AL_PASAR = 1.3;
 
 const mismoColor = (a: string, b: string): boolean => String(a).toUpperCase() === String(b).toUpperCase();
 
@@ -228,6 +231,21 @@ function bordeDelAcento(S: string, F: string, Sf: string, C: string): string {
   return C;
 }
 
+/**
+ * Acento fuerte: el botón secundario con el puntero encima (ADR-0023; lote 20). Sirve un color que deja el texto sobre
+ * el acento a 4.5:1 y que se distingue del acento (`DIFERENCIA_AL_PASAR`). Primero, la mezcla al 78 % con el contraste;
+ * si no sirve, la primera mezcla con el blanco o el negro, de 10 en 10 %, que sirva. Si ninguna sirve, el acento.
+ */
+function acentoFuerte(S: string, C: string, texto: string): string {
+  const sirve = (color: string): boolean =>
+    relacionDeContraste(texto, color) >= TEXTO_MINIMO && relacionDeContraste(color, S) >= DIFERENCIA_AL_PASAR;
+  if (sirve(mezclarSrgb(S, 0.78, C))) return mezcla(S, 78, C);
+  for (let peso = 90; peso > 0; peso -= 10)
+    for (const polo of [BLANCO, NEGRO])
+      if (sirve(mezclarSrgb(S, peso / 100, polo))) return mezcla(S, peso, polo);
+  return S;
+}
+
 function tokensDeMarca({
   primary: P,
   secondary: S,
@@ -248,10 +266,6 @@ function tokensDeMarca({
   const enlace = legibleSobreFondos(TEXTO_MINIMO) ? P : C;
   // Como el texto sobre el principal (ADR-0019): sobre un acento claro en una base oscura, solo la superficie se lee.
   const sobreAcento = textoMasLegible(S, [BLANCO, C, Sf]);
-  // Como el principal fuerte: si el texto sobre el acento no llega a 4.5:1 sobre la mezcla (el botón secundario con
-  // el puntero encima), el acento fuerte es el acento (ADR-0023).
-  const acentoFuerte =
-    relacionDeContraste(sobreAcento, mezclarSrgb(S, 0.78, C)) >= TEXTO_MINIMO ? mezcla(S, 78, C) : S;
   return {
     '--ws-primary': P,
     '--ws-primary-strong': principalFuerte,
@@ -260,7 +274,7 @@ function tokensDeMarca({
     '--ws-on-primary-soft':
       relacionDeContraste(colorFuerte, mezclarSrgb(P, 0.1, Sf)) >= TEXTO_MINIMO ? principalFuerte : C,
     '--ws-accent': S,
-    '--ws-accent-strong': acentoFuerte,
+    '--ws-accent-strong': acentoFuerte(S, C, sobreAcento),
     '--ws-accent-soft': mezcla(S, 9, Sf),
     '--ws-on-accent': sobreAcento,
     '--ws-accent-line': bordeDelAcento(S, F, Sf, C),

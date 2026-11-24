@@ -1060,6 +1060,10 @@ try {
       .join() !== 'a:predefined,b:predefined,c:predefined'
   )
     throw new Error('GET /bff/admin/themes debe traer la revisión, el activo B y los predefinidos A, B y C');
+  // Lote 20 (ADR-0023): el botón secundario de C con el puntero encima se aclara hacia el blanco; antes era la mezcla
+  // del grafito con el grafito, igual al secundario.
+  if (listaInicial.themes[2].tokens['--ws-accent-strong'] !== 'color-mix(in srgb, #1F2328 90%, #FFFFFF)')
+    throw new Error('El --ws-accent-strong de C debe ser color-mix(in srgb, #1F2328 90%, #FFFFFF)');
   if (
     listaInicial.themes
       .slice(0, 3)
