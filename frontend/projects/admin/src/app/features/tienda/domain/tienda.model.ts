@@ -128,18 +128,44 @@ export interface EventoActividad {
   readonly description: string;
 }
 
+/** Un correo o un teléfono de la tienda, con una etiqueta opcional («Ventas»); lote 15, PBI-0169. */
+export interface DatoDeContacto {
+  readonly value: string;
+  readonly label: string;
+}
+
+/** Una red social: su nombre y una dirección `https://` (PBI-0169). */
+export interface RedSocial {
+  readonly label: string;
+  readonly url: string;
+}
+
+/** Un aviso de la barra superior de la tienda, con un enlace opcional (PBI-0175). */
+export interface AvisoTienda {
+  readonly text: string;
+  readonly url: string;
+}
+
+/** Un acceso del pie de la tienda: su columna (`group`), su texto y su destino (PBI-0185). */
+export interface AccesoInferior {
+  readonly group: string;
+  readonly label: string;
+  readonly url: string;
+}
+
 export interface ConfiguracionTienda {
   readonly storeName: string;
   readonly logoText: string;
   readonly logoUrl: string;
-  readonly contactEmail: string;
-  readonly contactPhone: string;
   readonly fontFamily: string;
-  readonly headerMessage: string;
+  /** El primero de cada lista es el principal, donde la tienda solo muestra uno (lote 15). */
+  readonly contactEmails: readonly DatoDeContacto[];
+  readonly contactPhones: readonly DatoDeContacto[];
+  readonly socialLinks: readonly RedSocial[];
+  readonly announcements: readonly AvisoTienda[];
   readonly footerText: string;
-  readonly topNavigation: string;
   readonly sideNavigation: string;
-  readonly quickLinks: string;
+  readonly quickLinks: readonly AccesoInferior[];
   readonly benefits: string;
   readonly contactContent: string;
   readonly shippingContent: string;

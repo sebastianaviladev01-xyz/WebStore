@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
 import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
@@ -32,4 +33,83 @@ test('desactivar Términos en el CMS bloquea la página en el Storefront', async
   await tienda.goto(terminos);
   await expect(tienda).toHaveURL(terminos);
   await expect(tienda.getByRole('heading', { level: 1, name: 'Términos y condiciones' })).toBeVisible();
+});
+
+// Lote 15 (ADR-0021): correos, teléfonos y redes (PBI-0169), avisos (PBI-0175) y accesos inferiores (PBI-0185) se
+// editan como listas, con las reglas del BFF antes de enviar. La prueba deja las listas como estaban.
+test('lote 15: Contenido edita correos, teléfonos, redes, avisos y accesos como listas y la tienda los recibe', async ({
+  page,
+}) => {
+  const antes = (await leerSnapshot()).config;
+  await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+  try {
+    await page.goto('/contenido');
+    await expect(page.getByRole('textbox', { name: 'Correo 1', exact: true })).toHaveValue(
+      'contacto@webstore.demo',
+    );
+    await expect(page.getByRole('textbox', { name: 'Aviso 1', exact: true })).toHaveValue(
+      'Despachos en Lima. Consulta cobertura y tarifas.',
+    );
+    await expect(page.getByRole('textbox', { name: 'Grupo 1', exact: true })).toHaveValue('Mi cuenta');
+
+    await page.getByRole('button', { name: 'Agregar teléfono' }).click();
+    const telefono = page.getByRole('textbox', { name: 'Teléfono 2', exact: true });
+    await telefono.fill('llámanos');
+    await telefono.blur();
+    await expect(
+      page.getByText('Usa de 6 a 15 dígitos; se admiten espacios, +, guiones y paréntesis.'),
+    ).toBeVisible();
+    await telefono.fill('(01) 555-0000');
+    await page.getByRole('textbox', { name: 'Etiqueta del teléfono 2', exact: true }).fill('Soporte');
+
+    await page.getByRole('button', { name: 'Agregar aviso' }).click();
+    await page.getByRole('textbox', { name: 'Aviso 2', exact: true }).fill('Mantenimiento el domingo');
+    const enlace = page.getByRole('textbox', { name: 'Enlace del aviso 2', exact: true });
+    await enlace.fill('catalogo');
+    await enlace.blur();
+    await expect(
+      page.getByText('Usa una ruta de la tienda (/catalogo) o una dirección https://, o déjalo vacío.'),
+    ).toBeVisible();
+    await enlace.fill('/catalogo');
+    await page.getByRole('button', { name: 'Subir aviso 2' }).click();
+    await expect(page.getByRole('textbox', { name: 'Aviso 1', exact: true })).toHaveValue(
+      'Mantenimiento el domingo',
+    );
+
+    await page.getByRole('button', { name: 'Agregar red' }).click();
+    await page.getByRole('textbox', { name: 'Nombre de la red 1', exact: true }).fill('Instagram');
+    await page
+      .getByRole('textbox', { name: 'Dirección de la red 1', exact: true })
+      .fill('https://www.instagram.com/webstore');
+
+    // El pie admite hasta tres grupos además de Productos: un cuarto se avisa y no se envía.
+    await page.getByRole('button', { name: 'Agregar acceso' }).click();
+    await page.getByRole('textbox', { name: 'Grupo 11', exact: true }).fill('Extra');
+    await expect(
+      page.getByRole('alert').filter({ hasText: 'El pie admite hasta tres grupos' }),
+    ).toBeVisible();
+    await page.getByRole('button', { name: 'Quitar acceso 11' }).click();
+
+    await page.getByRole('button', { name: 'Guardar configuración' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Configuración publicada en la tienda.' }),
+    ).toBeVisible();
+
+    const publicas = await (await page.request.get(`${urls.bff}/bff/content/settings`)).json();
+    expect(publicas.contactPhones[1]).toEqual({ value: '(01) 555-0000', label: 'Soporte' });
+    expect(publicas.announcements.slice(0, 2)).toEqual([
+      { text: 'Mantenimiento el domingo', url: '/catalogo' },
+      { text: 'Despachos en Lima. Consulta cobertura y tarifas.', url: '' },
+    ]);
+    expect(publicas.socialLinks).toEqual([{ label: 'Instagram', url: 'https://www.instagram.com/webstore' }]);
+    expect(publicas.quickLinks).toEqual(antes['quickLinks']);
+  } finally {
+    await enviarCambios({
+      config: {
+        contactPhones: antes['contactPhones'],
+        announcements: antes['announcements'],
+        socialLinks: antes['socialLinks'],
+      },
+    });
+  }
 });

@@ -1,12 +1,19 @@
-import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { Router, RouterLink, UrlTree } from '@angular/router';
 
 import { Categoria } from '../features/catalogo/domain/categoria.model';
 import { ContenidoFacade } from '../features/contenido/application/contenido.facade';
+import {
+  contactosVisibles,
+  enlaceDeTelefono,
+  redesVisibles,
+} from '../features/contenido/domain/contacto.rules';
+import { gruposDelPie } from '../features/contenido/domain/pie.rules';
 
 /**
- * Pie de la tienda, separado de `AppLayout` sin cambiar su marcado (PBI-0118). Sin datos de contacto (el contenido
- * no llegó, PBI-0111) no muestra el párrafo de contacto.
+ * Pie de la tienda, separado de `AppLayout` (PBI-0118). Desde el lote 15 (ADR-0021), las columnas después de
+ * «Productos» salen de los «Accesos inferiores» de Contenido (PBI-0185) y el contacto muestra todos los correos y
+ * teléfonos, y las redes (PBI-0169). Sin datos de contacto no muestra el párrafo de contacto.
  */
 @Component({
   selector: 'ws-store-footer',
@@ -37,16 +44,43 @@ import { ContenidoFacade } from '../features/contenido/application/contenido.fac
             <p class="max-w-xs text-sm leading-6 text-footer-text">
               {{ content.settings().footerText }}
             </p>
-            @if (content.settings().contactEmail || content.settings().contactPhone) {
+            @if (correos().length || telefonos().length) {
               <p class="ws-footer-contact text-sm leading-6">
-                @if (content.settings().contactEmail) {
-                  <a class="hover:text-footer-heading" [href]="'mailto:' + content.settings().contactEmail">
-                    {{ content.settings().contactEmail }}
+                @for (correo of correos(); track correo.value) {
+                  <a class="hover:text-footer-heading" [href]="'mailto:' + correo.value">
+                    {{ correo.label ? correo.label + ': ' : '' }}{{ correo.value }}
                   </a>
                   <br />
                 }
-                {{ content.settings().contactPhone }}
+                @for (telefono of telefonos(); track telefono.value; let ultimo = $last) {
+                  <a class="hover:text-footer-heading" [href]="enlaceDeTelefono(telefono.value)">
+                    {{ telefono.label ? telefono.label + ': ' : '' }}{{ telefono.value }}
+                  </a>
+                  @if (!ultimo) {
+                    <br />
+                  }
+                }
               </p>
+            }
+            @if (redes().length) {
+              <ul
+                class="ws-footer-social mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm"
+                aria-label="Redes sociales"
+              >
+                @for (red of redes(); track red.url) {
+                  <li>
+                    <a
+                      class="hover:text-footer-heading"
+                      [href]="red.url"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {{ red.label }}
+                      <span class="sr-only">(se abre en otra pestaña)</span>
+                    </a>
+                  </li>
+                }
+              </ul>
             }
           </div>
 
@@ -60,41 +94,23 @@ import { ContenidoFacade } from '../features/contenido/application/contenido.fac
             </div>
           </div>
 
-          <div>
-            <h2 class="ws-footer-title">Mi cuenta</h2>
-            <div class="ws-footer-links">
-              <a routerLink="/cuenta/login">Ingresar</a>
-              <a routerLink="/cuenta/perfil">Mi perfil</a>
-              <a routerLink="/pedidos">Mis pedidos</a>
-              <a routerLink="/cuenta/recuperar">Recuperar acceso</a>
+          @for (grupo of grupos(); track grupo.titulo) {
+            <div>
+              <h2 class="ws-footer-title">{{ grupo.titulo }}</h2>
+              <div class="ws-footer-links">
+                @for (enlace of grupo.enlaces; track $index) {
+                  @if (enlace.externo) {
+                    <a [href]="enlace.url" target="_blank" rel="noopener noreferrer">
+                      {{ enlace.label }}
+                      <span class="sr-only">(se abre en otra pestaña)</span>
+                    </a>
+                  } @else {
+                    <a [routerLink]="ruta(enlace.url)">{{ enlace.label }}</a>
+                  }
+                }
+              </div>
             </div>
-          </div>
-
-          <div>
-            <h2 class="ws-footer-title">Información</h2>
-            <div class="ws-footer-links">
-              @if (content.settings().shippingPageEnabled) {
-                <a routerLink="/info/envios">Envíos</a>
-              }
-              @if (content.settings().privacyPageEnabled) {
-                <a routerLink="/info/privacidad">Privacidad</a>
-              }
-              @if (content.settings().termsPageEnabled) {
-                <a routerLink="/info/terminos">Términos</a>
-              }
-            </div>
-          </div>
-
-          <div>
-            <h2 class="ws-footer-title">Ayuda</h2>
-            <div class="ws-footer-links">
-              @if (content.settings().contactPageEnabled) {
-                <a routerLink="/info/contacto">Contacto</a>
-              }
-              <a routerLink="/libro-reclamaciones">Libro de reclamaciones</a>
-              <a routerLink="/carrito">Carrito</a>
-            </div>
-          </div>
+          }
         </div>
 
         <div
@@ -112,5 +128,18 @@ export class PieTiendaComponent {
   /** Categorías principales, en el orden de la cabecera; el pie muestra las cuatro primeras. */
   readonly categorias = input.required<readonly Categoria[]>();
   protected readonly content = inject(ContenidoFacade);
+  private readonly router = inject(Router);
   protected readonly currentYear = new Date().getFullYear();
+  protected readonly correos = computed(() => contactosVisibles(this.content.settings().contactEmails));
+  protected readonly telefonos = computed(() => contactosVisibles(this.content.settings().contactPhones));
+  protected readonly redes = computed(() => redesVisibles(this.content.settings().socialLinks));
+  /** Columnas de los «Accesos inferiores» (PBI-0185). */
+  protected readonly grupos = computed(() =>
+    gruposDelPie(this.content.settings().quickLinks, this.content.settings()),
+  );
+  protected readonly enlaceDeTelefono = enlaceDeTelefono;
+
+  protected ruta(url: string): UrlTree {
+    return this.router.parseUrl(url);
+  }
 }

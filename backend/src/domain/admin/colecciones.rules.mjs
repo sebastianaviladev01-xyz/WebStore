@@ -1,5 +1,6 @@
 import { LADO_IMAGEN_DE_CATEGORIA, leerImagen } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
+import { LISTAS_DE_CONTENIDO, validarListaDeContenido } from './contenido.rules.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
 import { COMPLAINT_STATUSES } from '../reclamos/reclamo.rules.mjs';
 
@@ -259,6 +260,13 @@ export function requireValidConfig(config, current) {
   const result = { ...current };
   for (const [key, value] of Object.entries(config)) {
     if (!(key in current)) continue;
+    // Lote 15 (ADR-0021): correos, teléfonos, redes, avisos y accesos inferiores son listas con sus reglas.
+    if (LISTAS_DE_CONTENIDO.includes(key)) {
+      const lista = validarListaDeContenido(key, value);
+      if (lista.error) throw invalid('config', key, lista.error);
+      result[key] = lista.valor;
+      continue;
+    }
     const expected = typeof current[key];
     if (typeof value !== expected) throw invalid('config', key, 'hay un campo con un valor que no es válido');
     result[key] = value;

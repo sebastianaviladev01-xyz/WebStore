@@ -30,18 +30,44 @@ export interface Banner {
   readonly active: boolean;
 }
 
+/** Un correo o un teléfono de la tienda, con una etiqueta opcional («Ventas»); lote 15, PBI-0169. */
+export interface DatoDeContacto {
+  readonly value: string;
+  readonly label: string;
+}
+
+/** Una red social: su nombre (el nombre accesible del enlace) y una dirección `https://` (PBI-0169). */
+export interface RedSocial {
+  readonly label: string;
+  readonly url: string;
+}
+
+/** Un aviso de la barra superior, con un enlace opcional: vacío, ruta de la tienda o `https://` (PBI-0175). */
+export interface AvisoTienda {
+  readonly text: string;
+  readonly url: string;
+}
+
+/** Un acceso del pie: la columna (`group`), su texto y su destino (PBI-0185). */
+export interface AccesoInferior {
+  readonly group: string;
+  readonly label: string;
+  readonly url: string;
+}
+
 export interface ConfiguracionTienda {
   readonly storeName: string;
   readonly logoText: string;
   readonly logoUrl: string;
-  readonly contactEmail: string;
-  readonly contactPhone: string;
+  /** El primero es el principal, donde la tienda solo muestra uno. */
+  readonly contactEmails: readonly DatoDeContacto[];
+  readonly contactPhones: readonly DatoDeContacto[];
+  readonly socialLinks: readonly RedSocial[];
   readonly fontFamily: string;
-  readonly headerMessage: string;
+  readonly announcements: readonly AvisoTienda[];
   readonly footerText: string;
-  readonly topNavigation: string;
   readonly sideNavigation: string;
-  readonly quickLinks: string;
+  readonly quickLinks: readonly AccesoInferior[];
   readonly benefits: string;
   readonly contactContent: string;
   readonly shippingContent: string;
@@ -52,3 +78,8 @@ export interface ConfiguracionTienda {
   readonly privacyPageEnabled: boolean;
   readonly termsPageEnabled: boolean;
 }
+
+export type PaginasHabilitadas = Pick<
+  ConfiguracionTienda,
+  'contactPageEnabled' | 'shippingPageEnabled' | 'privacyPageEnabled' | 'termsPageEnabled'
+>;

@@ -1,25 +1,95 @@
 import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormArray,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { BYTES_MAXIMOS_FOTO } from '../domain/foto.rules';
+import {
+  MAXIMOS_DE_CONTENIDO,
+  motivoDeCorreo,
+  motivoDeDestino,
+  motivoDeEnlaceDeAviso,
+  motivoDeGrupos,
+  motivoDeRed,
+  motivoDeTelefono,
+} from '../domain/contenido.rules';
 import { ConfiguracionTienda } from '../domain/tienda.model';
 import { mensajeDeError } from '../domain/formulario.rules';
-import { avisoDeNavegacion } from '../domain/navegacion.rules';
 import { conservarBorrador } from './borrador';
+import { CampoDeLista, FilaDeLista, ListaContenidoComponent } from './lista-contenido.component';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
+
+/** Control de texto vacío con sus validadores. */
+const texto = (...validators: ValidatorFn[]) => new FormControl('', { nonNullable: true, validators });
+
+/** Validador a partir de una regla de `contenido.rules.ts`: su motivo, si lo hay. */
+const conMotivo =
+  (motivo: (valor: string) => string | null): ValidatorFn =>
+  (control: AbstractControl): ValidationErrors | null => {
+    const aviso = motivo(String(control.value ?? ''));
+    return aviso ? { motivo: aviso } : null;
+  };
+
+/** Correo o teléfono, con su etiqueta opcional. */
+const filaDeContacto = (motivo: (valor: string) => string | null): FilaDeLista =>
+  new FormGroup<Record<string, FormControl<string>>>({
+    value: texto(conMotivo(motivo)),
+    label: texto(Validators.maxLength(MAXIMOS_DE_CONTENIDO.etiqueta)),
+  });
+
+/** Filas vacías de cada lista, para «Agregar» y para rellenar el formulario. */
+const nuevoCorreo = (): FilaDeLista => filaDeContacto(motivoDeCorreo);
+const nuevoTelefono = (): FilaDeLista => filaDeContacto(motivoDeTelefono);
+const nuevaRed = (): FilaDeLista =>
+  new FormGroup<Record<string, FormControl<string>>>({
+    label: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.etiqueta)),
+    url: texto(conMotivo(motivoDeRed)),
+  });
+const nuevoAviso = (): FilaDeLista =>
+  new FormGroup<Record<string, FormControl<string>>>({
+    text: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.textoDeAviso)),
+    url: texto(conMotivo(motivoDeEnlaceDeAviso)),
+  });
+const nuevoAcceso = (): FilaDeLista =>
+  new FormGroup<Record<string, FormControl<string>>>({
+    group: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.etiqueta)),
+    label: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.textoDeAcceso)),
+    url: texto(conMotivo(motivoDeDestino)),
+  });
+
+/** PBI-0185: el pie admite hasta tres grupos, además de «Productos». */
+const gruposDelPieValidos: ValidatorFn = (control) => {
+  const filas = (control as FormArray<FilaDeLista>).getRawValue();
+  const aviso = motivoDeGrupos(filas.map((fila) => fila['group'] ?? ''));
+  return aviso ? { motivo: aviso } : null;
+};
 
 @Component({
   selector: 'ws-content-page',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatCheckboxModule],
+  imports: [
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatCheckboxModule,
+    ListaContenidoComponent,
+  ],
   template: `
     <h1 class="text-3xl font-semibold tracking-tight text-ink">Contenido y configuración</h1>
     <p class="mt-3 max-w-3xl text-sm text-muted">
-      Edita logo gráfico, información fija, navegación superior/lateral, accesos inferiores y páginas
-      predeterminadas. La tipografía permanece bloqueada a una sola fuente por acuerdo del MVP.
+      Edita logo gráfico, información fija, contacto y redes, avisos de la barra superior, navegación lateral,
+      accesos inferiores y páginas predeterminadas. La tipografía permanece bloqueada a una sola fuente por
+      acuerdo del MVP.
     </p>
 
     @if (borrador.aviso(); as aviso) {
@@ -94,39 +164,72 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
           <mat-label>Tipografía</mat-label>
           <input matInput formControlName="fontFamily" readonly />
         </mat-form-field>
-        <mat-form-field>
-          <mat-label>Correo de contacto</mat-label>
-          <input matInput formControlName="contactEmail" />
-          <mat-error>{{ mensaje(form.controls.contactEmail.errors) }}</mat-error>
-        </mat-form-field>
-        <mat-form-field>
-          <mat-label>Teléfono</mat-label>
-          <input matInput formControlName="contactPhone" />
-        </mat-form-field>
-        <mat-form-field class="sm:col-span-2">
-          <mat-label>Mensaje superior</mat-label>
-          <input matInput formControlName="headerMessage" />
-        </mat-form-field>
+        <!-- Lote 15 (ADR-0021), PBI-0169: varios correos, teléfonos y redes; el primero es el principal. -->
+        <ws-content-list
+          class="contents"
+          titulo="Correos de la tienda"
+          descripcion="El primero es el principal. La etiqueta es opcional, por ejemplo «Ventas» o «Soporte»."
+          vacio="La tienda no muestra ningún correo."
+          nombre="correo"
+          [lista]="form.controls.contactEmails"
+          [campos]="camposDeCorreo"
+          [maximo]="maximos.contactEmails"
+          [nueva]="nuevoCorreo"
+        />
+        <ws-content-list
+          class="contents"
+          titulo="Teléfonos de la tienda"
+          descripcion="El primero es el principal. La etiqueta es opcional, por ejemplo «Ventas» o «Soporte»."
+          vacio="La tienda no muestra ningún teléfono."
+          nombre="teléfono"
+          [lista]="form.controls.contactPhones"
+          [campos]="camposDeTelefono"
+          [maximo]="maximos.contactPhones"
+          [nueva]="nuevoTelefono"
+        />
+        <ws-content-list
+          class="contents"
+          titulo="Redes sociales"
+          descripcion="La tienda las muestra en el pie y en Contacto, y las abre en otra pestaña."
+          vacio="La tienda no muestra redes sociales."
+          nombre="red"
+          [lista]="form.controls.socialLinks"
+          [campos]="camposDeRed"
+          [maximo]="maximos.socialLinks"
+          [nueva]="nuevaRed"
+        />
+        <!-- PBI-0175: la barra superior de la tienda muestra estos avisos; con varios, pasan uno tras otro. -->
+        <ws-content-list
+          class="contents"
+          titulo="Avisos de la barra superior"
+          descripcion="Avisos generales para los clientes, como un mantenimiento o una próxima oferta. El enlace es opcional. Con varios, la tienda los muestra uno tras otro."
+          vacio="La barra superior no muestra avisos."
+          nombre="aviso"
+          [lista]="form.controls.announcements"
+          [campos]="camposDeAviso"
+          [maximo]="maximos.announcements"
+          [nueva]="nuevoAviso"
+        />
         <mat-form-field class="sm:col-span-2">
           <mat-label>Texto footer</mat-label>
           <input matInput formControlName="footerText" />
-        </mat-form-field>
-        <!-- PBI-0153: avisa, sin bloquear, si un texto no lleva a ninguna página de la tienda. -->
-        <mat-form-field class="sm:col-span-2" [subscriptSizing]="avisoNavegacion() ? 'dynamic' : 'fixed'">
-          <mat-label>Navegación superior</mat-label>
-          <input matInput formControlName="topNavigation" />
-          @if (avisoNavegacion(); as aviso) {
-            <mat-hint class="text-warning">{{ aviso }}</mat-hint>
-          }
         </mat-form-field>
         <mat-form-field class="sm:col-span-2">
           <mat-label>Orden preferido de categorías laterales</mat-label>
           <input matInput formControlName="sideNavigation" />
         </mat-form-field>
-        <mat-form-field class="sm:col-span-2">
-          <mat-label>Accesos inferiores</mat-label>
-          <input matInput formControlName="quickLinks" />
-        </mat-form-field>
+        <!-- PBI-0185: el pie de la tienda sale de estos accesos; cada grupo es una columna. -->
+        <ws-content-list
+          class="contents"
+          titulo="Accesos inferiores"
+          descripcion="Las columnas del pie de la tienda, después de «Productos»: hasta tres grupos. Un acceso a una página desactivada no se muestra."
+          vacio="El pie solo muestra «Productos»."
+          nombre="acceso"
+          [lista]="form.controls.quickLinks"
+          [campos]="camposDeAcceso"
+          [maximo]="maximos.quickLinks"
+          [nueva]="nuevoAcceso"
+        />
         <mat-form-field class="sm:col-span-2">
           <mat-label>Beneficios (Título|Descripción; ...)</mat-label>
           <textarea matInput rows="3" formControlName="benefits"></textarea>
@@ -190,17 +293,14 @@ export class ContenidoPage {
     storeName: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     logoText: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     logoUrl: new FormControl('', { nonNullable: true }),
-    contactEmail: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    contactPhone: new FormControl('', { nonNullable: true }),
     fontFamily: new FormControl('Source Sans 3 Variable', { nonNullable: true }),
-    headerMessage: new FormControl('', { nonNullable: true }),
+    contactEmails: new FormArray<FilaDeLista>([]),
+    contactPhones: new FormArray<FilaDeLista>([]),
+    socialLinks: new FormArray<FilaDeLista>([]),
+    announcements: new FormArray<FilaDeLista>([]),
     footerText: new FormControl('', { nonNullable: true }),
-    topNavigation: new FormControl('', { nonNullable: true }),
     sideNavigation: new FormControl('', { nonNullable: true }),
-    quickLinks: new FormControl('', { nonNullable: true }),
+    quickLinks: new FormArray<FilaDeLista>([], { validators: gruposDelPieValidos }),
     benefits: new FormControl('', { nonNullable: true }),
     contactContent: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     shippingContent: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
@@ -222,7 +322,7 @@ export class ContenidoPage {
     restaurar: (borrador) => {
       if (!borrador.base) return false;
       this.base = borrador.base;
-      this.form.setValue(borrador.valor);
+      this.cargar(borrador.valor as unknown as ConfiguracionTienda);
       return true;
     },
   });
@@ -238,7 +338,7 @@ export class ContenidoPage {
       const config = this.admin.config();
       if (!config || this.form.dirty) return;
       this.base = config;
-      this.form.setValue(config, { emitEvent: false });
+      this.cargar(config);
     });
   }
 
@@ -294,10 +394,54 @@ export class ContenidoPage {
 
   protected readonly saved = signal(false);
 
-  /** Aviso de la «Navegación superior» con lo escrito ahora y las páginas marcadas (PBI-0153). */
-  protected avisoNavegacion(): string | null {
-    const valor = this.form.getRawValue();
-    return avisoDeNavegacion(valor.topNavigation, valor);
+  // --- Listas de Contenido (lote 15, ADR-0021) ---
+  protected readonly maximos = MAXIMOS_DE_CONTENIDO;
+  protected readonly camposDeCorreo: readonly CampoDeLista[] = [
+    { clave: 'value', etiqueta: 'Correo' },
+    { clave: 'label', etiqueta: 'Etiqueta del correo', pista: 'Opcional.' },
+  ];
+  protected readonly camposDeTelefono: readonly CampoDeLista[] = [
+    { clave: 'value', etiqueta: 'Teléfono' },
+    { clave: 'label', etiqueta: 'Etiqueta del teléfono', pista: 'Opcional.' },
+  ];
+  protected readonly camposDeRed: readonly CampoDeLista[] = [
+    { clave: 'label', etiqueta: 'Nombre de la red', pista: 'Por ejemplo, Instagram.' },
+    { clave: 'url', etiqueta: 'Dirección de la red', pista: 'https://…' },
+  ];
+  protected readonly camposDeAviso: readonly CampoDeLista[] = [
+    { clave: 'text', etiqueta: 'Aviso' },
+    { clave: 'url', etiqueta: 'Enlace del aviso', pista: 'Opcional: /catalogo o https://…' },
+  ];
+  protected readonly camposDeAcceso: readonly CampoDeLista[] = [
+    { clave: 'group', etiqueta: 'Grupo', pista: 'La columna, por ejemplo «Ayuda».' },
+    { clave: 'label', etiqueta: 'Texto del acceso' },
+    { clave: 'url', etiqueta: 'Destino', pista: '/info/envios o https://…' },
+  ];
+  protected readonly nuevoCorreo = nuevoCorreo;
+  protected readonly nuevoTelefono = nuevoTelefono;
+  protected readonly nuevaRed = nuevaRed;
+  protected readonly nuevoAviso = nuevoAviso;
+  protected readonly nuevoAcceso = nuevoAcceso;
+
+  /**
+   * Rellena el formulario: cada lista recibe tantas filas como elementos y después se copia el valor. Usa las funciones
+   * del módulo, no los campos de la clase: el borrador se restaura mientras la clase aún se está construyendo.
+   */
+  private cargar(config: ConfiguracionTienda): void {
+    const listas = [
+      [this.form.controls.contactEmails, config.contactEmails, nuevoCorreo],
+      [this.form.controls.contactPhones, config.contactPhones, nuevoTelefono],
+      [this.form.controls.socialLinks, config.socialLinks, nuevaRed],
+      [this.form.controls.announcements, config.announcements, nuevoAviso],
+      [this.form.controls.quickLinks, config.quickLinks, nuevoAcceso],
+    ] as const;
+    for (const [lista, elementos, nueva] of listas) {
+      lista.clear({ emitEvent: false });
+      (elementos ?? []).forEach(() => lista.push(nueva(), { emitEvent: false }));
+    }
+    this.form.setValue(config as unknown as ReturnType<ContenidoPage['form']['getRawValue']>, {
+      emitEvent: false,
+    });
   }
 
   /** Guarda solo lo que cambió (PBI-0120); si falla, lo escrito se queda y el motivo sale junto al botón (PBI-0125). */
@@ -310,7 +454,7 @@ export class ContenidoPage {
       this.form.markAllAsTouched();
       return;
     }
-    const editado = this.form.getRawValue();
+    const editado = this.form.getRawValue() as unknown as ConfiguracionTienda;
     if (!(await this.admin.guardarConfiguracion(base, editado))) {
       this.saveError.set(
         this.admin.tomarError() ?? 'No pudimos guardar la configuración. Inténtalo de nuevo.',

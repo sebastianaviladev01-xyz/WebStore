@@ -46,6 +46,11 @@ const shell = [
   read('frontend/src/app/layout/pie-tienda.component.ts'),
 ].join('\n');
 const routes = read('frontend/src/app/app.routes.ts');
+// Lote 15 (PBI-0175 y PBI-0185): el enlace fijo a Envíos y las columnas del pie se deciden en domain/.
+const reglasDeNavegacion = [
+  read('frontend/src/app/features/contenido/domain/navegacion.rules.ts'),
+  read('frontend/src/app/features/contenido/domain/pie.rules.ts'),
+].join('\n');
 const contentService = read('frontend/src/app/features/contenido/application/contenido.facade.ts');
 // La vigencia y el máximo de banners pasaron a domain/ (lote 05, PBI-0117).
 const bannerRules = read('frontend/src/app/features/contenido/domain/banner.rules.ts');
@@ -151,7 +156,10 @@ for (const [label, ok] of [
   ],
   [
     'Navegación oculta página Envíos desactivada',
-    shell.includes('content.settings().shippingPageEnabled') && shell.includes('routerLink="/info/envios"'),
+    reglasDeNavegacion.includes("paginas.shippingPageEnabled ? [{ label: 'Envíos', route: '/info/envios'") &&
+      reglasDeNavegacion.includes("'/info/envios': 'shippingPageEnabled'") &&
+      shell.includes('enlacesDeLaCabecera(this.content.settings())') &&
+      shell.includes('gruposDelPie(this.content.settings().quickLinks, this.content.settings())'),
   ],
   [
     'Mega-menú dinámico conectado al catálogo',

@@ -11,6 +11,7 @@ import { readFile, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { SCHEMA_VERSION } from '../../src/infrastructure/persistencia/normalizar-estado.mjs';
 
 const serverEntry = fileURLToPath(new URL('../../src/main.mjs', import.meta.url));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -63,7 +64,7 @@ test('un estado v2 con colores propios se migra a «Colores de Contenido» activ
     assert.ok(!('primaryColor' in publicas) && !('secondaryColor' in publicas));
 
     const guardado = JSON.parse(await readFile(dataFile, 'utf8'));
-    assert.equal(guardado.schemaVersion, 3);
+    assert.equal(guardado.schemaVersion, SCHEMA_VERSION);
     assert.ok(!('primaryColor' in guardado.config) && !('secondaryColor' in guardado.config));
     const [tema] = guardado.appearance.customThemes;
     assert.equal(guardado.appearance.customThemes.length, 1);

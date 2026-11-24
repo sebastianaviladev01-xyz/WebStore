@@ -70,9 +70,9 @@ test('caracterización: normalizar otra vez el resultado no lo cambia', () => {
 
 // --- Migración schemaVersion: 3 ---
 
-test('la versión del esquema es 3', () => {
-  assert.equal(SCHEMA_VERSION, 3);
-  assert.equal(normalizeState(estadoV2(), demoPasswords).schemaVersion, 3);
+test('la versión del esquema es 4 (lote 15: listas de Contenido)', () => {
+  assert.equal(SCHEMA_VERSION, 4);
+  assert.equal(normalizeState(estadoV2(), demoPasswords).schemaVersion, 4);
 });
 
 test('sin estado guardado (la semilla): B activo, revisión 0, sin temas propios y Contenido sin colores', () => {
@@ -347,7 +347,7 @@ test('lote 07b (PBI-0028 y PBI-0033): un estado sin actividad ni «visto» carga
   const estado = normalizeState(guardado, demoPasswords);
   assert.deepEqual(estado.activity, []);
   assert.deepEqual(estado.adminNotificationsSeen, []);
-  assert.equal(estado.schemaVersion, 3, 'las listas nuevas no cambian la versión del esquema');
+  assert.equal(estado.schemaVersion, SCHEMA_VERSION, 'las listas nuevas no cambian la versión del esquema');
   const larga = Array.from({ length: 70 }, (_, n) => ({
     id: `e-${n}`,
     at: 'x',
@@ -370,7 +370,7 @@ test('lote 13 (PBI-0173): un estado sin errores de compra carga con la lista vac
   };
   const estado = normalizeState({ ...guardado, checkoutErrors: [bueno, { id: 'x' }] }, demoPasswords);
   assert.deepEqual(estado.checkoutErrors, [bueno]);
-  assert.equal(estado.schemaVersion, 3, 'la lista nueva no cambia la versión del esquema');
+  assert.equal(estado.schemaVersion, SCHEMA_VERSION, 'la lista nueva no cambia la versión del esquema');
 });
 
 test('lote 12 (PBI-0184): un banner guardado sin botón secundario recibe el «Ver todos los productos» que el inicio mostraba fijo', () => {
@@ -412,4 +412,65 @@ test('lote 12 (PBI-0184): los banners principales de la semilla llevan su botón
     assert.equal(banner.secondaryCta, 'Ver todos los productos', banner.id);
     assert.equal(banner.secondaryCtaUrl, '/catalogo', banner.id);
   }
+});
+
+// --- Migración schemaVersion: 4 (lote 15, ADR-0021; PBI-0169, PBI-0175 y PBI-0185) ---
+
+/** Estado guardado por la versión 3, con los campos de Contenido de texto. */
+function estadoV3(contenido = {}) {
+  const base = structuredClone(seed);
+  for (const clave of ['contactEmails', 'contactPhones', 'socialLinks', 'announcements', 'quickLinks'])
+    delete base.config[clave];
+  return {
+    ...base,
+    schemaVersion: 3,
+    revision: 9,
+    adminCredentials: base.users.map((user) => ({ userId: user.id, salt: 's', hash: 'h' })),
+    config: {
+      ...base.config,
+      contactEmail: 'hola@mitienda.pe',
+      contactPhone: '+51 01 555 0000',
+      headerMessage: 'Envío gratis desde S/ 300.',
+      topNavigation: 'Inicio, Productos, Pedidos, Envíos, Ayuda',
+      quickLinks: 'Contacto, Envíos',
+      ...contenido,
+    },
+  };
+}
+
+test('v3 → v4: el correo y el teléfono pasan a ser el primero de su lista y se quitan los campos de texto', () => {
+  const { config } = normalizeState(estadoV3(), demoPasswords);
+  assert.deepEqual(config.contactEmails, [{ value: 'hola@mitienda.pe', label: '' }]);
+  assert.deepEqual(config.contactPhones, [{ value: '+51 01 555 0000', label: '' }]);
+  assert.deepEqual(config.socialLinks, []);
+  for (const campo of ['contactEmail', 'contactPhone', 'headerMessage', 'topNavigation'])
+    assert.equal(campo in config, false, campo);
+});
+
+test('v3 → v4: el mensaje superior y la navegación pasan a ser los avisos; los accesos, el pie que se veía', () => {
+  const { config } = normalizeState(estadoV3(), demoPasswords);
+  assert.deepEqual(config.announcements, [
+    { text: 'Envío gratis desde S/ 300.', url: '' },
+    { text: 'Ayuda', url: '/info/contacto' },
+  ]);
+  assert.deepEqual(config.quickLinks, seed.config.quickLinks);
+});
+
+test('v3 → v4: un correo o teléfono vacío deja la lista vacía, nunca el de la demo', () => {
+  const { config } = normalizeState(estadoV3({ contactEmail: '', contactPhone: ' ' }), demoPasswords);
+  assert.deepEqual(config.contactEmails, []);
+  assert.deepEqual(config.contactPhones, []);
+});
+
+test('v4: las listas guardadas se conservan y normalizar otra vez no cambia nada', () => {
+  const v4 = normalizeState(estadoV3(), demoPasswords);
+  v4.config.socialLinks = [{ label: 'Instagram', url: 'https://www.instagram.com/mitienda' }];
+  const otraVez = normalizeState(structuredClone(v4), demoPasswords);
+  assert.deepEqual(otraVez, v4);
+});
+
+test('la semilla normalizada conserva sus listas de Contenido', () => {
+  const next = normalizeState(structuredClone(seed), demoPasswords);
+  for (const clave of ['contactEmails', 'contactPhones', 'socialLinks', 'announcements', 'quickLinks'])
+    assert.deepEqual(next.config[clave], seed.config[clave], clave);
 });
