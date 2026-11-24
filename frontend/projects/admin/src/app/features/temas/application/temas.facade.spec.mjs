@@ -186,3 +186,58 @@ test('un error de regla queda con su código y sus detalles, sin recargar la lis
   assert.equal(facade.aviso(), null);
   assert.equal(cuantas('temasAdmin'), 1);
 });
+
+// Lote 14 (PBI-0188, ADR-0022): la tuerca de la demo ofrece solo A, B y C. La apariencia en modo demo trae, además, el
+// activo si es propio (para pintarlo), pero la tuerca no lo ofrece ni lo acepta como vista previa.
+const PROPIO = { ...tema('t-1', '#0A7A5A'), kind: 'custom' };
+const OTRO_PROPIO = { ...tema('t-2', '#7A0A5A'), kind: 'custom' };
+
+test('modo demo: la tuerca ofrece solo A, B y C, aunque el activo sea un tema propio', async () => {
+  const { facade } = montar({
+    apariencia: { demoMode: true, activeThemeId: 't-1', themes: [A, B, C, PROPIO] },
+  });
+  await facade.cargar();
+  assert.deepEqual(
+    facade.temasDeLaTuerca().map((item) => item.id),
+    ['a', 'b', 'c'],
+  );
+  assert.equal(facade.temaVisible().tema.id, 't-1');
+});
+
+test('modo demo: verTema no acepta un tema propio como vista previa', async () => {
+  const { facade, propiedades } = montar({
+    apariencia: { demoMode: true, activeThemeId: 'b', themes: [A, B, C, PROPIO] },
+  });
+  await facade.cargar();
+  facade.verTema('t-1');
+  assert.equal(facade.temaVisible().esVistaPrevia, false);
+  assert.equal(propiedades.get('--ws-primary'), '#1D4ED8');
+  facade.verTema('c');
+  assert.equal(facade.temaVisible().tema.id, 'c');
+  assert.equal(facade.temaVisible().esVistaPrevia, true);
+});
+
+test('modo demo: tras activar un tema propio, la apariencia trae A, B, C y el activo, sin los demás propios', async () => {
+  const conPropios = (revision, activeThemeId) => ({
+    revision,
+    activeThemeId,
+    themes: [A, B, C, PROPIO, OTRO_PROPIO],
+  });
+  const { facade } = montar({
+    apariencia: { demoMode: true, activeThemeId: 'b', themes: [A, B, C] },
+    temasAdmin: conPropios(0, 'b'),
+    activar: conPropios(1, 't-1'),
+  });
+  await facade.cargar();
+  await facade.cargarTemas();
+  assert.equal(await facade.activar('t-1'), true);
+  assert.deepEqual(
+    facade.temas().map((item) => item.id),
+    ['a', 'b', 'c', 't-1'],
+  );
+  assert.equal(facade.temaActivo().id, 't-1');
+  assert.deepEqual(
+    facade.temasDeLaTuerca().map((item) => item.id),
+    ['a', 'b', 'c'],
+  );
+});

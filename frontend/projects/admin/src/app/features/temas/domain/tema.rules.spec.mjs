@@ -65,8 +65,8 @@ test('predefinidos: mapa completo de tokens en orden y pares de contraste en cen
   }
 });
 
-test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 37 tokens, 27 pares y solo dos bloquean', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 37);
+test('TOKENS_DEL_TEMA y PARES_DE_CONTRASTE: 38 tokens, 27 pares y solo dos bloquean', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 38);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.ok(Object.isFrozen(TOKENS_DEL_TEMA) && Object.isFrozen(PARES_DE_CONTRASTE));
   assert.equal(PARES_DE_CONTRASTE.length, 27);

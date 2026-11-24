@@ -12,7 +12,7 @@ Cada paso dice qué hacer y cómo comprobarlo. Los comandos son para PowerShell,
 
 ## 1. Sin modo demo
 
-`WEBSTORE_DEMO_MODE` **no se define**. Sin la variable, el modo demo está apagado: no aparece la tuerca «Cambiar tema», y el BFF ignora la cookie de la vista previa ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)).
+`WEBSTORE_DEMO_MODE` **no se define**. Sin la variable, el modo demo está apagado: no aparece la tuerca «Cambiar tema» del Admin, y el BFF ignora la cookie de la vista previa ([ADR-0012](../adrs/0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md)). La tienda no tiene tuerca en ningún caso: el tema se configura solo en el Admin, en «Temas» ([ADR-0022](../adrs/0022-quitar-la-tuerca-de-la-tienda-y-limitar-la-demo-a-los-temas-predefinidos.md)).
 
 Si la terminal viene de levantar la demo, quítala antes de arrancar:
 
@@ -22,7 +22,7 @@ Remove-Item Env:WEBSTORE_DEMO_MODE -ErrorAction SilentlyContinue
 
 En Bash: `unset WEBSTORE_DEMO_MODE`.
 
-**Comprobación:** `GET /bff/appearance` responde `"demoMode":false` y en `themes` solo trae el tema activo. La tienda y el Admin no muestran la tuerca.
+**Comprobación:** `GET /bff/appearance` responde `"demoMode":false` y en `themes` solo trae el tema activo. El Admin no muestra la tuerca (la tienda nunca la tiene).
 
 ## 2. Contraseñas propias de las cuentas sembradas
 

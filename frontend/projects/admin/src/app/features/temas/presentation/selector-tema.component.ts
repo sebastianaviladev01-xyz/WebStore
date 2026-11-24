@@ -4,9 +4,10 @@ import { MatMenuModule } from '@angular/material/menu';
 import { TemasFacade } from '../application/temas.facade';
 
 /**
- * Tuerca del modo demo: un botón flotante que abre un menú con los temas y «Volver al tema activo».
- * Elegir un tema solo cambia este navegador (cookie de la vista previa, ADR-0012). `App` la monta
- * únicamente si el BFF publica `demoMode` (AC-15, AC-16). Estilos en `styles.css` del Admin, solo con tokens.
+ * Tuerca del modo demo: un botón flotante que abre un menú con los temas predefinidos (A, B y C) y «Volver al tema
+ * activo». Elegir un tema solo cambia este navegador (cookie de la vista previa, ADR-0012), y la tienda, que ya no
+ * tiene tuerca, lo lee en el mismo host (PBI-0188, ADR-0022). `App` la monta únicamente si el BFF publica `demoMode`
+ * (AC-15, AC-16). Estilos en `styles.css` del Admin, solo con tokens.
  */
 @Component({
   selector: 'ws-admin-selector-tema',
@@ -42,9 +43,9 @@ import { TemasFacade } from '../application/temas.facade';
     >
       <p class="ws-selector-tema-titulo">
         Probar un tema
-        <span>Solo cambia en este navegador.</span>
+        <span>Solo cambia en este navegador, también en la tienda.</span>
       </p>
-      @for (tema of temas.temas(); track tema.id) {
+      @for (tema of temas.temasDeLaTuerca(); track tema.id) {
         <button
           mat-menu-item
           type="button"

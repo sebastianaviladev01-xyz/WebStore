@@ -13,6 +13,7 @@ import {
   medirTexto,
   restablecerTemas,
 } from './apoyo/contraste';
+import { enlaceDelCarrito, urls } from './apoyo/entorno';
 
 /**
  * Temas y contraste en la tienda (lote 03, ADR-0017 y ADR-0019).
@@ -21,6 +22,8 @@ import {
  * - PBI-0060 y PBI-0061: con un tema propio oscuro, lo escrito en un campo, las opciones de una lista y el mensaje de
  *   error se leen.
  * - PBI-0062: con un principal muy claro sobre una base oscura, el texto del botón principal se lee.
+ * - PBI-0189 (lote 14, ADR-0023): con A, B, C y un tema propio de ámbar, la oferta y el contador del carrito llevan el
+ *   secundario con su texto (4.5:1) y su borde del acento, que se distingue del fondo (3:1).
  * Las medidas solo leen colores con `getComputedStyle`. Al terminar, B queda activo y los temas de prueba se borran.
  */
 const PREFIJO = 'Lote03 Tienda';
@@ -34,6 +37,14 @@ const CLARO = {
   background: '#FFFFFF',
   surface: '#F3F4F6',
   contrast: '#111827',
+};
+/** Lote 14 (PBI-0189): un ámbar claro sobre la base de B, que sin borde apenas se distingue del blanco (1.79:1). */
+const AMBAR = {
+  primary: '#1D4ED8',
+  secondary: '#FFB300',
+  background: '#F3F5F8',
+  surface: '#FFFFFF',
+  contrast: '#0F172A',
 };
 const PROPIOS = [
   { nombre: 'oscuro', colores: OSCURO },
@@ -110,6 +121,73 @@ test.describe('Temas y contraste en la tienda', () => {
       exigir(nombre, 'opción seleccionada, texto', opcion.texto, opcion.fondo, MINIMO.texto);
       const panel = await medirTexto(page.getByRole('option', { selected: false }).last());
       exigir(nombre, 'opción sin seleccionar, texto sobre el panel', panel.color, panel.fondo, MINIMO.texto);
+    });
+  }
+
+  for (const tema of [...TEMAS, 'ámbar'] as const) {
+    test(`PBI-0189: con ${tema === 'ámbar' ? 'un tema propio de ámbar' : tema.toUpperCase()}, la oferta y el contador del carrito se ven y se leen`, async ({
+      page,
+      request,
+    }) => {
+      await activarTema(tema === 'ámbar' ? await crearTemaPropio(`${PREFIJO} ámbar`, AMBAR) : tema);
+      const productos: { id: string; stock: number }[] = await (
+        await request.get(`${urls.bff}/bff/catalog/products`)
+      ).json();
+      const conStock = productos.find((producto) => producto.stock > 0)!;
+      await page.addInitScript(
+        (id) => localStorage.setItem('webstore-cart-v1', JSON.stringify([{ productId: id, quantity: 1 }])),
+        conStock.id,
+      );
+      // El seed no trae insignias: la oferta se añade a la respuesta del catálogo solo en esta prueba.
+      await page.route('**/bff/catalog/products', async (ruta) => {
+        const respuesta = await ruta.fetch();
+        const lista: { id: string }[] = await respuesta.json();
+        await ruta.fulfill({
+          response: respuesta,
+          json: lista.map((producto) =>
+            producto.id === conStock.id ? { ...producto, badge: 'Oferta' } : producto,
+          ),
+        });
+      });
+      await page.goto('/catalogo');
+      const nombre = tema === 'ámbar' ? 'ámbar' : tema;
+
+      const oferta = page.getByText('Oferta', { exact: true });
+      await expect(oferta).toBeVisible();
+      const textoOferta = await medirTexto(oferta);
+      exigir(
+        nombre,
+        'texto de la oferta sobre el secundario',
+        textoOferta.color,
+        textoOferta.fondo,
+        MINIMO.texto,
+      );
+      expect(enRgb(textoOferta.fondo)).toBe(await colorDelToken(page, '--ws-accent'));
+
+      const contador = enlaceDelCarrito(page).getByText('1', { exact: true });
+      await expect(contador).toBeVisible();
+      const textoContador = await medirTexto(contador);
+      exigir(
+        nombre,
+        'texto del contador del carrito',
+        textoContador.color,
+        textoContador.fondo,
+        MINIMO.texto,
+      );
+
+      // El borde del acento contornea los dos y se distingue de la superficie y del lienzo de la tienda.
+      const borde = await colorDelToken(page, '--ws-accent-line');
+      for (const fondo of ['--ws-surface', '--ws-store-bg', '--ws-bg'])
+        exigir(
+          nombre,
+          `borde del acento sobre ${fondo}`,
+          borde,
+          await colorDelToken(page, fondo),
+          MINIMO.marca,
+        );
+      const bordeCrudo = await colorDelToken(page, '--ws-accent-line', { crudo: true });
+      for (const elemento of [oferta, contador])
+        expect(await elemento.evaluate((el) => getComputedStyle(el).boxShadow)).toContain(bordeCrudo);
     });
   }
 

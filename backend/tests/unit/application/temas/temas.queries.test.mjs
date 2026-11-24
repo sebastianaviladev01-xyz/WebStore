@@ -41,18 +41,30 @@ function crearAlmacen(activeThemeId = 'b') {
 
 const consultas = (activeThemeId) => createTemasQueries({ store: crearAlmacen(activeThemeId) });
 
-test('apariencia(true) trae A, B y C y después los propios por nombre', () => {
+// Lote 14 (PBI-0188, ADR-0022): la tuerca de la demo ofrece solo A, B y C. La apariencia pública en modo demo trae los
+// tres predefinidos y, si el activo es un tema propio, también el activo, para que la tienda y el Admin lo pinten.
+test('apariencia(true) trae A, B y C, sin los temas propios, si el activo es un predefinido', () => {
   const vista = consultas().apariencia(true);
   assert.equal(vista.demoMode, true);
   assert.equal(vista.activeThemeId, 'b');
   assert.deepEqual(
     vista.themes.map(({ id }) => id),
-    ['a', 'b', 'c', 'b1', 'n', 'z'],
+    ['a', 'b', 'c'],
   );
   assert.deepEqual(
     vista.themes.map(({ kind }) => kind),
-    ['predefined', 'predefined', 'predefined', 'custom', 'custom', 'custom'],
+    ['predefined', 'predefined', 'predefined'],
   );
+});
+
+test('apariencia(true) con un tema propio activo trae A, B, C y el activo, sin los demás propios', () => {
+  const vista = consultas('n').apariencia(true);
+  assert.equal(vista.activeThemeId, 'n');
+  assert.deepEqual(
+    vista.themes.map(({ id }) => id),
+    ['a', 'b', 'c', 'n'],
+  );
+  assert.equal(vista.themes[3].kind, 'custom');
 });
 
 test('apariencia(false) trae solo el tema activo y demoMode en falso', () => {
@@ -91,7 +103,7 @@ test('un activeThemeId inexistente se trata como B', () => {
 test('el DTO no trae fechas y los tokens de un propio se calculan al leer', () => {
   const store = crearAlmacen();
   const antes = structuredClone(store.state);
-  const { themes } = createTemasQueries({ store }).apariencia(true);
+  const { themes } = createTemasQueries({ store }).temasAdmin();
   const tema = themes.find(({ id }) => id === 'z');
 
   assert.deepEqual(tema.tokens, tokensDelTema(colores, TEMAS_PREDEFINIDOS));
@@ -118,14 +130,20 @@ test('temasAdmin trae la revisión, el activo y todos los temas', () => {
   assert.equal(vista.themes.length, 6);
 });
 
-test('hojaDeEstilos: con modo demo y vista previa válida sirve la vista previa', () => {
+test('hojaDeEstilos: con modo demo y la vista previa de un predefinido sirve la vista previa', () => {
   const css = consultas('b').hojaDeEstilos(true, 'a');
   assert.ok(css.includes(`  --ws-primary: ${TEMAS_PREDEFINIDOS[0].tokens['--ws-primary']};\n`));
   assert.ok(!css.includes('#1d4ed8'));
-  const propioCss = consultas('b').hojaDeEstilos(true, 'n');
-  assert.ok(
-    propioCss.includes('  --ws-primary: #0A7A5A;\n') || propioCss.includes('  --ws-primary: #0a7a5a;\n'),
-  );
+  assert.equal(consultas('n').hojaDeEstilos(true, 'c'), consultas('c').hojaDeEstilos(false));
+});
+
+test('hojaDeEstilos: con modo demo, la vista previa de un tema propio se ignora y sirve el activo (PBI-0188)', () => {
+  assert.equal(consultas('b').hojaDeEstilos(true, 'n'), consultas('b').hojaDeEstilos(false));
+  assert.equal(consultas('c').hojaDeEstilos(true, 'z'), consultas('c').hojaDeEstilos(false));
+  // Un tema propio activo se sirve como activo, con su id en la cookie o con el de otro propio.
+  assert.equal(consultas('n').hojaDeEstilos(true, 'n'), consultas('n').hojaDeEstilos(false));
+  assert.equal(consultas('n').hojaDeEstilos(true, 'z'), consultas('n').hojaDeEstilos(false));
+  assert.ok(consultas('n').hojaDeEstilos(false).includes('  --ws-primary: #0A7A5A;\n'));
 });
 
 test('hojaDeEstilos: una vista previa inexistente o vacía sirve el activo', () => {
@@ -161,14 +179,14 @@ test('hojaDeEstilos: formato exacto, cada token una vez y en orden', () => {
 
 const declaraciones = (css) => css.slice(':root:root {\n'.length, -'}\n'.length).trimEnd().split('\n');
 
-test('hojaDeEstilos: 37 declaraciones, con el lienzo de la tienda justo antes del fondo principal (B y un propio)', () => {
+test('hojaDeEstilos: 38 declaraciones, con el lienzo de la tienda justo antes del fondo principal (B y un propio)', () => {
   const casos = [
     ['b', '  --ws-store-bg: #f9fafc;', '  --ws-bg: #f3f5f8;'],
     ['n', '  --ws-store-bg: #F0F0F0;', '  --ws-bg: #F0F0F0;'],
   ];
   for (const [id, lienzo, fondo] of casos) {
     const lineas = declaraciones(consultas(id).hojaDeEstilos(false));
-    assert.equal(lineas.length, 37, id);
+    assert.equal(lineas.length, 38, id);
     const indice = lineas.indexOf(lienzo);
     assert.ok(indice >= 0, `${id}: falta «${lienzo.trim()}»`);
     assert.equal(lineas[indice + 1], fondo, id);

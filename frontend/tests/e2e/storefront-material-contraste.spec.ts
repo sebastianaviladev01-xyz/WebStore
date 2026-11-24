@@ -14,15 +14,15 @@ import {
   medirTexto,
   restablecerTemas,
 } from './apoyo/contraste';
-import { menuDeTemas, tuerca } from './apoyo/modo-demo';
 
 /**
  * Componentes de Material de la tienda con los temas (feature 005). TEST-12 (AC-06): con A, B y C, cada texto o
  * marca que Material pinta con el principal, o sobre él, llega a su mínimo (4.5:1 el texto y 3:1 una marca): la
  * etiqueta del botón relleno del diálogo «Producto agregado» y su capa de estado, que sigue en `--ws-on-primary`
  * (pregunta 4 del plan), el botón de opción del checkout, la etiqueta enfocada de un campo, la opción
- * seleccionada de una lista desplegable y el selector de tema del modo demo. Cada medida queda en las
- * anotaciones de la prueba. Al terminar, B queda activo.
+ * seleccionada de una lista desplegable. El selector de tema del modo demo salió de la tienda en el lote 14
+ * (PBI-0188) y se mide en `admin-material-contraste.spec.ts`. Cada medida queda en las anotaciones de la prueba.
+ * Al terminar, B queda activo.
  */
 test.describe('Componentes de Material de la tienda con los temas', () => {
   test.beforeEach(() => restablecerTemas());
@@ -105,15 +105,6 @@ test.describe('Componentes de Material de la tienda con los temas', () => {
       const radio = await medirBotonDeOpcion(yape);
       exigir(tema, 'botón de opción «Yape / Plin», punto', radio.punto, radio.fondo, MINIMO.marca);
       exigir(tema, 'botón de opción «Yape / Plin», anillo', radio.anillo, radio.fondo, MINIMO.marca);
-
-      // Selector de tema del modo demo: el texto de una opción sobre el panel.
-      await tuerca(page).click();
-      const menu = menuDeTemas(page);
-      await expect(menu).toBeVisible();
-      const temaDelMenu = await medirTexto(menu.getByRole('menuitemradio', { name: /^Azul cobalto/ }));
-      exigir(tema, 'selector de tema, «Azul cobalto»', temaDelMenu.color, temaDelMenu.fondo, MINIMO.texto);
-      await page.keyboard.press('Escape');
-      await expect(menu).toBeHidden();
     });
   }
 });

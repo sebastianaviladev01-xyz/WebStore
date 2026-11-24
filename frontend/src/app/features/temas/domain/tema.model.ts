@@ -18,6 +18,7 @@ export type NombreToken =
   | '--ws-accent-strong'
   | '--ws-accent-soft'
   | '--ws-on-accent'
+  | '--ws-accent-line'
   | '--ws-link'
   | '--ws-on-link'
   | '--ws-focus-ring'

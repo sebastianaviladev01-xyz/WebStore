@@ -3,6 +3,8 @@
 - Estado: Aceptada
 - Fecha: 2026-11-11
 
+> Modificada por [ADR-0022](0022-quitar-la-tuerca-de-la-tienda-y-limitar-la-demo-a-los-temas-predefinidos.md) (2026-11-23, lote 14, PBI-0188): la tienda ya no tiene tuerca; solo la del Admin escribe la cookie, ofrece solo A, B y C, y la vista previa solo puede ser uno de ellos. La tienda sigue leyendo la cookie en modo demo. Lo que sigue es la decisión original.
+
 ## Contexto
 
 ### Por qué había que decidir

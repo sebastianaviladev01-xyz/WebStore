@@ -4,7 +4,8 @@ import { DiaDelMes } from '../domain/resumen.model';
 
 /**
  * Barras por día del mes con los pedidos y, si el rol los ve, los clientes nuevos. Solo CSS y tokens: `primary`
- * para «Pedidos» y `accent` para «Clientes nuevos». Para lectores de pantalla tiene un texto alternativo y una tabla
+ * para «Pedidos» y `accent` para «Clientes nuevos», con el borde del acento (`accent-line`, PBI-0189) para que un
+ * secundario claro se distinga del fondo. Para lectores de pantalla tiene un texto alternativo y una tabla
  * `sr-only` con los valores de cada día.
  */
 @Component({
@@ -18,7 +19,10 @@ import { DiaDelMes } from '../domain/resumen.model';
       </li>
       @if (conClientes()) {
         <li class="inline-flex items-center gap-2">
-          <span class="size-3 rounded-sm bg-accent" aria-hidden="true"></span>
+          <span
+            class="size-3 rounded-sm bg-accent ring-1 ring-accent-line ring-inset"
+            aria-hidden="true"
+          ></span>
           Clientes nuevos
         </li>
       }
@@ -43,7 +47,7 @@ import { DiaDelMes } from '../domain/resumen.model';
                 <span class="w-2 rounded-t-sm bg-primary" [style.height.%]="altura(dia.pedidos)"></span>
                 @if (conClientes()) {
                   <span
-                    class="w-2 rounded-t-sm bg-accent"
+                    class="w-2 rounded-t-sm bg-accent ring-1 ring-accent-line ring-inset"
                     [style.height.%]="altura(dia.clientesNuevos)"
                   ></span>
                 }

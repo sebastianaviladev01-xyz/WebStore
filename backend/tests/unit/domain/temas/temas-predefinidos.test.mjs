@@ -14,6 +14,7 @@ import {
   medirPares,
   tokensDelTema,
 } from '../../../../src/domain/temas/tema.rules.mjs';
+import { relacionDeContraste } from '../../../../src/domain/temas/contraste.rules.mjs';
 
 const casos = JSON.parse(readFileSync(new URL('./casos-tema.json', import.meta.url), 'utf8'));
 const tema = (id) => TEMAS_PREDEFINIDOS.find((candidato) => candidato.id === id);
@@ -237,4 +238,20 @@ test('el tema por defecto es uno de los predefinidos y es el activo del seed', a
   assert.equal(TEMA_POR_DEFECTO, 'b');
   assert.ok(TEMAS_PREDEFINIDOS.some((predefinido) => predefinido.id === TEMA_POR_DEFECTO));
   assert.equal(seed.appearance.activeThemeId, TEMA_POR_DEFECTO);
+});
+
+// Lote 14 (PBI-0189, ADR-0023): el borde del acento de A, B y C. En B y C el secundario ya llega a 3:1 sobre los dos
+// fondos y el borde es el propio secundario (B no cambia a la vista); en A, el ámbar #F5A524 (2.04:1 sobre el blanco)
+// se contornea con su mezcla al 70 % con el contraste. Los demás tokens del acento de A, B y C no cambian.
+test('A, B y C tienen su borde del acento, que llega a 3:1 sobre el fondo principal y la superficie', () => {
+  assert.equal(tema('a').tokens['--ws-accent-line'], 'color-mix(in srgb, #F5A524 70%, #17151C)');
+  assert.equal(tema('b').tokens['--ws-accent-line'], 'var(--ws-accent)');
+  assert.equal(tema('c').tokens['--ws-accent-line'], '#1F2328');
+  for (const id of ['a', 'b', 'c']) {
+    const colores = coloresCalculados(tema(id).tokens);
+    for (const fondo of ['--ws-bg', '--ws-surface', '--ws-store-bg'])
+      assert.ok(relacionDeContraste(colores['--ws-accent-line'], colores[fondo]) >= 3, `${id} ${fondo}`);
+  }
+  assert.equal(tema('a').tokens['--ws-accent-strong'], 'color-mix(in srgb, #F5A524 78%, #17151C)');
+  assert.equal(tema('c').tokens['--ws-accent-strong'], 'color-mix(in srgb, #1F2328 78%, #1F2328)');
 });

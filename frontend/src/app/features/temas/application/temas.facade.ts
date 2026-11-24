@@ -3,14 +3,15 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { AparienciaGateway } from '../domain/apariencia.gateway';
 import { temaVisible as resolverTemaVisible, TemaVisible } from '../domain/tema-visible.rules';
-import { Apariencia, Tema } from '../domain/tema.model';
-import { borrarVistaPrevia, escribirVistaPrevia, leerVistaPrevia } from './cookie-vista-previa';
+import { Apariencia } from '../domain/tema.model';
+import { borrarVistaPrevia, leerVistaPrevia } from './cookie-vista-previa';
 
 /**
  * Carga la apariencia del BFF y pinta el tema visible: escribe sus tokens en `:root` y el color de la
- * barra del navegador. En modo demo recuerda la vista previa elegida en la cookie `ws_tema_vista_previa`
- * (`cookie-vista-previa.ts`, sin `Domain`: la tienda y el Admin solo la comparten en el mismo host). Si la
- * carga falla, no toca el DOM y queda lo que pinta `tokens.css`.
+ * barra del navegador. La tienda no tiene tuerca (PBI-0188, ADR-0022): en modo demo solo lee la vista previa que
+ * eligió la tuerca del Admin en la cookie `ws_tema_vista_previa` (`cookie-vista-previa.ts`, sin `Domain`: la
+ * tienda y el Admin solo la comparten en el mismo host) y borra la que ya no sirve. Si la carga falla, no toca el
+ * DOM y queda lo que pinta `tokens.css`.
  */
 @Injectable({ providedIn: 'root' })
 export class TemasFacade {
@@ -20,12 +21,6 @@ export class TemasFacade {
   private readonly vistaPreviaState = signal<string | null>(leerVistaPrevia(this.document));
   private loadPromise: Promise<void> | null = null;
 
-  readonly modoDemo = computed(() => this.aparienciaState()?.demoMode ?? false);
-  readonly temas = computed<readonly Tema[]>(() => this.aparienciaState()?.themes ?? []);
-  readonly temaActivo = computed<Tema | null>(() => {
-    const apariencia = this.aparienciaState();
-    return apariencia ? resolverTemaVisible(apariencia, null).tema : null;
-  });
   readonly temaVisible = computed<TemaVisible | null>(() => {
     const apariencia = this.aparienciaState();
     return apariencia ? resolverTemaVisible(apariencia, this.vistaPreviaState()) : null;
@@ -34,19 +29,6 @@ export class TemasFacade {
   cargar(): Promise<void> {
     this.loadPromise ??= this.cargarApariencia();
     return this.loadPromise;
-  }
-
-  verTema(id: string): void {
-    if (!this.modoDemo() || !this.temas().some((tema) => tema.id === id)) return;
-    escribirVistaPrevia(this.document, id);
-    this.vistaPreviaState.set(id);
-    this.aplicar();
-  }
-
-  volverAlActivo(): void {
-    borrarVistaPrevia(this.document);
-    this.vistaPreviaState.set(null);
-    this.aplicar();
   }
 
   private async cargarApariencia(): Promise<void> {

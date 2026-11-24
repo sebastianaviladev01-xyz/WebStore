@@ -153,8 +153,8 @@ test('los cinco pares de la feature 004 van después de disabledText/disabled, c
   ]);
 });
 
-test('el mapa tiene 37 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
-  assert.equal(TOKENS_DEL_TEMA.length, 37);
+test('el mapa tiene 38 tokens y el lienzo de la tienda va justo antes del fondo principal, fuera de la escala neutra (ADR-0013)', () => {
+  assert.equal(TOKENS_DEL_TEMA.length, 38);
   assert.equal(TOKENS_DEL_TEMA.indexOf('--ws-store-bg'), TOKENS_DEL_TEMA.indexOf('--ws-bg') - 1);
   assert.equal(ESCALA_NEUTRA.includes('--ws-store-bg'), false);
 });
@@ -493,4 +493,63 @@ test('con una base clara el texto sobre el acento no cambia: el blanco o el cont
     tokensDelTema({ primary: '#1D4ED8', secondary, ...base }, casos.predefinidos)['--ws-on-accent'];
   assert.equal(sobre('#C2410C'), '#FFFFFF');
   assert.equal(sobre('#F2B705'), '#0F172A');
+});
+
+// Lote 14 (PBI-0189, ADR-0023): el secundario se ve como tal. Un borde del acento (`--ws-accent-line`) que llega a
+// 3:1 sobre el fondo principal y la superficie (WCAG 1.4.11) contornea los componentes rellenos con el acento, y el
+// acento fuerte (el del puntero encima) deja de mezclarse con el contraste si el texto sobre el acento no llega ahí a 4.5:1.
+const BASE_B = { primary: '#1D4ED8', background: '#F3F5F8', surface: '#FFFFFF', contrast: '#0F172A' };
+const AMBARES = ['#F5A524', '#FFB300', '#FFC107', '#F59E0B', '#FCD34D', '#D97706', '#FFE08A'];
+
+test('el borde del acento va justo después del texto sobre el acento, fuera de la escala neutra', () => {
+  const indice = TOKENS_DEL_TEMA.indexOf('--ws-accent-line');
+  assert.ok(indice > 0, 'falta --ws-accent-line');
+  assert.equal(TOKENS_DEL_TEMA[indice - 1], '--ws-on-accent');
+  assert.equal(TOKENS_DEL_TEMA[indice + 1], '--ws-link');
+  assert.equal(ESCALA_NEUTRA.includes('--ws-accent-line'), false);
+});
+
+test('si el secundario ya llega a 3:1 sobre los dos fondos, el borde del acento es el secundario', () => {
+  const tokens = tokensDelTema({ ...BASE_B, secondary: '#C2410C' }, casos.predefinidos);
+  assert.equal(tokens['--ws-accent-line'], '#C2410C');
+  const oscura = tokensDelTema(caso('base oscura').colores, casos.predefinidos);
+  assert.equal(oscura['--ws-accent-line'], oscura['--ws-accent']);
+});
+
+test('con un ámbar claro, el borde del acento es la primera mezcla con el contraste, de 10 en 10 %, que llega a 3:1', () => {
+  const tokens = tokensDelTema({ ...BASE_B, secondary: '#FFB300' }, casos.predefinidos);
+  assert.equal(tokens['--ws-accent-line'], 'color-mix(in srgb, #FFB300 70%, #0F172A)');
+  assert.equal(tokens['--ws-accent'], '#FFB300', 'el relleno sigue siendo el secundario elegido');
+});
+
+test('el borde del acento llega a 3:1 sobre el fondo principal y la superficie con cualquier ámbar y con la base oscura', () => {
+  const temas = [
+    ...AMBARES.map((secondary) => ({ ...BASE_B, secondary })),
+    ...AMBARES.map((secondary) => ({ ...caso('base oscura').colores, secondary })),
+    { ...BASE_B, secondary: '#FFFFFF' },
+  ];
+  for (const colores of temas) {
+    const calculados = coloresCalculados(tokensDelTema(colores, casos.predefinidos));
+    for (const fondo of ['--ws-bg', '--ws-surface'])
+      assert.ok(
+        relacionDeContraste(calculados['--ws-accent-line'], calculados[fondo]) >= 3,
+        `${colores.secondary} sobre ${colores.background}: borde sobre ${fondo}`,
+      );
+  }
+});
+
+test('el texto sobre el acento se lee a 4.5:1 sobre el acento fuerte si se lee así sobre el acento', () => {
+  for (const secondary of [...AMBARES, '#C2410C', '#2E90FA', '#12B76A', '#7A5AF8']) {
+    const calculados = coloresCalculados(tokensDelTema({ ...BASE_B, secondary }, casos.predefinidos));
+    const sobreAcento = relacionDeContraste(calculados['--ws-on-accent'], calculados['--ws-accent']);
+    const sobreFuerte = relacionDeContraste(calculados['--ws-on-accent'], calculados['--ws-accent-strong']);
+    assert.ok(sobreFuerte >= Math.min(4.5, sobreAcento), `${secondary}: ${sobreFuerte.toFixed(2)}`);
+  }
+});
+
+test('si el texto no llega a 4.5:1 sobre la mezcla al 78 %, el acento fuerte es el acento; si llega, la mezcla', () => {
+  const medio = tokensDelTema({ ...BASE_B, secondary: '#D97706' }, casos.predefinidos);
+  assert.equal(medio['--ws-accent-strong'], '#D97706');
+  const claro = tokensDelTema({ ...BASE_B, secondary: '#FFB300' }, casos.predefinidos);
+  assert.equal(claro['--ws-accent-strong'], 'color-mix(in srgb, #FFB300 78%, #0F172A)');
 });

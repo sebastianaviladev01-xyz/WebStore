@@ -190,9 +190,10 @@ img {
   transform: translateY(-1px);
 }
 
-/* Lote 12 (PBI-0184): el botón secundario de los banners, con la paleta secundaria del tema (el acento) y su texto. */
+/* Lote 12 (PBI-0184): el botón secundario de los banners, con la paleta secundaria del tema (el acento) y su texto.
+   Lote 14 (PBI-0189): su borde es el del acento, que llega a 3:1 sobre los fondos aunque el secundario sea claro. */
 .ws-btn-accent {
-  border: 1px solid var(--ws-accent);
+  border: 1px solid var(--ws-accent-line);
   background: var(--ws-accent);
   color: var(--ws-on-accent);
 }

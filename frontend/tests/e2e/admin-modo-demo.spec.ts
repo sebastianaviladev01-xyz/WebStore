@@ -5,6 +5,7 @@ import {
   ANCHOS,
   elegirCConTeclado,
   marcarSinRecarga,
+  menuDeTemas,
   PRIMARIO,
   primario,
   sigueSinRecargar,
@@ -18,7 +19,8 @@ import {
 
 /**
  * Modo demo en el Admin (feature 002). TEST-21: la tuerca está también en el acceso, se maneja con teclado y
- * cambia el tema solo en este navegador (AC-15, AC-21); sin modo demo no existe (AC-16); no tapa el menú.
+ * cambia el tema solo en este navegador (AC-15, AC-21); sin modo demo no existe (AC-16); no tapa el menú. Desde el
+ * lote 14 (PBI-0188) es la única tuerca: ofrece solo A, B y C, y la tienda pinta lo que elige.
  */
 const menu = (page: Page) => page.getByRole('navigation', { name: 'Administración' });
 
@@ -45,10 +47,10 @@ test('la tuerca del acceso cambia el tema solo en este navegador y se maneja con
   await expect(tuerca(page)).toBeVisible();
   expect(await primario(page)).toBe(PRIMARIO.c);
 
-  // Mismo navegador: la tienda también se ve con C.
+  // Mismo navegador: la tienda también se ve con C, sin tuerca propia (PBI-0188).
   await page.goto(`${urls.storefront}/`);
-  await expect(tuerca(page)).toBeVisible();
-  expect(await primario(page)).toBe(PRIMARIO.c);
+  await expect.poll(() => primario(page)).toBe(PRIMARIO.c);
+  await expect(tuerca(page)).toHaveCount(0);
 
   const otro = await browser.newContext();
   try {
@@ -63,6 +65,15 @@ test('la tuerca del acceso cambia el tema solo en este navegador y se maneja con
 
   await page.goto('/');
   await expect(tuerca(page)).toBeVisible();
+  // Solo los tres temas predefinidos (PBI-0188).
+  await tuerca(page).click();
+  await expect(menuDeTemas(page).getByRole('menuitemradio')).toHaveText([
+    /^Violeta tienda/,
+    /^Azul cobalto/,
+    /^Grafito y ámbar/,
+  ]);
+  await page.keyboard.press('Escape');
+  await expect(menuDeTemas(page)).toBeHidden();
   await volverAlActivoConTeclado(page);
   await expect.poll(() => primario(page)).toBe(PRIMARIO.b);
   expect(await vistaPrevia(context)).toBeNull();

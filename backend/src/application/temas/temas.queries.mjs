@@ -2,7 +2,7 @@ import { TOKENS_DEL_TEMA, tokensDelTema } from '../../domain/temas/tema.rules.mj
 import { TEMA_POR_DEFECTO, TEMAS_PREDEFINIDOS } from '../../domain/temas/temas-predefinidos.mjs';
 
 /**
- * Consultas de temas: la apariencia pública (tema activo o, en modo demo, todos), la vista del Admin y la hoja
+ * Consultas de temas: la apariencia pública (tema activo o, en modo demo, A, B, C y el activo), la vista del Admin y la hoja
  * de estilos `theme.css`. Solo lee `store.state.appearance`, cuya revisión es propia de los temas (ADR-0011).
  * Los `tokens` de un tema propio se calculan al leer y nunca se guardan.
  */
@@ -49,21 +49,26 @@ export function createTemasQueries({ store }) {
   const temaActivo = (lista) =>
     buscar(lista, store.state.appearance.activeThemeId) ?? buscar(lista, TEMA_POR_DEFECTO);
 
+  // La tuerca de la demo ofrece solo los predefinidos (PBI-0188, ADR-0022): la vista previa es uno de ellos.
+  const predefinidos = (lista) => lista.filter((tema) => tema.kind === 'predefined');
+
   return {
     apariencia(modoDemo, credencialesDePrueba) {
       const lista = temas();
       const activo = temaActivo(lista);
+      // En modo demo, A, B y C y, si el activo es propio, también el activo; nunca los demás temas propios.
+      const deLaDemo = activo.kind === 'predefined' ? predefinidos(lista) : [...predefinidos(lista), activo];
       return {
         demoMode: modoDemo === true,
         testCredentials: modoDemo === true || credencialesDePrueba === true,
         activeThemeId: activo.id,
-        themes: modoDemo === true ? lista : [activo],
+        themes: modoDemo === true ? deLaDemo : [activo],
       };
     },
     temasAdmin: () => vistaTemasAdmin(store.state.appearance),
     hojaDeEstilos(modoDemo, idVistaPrevia) {
       const lista = temas();
-      const vistaPrevia = modoDemo === true ? buscar(lista, idVistaPrevia) : undefined;
+      const vistaPrevia = modoDemo === true ? buscar(predefinidos(lista), idVistaPrevia) : undefined;
       return hojaDeEstilosDelTema(vistaPrevia ?? temaActivo(lista));
     },
   };

@@ -157,8 +157,24 @@ test('un tema propio con un color inválido se descarta al arrancar, se avisa en
     assert.equal(apariencia.status, 200);
     const cuerpo = await apariencia.json();
     assert.equal(cuerpo.activeThemeId, 'b', 'el activo era el descartado: queda B');
+    // Desde el lote 14 (PBI-0188, ADR-0022) la apariencia de la demo no publica los temas propios que no están activos:
+    // que el bueno sigue guardado se ve en la lista del Admin.
     assert.deepEqual(
       cuerpo.themes.map(({ id }) => id),
+      ['a', 'b', 'c'],
+    );
+    const sesion = await (
+      await fetch(`${base}/bff/admin/sessions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'owner@webstore.demo', password: 'WebStore#2026' }),
+      })
+    ).json();
+    const temasAdmin = await (
+      await fetch(`${base}/bff/admin/themes`, { headers: { authorization: `Bearer ${sesion.token}` } })
+    ).json();
+    assert.deepEqual(
+      temasAdmin.themes.map(({ id }) => id),
       ['a', 'b', 'c', 't-bueno'],
     );
     const hoja = await fetch(`${base}/bff/appearance/theme.css`);
