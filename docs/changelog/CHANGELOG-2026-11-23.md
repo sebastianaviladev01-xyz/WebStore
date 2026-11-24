@@ -1,0 +1,23 @@
+# Cambios — 2026-11-23: los cambios que pidió Daniel, por lotes
+
+Daniel Avila respondió entre el 2026-11-18 y el 2026-11-20 las preguntas de la página de decisiones, y de sus respuestas salieron PBI-0168 a PBI-0193. Sebastián Avila pidió presentarlos cerrados el mismo día y, después, cerrar también todo lo demás que no dependía de terceros. Se entregaron en diez lotes por área, ordenados por la prioridad que confirmó Daniel, como excepción al flujo SDD ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)). Cada lote tuvo su rama, su PR y la auditoría de la sesión principal. Lo que Daniel no detalló se construyó con la opción más apegada a lo que escribió, o con la más conservadora, y quedó como «Provisional, por confirmar con Daniel» en las [decisiones pendientes](../planning/PENDING-DECISIONS.md).
+
+- **Catálogo, inventario y roles (lote 11, PR #68):** el vendedor gestiona Inventario y ve Pedidos sin cambiar su estado; los botones del panel de filtros van a la derecha con ícono («Buscar», «Limpiar» y «Agregar»); la imagen de la categoría se guarda en una sola versión de 100 × 100 px y se ve también en la lista de Categorías, en el filtro del catálogo y en «Compra por categoría».
+- **Banners (lote 12, PR #69):** hasta dos botones por banner, con la paleta primaria y la secundaria, y los enlaces externos en otra pestaña.
+- **Dashboard y notificaciones (lote 13, PR #70):** «Resumen» pasa a «Dashboard», las ventas no suman el envío, las cifras se pliegan, sale «Personas en línea» y la campana avisa también de los reclamos y de los errores de compra.
+- **Temas (lote 14, PR #71):** la tuerca sale del storefront y la del backoffice, en la demo, ofrece solo A, B y C ([ADR-0022](../adrs/0022-quitar-la-tuerca-de-la-tienda-y-limitar-la-demo-a-los-temas-predefinidos.md)); el color secundario se ve, con un contorno propio ([ADR-0023](../adrs/0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md)).
+- **Contenido (lote 15, PR #72):** varios correos, teléfonos y redes; avisos para los clientes en lugar de la navegación superior; aviso de mantenimiento si el contenido nunca llega; pie armado con los accesos inferiores.
+- **Storefront (lote 16, PR #73):** textos de la cuenta («Verificar cuenta», «te enviamos un código»), filtro de precio por rango, «Finalizar compra» al final del checkout, sin `/inicio-anterior`, buscador que conserva su relleno con el foco y, como opción, sugeridos en un panel lateral.
+- **Entrega, términos y feriados (lote 17, PR #74):** la primera fecha de entrega se configura por tienda, cada versión de los términos aceptada queda en el pedido y los feriados se editan en el backoffice («Entregas y feriados»).
+- **Comparador y direcciones (lote 19, PR #75):** comparador de hasta 4 productos en `/comparar` y, si la tienda lo elige, una dirección por producto, con el envío cobrado una vez por destino distinto.
+- **Hallazgos de los lotes 11 a 17 (lote 20, PR #76):** la página de Términos muestra su versión, sin avisos NG0956 en la ficha ni en Contenido, «Recuperar contraseña» sin errores antes de escribir, el botón secundario de C cambia de tono con el puntero, e2e del menú por nombres, capturas con movimiento reducido y comentarios al día con las respuestas de Daniel.
+- **Cierre (lote 18):** el stock queda como estaba al terminar cada e2e que crea pedidos, el detalle del pedido carga la miniatura, el error de la dirección de una línea dice de qué producto es, el vocabulario interno y el contrato se quedan en inglés ([ADR-0024](../adrs/0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md), provisional), «storefront» y «backoffice» en el glosario y la documentación, todos los registros al día y cierre de la excepción.
+
+## Verificación
+
+- Cada lote: `npm run verify` y `npm run test:e2e` completos en verde, ejecutados por la sesión del lote y repetidos por la sesión principal; capturas antes y después cuando tocaba la interfaz, guardadas en `frontend/output/visual-qa/lote-NN-*/` del checkout principal (no se versionan).
+- Al terminar el lote 18: 370 pruebas del frontend, 672 del BFF, 34 de arquitectura, el smoke test del contrato y 344 e2e, todo en verde.
+
+## Lo que queda abierto
+
+Las decisiones provisionales, por confirmar con Daniel, en las [decisiones pendientes](../planning/PENDING-DECISIONS.md); el nombre del producto, que decide Daniel; y los elementos del [backlog](../planning/backlog.md) que dependen de terceros, de Daniel, de una persona (prueba con lector de pantalla) o del backend de producción (PBI-0197 y PBI-0198), cada uno con su motivo ([cierre de ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md#cierre)).
