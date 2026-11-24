@@ -524,14 +524,6 @@ html.ws-product-switching::view-transition-new(root) {
   }
 }
 
-.ws-promo-primary {
-  background: var(--ws-primary-soft);
-}
-
-.ws-promo-secondary {
-  background: var(--ws-accent-soft);
-}
-
 .ws-mega-group:nth-last-of-type(-n + 3) > div {
   right: 0;
   left: auto;

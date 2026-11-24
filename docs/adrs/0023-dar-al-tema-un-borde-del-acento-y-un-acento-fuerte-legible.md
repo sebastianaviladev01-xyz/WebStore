@@ -52,3 +52,5 @@ Un hallazgo de los lotes de ADR-0021: con C, el botón secundario con el puntero
 - Sin tokens ni pares nuevos y sin migración: el mapa sigue con 38 tokens y 27 pares; los tokens se calculan al leer. Cambia el valor de una clave que ya existía.
 
 *Motivo:* el estado con el puntero encima debe verse en cualquier tema sin perder el contraste del texto; empezar por la mezcla de siempre deja A y B como estaban.
+
+El mismo lote revisó el tinte suave: `--ws-accent-soft` sigue sin uso en las plantillas (su única regla, `.ws-promo-secondary`, tampoco se usaba y se quitó). Queda en el mapa como **reservado** para un fondo suave del secundario: quitarlo cambiaría el contrato de 38 claves, el cálculo del BFF y su réplica, `casos-tema.json`, el smoke test y estos ADR, sin ningún efecto visible.
