@@ -93,11 +93,22 @@ export interface TarifaEnvio {
 
 export type EstadoPedido = 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
+/** La dirección propia de una línea del pedido (lote 19, PBI-0006): los campos de la dirección de entrega. */
+export interface DireccionDeLinea {
+  readonly addressLine: string;
+  readonly district: string;
+  readonly province: string;
+  readonly department: string;
+  readonly reference?: string;
+}
+
 export interface LineaPedido {
   readonly productId: string;
   readonly name: string;
   readonly quantity: number;
   readonly unitPrice: number;
+  /** Otra dirección para esta línea (una por producto, lote 19); null o ausente si va a la del pedido. */
+  readonly shipping?: DireccionDeLinea | null;
 }
 
 export interface Pedido {
@@ -158,6 +169,9 @@ export interface AccesoInferior {
 /** Primera fecha de entrega que puede elegir el comprador (lote 17, PBI-0178): hoy, mañana o el siguiente día hábil. */
 export type ReglaDePrimeraEntrega = 'same-day' | 'next-calendar-day' | 'next-business-day';
 
+/** Una dirección de entrega por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional). */
+export type ModoDeDireccion = 'per-order' | 'per-product';
+
 /** Un día no laborable del calendario de la tienda (lote 17, PBI-0183): su fecha (`AAAA-MM-DD`) y un nombre opcional. */
 export interface DiaNoLaborable {
   readonly id: string;
@@ -194,6 +208,8 @@ export interface ConfiguracionTienda {
   /** Primera fecha de entrega y hora de corte opcional (`HH:MM` en hora de Lima, o vacía); lote 17, PBI-0178. */
   readonly firstDeliveryDay: ReglaDePrimeraEntrega;
   readonly deliveryCutoffTime: string;
+  /** Una dirección por pedido o una por producto (lote 19, PBI-0006); el BFF la completa con la de por defecto. */
+  readonly deliveryAddressMode: ModoDeDireccion;
   /** La versión vigente de los términos y cuándo se publicó (null si es anterior al registro); la calcula el BFF. */
   readonly termsVersion: number;
   readonly termsPublishedAt: string | null;

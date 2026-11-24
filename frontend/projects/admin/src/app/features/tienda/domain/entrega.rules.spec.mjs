@@ -19,6 +19,7 @@ const {
   diasDelAnio,
   diaDeLaSemana,
   motivoParaNoAgregarDia,
+  MODOS_DE_DIRECCION,
 } = await import(`data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`);
 
 const BFF = '../../../../../../../../backend/src/domain/';
@@ -114,4 +115,18 @@ test('PBI-0183: no se agrega una fecha vacía, que no existe o repetida, ni un n
     'El nombre admite hasta 60 caracteres.',
   );
   assert.equal(motivoParaNoAgregarDia(dias, '2026-07-28', ` ${'x'.repeat(60)} `), null);
+});
+
+// Lote 19 (ADR-0021, PBI-0006; provisional): la tienda elige una dirección por pedido o una por producto.
+test('PBI-0006: los modos de dirección son los del BFF, con el de por defecto primero', async () => {
+  const { MODOS_DE_DIRECCION: delBff, MODO_DE_DIRECCION_POR_DEFECTO } = await import(
+    new URL(`${BFF}pedidos/direcciones-por-producto.rules.mjs`, import.meta.url)
+  );
+  assert.deepEqual(MODOS_DE_DIRECCION.map((modo) => modo.valor).sort(), [...delBff].sort());
+  assert.equal(MODOS_DE_DIRECCION[0].valor, MODO_DE_DIRECCION_POR_DEFECTO);
+  assert.deepEqual(
+    MODOS_DE_DIRECCION.map((modo) => modo.etiqueta),
+    ['Una dirección por pedido', 'Una dirección por producto'],
+  );
+  for (const modo of MODOS_DE_DIRECCION) assert.ok(modo.explicacion.length > 20, modo.valor);
 });

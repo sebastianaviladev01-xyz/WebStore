@@ -18,12 +18,20 @@ export interface DireccionEnvio {
   readonly reference?: string;
 }
 
+/**
+ * Una línea del pedido: la del carrito y, con una dirección por producto (lote 19, PBI-0006), la otra dirección a la
+ * que va. Sin `shipping`, va a la dirección del pedido (los pedidos anteriores al lote 19 nunca la tienen).
+ */
+export interface LineaPedido extends LineaCarrito {
+  readonly shipping?: DireccionEnvio;
+}
+
 export interface CheckoutCommand {
   readonly customer: ClienteCheckout;
   readonly shipping: DireccionEnvio;
   readonly deliveryDate: string;
   readonly paymentMethod: MetodoPago;
-  readonly items: readonly LineaCarrito[];
+  readonly items: readonly LineaPedido[];
   readonly subtotal: number;
   readonly igv: number;
   readonly shippingCost: number;
@@ -47,7 +55,7 @@ export interface Pedido extends ComprobantePedido {
   readonly shipping: DireccionEnvio;
   readonly deliveryDate: string;
   readonly paymentMethod: MetodoPago;
-  readonly items: readonly LineaCarrito[];
+  readonly items: readonly LineaPedido[];
   readonly subtotal: number;
   readonly igv: number;
   readonly shippingCost: number;

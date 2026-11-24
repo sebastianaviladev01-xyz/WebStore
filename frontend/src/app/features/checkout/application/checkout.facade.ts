@@ -101,6 +101,10 @@ export class CheckoutFacade {
         await this.contenido.load(true);
         this.terminosCambiaronState.set(true);
       }
+      // Lote 19 (PBI-0006): la tienda volvió a una sola dirección por pedido mientras el comprador llenaba el formulario.
+      // Se recarga el contenido; la página quita las direcciones de los productos y vuelve a calcular el envío.
+      if (error instanceof BffRequestError && error.code === 'PER_PRODUCT_ADDRESS_DISABLED')
+        await this.contenido.load(true);
       // La primera fecha cambió mientras tanto (por ejemplo, pasó la hora de corte): se vuelve a pedir.
       if (error instanceof BffRequestError && error.code === 'INVALID_DELIVERY_DATE')
         await this.orders.cargarPrimeraFechaDeEntrega();

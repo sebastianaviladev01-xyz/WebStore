@@ -11,10 +11,11 @@ import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { lugarDeLosSugeridos } from '../../contenido/domain/sugeridos.rules';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
+import { BotonCompararComponent } from './boton-comparar.component';
 
 @Component({
   selector: 'ws-product-card',
-  imports: [CurrencyPipe, MatMenuModule, NgOptimizedImage, RouterLink],
+  imports: [BotonCompararComponent, CurrencyPipe, MatMenuModule, NgOptimizedImage, RouterLink],
   template: `
     <article class="ws-product-card">
       <a
@@ -88,13 +89,17 @@ import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
           >
             {{ product().stock > 0 ? 'Agregar al carrito' : 'No disponible' }}
           </button>
-          <a
-            [routerLink]="['/catalogo', product().slug]"
-            class="ws-product-detail"
-            [attr.aria-label]="'Ver detalle de ' + product().name"
-          >
-            Ver detalle
-          </a>
+          <!-- Lote 19 (PBI-0001): «Comparar» junto a «Ver detalle». -->
+          <div class="ws-product-links">
+            <ws-compare-toggle [product]="product()" />
+            <a
+              [routerLink]="['/catalogo', product().slug]"
+              class="ws-product-detail"
+              [attr.aria-label]="'Ver detalle de ' + product().name"
+            >
+              Ver detalle
+            </a>
+          </div>
         </div>
       </div>
     </article>

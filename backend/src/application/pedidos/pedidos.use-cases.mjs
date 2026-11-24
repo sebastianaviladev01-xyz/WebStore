@@ -4,6 +4,7 @@ import { conEvento, eventoEstadoDePedido } from '../../domain/admin/actividad.ru
 import { bumpRevision } from '../../domain/comun/revision.rules.mjs';
 import { requireShippingRate } from '../../domain/envios/tarifa-envio.rules.mjs';
 import { pickShipping, requireDeliveryDate } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
+import { destinosDelPedido, envioPorDestinos } from '../../domain/pedidos/direcciones-por-producto.rules.mjs';
 import {
   canModify,
   changeOrderStatus,
@@ -55,10 +56,16 @@ export function createPedidosUseCases({ store, security, now = () => new Date() 
   function changeShipping(order, data) {
     const shipping = pickShipping(data);
     const rate = requireShippingRate(store.state.rates, shipping.district);
+    // Lote 19 (PBI-0006): las líneas con su propia dirección la conservan; el envío vuelve a cobrarse una vez por
+    // destino distinto. Sin direcciones por línea, es la tarifa de la nueva dirección, como siempre.
+    const { shippingCost } = envioPorDestinos(
+      store.state.rates,
+      destinosDelPedido(shipping, order.items ?? []),
+    );
     order.shipping = shipping;
     order.shippingOrigin = rate.origin;
-    order.shippingCost = rate.price;
-    order.total = orderAmounts(order.subtotal, rate.price).total;
+    order.shippingCost = shippingCost;
+    order.total = orderAmounts(order.subtotal, shippingCost).total;
     order.updatedAt = nowIso();
   }
 

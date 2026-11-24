@@ -15,6 +15,11 @@ import {
   requirePaymentMethod,
   requireTermsAccepted,
 } from '../../domain/pedidos/datos-del-pedido.rules.mjs';
+import {
+  destinosDelPedido,
+  direccionesDeLasLineas,
+  envioPorDestinos,
+} from '../../domain/pedidos/direcciones-por-producto.rules.mjs';
 import { nextOrderId, orderAmounts, roundMoney } from '../../domain/pedidos/pedido.rules.mjs';
 import { primeraFechaDeLaTienda } from '../../domain/pedidos/primera-fecha-de-entrega.rules.mjs';
 import { toPublicProduct } from '../catalogo/catalogo.queries.mjs';
@@ -28,12 +33,15 @@ import { orderToPublic } from '../pedidos/pedidos.use-cases.mjs';
  * debe ser la vigente (PBI-0177), después de comprobar que los aceptó.
  */
 function requireOrderCommand(command, state, instante) {
+  const shipping = pickShipping(command.shipping);
   const pedido = {
     customer: pickCustomer(command.customer),
-    shipping: pickShipping(command.shipping),
+    shipping,
     deliveryDate: requireDeliveryDate(command.deliveryDate, primeraFechaDeLaTienda(state, instante)),
     paymentMethod: requirePaymentMethod(command.paymentMethod),
     requested: requireOrderLines(command.items),
+    // Lote 19 (PBI-0006): con una dirección por producto, la de cada línea que la trae; si no, ninguna.
+    lineAddresses: direccionesDeLasLineas(command.items, state.config?.deliveryAddressMode, shipping),
     termsAccepted: requireTermsAccepted(command.termsAccepted),
   };
   return {
@@ -130,12 +138,18 @@ export function createCheckoutUseCases({ store, security, now = () => new Date()
 
   function crearPedido(command, bearerToken, key) {
     const instante = now();
-    const { customer, shipping, deliveryDate, paymentMethod, requested, termsVersion } = requireOrderCommand(
-      command,
-      store.state,
-      instante,
-    );
+    const { customer, shipping, deliveryDate, paymentMethod, requested, lineAddresses, termsVersion } =
+      requireOrderCommand(command, store.state, instante);
+    // La dirección principal siempre necesita tarifa: es la del pedido y la que el cliente puede cambiar después.
     const rate = requireShippingRate(store.state.rates, shipping.district);
+    // Lote 19 (PBI-0006): una tarifa por destino distinto que usan las líneas; con una sola dirección, la de siempre.
+    const envio = envioPorDestinos(
+      store.state.rates,
+      destinosDelPedido(
+        shipping,
+        requested.map((item) => ({ shipping: lineAddresses.get(item.productId) })),
+      ),
+    );
     const products = reserveStock(store.state.products, requested, { requireActive: true });
     const { state } = store;
     const items = requested.map((item) => ({
@@ -145,9 +159,10 @@ export function createCheckoutUseCases({ store, security, now = () => new Date()
         products.find((product) => product.id === item.productId),
         0,
       ),
+      ...(lineAddresses.has(item.productId) ? { shipping: lineAddresses.get(item.productId) } : {}),
     }));
     const subtotal = roundMoney(items.reduce((total, item) => total + item.product.price * item.quantity, 0));
-    const amounts = orderAmounts(subtotal, rate.price);
+    const amounts = orderAmounts(subtotal, envio.shippingCost);
     requireShownTotal(command.total, {
       subtotal: amounts.subtotal,
       shippingCost: amounts.shippingCost,

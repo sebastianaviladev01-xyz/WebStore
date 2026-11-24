@@ -34,6 +34,8 @@ const orderToAdmin = (order) => ({
     name: item.product?.name ?? '',
     quantity: item.quantity,
     unitPrice: item.product?.price ?? 0,
+    // Lote 19 (PBI-0006): la dirección propia de la línea, o null si va a la del pedido (los pedidos antiguos).
+    shipping: item.shipping ?? null,
   })),
 });
 

@@ -23,6 +23,13 @@ export const routes: Routes = [
         loadChildren: () => import('./features/vitrina/vitrina.routes').then((m) => m.vitrinaRoutes),
       },
       {
+        // Lote 19 (ADR-0021, PBI-0001; provisional): el comparador, con la lista en `?ids=` para compartirla.
+        path: 'comparar',
+        loadComponent: () =>
+          import('./features/vitrina/presentation/comparador.page').then((m) => m.ComparadorPage),
+        title: 'WebStore | Comparar productos',
+      },
+      {
         path: 'carrito',
         loadComponent: () =>
           import('./features/carrito/presentation/carrito.page').then((m) => m.CarritoPage),

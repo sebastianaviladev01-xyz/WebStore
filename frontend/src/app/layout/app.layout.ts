@@ -5,6 +5,7 @@ import { Router, RouterLink, RouterOutlet } from '@angular/router';
 
 import { CuentaFacade } from '../features/cuenta/application/cuenta.facade';
 import { CarritoFacade } from '../features/carrito/application/carrito.facade';
+import { ComparadorFacade } from '../features/comparador/application/comparador.facade';
 import { CatalogoFacade } from '../features/catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../features/contenido/application/contenido.facade';
 import { descendientesDeCategoria } from '../features/catalogo/domain/categoria.rules';
@@ -167,6 +168,31 @@ import { PieTiendaComponent } from './pie-tienda.component';
                 </svg>
                 <span class="hidden xl:block">Pedidos</span>
               </a>
+              <!-- Lote 19 (PBI-0001): el acceso a la comparación aparece cuando hay productos elegidos. -->
+              @if (comparador.cantidad() > 0) {
+                <a
+                  routerLink="/comparar"
+                  class="ws-header-action relative"
+                  [attr.aria-label]="'Comparar productos (' + comparador.cantidad() + ')'"
+                  title="Comparar productos"
+                >
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 24 24"
+                    class="h-5 w-5 fill-none stroke-current"
+                    stroke-width="1.7"
+                  >
+                    <path d="M4 6h7v13H4zM13 6h7v13h-7z" />
+                    <path d="M7 10h1M16 10h1" />
+                  </svg>
+                  <span class="hidden xl:block">Comparar</span>
+                  <span
+                    class="ws-compare-count absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[10px] font-semibold text-on-primary"
+                  >
+                    {{ comparador.cantidad() }}
+                  </span>
+                </a>
+              }
               <a routerLink="/carrito" class="ws-header-action relative" aria-label="Carrito" title="Carrito">
                 <svg
                   aria-hidden="true"
@@ -347,6 +373,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
 })
 export class AppLayout {
   protected readonly cart = inject(CarritoFacade);
+  protected readonly comparador = inject(ComparadorFacade);
   protected readonly auth = inject(CuentaFacade);
   protected readonly content = inject(ContenidoFacade);
   protected readonly catalog = inject(CatalogoFacade);
