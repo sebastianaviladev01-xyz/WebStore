@@ -42,15 +42,18 @@ export const ORDER_STATUSES = ['confirmed', 'processing', 'shipped', 'delivered'
 /** Estados en los que el cliente ya no puede cambiar ni cancelar el pedido (PBI-0094). */
 const CLOSED_STATUSES = new Set(['shipped', 'delivered', 'cancelled']);
 
-/** El pedido sigue dentro de las 24 horas posteriores a la compra. */
-export const withinModificationWindow = (order) =>
-  Date.now() - new Date(order.createdAt).getTime() <= ORDER_MODIFICATION_WINDOW_MS;
+/**
+ * El pedido sigue dentro de las 24 horas posteriores a la compra, medidas en `ahora`.
+ * Quien llama pasa su reloj (PBI-0245): así la ventana usa el mismo instante que fechó el pedido.
+ */
+export const withinModificationWindow = (order, ahora = new Date()) =>
+  new Date(ahora).getTime() - new Date(order.createdAt).getTime() <= ORDER_MODIFICATION_WINDOW_MS;
 
 /** El pedido no se envió, no se entregó y no se canceló. */
 export const isOrderOpen = (order) => !CLOSED_STATUSES.has(order.status);
 
-export function canModify(order) {
-  return withinModificationWindow(order) && isOrderOpen(order);
+export function canModify(order, ahora = new Date()) {
+  return withinModificationWindow(order, ahora) && isOrderOpen(order);
 }
 
 /** Un pedido pertenece a la cuenta que lo hizo o a la cuenta verificada con el mismo correo. */
