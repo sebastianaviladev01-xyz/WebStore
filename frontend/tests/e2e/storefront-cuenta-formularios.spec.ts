@@ -119,6 +119,31 @@ test.describe('PBI-0154 y PBI-0180: recuperar la contraseña', () => {
     await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
     await expect(main.getByRole('status')).toHaveText('Contraseña actualizada. Ya puedes iniciar sesión.');
   });
+
+  // Lote 20 (ADR-0021): el código y la contraseña nueva aparecen al pedir el código, sin errores; como en el resto de
+  // formularios de la tienda, el error sale al salir del campo o al intentar enviar.
+  test('el código y la contraseña nueva aparecen sin errores y solo los muestran al tocarlos o al enviar', async ({
+    page,
+  }) => {
+    await page.goto('/cuenta/recuperar');
+    await page.getByRole('textbox', { name: 'Correo' }).fill('sin-cuenta@example.com');
+    await page.getByRole('button', { name: 'Enviar código' }).click();
+    const codigo = page.getByRole('textbox', { name: 'Código de recuperación' });
+    const contrasena = page.getByRole('textbox', { name: 'Nueva contraseña' });
+    await expect(codigo).toBeVisible();
+    await expect(page.getByText('Ingresa el código de seis dígitos.')).toHaveCount(0);
+    await expect(page.getByText('Ingresa una contraseña.')).toHaveCount(0);
+    await expect(codigo).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(contrasena).toHaveAccessibleDescription('10 caracteres como mínimo, con letras y números.');
+
+    await codigo.focus();
+    await codigo.blur();
+    await expect(codigo).toHaveAccessibleDescription('Ingresa el código de seis dígitos.');
+    await expect(page.getByText('Ingresa una contraseña.')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
+    await expect(contrasena).toHaveAccessibleDescription('Ingresa una contraseña.');
+  });
 });
 
 test.describe('PBI-0047: campos con contorno', () => {
