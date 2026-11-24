@@ -1,7 +1,15 @@
 import { expect, request as nuevoRequest, test, type Page } from '@playwright/test';
 
 import { actualizarProducto, enviarCambios, leerProductos, leerSnapshot } from './apoyo/catalogo';
-import { correoUnico, cuentasAdmin, fechaDeEntrega, ingresarAlAdmin, menuAdmin, urls } from './apoyo/entorno';
+import {
+  correoUnico,
+  cuentasAdmin,
+  fechaDeEntrega,
+  ingresarAlAdmin,
+  menuAdmin,
+  terminosAceptados,
+  urls,
+} from './apoyo/entorno';
 
 /**
  * Lote 07b, Admin: funciones nuevas y lo que dejó el lote 07 (ADR-0017). Recorridos contra el BFF de prueba real:
@@ -146,7 +154,7 @@ async function crearPedido(nombre: string): Promise<string> {
         items: [{ productId: 'p-004', quantity: 1 }],
         paymentMethod: 'yape-plin',
         deliveryDate: fechaDeEntrega(),
-        termsAccepted: true,
+        ...(await terminosAceptados(api)),
       },
     });
     expect(respuesta.status()).toBe(201);
@@ -201,7 +209,7 @@ async function intentarCompraConTotalViejo(): Promise<void> {
         items: [{ productId: 'p-004', quantity: 1 }],
         paymentMethod: 'yape-plin',
         deliveryDate: fechaDeEntrega(),
-        termsAccepted: true,
+        ...(await terminosAceptados(api)),
         total: 1,
       },
     });

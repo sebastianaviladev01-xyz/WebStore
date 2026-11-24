@@ -9,6 +9,7 @@ import {
   fechaDeEntrega,
   ingresarAlAdmin,
   menuAdmin,
+  terminosAceptados,
   urls,
 } from './apoyo/entorno';
 
@@ -97,7 +98,7 @@ test.describe('Menú lateral en escritorio', () => {
         items: [{ productId: 'p-004', quantity: 1 }],
         paymentMethod: 'yape-plin',
         deliveryDate: fechaDeEntrega(),
-        termsAccepted: true,
+        ...(await terminosAceptados(page.request)),
       },
     });
     expect(respuesta.ok()).toBeTruthy();

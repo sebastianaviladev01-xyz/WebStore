@@ -7,7 +7,7 @@ import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/s
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import { clasesDeEstadoPedido } from './estado-pedido';
-import { fechaDeEntrega, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
+import { fechaDeEntrega, versionDeTerminos, ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { ETIQUETAS_ESTADO_PEDIDO, Pedido, EstadoPedido } from '../domain/tienda.model';
 import {
   FILTROS_PEDIDOS_VACIOS,
@@ -141,8 +141,11 @@ const PAYMENT_LABELS: Record<string, string> = {
             <dd>{{ payment(order.paymentMethod) }}</dd>
             <dt class="text-muted">Términos</dt>
             <dd>
+              <!-- Lote 17 (PBI-0177): la fecha y la hora con segundos, y la versión aceptada. -->
               @if (order.termsAcceptedAt) {
-                Aceptados el {{ order.termsAcceptedAt | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+                Aceptados el {{ order.termsAcceptedAt | date: 'dd/MM/yyyy HH:mm:ss' : zonaLima }}
+                <br />
+                {{ versionDeTerminos(order.termsVersion) }}
               } @else {
                 Sin registro
               }
@@ -211,6 +214,7 @@ export class PedidosPage {
   /** Fechas en la hora de Lima, como el Dashboard (PBI-0067). */
   protected readonly zonaLima = ZONA_HORARIA_LIMA;
   protected readonly fechaDeEntrega = fechaDeEntrega;
+  protected readonly versionDeTerminos = versionDeTerminos;
   /** Id del pedido que pide la URL (`?pedido=<id>`); si no está en la lista filtrada, el detalle es el primero de ella. */
   readonly pedido = input<string>();
   protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);

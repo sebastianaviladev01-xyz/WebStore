@@ -6,6 +6,14 @@
 /** Zona de Lima para el pipe `date` de Angular (UTC-5; Perú no tiene horario de verano). */
 export const ZONA_HORARIA_LIMA = '-0500';
 
+/**
+ * La versión de los términos que aceptó el comprador (lote 17, ADR-0021, PBI-0177; provisional): los pedidos anteriores
+ * al registro de versiones no la tienen.
+ */
+export function versionDeTerminos(version: number | null | undefined): string {
+  return typeof version === 'number' ? `Versión ${version}` : 'Sin registro de versión';
+}
+
 /** La fecha de entrega es un día (`AAAA-MM-DD`), no un instante: se muestra tal cual, como `dd/MM/aaaa`. */
 export function fechaDeEntrega(dia: string): string {
   const partes = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dia);
