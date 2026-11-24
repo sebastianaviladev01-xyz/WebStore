@@ -443,9 +443,12 @@ test.describe('PBI-0151: lo escrito cuando la sesión vence', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/marcas');
     await page.getByRole('button', { name: 'Agregar marca' }).click();
-    await page.getByRole('textbox', { name: 'Nombre' }).fill('Marca borrador lote 07');
+    await page
+      .getByRole('dialog', { name: 'Nueva marca' })
+      .getByRole('textbox', { name: 'Nombre' })
+      .fill('Marca borrador lote 07');
     await vencerSesion(page);
-    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
 
     await page.getByRole('textbox', { name: 'Correo' }).fill(cuentasAdmin.admin.email);
@@ -455,7 +458,9 @@ test.describe('PBI-0151: lo escrito cuando la sesión vence', () => {
     await page.goto('/marcas');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await page.getByRole('button', { name: 'Agregar marca' }).click();
-    await expect(page.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
+    await expect(
+      page.getByRole('dialog', { name: 'Nueva marca' }).getByRole('textbox', { name: 'Nombre' }),
+    ).toHaveValue('');
     await expect(page.getByText('Recuperamos lo que escribiste')).toHaveCount(0);
   });
 });

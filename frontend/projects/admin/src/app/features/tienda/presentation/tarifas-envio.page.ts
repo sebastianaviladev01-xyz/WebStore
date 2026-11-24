@@ -187,7 +187,8 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
                 <mat-error>Elige un distrito.</mat-error>
               </mat-form-field>
             } @else {
-              <mat-form-field>
+              <!-- La ayuda ocupa dos líneas: el espacio de abajo crece para no tapar el precio. -->
+              <mat-form-field subscriptSizing="dynamic">
                 <mat-label>Distritos</mat-label>
                 <mat-select formControlName="destinations" multiple>
                   @for (district of districts(); track district) {

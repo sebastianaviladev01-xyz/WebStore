@@ -58,9 +58,10 @@ test.describe('PBI-0211: ventana de registro en Marcas, Clientes y Tarifas de en
       await page.getByRole('button', { name: agregar }).click();
       const ventana = page.getByRole('dialog', { name: titulo });
       await expect(ventana).toBeVisible();
-      await expect(ventana).toHaveAttribute('aria-modal', 'true');
       await expect(ventana.getByRole('form', { name: titulo })).toBeVisible();
-      expect(await focoDentro(ventana), 'el foco entra en la ventana').toBe(true);
+      await expect.poll(() => focoDentro(ventana), { message: 'el foco entra en la ventana' }).toBe(true);
+      // Con la ventana abierta, el resto de la página queda oculto a los lectores de pantalla (MatDialog).
+      await expect(page.getByRole('heading', { level: 1 })).toHaveCount(0);
       // Diez Tab no sacan el foco de la ventana.
       for (let i = 0; i < 10; i++) {
         await page.keyboard.press('Tab');
@@ -68,7 +69,8 @@ test.describe('PBI-0211: ventana de registro en Marcas, Clientes y Tarifas de en
       }
       await page.keyboard.press('Escape');
       await expect(ventana).toBeHidden();
-      expect(await nombreDelFoco(page)).toContain('Agregar');
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      await expect.poll(() => nombreDelFoco(page)).toContain('Agregar');
 
       // «Editar» abre la misma ventana con el registro y le devuelve el foco al cerrarla.
       await page.getByRole('button', { name: editar }).click();
@@ -76,7 +78,7 @@ test.describe('PBI-0211: ventana de registro en Marcas, Clientes y Tarifas de en
       await expect(edicion).toBeVisible();
       await edicion.getByRole('button', { name: 'Cancelar' }).click();
       await expect(edicion).toBeHidden();
-      expect(await nombreDelFoco(page)).toBe(editar);
+      await expect.poll(() => nombreDelFoco(page)).toBe(editar);
     });
   }
 
