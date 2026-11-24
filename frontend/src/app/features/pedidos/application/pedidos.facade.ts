@@ -24,12 +24,18 @@ export class PedidosFacade {
   private readonly ordersState = signal<readonly Pedido[]>([]);
   private readonly loadingState = signal(false);
   private readonly errorState = signal<string | null>(null);
+  private readonly primeraFechaState = signal<string | null>(null);
 
   readonly orders = computed(() =>
     [...this.ordersState()].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   );
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
+  /**
+   * La primera fecha de entrega que se puede elegir (lote 17, PBI-0178), la que calcula el BFF con la configuración de
+   * la tienda; `null` mientras no llega. La usan el checkout y el detalle del pedido.
+   */
+  readonly primeraFechaDeEntrega = this.primeraFechaState.asReadonly();
 
   constructor() {
     // Al cerrar sesión, al eliminar la cuenta o al iniciar sesión otra persona, no queda a la vista ningún pedido de
@@ -78,6 +84,18 @@ export class PedidosFacade {
       this.ordersState.set([...mine, ...guest.filter((order): order is Pedido => order !== null)]);
     } finally {
       this.loadingState.set(false);
+    }
+  }
+
+  /**
+   * Pide al BFF la primera fecha de entrega. Si falla, conserva la anterior: el BFF vuelve a validar la fecha al
+   * comprar y al cambiarla.
+   */
+  async cargarPrimeraFechaDeEntrega(): Promise<void> {
+    try {
+      this.primeraFechaState.set(await this.gateway.primeraFechaDeEntrega());
+    } catch {
+      // Sin la fecha, el campo usa la de hoy en Lima como mínimo y el BFF decide.
     }
   }
 
@@ -132,6 +150,9 @@ export class PedidosFacade {
       return true;
     } catch (error) {
       const message = messageOf(error, FALLBACK);
+      // La primera fecha cambió mientras tanto (por ejemplo, pasó la hora de corte): se vuelve a pedir.
+      if (error instanceof BffRequestError && error.code === 'INVALID_DELIVERY_DATE')
+        void this.cargarPrimeraFechaDeEntrega();
       if (error instanceof BffRequestError && YA_NO_MODIFICABLE.has(error.code ?? '')) {
         const order = await this.fetch(id);
         if (order) this.replace(order);

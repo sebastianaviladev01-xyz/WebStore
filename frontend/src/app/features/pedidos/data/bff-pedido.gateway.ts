@@ -43,6 +43,15 @@ export class BffPedidoGateway implements PedidoGateway {
     );
   }
 
+  primeraFechaDeEntrega(): Promise<string> {
+    return callBff(
+      async () =>
+        (await firstValueFrom(this.http.get<{ minimum: string }>(`${this.base}/checkout/delivery-dates`)))
+          .minimum,
+      FALLBACK,
+    );
+  }
+
   private url(id: string): string {
     return `${this.base}/orders/${encodeURIComponent(id)}`;
   }

@@ -45,10 +45,6 @@ async function llenarCheckout(page: Page, { aceptar = true } = {}): Promise<void
   if (aceptar) await terminos(page).check();
 }
 
-/** Fecha `AAAA-MM-DD` de Lima del instante dado. */
-const fechaDeLimaDe = (instante: Date) =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima' }).format(instante);
-
 test.describe('PBI-0040: términos y condiciones', () => {
   test('la casilla empieza sin marcar, enlaza a los términos y sin marcarla no se envía el pedido', async ({
     page,
@@ -79,7 +75,9 @@ test.describe('PBI-0040: términos y condiciones', () => {
     await finalizar(page).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Gracias por tu compra' })).toBeVisible();
     expect(enviados).toHaveLength(1);
-    expect(enviados[0].postDataJSON()).toMatchObject({ termsAccepted: true });
+    // Lote 17 (PBI-0177): con la versión de los términos que muestra la tienda.
+    const { termsVersion } = await (await page.request.get(`${urls.bff}/bff/content/settings`)).json();
+    expect(enviados[0].postDataJSON()).toMatchObject({ termsAccepted: true, termsVersion });
 
     // El BFF guarda cuándo se aceptaron.
     const id = decodeURIComponent(page.url().split('/pedido/')[1]);
@@ -90,7 +88,37 @@ test.describe('PBI-0040: términos y condiciones', () => {
     const guardado = await page.request.get(`${urls.bff}/bff/orders/${encodeURIComponent(id)}`, {
       headers: { 'x-order-token': token },
     });
-    expect(Date.parse((await guardado.json()).termsAcceptedAt)).not.toBeNaN();
+    const pedidoGuardado = await guardado.json();
+    expect(Date.parse(pedidoGuardado.termsAcceptedAt)).not.toBeNaN();
+    expect(pedidoGuardado.termsVersion).toBe(termsVersion);
+  });
+
+  test('lote 17 (PBI-0177): si los términos cambiaron, avisa y pide volver a aceptarlos', async ({
+    page,
+  }) => {
+    await conCarrito(page, [{ productId: 'p-004', quantity: 1 }]);
+    const mensaje =
+      'Los términos y condiciones cambiaron. Revísalos y vuelve a aceptarlos para finalizar la compra.';
+    let ajustes = 0;
+    page.on('request', (peticion) => {
+      if (peticion.url().includes('/bff/content/settings')) ajustes++;
+    });
+    await page.route('**/bff/checkout/orders', (ruta) =>
+      ruta.fulfill(problema(409, 'TERMS_VERSION_CHANGED', mensaje, { termsVersion: 2 })),
+    );
+    await page.goto('/checkout');
+    await llenarCheckout(page);
+    const antes = ajustes;
+    await finalizar(page).click();
+
+    await expect(page.getByRole('alert').filter({ hasText: mensaje })).toBeVisible();
+    await expect(terminos(page)).not.toBeChecked();
+    await expect(terminos(page)).toHaveAccessibleDescription(
+      'Acepta los términos y condiciones para finalizar la compra.',
+    );
+    // La tienda vuelve a pedir el contenido para tener la versión vigente.
+    expect(ajustes).toBeGreaterThan(antes);
+    await expect(page.getByRole('heading', { name: 'Gracias por tu compra' })).toHaveCount(0);
   });
 });
 
@@ -116,37 +144,45 @@ test.describe('PBI-0063 y PBI-0096: campos de entrega del checkout', () => {
     await expect(page.getByRole('heading', { name: 'Gracias por tu compra' })).toHaveCount(0);
   });
 
-  test('una fecha anterior a hoy en Lima muestra su mensaje y no se envía', async ({ page }) => {
+  test('una fecha anterior a la primera fecha de entrega muestra su mensaje y no se envía', async ({
+    page,
+  }) => {
     await conCarrito(page, [{ productId: 'p-004', quantity: 1 }]);
     await page.goto('/checkout');
     await llenarCheckout(page);
-    await page.getByLabel('Fecha de entrega preferida').fill(fechaDeEntrega(-1));
+    // Lote 17 (PBI-0178): por defecto, la primera fecha es mañana en Lima; hoy ya no vale.
+    await expect(page.getByLabel('Fecha de entrega preferida')).toHaveAttribute('min', fechaDeEntrega(1));
+    await page.getByLabel('Fecha de entrega preferida').fill(fechaDeEntrega(0));
     await finalizar(page).click();
     await expect(page.getByLabel('Fecha de entrega preferida')).toHaveAccessibleDescription(
-      'Elige una fecha desde hoy.',
+      `Elige una fecha desde el ${fechaDeEntrega(1).split('-').reverse().join('/')}.`,
     );
     await expect(page.getByRole('heading', { name: 'Gracias por tu compra' })).toHaveCount(0);
   });
 
-  test('a las 21:30 de Lima, el mínimo es hoy en Lima y la fecha propuesta, dos días después', async ({
+  test('lote 17 (PBI-0178): el mínimo y la fecha propuesta son la primera fecha que da el BFF', async ({
     page,
   }) => {
-    // 2026-11-15 02:30 UTC son las 21:30 del 14 en Lima: en UTC ya sería el 15.
-    await page.clock.setFixedTime(new Date('2026-11-15T02:30:00Z'));
+    await page.route('**/bff/checkout/delivery-dates', (ruta) =>
+      ruta.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ minimum: '2030-01-10' }),
+      }),
+    );
     await conCarrito(page, [{ productId: 'p-004', quantity: 1 }]);
     await page.goto('/checkout');
     const fecha = page.getByLabel('Fecha de entrega preferida');
-    await expect(fecha).toHaveAttribute('min', '2026-11-14');
-    await expect(fecha).toHaveValue('2026-11-16');
+    await expect(fecha).toHaveAttribute('min', '2030-01-10');
+    await expect(fecha).toHaveValue('2030-01-10');
   });
 
-  test('el mínimo del campo de fecha es hoy en Lima', async ({ page }) => {
+  test('lote 17 (PBI-0178): por defecto, el mínimo es mañana en Lima, también de noche', async ({ page }) => {
     await conCarrito(page, [{ productId: 'p-004', quantity: 1 }]);
     await page.goto('/checkout');
-    await expect(page.getByLabel('Fecha de entrega preferida')).toHaveAttribute(
-      'min',
-      fechaDeLimaDe(new Date()),
-    );
+    const manana = fechaDeEntrega(1);
+    await expect(page.getByLabel('Fecha de entrega preferida')).toHaveAttribute('min', manana);
+    await expect(page.getByLabel('Fecha de entrega preferida')).toHaveValue(manana);
   });
 });
 

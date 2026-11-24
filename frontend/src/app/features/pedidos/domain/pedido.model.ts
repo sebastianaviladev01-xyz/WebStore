@@ -31,6 +31,8 @@ export interface CheckoutCommand {
   readonly total: number;
   /** Aceptó los términos y condiciones (PBI-0040). */
   readonly termsAccepted: boolean;
+  /** La versión de los términos que mostró la tienda (lote 17, PBI-0177); el BFF exige la vigente. */
+  readonly termsVersion: number;
 }
 
 export interface ComprobantePedido {
@@ -53,6 +55,8 @@ export interface Pedido extends ComprobantePedido {
   readonly updatedAt: string;
   /** Cuándo aceptó el comprador los términos y condiciones; los pedidos anteriores al lote 04 no lo tienen. */
   readonly termsAcceptedAt?: string;
+  /** La versión de los términos aceptada (lote 17, PBI-0177); los pedidos anteriores no la tienen. */
+  readonly termsVersion?: number;
 }
 
 /** Respuesta del checkout: incluye una única vez el token que permite a un invitado consultar su pedido. */

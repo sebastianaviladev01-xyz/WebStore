@@ -79,6 +79,12 @@ export interface ConfiguracionTienda {
   readonly termsPageEnabled: boolean;
   /** Opcional: un BFF anterior al lote 16 no lo envía, y entonces es el diálogo (`lugarDeLosSugeridos`). */
   readonly addToCartDisplay?: LugarDeSugeridos;
+  /**
+   * La versión vigente de los términos (lote 17, PBI-0177): el checkout la envía al aceptarlos. Opcional: el respaldo,
+   * mientras no llega el contenido, no la tiene.
+   */
+  readonly termsVersion?: number;
+  readonly termsPublishedAt?: string | null;
 }
 
 export type PaginasHabilitadas = Pick<
