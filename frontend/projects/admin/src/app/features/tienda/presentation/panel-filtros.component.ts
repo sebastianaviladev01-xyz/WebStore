@@ -19,7 +19,7 @@ const ICONOS = {
  * Lote 11 (ADR-0021, PBI-0171; Daniel, 2026-11-20): los botones van a la derecha, en este orden y con su ícono:
  * «Buscar» (lupa), «Limpiar» (borrador; su nombre accesible sigue siendo «Limpiar filtros») y, en los listados con
  * alta, «Agregar» (más). «Agregar» lleva a `rutaAgregar` si el registro tiene su propia interfaz; si no, avisa a la
- * página (`agregar`), que abre su formulario de alta. Sin `agregarQue`, no hay «Agregar».
+ * página (`agregar`), que abre su ventana de registro (lote 21, ADR-0025, PBI-0211). Sin `agregarQue`, no hay «Agregar».
  */
 @Component({
   selector: 'ws-filter-panel',
@@ -108,7 +108,8 @@ export class PanelFiltrosComponent {
   readonly error = input<string | null>(null);
   /** Qué agrega «Agregar» (p. ej. «producto»; su nombre accesible es «Agregar producto»); sin él, no hay botón. */
   readonly agregarQue = input<string | null>(null);
-  /** Ruta de la interfaz de registro propia (p. ej. `/productos/nuevo`); sin ella, «Agregar» emite `agregar`. */
+  /** Ruta de la interfaz de registro propia (p. ej. `/productos/nuevo`); sin ella, «Agregar» emite `agregar` y la
+   * página abre su ventana de registro. */
   readonly rutaAgregar = input<string | null>(null);
   readonly buscar = output<void>();
   readonly limpiar = output<void>();

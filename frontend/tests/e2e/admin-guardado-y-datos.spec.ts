@@ -90,10 +90,14 @@ test.describe('Guardado del Admin', () => {
     const nombre = 'Marca doble clic 06';
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-      await page.goto('/marcas/nueva');
-      await page.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
-      await page.getByRole('button', { name: 'Guardar', exact: true }).dblclick();
-      await expect(page).toHaveURL(/\/marcas$/);
+      // Lote 21 (PBI-0211): la marca se registra en la ventana de registro.
+      await page.goto('/marcas');
+      await page.getByRole('button', { name: 'Agregar marca' }).click();
+      const ventana = page.getByRole('dialog', { name: 'Nueva marca' });
+      await ventana.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+      await ventana.getByRole('button', { name: 'Guardar', exact: true }).dblclick();
+      await expect(ventana).toBeHidden();
+      await expect(page.getByRole('region', { name: 'Lista de marcas' })).toContainText(nombre);
       expect((await leerMarcas()).filter((marca) => marca.name === nombre)).toHaveLength(1);
     } finally {
       await cambiarMarcas((marcas) => marcas.filter((marca) => marca.name !== nombre));
@@ -207,34 +211,39 @@ test.describe('Guardado del Admin', () => {
     }
   });
 
-  test('PBI-0122 y PBI-0130: Clientes muestra el modo de edición, se cancela y no recrea al eliminado', async ({
+  // Lote 21 (ADR-0025, PBI-0211): el cliente se registra en una ventana emergente; «Cancelar» la cierra y sale de la
+  // edición. Con la ventana abierta la lista no se puede tocar, así que no se elimina el cliente que se edita.
+  test('PBI-0122 y PBI-0130: Clientes muestra el modo de edición, se cancela y el eliminado no vuelve', async ({
     page,
   }) => {
     const nombre = 'Cliente Lote 06';
     const correo = correoUnico('cliente-lote06');
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/clientes');
-    await expect(page.getByRole('heading', { level: 2, name: 'Nuevo cliente' })).toBeVisible();
-    await page.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
-    await page.getByRole('textbox', { name: 'Correo' }).fill(correo);
-    await page.getByRole('textbox', { name: 'Documento' }).fill('11112222');
-    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await page.getByRole('button', { name: 'Agregar cliente' }).click();
+    const nuevo = page.getByRole('dialog', { name: 'Nuevo cliente' });
+    await nuevo.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+    await nuevo.getByRole('textbox', { name: 'Correo' }).fill(correo);
+    await nuevo.getByRole('textbox', { name: 'Documento' }).fill('11112222');
+    await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await expect(nuevo).toBeHidden();
     const eliminar = page.getByRole('button', { name: `Eliminar cliente ${nombre}` });
     await expect(eliminar).toBeVisible();
 
     // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
     await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Editar cliente' })).toBeVisible();
-    await page.getByRole('button', { name: 'Cancelar' }).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Nuevo cliente' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
+    const edicion = page.getByRole('dialog', { name: 'Editar cliente' });
+    await expect(edicion.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
+    await edicion.getByRole('button', { name: 'Cancelar' }).click();
+    await expect(edicion).toBeHidden();
+    await page.getByRole('button', { name: 'Agregar cliente' }).click();
+    await expect(nuevo.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
+    await page.keyboard.press('Escape');
+    await expect(nuevo).toBeHidden();
 
-    await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
     page.once('dialog', (dialogo) => void dialogo.accept());
     await eliminar.click();
     await expect(eliminar).toHaveCount(0);
-    await expect(page.getByRole('heading', { level: 2, name: 'Nuevo cliente' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
     const clientes = (await leerSnapshot()).customers;
     expect(clientes.some((cliente) => cliente.email === correo)).toBe(false);
   });
@@ -301,7 +310,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
   test('PBI-0123: un usuario con el correo de otro no se envía', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const guardados = contarGuardados(page);
-    await page.goto('/usuarios');
+    await page.goto('/usuarios/nuevo');
     await page.getByRole('textbox', { name: 'Nombre' }).fill('Otra persona');
     const correo = page.getByRole('textbox', { name: 'Correo' });
     await correo.fill('ADMIN@webstore.demo');
@@ -347,7 +356,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
   test('PBI-0128: un banner que termina antes de empezar no se envía', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const guardados = contarGuardados(page);
-    await page.goto('/banners');
+    await page.goto('/banners/nuevo');
     await page.getByRole('textbox', { name: 'Antetítulo' }).fill('Campaña');
     await page.getByRole('textbox', { name: 'Título', exact: true }).fill('Banner lote 06');
     await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
@@ -369,7 +378,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const guardados = contarGuardados(page);
-    await page.goto('/banners');
+    await page.goto('/banners/nuevo');
     await page.getByRole('textbox', { name: 'Antetítulo' }).fill('Campaña');
     await page.getByRole('textbox', { name: 'Título', exact: true }).fill('Banner lote 12');
     await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
@@ -482,8 +491,12 @@ test.describe('Acceso, sesión y Contenido', () => {
   }) => {
     const nombre = 'Marca sesión vencida 06';
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    await page.goto('/marcas/nueva');
-    await page.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+    await page.goto('/marcas');
+    await page.getByRole('button', { name: 'Agregar marca' }).click();
+    await page
+      .getByRole('dialog', { name: 'Nueva marca' })
+      .getByRole('textbox', { name: 'Nombre' })
+      .fill(nombre);
     // La sesión se cierra en el BFF (como si venciera) sin que el navegador se entere.
     const token = await page.evaluate(() => sessionStorage.getItem('webstore-admin-session-v1'));
     const api = await nuevoRequest.newContext({ baseURL: urls.bff });

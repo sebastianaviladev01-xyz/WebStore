@@ -108,14 +108,16 @@ test.describe('Borrados que llegan al BFF', () => {
     const lista = page.getByRole('region', { name: 'Usuarios administrativos' });
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-      await page.goto('/usuarios');
+      // Lote 21 (PBI-0211): el usuario se registra en su propia interfaz y se vuelve a la lista al guardar.
+      await page.goto('/usuarios/nuevo');
       await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Vendedor del lote 08');
       await page.getByRole('textbox', { name: 'Correo', exact: true }).fill(correo);
       await page.getByLabel('Contraseña temporal').fill('Temporal1234');
       await page.getByRole('button', { name: 'Guardar usuario' }).click();
       await expect(lista).toContainText('Vendedor del lote 08');
 
-      await lista.getByRole('button', { name: 'Editar usuario Vendedor del lote 08' }).click();
+      await lista.getByRole('link', { name: 'Editar usuario Vendedor del lote 08' }).click();
+      await expect(page).toHaveURL(/\/usuarios\/[^/]+$/);
       await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Vendedor renombrado 08');
       await page.getByRole('button', { name: 'Guardar usuario' }).click();
       await expect(lista).toContainText('Vendedor renombrado 08');
@@ -141,29 +143,39 @@ test.describe('Borrados que llegan al BFF', () => {
 test.describe('Tarifas de envío: alta, edición y borrado', () => {
   test('crear una tarifa, cambiarle el precio y eliminarla queda guardado en el BFF', async ({ page }) => {
     const antes = (await leerSnapshot()).rates;
-    const distrito = 'Distrito E2E Ocho';
+    // Lote 21 (ADR-0025): el distrito se elige de la lista (PBI-0216) en la ventana de registro (PBI-0211).
+    const distrito = 'Pucusana';
     const lista = page.getByRole('region', { name: 'Tarifas registradas' });
     const tarifa = () =>
-      leerSnapshot().then((snapshot) => snapshot.rates.find((rate) => rate.destination === distrito));
+      leerSnapshot().then((snapshot) =>
+        snapshot.rates.find((rate) => rate.origin === 'Origen E2E Ocho' && rate.destination === distrito),
+      );
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/envios');
-      await page.getByRole('combobox', { name: 'Tienda de origen' }).fill('Origen E2E Ocho');
-      await page.getByRole('textbox', { name: 'Distritos' }).fill(distrito);
-      await page.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('12.5');
-      await page.getByRole('button', { name: 'Guardar 1 tarifa' }).click();
+      await page.getByRole('button', { name: 'Agregar tarifa' }).click();
+      const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
+      await ventana.getByRole('combobox', { name: 'Tienda de origen' }).fill('Origen E2E Ocho');
+      await ventana.getByRole('combobox', { name: 'Distritos' }).click();
+      await page.getByRole('option', { name: distrito, exact: true }).click();
+      await page.keyboard.press('Escape');
+      await ventana.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('12.5');
+      await ventana.getByRole('button', { name: 'Guardar 1 tarifa' }).click();
+      await expect(ventana).toBeHidden();
       await expect.poll(tarifa).toMatchObject({ origin: 'Origen E2E Ocho', price: 12.5 });
 
       // La lista la muestra con su filtro de texto.
       const panel = page.getByRole('search', { name: 'Filtros de tarifas' });
-      await panel.getByRole('textbox', { name: 'Buscar tarifa' }).fill('Ocho');
+      await panel.getByRole('textbox', { name: 'Buscar tarifa' }).fill('Origen E2E Ocho');
       await panel.getByRole('button', { name: 'Buscar', exact: true }).click();
       await expect(lista).toContainText(distrito);
 
       await lista.getByRole('button', { name: `Editar tarifa de Origen E2E Ocho a ${distrito}` }).click();
-      await expect(page.getByRole('heading', { level: 2, name: 'Editar tarifa' })).toBeVisible();
-      await page.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('15');
-      await page.getByRole('button', { name: 'Guardar tarifa' }).click();
+      const edicion = page.getByRole('dialog', { name: 'Editar tarifa' });
+      await expect(edicion.getByRole('combobox', { name: 'Distrito', exact: true })).toHaveText(distrito);
+      await edicion.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('15');
+      await edicion.getByRole('button', { name: 'Guardar tarifa' }).click();
+      await expect(edicion).toBeHidden();
       await expect.poll(tarifa).toMatchObject({ price: 15 });
 
       const eliminar = lista.getByRole('button', {

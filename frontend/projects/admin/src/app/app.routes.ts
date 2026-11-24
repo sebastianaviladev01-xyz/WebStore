@@ -95,22 +95,6 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Marcas',
       },
       {
-        // Antes que `marcas/:id`, para que «nueva» no llegue como identificador.
-        path: 'marcas/nueva',
-        resolve: conDatos,
-        canMatch: [permisoGuard('brands.manage')],
-        loadComponent: () =>
-          import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
-        title: 'WebStore Admin | Nueva marca',
-      },
-      {
-        path: 'marcas/:id',
-        canMatch: [permisoGuard('brands.manage')],
-        loadComponent: () =>
-          import('./features/tienda/presentation/registro-marca.page').then((m) => m.RegistroMarcaPage),
-        title: 'WebStore Admin | Editar marca',
-      },
-      {
         path: 'clientes',
         resolve: conDatos,
         canMatch: [permisoGuard('customers.manage')],
@@ -127,6 +111,22 @@ export const adminRoutes: Routes = [
         title: 'WebStore Admin | Usuarios',
       },
       {
+        // Lote 21 (ADR-0025, PBI-0211): más de tres campos, página propia. Antes que `usuarios/:id`.
+        path: 'usuarios/nuevo',
+        resolve: conDatos,
+        canMatch: [permisoGuard('users.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-usuario.page').then((m) => m.RegistroUsuarioPage),
+        title: 'WebStore Admin | Nuevo usuario',
+      },
+      {
+        path: 'usuarios/:id',
+        canMatch: [permisoGuard('users.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-usuario.page').then((m) => m.RegistroUsuarioPage),
+        title: 'WebStore Admin | Editar usuario',
+      },
+      {
         path: 'pedidos',
         resolve: conDatos,
         // PBI-0170: la ve quien ve los pedidos; cambiar su estado pide `orders.manage` (la página lo oculta).
@@ -140,6 +140,22 @@ export const adminRoutes: Routes = [
         canMatch: [permisoGuard('banners.manage')],
         loadComponent: () => import('./features/tienda/presentation/banners.page').then((m) => m.BannersPage),
         title: 'WebStore Admin | Banners',
+      },
+      {
+        // Lote 21 (ADR-0025, PBI-0211): más de tres campos, página propia. Antes que `banners/:id`.
+        path: 'banners/nuevo',
+        resolve: conDatos,
+        canMatch: [permisoGuard('banners.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-banner.page').then((m) => m.RegistroBannerPage),
+        title: 'WebStore Admin | Nuevo banner',
+      },
+      {
+        path: 'banners/:id',
+        canMatch: [permisoGuard('banners.manage')],
+        loadComponent: () =>
+          import('./features/tienda/presentation/registro-banner.page').then((m) => m.RegistroBannerPage),
+        title: 'WebStore Admin | Editar banner',
       },
       {
         path: 'contenido',

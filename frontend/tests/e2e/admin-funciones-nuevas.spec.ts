@@ -100,23 +100,33 @@ test.describe('PBI-0155: Pedidos y Tarifas de envío con el panel estándar', ()
 });
 
 test.describe('PBI-0157: lo escrito en Tarifas de envío cuando la sesión vence', () => {
-  test('vuelve el precio para varios distritos y el ajuste porcentual, sin guardarse', async ({ page }) => {
+  // Lote 21 (ADR-0025): el formulario va en la ventana de registro (PBI-0211), los distritos se eligen de la lista
+  // (PBI-0216) y ya no hay ajuste porcentual (PBI-0217). La ventana vuelve a abrirse con lo recuperado.
+  test('vuelve el precio para varios distritos elegidos, sin guardarse, en la ventana', async ({ page }) => {
     const antes = ((await leerSnapshot()) as unknown as { rates: unknown }).rates;
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/envios');
-    await page.getByRole('combobox', { name: 'Tienda de origen' }).fill('Lima Norte');
-    await page.getByRole('textbox', { name: 'Distritos' }).fill('Comas, Independencia');
-    await page.getByRole('spinbutton', { name: 'Porcentaje' }).fill('7');
+    await page.getByRole('button', { name: 'Agregar tarifa' }).click();
+    const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
+    await ventana.getByRole('combobox', { name: 'Tienda de origen' }).fill('Lima Norte');
+    await ventana.getByRole('combobox', { name: 'Distritos' }).click();
+    await page.getByRole('option', { name: 'Comas', exact: true }).click();
+    await page.getByRole('option', { name: 'Independencia', exact: true }).click();
+    await page.keyboard.press('Escape');
     await vencerSesion(page);
-    await page.getByRole('button', { name: 'Guardar 2 tarifas' }).click();
+    await ventana.getByRole('button', { name: 'Guardar 2 tarifas' }).click();
     await expect(page).toHaveURL(/\/login$/);
+    await expect(ventana).toBeHidden();
 
     await ingresarDeNuevo(page, cuentasAdmin.superadmin);
     await expect(page).toHaveURL(/\/envios$/);
-    await expect(page.getByRole('status').filter({ hasText: 'Recuperamos lo que escribiste' })).toBeVisible();
-    await expect(page.getByRole('combobox', { name: 'Tienda de origen' })).toHaveValue('Lima Norte');
-    await expect(page.getByRole('textbox', { name: 'Distritos' })).toHaveValue('Comas, Independencia');
-    await expect(page.getByRole('spinbutton', { name: 'Porcentaje' })).toHaveValue('7');
+    await expect(
+      ventana.getByRole('status').filter({ hasText: 'Recuperamos lo que escribiste' }),
+    ).toBeVisible();
+    await expect(ventana.getByRole('combobox', { name: 'Tienda de origen' })).toHaveValue('Lima Norte');
+    await expect(ventana.getByRole('combobox', { name: 'Distritos' })).toContainText('Comas, Independencia');
+    await expect(ventana.getByRole('button', { name: 'Guardar 2 tarifas' })).toBeVisible();
+    await expect(page.getByRole('spinbutton', { name: 'Porcentaje' })).toHaveCount(0);
     expect(((await leerSnapshot()) as unknown as { rates: unknown }).rates).toEqual(antes);
   });
 
@@ -124,17 +134,17 @@ test.describe('PBI-0157: lo escrito en Tarifas de envío cuando la sesión vence
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/envios');
     await page.getByRole('button', { name: 'Editar tarifa de Lima Centro a Lince' }).click();
-    await expect(page.getByRole('heading', { level: 2, name: 'Editar tarifa' })).toBeVisible();
-    await page.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('13');
+    const ventana = page.getByRole('dialog', { name: 'Editar tarifa' });
+    await ventana.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('13');
     await vencerSesion(page);
-    await page.getByRole('button', { name: 'Guardar tarifa' }).click();
+    await ventana.getByRole('button', { name: 'Guardar tarifa' }).click();
     await expect(page).toHaveURL(/\/login$/);
 
     await ingresarDeNuevo(page, cuentasAdmin.superadmin);
     await expect(page).toHaveURL(/\/envios$/);
-    await expect(page.getByRole('heading', { level: 2, name: 'Editar tarifa' })).toBeVisible();
-    await expect(page.getByRole('textbox', { name: 'Distrito', exact: true })).toHaveValue('Lince');
-    await expect(page.getByRole('spinbutton', { name: 'Precio (S/)' })).toHaveValue('13');
+    await expect(ventana).toBeVisible();
+    await expect(ventana.getByRole('combobox', { name: 'Distrito', exact: true })).toHaveText('Lince');
+    await expect(ventana.getByRole('spinbutton', { name: 'Precio (S/)' })).toHaveValue('13');
   });
 });
 
