@@ -1,6 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 
 import { Categoria } from '../domain/categoria.model';
+import { productosDestacados } from '../domain/destacados.rules';
 import { Producto } from '../domain/producto.model';
 import { CatalogoGateway } from '../domain/catalogo.gateway';
 
@@ -17,7 +18,8 @@ export class CatalogoFacade {
   readonly categories = this.categoriesState.asReadonly();
   readonly loading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
-  readonly featuredProducts = computed(() => this.products().filter((product) => product.featured));
+  /** Los que el Admin marcó como destacados, con stock y en el orden del catálogo, sin tope (PBI-0215). */
+  readonly featuredProducts = computed(() => productosDestacados(this.products()));
 
   /** Carga en curso: quien pide otra mientras tanto espera la misma (el checkout la pide al entrar). */
   private inFlight: Promise<void> | null = null;

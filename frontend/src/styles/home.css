@@ -1072,6 +1072,67 @@ ws-home-page .ws-featured .ws-section-copy {
   max-width: 640px;
 }
 
+/*
+ * Lote 22 (PBI-0215): con más de cuatro destacados, la fila se desplaza de a una página con «Anterior» y «Siguiente».
+ * Cada tarjeta mide lo mismo que en la cuadrícula (cuatro en escritorio, dos en tablet). En el celular la cuadrícula ya
+ * es una fila que se desliza (`storefront.css`) y el carrusel la usa tal cual. El relleno de arriba y de abajo deja ver
+ * la elevación de la tarjeta con el puntero encima, que el desplazamiento recortaría.
+ */
+@media (min-width: 601px) {
+  .ws-product-grid.is-carousel {
+    display: flex;
+    margin-block: -6px -24px;
+    padding-block: 6px 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .ws-product-grid.is-carousel::-webkit-scrollbar {
+    display: none;
+  }
+  .ws-product-grid.is-carousel > * {
+    flex: 0 0 calc((100% - 3 * 20px) / 4);
+    scroll-snap-align: start;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 1100px) {
+  .ws-product-grid.is-carousel > * {
+    flex-basis: calc((100% - 3 * 12px) / 4);
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .ws-product-grid.is-carousel > * {
+    flex-basis: calc((100% - 20px) / 2);
+  }
+}
+
+.ws-product-carousel-controls {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ws-product-carousel-controls .ws-carousel-control {
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+}
+
+.ws-product-carousel-controls .ws-carousel-control[aria-disabled='true'] {
+  cursor: default;
+  opacity: 0.4;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-product-grid.is-carousel {
+    scroll-behavior: auto;
+  }
+}
+
 /* Beneficios del inicio actual: las tarjetas llenan el ancho de la cabecera, hasta 4 por fila
    en escritorio y 2 en tablet; el número de columnas sigue a la cantidad de beneficios. */
 ws-home-page .ws-benefits-grid {

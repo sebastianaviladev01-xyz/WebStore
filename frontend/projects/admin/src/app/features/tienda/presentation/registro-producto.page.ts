@@ -202,6 +202,16 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
             <mat-error>{{ mensaje(form.controls.brandId.errors) }}</mat-error>
           </mat-form-field>
           <mat-checkbox formControlName="active">Activo</mat-checkbox>
+          <!-- Lote 22 (PBI-0215): sin tope; con más de cuatro, el inicio los muestra en un carrusel. -->
+          <div>
+            <mat-checkbox formControlName="featured" aria-describedby="ayuda-destacado">
+              Es destacado
+            </mat-checkbox>
+            <p id="ayuda-destacado" class="ml-11 text-xs text-muted">
+              Sale en «Productos destacados» del inicio si tiene stock. Con más de cuatro, se muestran en un
+              carrusel.
+            </p>
+          </div>
         </div>
         @if (saveError()) {
           <p
@@ -271,6 +281,7 @@ export class RegistroProductoPage {
     categoryId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     brandId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     active: new FormControl(true, { nonNullable: true }),
+    featured: new FormControl(false, { nonNullable: true }),
   });
   protected readonly mensaje = mensajeDeError;
   /**
@@ -281,7 +292,8 @@ export class RegistroProductoPage {
     form: this.form,
     guardar: () => ({ valor: this.form.getRawValue(), galeria: this.gallery() }),
     restaurar: (borrador) => {
-      this.form.setValue(borrador.valor);
+      // patchValue: un borrador guardado antes de la casilla «Es destacado» (lote 22) no la trae.
+      this.form.patchValue(borrador.valor);
       this.gallery.set(borrador.galeria);
     },
     diferido: true,
@@ -373,6 +385,7 @@ export class RegistroProductoPage {
       categoryId: p.categoryId,
       brandId: p.brandId,
       active: p.active,
+      featured: p.featured ?? false,
     });
   }
   protected async save() {

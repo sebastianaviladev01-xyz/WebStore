@@ -4,8 +4,10 @@ import { RouterLink } from '@angular/router';
 import { CatalogoFacade } from '../../catalogo/application/catalogo.facade';
 import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { hijosDeCategoria, descendientesDeCategoria } from '../../catalogo/domain/categoria.rules';
+import { necesitaCarrusel } from '../../catalogo/domain/destacados.rules';
 import { Producto } from '../../catalogo/domain/producto.model';
 import { CarruselBannersComponent } from './carrusel-banners.component';
+import { CarruselDestacadosComponent } from './carrusel-destacados.component';
 import { BotonesBannerComponent } from './botones-banner.component';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 import { AccesosRapidosComponent } from './accesos-rapidos.component';
@@ -16,6 +18,7 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
   selector: 'ws-home-page',
   imports: [
     CarruselBannersComponent,
+    CarruselDestacadosComponent,
     TarjetaProductoComponent,
     AccesosRapidosComponent,
     RevealDirective,
@@ -37,60 +40,65 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
 
     <ws-quick-access [categories]="categoryAccess()" />
 
-    <section id="destacados" class="ws-section ws-featured" aria-labelledby="featured-title">
-      <div class="ws-container">
-        <div class="ws-section-heading" wsReveal>
-          <div>
-            <h2 id="featured-title" class="ws-heading">Productos destacados</h2>
-            <p class="ws-section-copy">
-              Tecnología elegida por su diseño y desempeño, con precios que ya incluyen IGV.
-            </p>
+    <!-- Lote 22 (PBI-0215): sin destacados con stock, la sección no sale (mientras carga o con error, sí). -->
+    @if (showFeaturedSection()) {
+      <section id="destacados" class="ws-section ws-featured" aria-labelledby="featured-title">
+        <div class="ws-container">
+          <div class="ws-section-heading" wsReveal>
+            <div>
+              <h2 id="featured-title" class="ws-heading">Productos destacados</h2>
+              <p class="ws-section-copy">
+                Tecnología elegida por su diseño y desempeño, con precios que ya incluyen IGV.
+              </p>
+            </div>
+            <a routerLink="/catalogo" class="ws-text-link">Ver todos los productos</a>
           </div>
-          <a routerLink="/catalogo" class="ws-text-link">Ver todos los productos</a>
-        </div>
 
-        <div class="ws-category-tabs" role="group" aria-label="Filtrar productos destacados">
-          <button
-            type="button"
-            data-label="Destacados"
-            [class.is-active]="selectedCategory() === ''"
-            [attr.aria-pressed]="selectedCategory() === ''"
-            (click)="selectCategory('')"
-          >
-            Destacados
-          </button>
-          @for (category of showcaseCategories(); track category.id) {
+          <div class="ws-category-tabs" role="group" aria-label="Filtrar productos destacados">
             <button
               type="button"
-              [attr.data-label]="category.name"
-              [class.is-active]="selectedCategory() === category.id"
-              [attr.aria-pressed]="selectedCategory() === category.id"
-              (click)="selectCategory(category.id)"
+              data-label="Destacados"
+              [class.is-active]="selectedCategory() === ''"
+              [attr.aria-pressed]="selectedCategory() === ''"
+              (click)="selectCategory('')"
             >
-              {{ category.name }}
+              Destacados
             </button>
-          }
-        </div>
-
-        @if (catalog.loading()) {
-          <div class="ws-card p-12 text-center text-muted" role="status">Cargando productos…</div>
-        } @else if (catalog.error()) {
-          <div class="ws-card p-12 text-center" role="alert">
-            <h3 class="text-xl font-semibold">No se pudo cargar el catálogo</h3>
-            <p class="mt-2 text-muted">{{ catalog.error() }}</p>
-            <button type="button" class="ws-btn-secondary mt-5" (click)="catalog.load()">Reintentar</button>
-          </div>
-        } @else {
-          <div class="ws-product-grid">
-            @for (product of showcasedProducts(); track product.id; let first = $first, index = $index) {
-              <ws-product-card [product]="product" [priority]="first" wsReveal [revealIndex]="index" />
-            } @empty {
-              <p class="ws-empty-products">Pronto encontrarás nuevos productos en esta categoría.</p>
+            @for (category of showcaseCategories(); track category.id) {
+              <button
+                type="button"
+                [attr.data-label]="category.name"
+                [class.is-active]="selectedCategory() === category.id"
+                [attr.aria-pressed]="selectedCategory() === category.id"
+                (click)="selectCategory(category.id)"
+              >
+                {{ category.name }}
+              </button>
             }
           </div>
-        }
-      </div>
-    </section>
+
+          @if (catalog.loading()) {
+            <div class="ws-card p-12 text-center text-muted" role="status">Cargando productos…</div>
+          } @else if (catalog.error()) {
+            <div class="ws-card p-12 text-center" role="alert">
+              <h3 class="text-xl font-semibold">No se pudo cargar el catálogo</h3>
+              <p class="mt-2 text-muted">{{ catalog.error() }}</p>
+              <button type="button" class="ws-btn-secondary mt-5" (click)="catalog.load()">Reintentar</button>
+            </div>
+          } @else if (featuredCarousel()) {
+            <ws-featured-carousel [products]="showcasedProducts()" wsReveal />
+          } @else {
+            <div class="ws-product-grid">
+              @for (product of showcasedProducts(); track product.id; let first = $first, index = $index) {
+                <ws-product-card [product]="product" [priority]="first" wsReveal [revealIndex]="index" />
+              } @empty {
+                <p class="ws-empty-products">Pronto encontrarás nuevos productos en esta categoría.</p>
+              }
+            </div>
+          }
+        </div>
+      </section>
+    }
 
     @for (collection of categoryCollections(); track collection.category.id; let reversed = $odd) {
       <section
@@ -239,13 +247,26 @@ export class InicioPage {
     this.topCategories().filter((category) => this.productsInCategory(category.id).some(isAvailable)),
   );
 
-  /** Destacados y colecciones muestran solo productos con stock: no se destaca lo que no se puede comprar. */
+  /**
+   * Destacados y colecciones muestran solo productos con stock: no se destaca lo que no se puede comprar. Los
+   * destacados que marca el Admin salen todos, sin tope (PBI-0215); cada pestaña de categoría, hasta cuatro, como antes.
+   */
   protected readonly showcasedProducts = computed(() => {
     const category = this.selectedCategory();
-    return (category ? this.productsInCategory(category) : this.catalog.featuredProducts())
-      .filter(isAvailable)
-      .slice(0, 4);
+    return category
+      ? this.productsInCategory(category).filter(isAvailable).slice(0, 4)
+      : this.catalog.featuredProducts();
   });
+
+  /** Lote 22 (PBI-0215): con más de cuatro destacados, la pestaña «Destacados» los muestra en un carrusel. */
+  protected readonly featuredCarousel = computed(
+    () => !this.selectedCategory() && necesitaCarrusel(this.showcasedProducts().length),
+  );
+
+  /** Lote 22 (PBI-0215): sin destacados con stock no hay sección; mientras carga o si falla, sí (con su aviso). */
+  protected readonly showFeaturedSection = computed(
+    () => this.catalog.loading() || !!this.catalog.error() || this.catalog.featuredProducts().length > 0,
+  );
 
   protected readonly categoryCollections = computed(() =>
     this.topCategories()
