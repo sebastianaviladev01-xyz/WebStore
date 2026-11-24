@@ -83,6 +83,8 @@ export function requireValidProducts(products) {
       ['price', nonNegative, 'el precio debe ser un número mayor o igual a 0'],
       ['stock', nonNegativeInteger, 'el stock debe ser un número entero mayor o igual a 0'],
       ['active', isBoolean, 'el estado del producto no es válido'],
+      // Lote 22 (PBI-0215): la casilla «Es destacado»; sin ella, el producto no es destacado.
+      ['featured', isBoolean, 'la marca de destacado no es válida', { optional: true }],
       ['categoryId', hasText, 'cada producto necesita una categoría'],
       ['brandId', hasText, 'cada producto necesita una marca'],
       ['description', isText, 'la descripción no es válida', { optional: true }],

@@ -24,6 +24,7 @@ import {
   MODO_DE_DIRECCION_POR_DEFECTO,
 } from '../../domain/pedidos/direcciones-por-producto.rules.mjs';
 import { normalizeEmail } from '../../domain/comun/validacion.rules.mjs';
+import { conMarcaDeDestacado } from '../../domain/catalogo/producto.rules.mjs';
 import { migrateRole } from '../../domain/sesion/rol.rules.mjs';
 import { isSessionAlive } from '../../domain/sesion/sesion.rules.mjs';
 import { exigirTemaValido } from '../../domain/temas/tema-propio.rules.mjs';
@@ -36,8 +37,9 @@ import { seed } from './seed.mjs';
  * 2: roles fijos superadmin/admin/vendedor (antes owner/catalog-maintainer).
  * 3: temas (`appearance`); los colores de Contenido pasan a un tema propio y se retiran de `config` (D3).
  * 4: listas de Contenido (lote 15, ADR-0021): correos, teléfonos, avisos y accesos inferiores.
+ * 5: productos destacados configurables (lote 22, ADR-0025, PBI-0215): cada producto guarda su marca `featured`.
  */
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const COLORES_DE_B = TEMAS_PREDEFINIDOS.find((tema) => tema.id === TEMA_POR_DEFECTO).colors;
 const NOMBRE_DEL_TEMA_MIGRADO = 'Colores de Contenido';
@@ -277,6 +279,8 @@ export function normalizeState(input, demoPasswords, avisar = () => {}, opciones
   if (versionGuardada < 2) migrateAdminRoles(next, demoPasswords);
   if (versionGuardada < 3) migrarColoresDeContenido(next);
   if (versionGuardada < 4) migrarListasDeContenido(next, input.config ?? {});
+  // Lote 22 (PBI-0215): antes de la versión 5, los destacados eran los cuatro primeros activos; se guardan una vez.
+  next.products = conMarcaDeDestacado(next.products, { migrar: versionGuardada < 5 });
   next.config = sinColoresDeContenido(next.config);
   // Lote 16 (PBI-0179): sin el campo lo completa la semilla; un valor desconocido vuelve al diálogo, sin migración.
   if (!esModoDeSugeridos(next.config.addToCartDisplay))

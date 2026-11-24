@@ -70,9 +70,9 @@ test('caracterización: normalizar otra vez el resultado no lo cambia', () => {
 
 // --- Migración schemaVersion: 3 ---
 
-test('la versión del esquema es 4 (lote 15: listas de Contenido)', () => {
-  assert.equal(SCHEMA_VERSION, 4);
-  assert.equal(normalizeState(estadoV2(), demoPasswords).schemaVersion, 4);
+test('la versión del esquema es 5 (lote 22: productos destacados configurables)', () => {
+  assert.equal(SCHEMA_VERSION, 5);
+  assert.equal(normalizeState(estadoV2(), demoPasswords).schemaVersion, 5);
 });
 
 test('sin estado guardado (la semilla): B activo, revisión 0, sin temas propios y Contenido sin colores', () => {

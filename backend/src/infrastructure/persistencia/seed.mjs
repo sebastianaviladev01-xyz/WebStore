@@ -3,6 +3,7 @@ import { TEMA_POR_DEFECTO } from '../../domain/temas/temas-predefinidos.mjs';
 
 /** Datos de demostración: estado inicial de la tienda y base para normalizar y migrar data.json. */
 export const seed = {
+  // Lote 22 (PBI-0215): los cuatro primeros son los destacados que la demo mostraba antes de poder elegirlos.
   products: [
     {
       id: 'p-001',
@@ -16,6 +17,7 @@ export const seed = {
       price: 3299,
       stock: 9,
       active: true,
+      featured: true,
       highlights: [
         'Panel OLED 4K de 55 pulgadas',
         'Sonido envolvente para cine en casa',
@@ -35,6 +37,7 @@ export const seed = {
       price: 1899,
       stock: 6,
       active: true,
+      featured: true,
       highlights: ['Capacidad de 18 kg', 'Ciclos inteligentes', 'Motor de bajo consumo'],
     },
     {
@@ -49,6 +52,7 @@ export const seed = {
       price: 2399,
       stock: 4,
       active: true,
+      featured: true,
       highlights: ['Capacidad de 420 litros', 'Sistema No Frost', 'Distribución interior flexible'],
     },
     {
@@ -63,6 +67,7 @@ export const seed = {
       price: 699,
       stock: 12,
       active: true,
+      featured: true,
       highlights: ['Subwoofer inalámbrico', 'Diálogos más claros', 'Conexión HDMI y Bluetooth'],
       gallery: ['assets/brand/living-room-v2.jpg'],
     },
@@ -78,6 +83,7 @@ export const seed = {
       price: 1499,
       stock: 7,
       active: true,
+      featured: false,
       highlights: [
         'Panel UltraWide de 34 pulgadas',
         'Espacio panorámico de trabajo',
@@ -96,6 +102,7 @@ export const seed = {
       price: 449,
       stock: 0,
       active: true,
+      featured: false,
       highlights: ['Capacidad de 30 litros', 'Programas automáticos', 'Interior de fácil limpieza'],
     },
   ],
