@@ -4,6 +4,8 @@
 @import '@fontsource-variable/source-sans-3';
 @import '../../../src/styles/tokens.css';
 @import '../../../src/styles/material-typography.css';
+/* Lote 25 (PBI-0212): los campos con contorno de la tienda; <body> lleva la clase .ws-outline-fields. */
+@import '../../../src/styles/campos-con-contorno.css';
 
 * {
   box-sizing: border-box;
@@ -47,6 +49,13 @@ label:has(> input[type='file']:focus-visible) {
   border-radius: 12px;
   background: var(--ws-surface);
   box-shadow: 0 1px 2px color-mix(in srgb, var(--ws-ink) 4%, transparent);
+}
+
+/* Lote 25 (ADR-0025): la fila de una lista cuyo detalle está abierto (Reclamaciones), con el fondo del hover y una barra
+   del color de los enlaces a la izquierda, que no depende solo del fondo para distinguirse. */
+.ws-fila-actual {
+  background: var(--ws-surface-subtle);
+  box-shadow: inset 4px 0 0 var(--ws-link);
 }
 
 .admin-container {

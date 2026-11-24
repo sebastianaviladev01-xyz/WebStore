@@ -106,13 +106,17 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
       </mat-form-field>
     </ws-filter-panel>
     <section class="admin-card mt-6 overflow-hidden" aria-label="Lista de productos">
-      <!-- PBI-0132: la lista es una tabla con sus encabezados (en el celular, sin la fila de encabezados visible). -->
+      <!--
+        PBI-0132: la lista es una tabla con sus encabezados (en el celular, sin la fila de encabezados visible). Lote 25
+        (PBI-0219): el SKU va en su propia columna, sin el conteo de características ni de fotos.
+      -->
       <div role="table" aria-label="Productos">
         <div
           role="row"
-          class="grid grid-cols-[1fr_120px_110px_90px] bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
+          class="grid grid-cols-[minmax(0,1fr)_160px_120px_110px_90px] gap-x-4 bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
         >
           <span role="columnheader">Producto</span>
+          <span role="columnheader">SKU</span>
           <span role="columnheader">Precio</span>
           <span role="columnheader">Stock</span>
           <span role="columnheader"><span class="sr-only">Acciones</span></span>
@@ -120,7 +124,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         @for (p of pagina().items; track p.id) {
           <div
             role="row"
-            class="grid grid-cols-[1fr_120px_110px_90px] items-center border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-x-4 max-md:gap-y-2"
+            class="grid grid-cols-[minmax(0,1fr)_160px_120px_110px_90px] items-center gap-x-4 border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-y-2"
           >
             <!--
               PBI-0156: en el celular la fila de encabezados se oculta (conserva la medida de admin-productos-movil);
@@ -129,14 +133,22 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
             <div role="cell" class="min-w-0 max-md:col-span-full">
               <span class="sr-only md:hidden">Producto:</span>
               <strong class="block truncate">{{ p.name }}</strong>
-              <p class="text-xs text-muted">
-                {{ p.sku }} · {{ p.highlights.length }} características · {{ p.gallery.length + 1 }}
-                {{ p.gallery.length === 0 ? 'foto' : 'fotos' }}
-              </p>
             </div>
+            <!--
+              En el celular, el SKU va en su propia línea debajo del nombre, donde estaba la línea «SKU · características
+              · fotos», y no le quita espacio al precio, al stock ni a las acciones.
+            -->
+            <span
+              role="cell"
+              class="min-w-0 truncate text-muted max-md:col-span-full max-md:-mt-2 max-md:text-xs"
+            >
+              <span class="sr-only md:hidden">SKU:</span>
+              {{ p.sku }}
+            </span>
+            <!-- Lote 25 (PBI-0218): con dos decimales, como el resto de los montos del Admin. -->
             <span role="cell" class="max-md:col-start-2">
               <span class="sr-only md:hidden">Precio:</span>
-              {{ p.price | currency: 'PEN' : 'symbol' : '1.0-0' }}
+              {{ p.price | currency: 'PEN' : 'symbol' : '1.2-2' }}
             </span>
             <span role="cell" [class.text-danger]="p.stock === 0" class="font-semibold">
               <span class="font-normal text-muted md:hidden">Stock&nbsp;</span>

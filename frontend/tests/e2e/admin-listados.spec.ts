@@ -267,6 +267,31 @@ test.describe('PBI-0139: filtros de los demás listados', () => {
     await page.goto(`/reclamaciones?texto=${codigo}&estado=resolved`);
     await expect(lista).toContainText('Ninguna reclamación cumple los filtros.');
   });
+
+  // Lote 25 (ADR-0025): la lista marca la reclamación abierta y, por debajo de 1280 px, la vista va al detalle.
+  for (const { ancho, alto, debajo } of [
+    { ancho: 1440, alto: 900, debajo: false },
+    { ancho: 375, alto: 812, debajo: true },
+  ]) {
+    test(`Reclamaciones marca la abierta${debajo ? ' y lleva la vista al detalle' : ''} a ${ancho} px`, async ({
+      page,
+    }) => {
+      const codigo = await crearReclamo(`Reclamo abierto ${Date.now()}`);
+      await page.setViewportSize({ width: ancho, height: alto });
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto(`/reclamaciones?texto=${codigo}`);
+      const fila = page.getByRole('region', { name: 'Lista de reclamaciones' }).getByRole('button', {
+        name: new RegExp(codigo),
+      });
+      await expect(fila).not.toHaveAttribute('aria-current');
+      await fila.click();
+      await expect(fila).toHaveAttribute('aria-current', 'true');
+      const titulo = page.getByRole('heading', { level: 2, name: codigo });
+      await expect(titulo).toBeInViewport();
+      if (debajo) await expect(titulo).toBeFocused();
+      else await expect(fila).toBeFocused();
+    });
+  }
 });
 
 test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
@@ -274,6 +299,8 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
 
   for (const { ruta, tabla, encabezados } of [
     { ruta: '/inventario', tabla: 'Inventario', encabezados: ['Producto', 'Stock', 'Estado'] },
+    // Lote 25 (PBI-0219): con el SKU en su propia columna, la fila del celular sigue sin desbordar.
+    { ruta: '/productos', tabla: 'Productos', encabezados: ['Producto', 'SKU', 'Precio', 'Stock'] },
     { ruta: '/clientes', tabla: 'Clientes', encabezados: ['Cliente', 'Pedidos', 'Acciones'] },
   ]) {
     test(`${ruta} no desborda y es una tabla con encabezados`, async ({ page }) => {
@@ -303,7 +330,7 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
   // Lote 07b (PBI-0156): en el celular la fila de encabezados de Productos e Inventario sigue oculta (conserva la
   // medida de admin-productos-movil), pero cada celda de datos dice de qué columna es a un lector de pantalla.
   for (const { ruta, tabla, columnas } of [
-    { ruta: '/productos', tabla: 'Productos', columnas: ['Producto', 'Precio', 'Stock'] },
+    { ruta: '/productos', tabla: 'Productos', columnas: ['Producto', 'SKU', 'Precio', 'Stock'] },
     { ruta: '/inventario', tabla: 'Inventario', columnas: ['Producto', 'Stock', 'Estado'] },
   ]) {
     test(`${ruta}: cada celda dice su columna a un lector de pantalla (PBI-0156)`, async ({ page }) => {
@@ -324,7 +351,18 @@ test.describe('PBI-0132: accesibilidad de formularios y listas', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/productos');
     const tabla = page.getByRole('table', { name: 'Productos' });
-    await expect(tabla.getByRole('columnheader')).toHaveText(['Producto', 'Precio', 'Stock', 'Acciones']);
+    // Lote 25 (PBI-0219 y PBI-0218): el SKU en su propia columna y el precio con dos decimales.
+    await expect(tabla.getByRole('columnheader')).toHaveText([
+      'Producto',
+      'SKU',
+      'Precio',
+      'Stock',
+      'Acciones',
+    ]);
+    const fila = tabla.getByRole('row').filter({ hasText: 'OLED Vision 55” 4K' });
+    await expect(fila.getByRole('cell').nth(1)).toHaveText('TV-OLED-55-VSN', { useInnerText: true });
+    await expect(fila.getByRole('cell').nth(2)).toHaveText(/S\/\s?[\d,]+\.\d{2}/);
+    await expect(fila).not.toContainText('características');
     await expect(tabla.getByRole('link', { name: 'Editar producto OLED Vision 55” 4K' })).toBeVisible();
     await expect(tabla.getByRole('button', { name: 'Eliminar producto OLED Vision 55” 4K' })).toBeVisible();
     await page.goto('/categorias');
@@ -365,7 +403,8 @@ test.describe('PBI-0132: accesibilidad de formularios y listas', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     for (const [ruta, nombre, anterior] of [
       ['/contenido', 'Cargar logo', null],
-      ['/productos/p-001', 'Cargar foto', 'Agregar'],
+      // Lote 25: sin «URL de foto» ni «Agregar», antes de «Cargar foto» va el botón para quitar la foto de la galería.
+      ['/productos/p-001', 'Cargar foto', 'Quitar foto 2'],
     ] as const) {
       await page.goto(ruta);
       if (anterior) await page.getByRole('button', { name: anterior, exact: true }).focus();

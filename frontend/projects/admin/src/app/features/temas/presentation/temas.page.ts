@@ -218,7 +218,8 @@ export class TemasPage {
     this.dialog
       .open<TemaDialog, DatosTemaDialog, ResultadoTemaDialog>(TemaDialog, {
         data: datos,
-        width: '960px',
+        // Lote 25 (ADR-0025, PBI-0224): más ancha (antes 960 px) para que la vista previa se vea mejor.
+        width: '1200px',
         maxWidth: 'calc(100vw - 32px)',
         autoFocus: 'first-tabbable',
       })

@@ -115,7 +115,10 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
             {{ errorGeneral() }}
           </div>
         }
-        <div class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+        <!-- Lote 25 (PBI-0224): desde lg, la vista previa ocupa más que los colores (7 a 5). -->
+        <div
+          class="grid gap-6 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]"
+        >
           <div class="min-w-0">
             <mat-form-field>
               <mat-label>Nombre</mat-label>

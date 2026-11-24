@@ -1,10 +1,13 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import {
+  afterNextRender,
   ChangeDetectionStrategy,
   Component,
   computed,
   effect,
+  ElementRef,
   inject,
+  Injector,
   signal,
   untracked,
 } from '@angular/core';
@@ -75,10 +78,16 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
     }
     <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
       <section class="admin-card overflow-hidden" aria-label="Lista de reclamaciones">
+        <!--
+          Lote 25 (ADR-0025): la reclamación abierta en el detalle se marca en la lista, con aria-current para un lector
+          de pantalla y, a la vista, con el fondo de la fila y una barra del color de los enlaces a la izquierda.
+        -->
         @for (item of pagina().items; track item.id) {
           <button
             type="button"
             class="grid w-full gap-2 border-b border-line p-5 text-left hover:bg-subtle sm:grid-cols-[150px_1fr_auto]"
+            [class.ws-fila-actual]="selected()?.id === item.id"
+            [attr.aria-current]="selected()?.id === item.id ? 'true' : null"
             (click)="select(item)"
           >
             <span>
@@ -109,8 +118,9 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         />
       </section>
       @if (selected(); as item) {
-        <aside class="admin-card h-fit p-6">
-          <h2 class="text-xl font-semibold">{{ item.id }}</h2>
+        <aside class="admin-card h-fit scroll-mt-6 p-6" aria-labelledby="titulo-detalle-reclamacion">
+          <!-- Lote 25: por debajo de 1280 px, el detalle va debajo de la lista; al abrirlo, la vista y el foco van aquí. -->
+          <h2 id="titulo-detalle-reclamacion" class="text-xl font-semibold" tabindex="-1">{{ item.id }}</h2>
           <dl class="mt-5 grid gap-3 text-sm">
             <div>
               <dt class="text-muted">Consumidor</dt>
@@ -215,10 +225,31 @@ export class ReclamacionesPage {
     });
   }
 
+  private readonly injector = inject(Injector);
+  private readonly host: HTMLElement = inject(ElementRef).nativeElement;
   protected select(item: Reclamo) {
     this.saved.set(false);
     this.selected.set(item);
     this.form.setValue({ status: item.status, providerResponse: item.providerResponse });
+    this.mostrarDetalle();
+  }
+  /**
+   * Lote 25 (ADR-0025): por debajo de `xl` (1280 px) el detalle no está al lado de la lista sino debajo, fuera de la
+   * vista: al abrir una reclamación, la vista baja al detalle y el foco pasa a su título, para que un lector de
+   * pantalla lo anuncie. Desde 1280 px el detalle ya está a la vista y el foco se queda en la fila.
+   */
+  private mostrarDetalle() {
+    if (!window.matchMedia('(width < 80rem)').matches) return;
+    afterNextRender(
+      () => {
+        const titulo = this.host.querySelector<HTMLElement>('#titulo-detalle-reclamacion');
+        if (!titulo) return;
+        const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        titulo.closest('aside')?.scrollIntoView({ behavior: quieto ? 'auto' : 'smooth', block: 'start' });
+        titulo.focus({ preventScroll: true });
+      },
+      { injector: this.injector },
+    );
   }
   protected async save() {
     const item = this.selected();
