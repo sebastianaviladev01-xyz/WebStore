@@ -56,6 +56,7 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros (backlog,
 | 16 | Storefront | PBI-0180, 0181, 0190, 0193 |
 | 17 | Entrega, términos y feriados | PBI-0177, 0178, 0183 |
 | 18 | Cierre documental | PBI-0192 y los registros de todos los lotes |
+| 20 | Hallazgos de los lotes 11 a 17 | PBI-0194 y los hallazgos anotados en los PR de los lotes (añadido al ejecutar el lote 17, como permite el reparto) |
 
 El reparto puede ajustarse al ejecutar un lote; el ajuste se anota en su PR. Un hallazgo fuera del alcance de un lote se anota con su PBI y se asigna al lote de su área.
 
@@ -103,3 +104,34 @@ Daniel no dio estos detalles. Cada una queda «Provisional, por confirmar con Da
 - Responsable: Sebastián Avila. Termina cuando se fusiona el lote 18 o cuando él la retira. No se aplica a elementos anotados después del 2026-11-23, salvo los hallazgos de estos lotes o que él lo pida.
 - Aprobación: Sebastián Avila, 2026-11-23. Falta informar a Daniel Avila.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+Se ejecutaron diez lotes el 2026-11-23, cada uno con su rama y su PR hacia `dev`, auditado por la sesión principal (diff, `npm run verify` y e2e completo, y capturas cuando tocaba la interfaz). Los fusiona Sebastián Avila:
+
+| Lote | PR |
+|---|---|
+| 11, catálogo, inventario y roles | [#68](https://github.com/sebastianaviladev01-xyz/WebStore/pull/68) |
+| 12, banners | [#69](https://github.com/sebastianaviladev01-xyz/WebStore/pull/69) |
+| 13, Dashboard y notificaciones | [#70](https://github.com/sebastianaviladev01-xyz/WebStore/pull/70) |
+| 14, temas ([ADR-0022](0022-quitar-la-tuerca-de-la-tienda-y-limitar-la-demo-a-los-temas-predefinidos.md) y [ADR-0023](0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md)) | [#71](https://github.com/sebastianaviladev01-xyz/WebStore/pull/71) |
+| 15, contenido | [#72](https://github.com/sebastianaviladev01-xyz/WebStore/pull/72) |
+| 16, storefront | [#73](https://github.com/sebastianaviladev01-xyz/WebStore/pull/73) |
+| 17, entrega, términos y feriados | [#74](https://github.com/sebastianaviladev01-xyz/WebStore/pull/74) |
+| 19, comparador y direcciones | [#75](https://github.com/sebastianaviladev01-xyz/WebStore/pull/75) |
+| 20, hallazgos de los lotes 11 a 17 | [#76](https://github.com/sebastianaviladev01-xyz/WebStore/pull/76) |
+| 18, cierre ([ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md)) | El PR de este lote |
+
+El lote 20 no estaba en el reparto inicial: reunió los hallazgos que anotaron los PR de los lotes 11 a 17, más PBI-0194. Los hallazgos del lote 19 (stock compartido de las e2e, foto grande en el detalle del pedido y el error de la dirección de una línea sin su producto) se corrigieron en el lote 18. Todos tienen su PBI, PBI-0195 a PBI-0209, en el [backlog](../planning/backlog.md).
+
+Los registros quedaron al día en el lote 18: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (cada respuesta de Daniel dice qué quedó construido, y cada detalle que él no dio dice «Provisional, por confirmar con Daniel»), la [trazabilidad](../planning/TRACEABILITY.md), la [funcionalidad](../planning/FUNCIONALIDAD.md), las [historias de usuario](../planning/user-stories/user-stories.md), el [glosario](../architecture/glosario.md) y el [historial del 2026-11-23](../changelog/CHANGELOG-2026-11-23.md).
+
+**Lo que queda abierto**, con su motivo en la fila de cada elemento del backlog:
+
+- **Terceros o decisiones externas:** pasarela (PBI-0002), facturación electrónica (PBI-0003), multi-tenant (PBI-0004), SSR (PBI-0005), extorno (PBI-0007), correo real (PBI-0008) y lo que depende de él (PBI-0012 y PBI-0161), revisión legal (PBI-0009) y supresión de datos (PBI-0011), ERP de Ecom (PBI-0041) e integraciones (PBI-0058).
+- **Daniel:** el modelo de datos base (PBI-0043), el nombre del producto y la revisión de las decisiones provisionales de los lotes 11 a 20.
+- **Una persona:** la prueba con lector de pantalla (PBI-0165).
+- **El backend de producción:** convertir a 100 × 100 px las imágenes de categoría guardadas antes del lote 11 (PBI-0197) y limitar las peticiones que podrían llenar la lista de errores de compra (PBI-0198).
+- **Sebastián Avila y Daniel Avila:** confirmar [ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md), que dejó en inglés el vocabulario interno y el contrato (PBI-0022) por delegación.
+
+Falta informar a Daniel Avila, como decía la aprobación. La excepción termina al fusionar el PR de este cierre: desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
