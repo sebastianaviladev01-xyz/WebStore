@@ -28,3 +28,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el título dice «Editar cliente» y puede volver a «Nuevo cliente» con «Cancelar»; si elimina el cliente que edita, el formulario sale de la edición y «Guardar» no lo vuelve a crear.
 
 > Añadido el 2026-11-14 por el lote 06 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0122 y PBI-0130), sin especificación propia: lo prueba `frontend/tests/e2e/admin-guardado-y-datos.spec.ts`.
+
+### Escenario 03 – Registro en una ventana
+
+- **Dado** que el administrador está en Clientes
+- **Cuando** pulsa «Agregar» o «Editar»
+- **Entonces** registra el cliente en una ventana emergente con título, que atrapa el foco y se cierra con Escape, en vez del formulario al costado de la lista; cerrarla descarta lo escrito.
+
+> Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: mantenimientos»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-mantenimientos.spec.ts`. Cambia el Escenario 02: el título y «Cancelar» son los de la ventana.

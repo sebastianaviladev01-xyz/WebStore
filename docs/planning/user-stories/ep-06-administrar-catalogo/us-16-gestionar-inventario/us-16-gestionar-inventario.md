@@ -7,7 +7,7 @@
 
 ## Descripción
 
-- **Como** administrador (el vendedor cambia el stock desde la ficha de cada producto, en Productos)
+- **Como** administrador o vendedor (desde el lote 11, PBI-0170)
 - **Quiero** actualizar el stock de los productos
 - **Para** que la tienda venda solo lo que hay
 
@@ -48,3 +48,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** entra si es superadministrador, administrador o, desde el lote 11 (PBI-0170), vendedor; Inventario tiene el panel de filtros (por nombre o SKU y por estado del stock).
 
 > Añadido el 2026-11-15 por el lote 07 ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0013 y PBI-0139). El 2026-11-18 Daniel pidió que el vendedor también gestione Inventario (PBI-0170; [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»). Cambiado el 2026-11-23 por el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)). Lo prueban `admin-acceso.spec.ts`, `admin-permisos.spec.ts` y `admin-listados.spec.ts`.
+
+### Escenario 06 – El stock solo en Inventario
+
+- **Dado** que un usuario del backoffice quiere cambiar el stock de un producto
+- **Cuando** busca dónde hacerlo
+- **Entonces** lo cambia en Inventario: el registro del producto ya no tiene «Stock» y remite a Inventario. Un producto nuevo empieza sin stock, y el BFF conserva el stock vigente cuando el registro del producto llega sin él.
+
+> Añadido el 2026-11-24 por el lote 23 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0226; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: inventario, stock y SKU»), sin especificación propia: lo prueban `inventario.rules.test.mjs`, `snapshot-cambios.use-cases.test.mjs` y `frontend/tests/e2e/admin-catalogo-filtros.spec.ts`. Antes de los lotes 11 y 23, el vendedor cambiaba el stock desde el registro de cada producto.
