@@ -35,6 +35,7 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Término | Definición | Código | Contrato y estado del BFF |
 |---|---|---|---|
 | Carrito | Productos y cantidades elegidos antes de comprar. Guarda solo id y cantidad; precio y stock salen del catálogo vigente. | `CarritoFacade`, `LineaCarrito`, `CarritoPage` | `localStorage` del navegador |
+| Comparador | Hasta 4 productos elegidos con «Comparar» para verlos lado a lado en `/comparar` (lote 19, PBI-0001, provisional). Vive en memoria y en la URL, no en el navegador. | Feature `comparador` (`ComparadorFacade`, `comparador.rules.ts`); `ComparadorPage` y `BotonCompararComponent` en `vitrina` | — (no usa el BFF) |
 | Valor de venta e IGV | Desglose del precio: valor sin impuesto e IGV, mostrados en carrito y checkout. | `CarritoFacade` (`taxableBase`, `igv`) | `subtotal`, `igv` |
 | Checkout | Paso donde el comprador da sus datos, la dirección, la fecha de entrega y el método de pago, y crea el pedido. En la interfaz se titula «Datos de tu compra» desde el lote 16 (PBI-0190, provisional); «Finalizar compra» es solo el botón del final, después de los datos de pago y de la casilla de términos. | `CheckoutFacade`, `CheckoutCommand`, `CheckoutPage` | `/bff/checkout/orders`; `application/checkout/` |
 | Compra como invitado | Compra sin cuenta. El invitado consulta su pedido con un token de acceso guardado en el dispositivo. | `CredencialesPedido` | `accessToken`, cabecera `x-order-token` |
@@ -42,7 +43,8 @@ Vocabulario canónico de WebStore. Cada concepto usa el mismo término en las hi
 | Estado del pedido | Etapa del pedido. Valores en [Estado del pedido](#estado-del-pedido-estadopedido). | `EstadoPedido`, `ETIQUETAS_ESTADO_PEDIDO` | `status` |
 | Ventana de 24 h | Plazo, desde la creación del pedido, en que el cliente puede cambiar la dirección o la fecha de entrega, o cancelarlo. | — | `ORDER_MODIFICATION_WINDOW_MS`, `canModify()` en `domain/pedidos/pedido.rules.mjs` |
 | Método de pago | Medio elegido en el checkout. Los de la demo son demostrativos: la pasarela definitiva está pendiente. | `MetodoPago`: `card`, `yape-plin`, `transfer` | `paymentMethod` |
-| Dirección de envío | Dirección, distrito, provincia, departamento y referencia. El MVP usa una por pedido. | `DireccionEnvio` | `shipping` |
+| Dirección de envío | Dirección, distrito, provincia, departamento y referencia. Por defecto, una por pedido; desde el lote 19 (PBI-0006, provisional), la configuración de la tienda puede elegir una por producto. | `DireccionEnvio` | `shipping` |
+| Dirección por producto | Con «una dirección por producto», la dirección propia de una línea del pedido, distinta de la del pedido. El envío se cobra una vez por cada dirección distinta (lote 19, PBI-0006, provisional). | `ModoDeDireccion`, `LineaPedido.shipping`, `direccion-por-producto.rules.ts` (tienda); `MODOS_DE_DIRECCION` (Admin) | `deliveryAddressMode` (`per-order` o `per-product`), `items[].shipping`; `direcciones-por-producto.rules.mjs` |
 
 ## Envíos
 
