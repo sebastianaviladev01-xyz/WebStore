@@ -12,7 +12,6 @@ import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
   calcularIndicadores,
-  distritosConMasPedidos,
   gruposDeEstado,
   GrupoDeEstado,
   serieDelMes,
@@ -37,8 +36,7 @@ const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
  * Bloques del Dashboard que se pliegan: los que tienen título y, desde el lote 13 (PBI-0187), también la fila de
  * tarjetas de cifras.
  */
-type BloqueDashboard =
-  'cifras' | 'pedidos-por-dia' | 'distritos' | 'alertas' | 'ultimos-pedidos' | 'estados' | 'actividad';
+type BloqueDashboard = 'cifras' | 'pedidos-por-dia' | 'alertas' | 'ultimos-pedidos' | 'estados' | 'actividad';
 
 /** Qué suman las ventas (lote 13, ADR-0021, PBI-0186). */
 const AYUDA_VENTAS =
@@ -155,75 +153,35 @@ const AYUDA_VENTAS =
       </section>
 
       @if (verPedidos()) {
-        <div class="mt-5 grid gap-5 lg:grid-cols-3">
-          <!-- Plegado, el bloque se encoge a su encabezado y no se estira al alto de la fila. -->
-          <section
-            class="admin-card min-w-0 p-6 lg:col-span-2"
-            [class.self-start]="!bloqueAbierto('pedidos-por-dia')"
-          >
-            <h2 class="text-lg font-semibold">
-              <ng-container
-                *ngTemplateOutlet="
-                  botonDeBloque;
-                  context: {
-                    $implicit: 'pedidos-por-dia',
-                    titulo: verClientes() ? 'Pedidos y clientes nuevos por día' : 'Pedidos por día',
-                  }
-                "
-              />
-            </h2>
-            <div wsAdminBloquePlegable="pedidos-por-dia" [abierto]="bloqueAbierto('pedidos-por-dia')">
-              <div class="ws-plegable-contenido">
-                <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ mes() }}</p>
-                <ws-admin-grafico-pedidos
-                  class="mt-4"
-                  [serie]="serie()"
-                  [mes]="mes()"
-                  [conClientes]="verClientes()"
-                />
-              </div>
-            </div>
-          </section>
-
-          <section class="admin-card min-w-0 p-6" [class.self-start]="!bloqueAbierto('distritos')">
-            <h2 class="text-lg font-semibold">
-              <ng-container
-                *ngTemplateOutlet="
-                  botonDeBloque;
-                  context: { $implicit: 'distritos', titulo: 'Pedidos por distrito' }
-                "
-              />
-            </h2>
-            <div wsAdminBloquePlegable="distritos" [abierto]="bloqueAbierto('distritos')">
-              <div class="ws-plegable-contenido">
-                <p class="mt-1 text-sm text-muted">Los cinco distritos con más pedidos</p>
-                @if (distritos().length) {
-                  <ol class="mt-4 grid gap-3.5">
-                    @for (fila of distritos(); track fila.distrito) {
-                      <li>
-                        <div class="flex items-baseline justify-between gap-3 text-sm">
-                          <span class="min-w-0 truncate">{{ fila.distrito }}</span>
-                          <span class="shrink-0 tabular-nums text-muted">
-                            <strong class="font-semibold text-body">{{ fila.pedidos }}</strong>
-                            {{ fila.pedidos === 1 ? 'pedido' : 'pedidos' }}
-                          </span>
-                        </div>
-                        <div class="mt-1.5 h-2 rounded-full bg-soft" aria-hidden="true">
-                          <div
-                            class="h-full rounded-full bg-primary"
-                            [style.width.%]="(fila.pedidos / distritos()[0].pedidos) * 100"
-                          ></div>
-                        </div>
-                      </li>
-                    }
-                  </ol>
-                } @else {
-                  <p class="mt-4 text-sm text-muted">Todavía no hay pedidos.</p>
+        <!--
+          Lote 23 (ADR-0025, PBI-0222; provisional): sin «Pedidos por distrito», que Daniel y Walther llamaron relleno, el
+          gráfico ocupa todo el ancho, como «Pedidos por estado». «Clientes nuevos» pasa a «Clientes web nuevos», como
+          pidió Walther: son quienes hicieron su primer pedido en la tienda en línea, no los que compran en persona.
+        -->
+        <section class="admin-card mt-5 min-w-0 p-6">
+          <h2 class="text-lg font-semibold">
+            <ng-container
+              *ngTemplateOutlet="
+                botonDeBloque;
+                context: {
+                  $implicit: 'pedidos-por-dia',
+                  titulo: verClientes() ? 'Pedidos y clientes web nuevos por día' : 'Pedidos por día',
                 }
-              </div>
+              "
+            />
+          </h2>
+          <div wsAdminBloquePlegable="pedidos-por-dia" [abierto]="bloqueAbierto('pedidos-por-dia')">
+            <div class="ws-plegable-contenido">
+              <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ mes() }}</p>
+              <ws-admin-grafico-pedidos
+                class="mt-4"
+                [serie]="serie()"
+                [mes]="mes()"
+                [conClientes]="verClientes()"
+              />
             </div>
-          </section>
-        </div>
+          </div>
+        </section>
       }
 
       <div class="mt-5 grid gap-5 lg:grid-cols-3">
@@ -448,7 +406,6 @@ export class ResumenPage {
     calcularIndicadores(this.admin.orders(), this.admin.customers(), this.ahora()),
   );
   protected readonly serie = computed(() => serieDelMes(this.admin.orders(), this.ahora()));
-  protected readonly distritos = computed(() => distritosConMasPedidos(this.admin.orders()));
   protected readonly ultimos = computed(() => ultimosPedidos(this.admin.orders()));
   protected readonly actividad = computed(() => actividadReciente(this.admin.snapshot()?.activity ?? []));
   protected readonly estados = computed(() => gruposDeEstado(this.admin.orders()));

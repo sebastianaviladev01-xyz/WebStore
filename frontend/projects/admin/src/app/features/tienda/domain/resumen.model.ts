@@ -32,11 +32,6 @@ export interface DiaDelMes {
   readonly clientesNuevos: number;
 }
 
-export interface PedidosDistrito {
-  readonly distrito: string;
-  readonly pedidos: number;
-}
-
 /** Porcentajes enteros de pedidos por grupo de estado; suman 100, o 0 sin pedidos. */
 export interface DistribucionEstados {
   readonly completados: number;

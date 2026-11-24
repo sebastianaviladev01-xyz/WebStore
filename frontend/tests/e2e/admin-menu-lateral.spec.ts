@@ -258,15 +258,18 @@ test.describe('Animación del plegado (AC-06)', () => {
   };
   const duracion = async (page: Page) => duracionDe(await regionDe(page, 'Catálogo'));
 
-  /** Botón de «Pedidos por distrito» en el Dashboard y duración de su región (TEST-07, parte del Resumen, hoy el Dashboard). */
-  const distritos = (page: Page) =>
+  /**
+   * Botón de «Pedidos por estado» en el Dashboard y duración de su región (TEST-07, parte del Resumen, hoy el
+   * Dashboard). Hasta el lote 23 era «Pedidos por distrito», que se quitó (PBI-0222).
+   */
+  const estados = (page: Page) =>
     page
       .getByRole('main')
-      .getByRole('heading', { level: 2, name: 'Pedidos por distrito' })
-      .getByRole('button', { name: 'Pedidos por distrito' });
+      .getByRole('heading', { level: 2, name: 'Pedidos por estado' })
+      .getByRole('button', { name: 'Pedidos por estado' });
   const duracionDelBloque = async (page: Page) => {
-    const id = await distritos(page).getAttribute('aria-controls');
-    expect(id).toBe('bloque-distritos');
+    const id = await estados(page).getAttribute('aria-controls');
+    expect(id).toBe('bloque-estados');
     return duracionDe(page.locator(`[id="${id}"]`));
   };
 
@@ -294,8 +297,8 @@ test.describe('Animación del plegado (AC-06)', () => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     expect(await duracionDelBloque(page)).toBe(0);
-    await distritos(page).click();
-    await expect(distritos(page)).toHaveAttribute('aria-expanded', 'false');
+    await estados(page).click();
+    await expect(estados(page)).toHaveAttribute('aria-expanded', 'false');
     expect(await duracionDelBloque(page)).toBe(0);
   });
 
@@ -305,8 +308,8 @@ test.describe('Animación del plegado (AC-06)', () => {
     const desplegado = await duracionDelBloque(page);
     expect(desplegado).toBeGreaterThanOrEqual(180);
     expect(desplegado).toBeLessThanOrEqual(260);
-    await distritos(page).click();
-    await expect(distritos(page)).toHaveAttribute('aria-expanded', 'false');
+    await estados(page).click();
+    await expect(estados(page)).toHaveAttribute('aria-expanded', 'false');
     const plegado = await duracionDelBloque(page);
     expect(plegado).toBeGreaterThanOrEqual(180);
     expect(plegado).toBeLessThanOrEqual(260);

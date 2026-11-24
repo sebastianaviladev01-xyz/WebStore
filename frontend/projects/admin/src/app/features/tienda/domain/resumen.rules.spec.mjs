@@ -19,7 +19,6 @@ const {
   variacionPorcentual,
   calcularIndicadores,
   serieDelMes,
-  distritosConMasPedidos,
   ultimosPedidos,
   distribucionPorEstado,
   actividadReciente,
@@ -253,39 +252,6 @@ test('la serie cubre febrero, bisiesto y diciembre, y sin pedidos queda toda en 
   assert.equal(largo('2026-12-31T17:00:00Z'), 31);
   assert.equal(largo('2026-12-01T04:30:00Z'), 30, 'el 01/12 04:30 Z todavía es el 30/11 en Lima');
   assert.ok(serieDelMes([], ahora).every((punto) => punto.pedidos === 0 && punto.clientesNuevos === 0));
-});
-
-const enDistrito = (district, status = 'delivered') => ({ district, status });
-
-test('los distritos con más pedidos van de mayor a menor, con cancelados y empate por nombre', () => {
-  const pedidos = [
-    enDistrito('Miraflores'),
-    enDistrito('miraflores'),
-    enDistrito(' MIRAFLORES '),
-    enDistrito('Surco'),
-    enDistrito('Surco', 'cancelled'),
-    enDistrito('surco'),
-    enDistrito('San Isidro'),
-    enDistrito('Barranco'),
-    enDistrito('San Isidro'),
-    enDistrito('Barranco'),
-    enDistrito('Lince'),
-    enDistrito('Comas'),
-    enDistrito('Ate'),
-  ];
-  assert.deepEqual(distritosConMasPedidos(pedidos), [
-    { distrito: 'Miraflores', pedidos: 3 }, // «miraflores» y «Miraflores» son uno; se muestra la primera forma escrita
-    { distrito: 'Surco', pedidos: 3 }, // empata con Miraflores: por nombre; el cancelado cuenta
-    { distrito: 'Barranco', pedidos: 2 },
-    { distrito: 'San Isidro', pedidos: 2 },
-    { distrito: 'Ate', pedidos: 1 }, // de Ate, Comas y Lince solo cabe uno: el primero por nombre
-  ]);
-  assert.equal(distritosConMasPedidos(pedidos, 2).length, 2, 'el límite se puede cambiar');
-  assert.deepEqual(distritosConMasPedidos([enDistrito('Surco'), enDistrito('Lince')]), [
-    { distrito: 'Lince', pedidos: 1 },
-    { distrito: 'Surco', pedidos: 1 },
-  ]);
-  assert.deepEqual(distritosConMasPedidos([]), []);
 });
 
 test('los últimos pedidos van del más nuevo al más antiguo aunque el arreglo llegue desordenado', () => {

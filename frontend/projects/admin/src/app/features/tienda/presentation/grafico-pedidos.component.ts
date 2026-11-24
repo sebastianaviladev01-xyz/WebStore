@@ -3,8 +3,9 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { DiaDelMes } from '../domain/resumen.model';
 
 /**
- * Barras por día del mes con los pedidos y, si el rol los ve, los clientes nuevos. Solo CSS y tokens: `primary`
- * para «Pedidos» y `accent` para «Clientes nuevos», con el borde del acento (`accent-line`, PBI-0189) para que un
+ * Barras por día del mes con los pedidos y, si el rol los ve, los clientes web nuevos: quienes hicieron su primer pedido
+ * en la tienda en línea («Clientes nuevos» hasta el lote 23, ADR-0025, PBI-0222). Solo CSS y tokens: `primary` para
+ * «Pedidos» y `accent` para «Clientes web nuevos», con el borde del acento (`accent-line`, PBI-0189) para que un
  * secundario claro se distinga del fondo. Para lectores de pantalla tiene un texto alternativo y una tabla
  * `sr-only` con los valores de cada día.
  */
@@ -23,7 +24,7 @@ import { DiaDelMes } from '../domain/resumen.model';
             class="size-3 rounded-sm bg-accent ring-1 ring-accent-line ring-inset"
             aria-hidden="true"
           ></span>
-          Clientes nuevos
+          Clientes web nuevos
         </li>
       }
     </ul>
@@ -74,7 +75,7 @@ import { DiaDelMes } from '../domain/resumen.model';
             <th scope="col">Día</th>
             <th scope="col">Pedidos</th>
             @if (conClientes()) {
-              <th scope="col">Clientes nuevos</th>
+              <th scope="col">Clientes web nuevos</th>
             }
           </tr>
         </thead>
@@ -113,9 +114,9 @@ export class GraficoPedidosComponent {
   protected readonly textoAlternativo = computed(() => {
     const pedidos = this.serie().reduce((suma, dia) => suma + dia.pedidos, 0);
     const clientes = this.serie().reduce((suma, dia) => suma + dia.clientesNuevos, 0);
-    const series = this.conClientes() ? 'Pedidos y clientes nuevos' : 'Pedidos';
+    const series = this.conClientes() ? 'Pedidos y clientes web nuevos' : 'Pedidos';
     const totales = this.conClientes()
-      ? `${contar(pedidos, 'pedido', 'pedidos')} y ${contar(clientes, 'cliente nuevo', 'clientes nuevos')}`
+      ? `${contar(pedidos, 'pedido', 'pedidos')} y ${contar(clientes, 'cliente web nuevo', 'clientes web nuevos')}`
       : contar(pedidos, 'pedido', 'pedidos');
     return `${series} por día de ${this.mes()}: ${totales} en el mes.`;
   });
@@ -127,7 +128,7 @@ export class GraficoPedidosComponent {
   protected detalleDia(dia: DiaDelMes): string {
     const pedidos = contar(dia.pedidos, 'pedido', 'pedidos');
     return this.conClientes()
-      ? `Día ${dia.dia}: ${pedidos}, ${contar(dia.clientesNuevos, 'cliente nuevo', 'clientes nuevos')}`
+      ? `Día ${dia.dia}: ${pedidos}, ${contar(dia.clientesNuevos, 'cliente web nuevo', 'clientes web nuevos')}`
       : `Día ${dia.dia}: ${pedidos}`;
   }
 }
