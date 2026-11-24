@@ -329,7 +329,7 @@ const CAMPOS: readonly (readonly [RolDeCampo, string])[] = [
   ['textbox', 'URL de foto'],
   ['textbox', 'Características (una por línea)'],
   ['spinbutton', 'Precio'],
-  ['spinbutton', 'Stock'],
+  // Sin «Stock» desde el lote 23 (ADR-0025, PBI-0226): se gestiona solo en Inventario.
   ['combobox', 'Categoría'],
   ['combobox', 'Marca'],
   ['checkbox', 'Activo'],

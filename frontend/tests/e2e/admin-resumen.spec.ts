@@ -4,9 +4,10 @@ import { cuentasAdmin, ingresarAlAdmin, menuAdmin } from './apoyo/entorno';
 
 /**
  * Dashboard del Admin (el «Resumen» hasta el lote 13, PBI-0168): estructura y textos de la especificación (tarjetas
- * con «Ver más», gráfico, distritos, alertas, últimos pedidos y estados). No comprueba cifras: dependen de los pedidos
- * que hayan creado otras specs. Desde el lote 13 las tarjetas van bajo el h2 «Cifras», que las pliega (PBI-0187), y
- * su título es un h3.
+ * con «Ver más», gráfico, alertas, últimos pedidos y estados). No comprueba cifras: dependen de los pedidos que hayan
+ * creado otras specs. Desde el lote 13 las tarjetas van bajo el h2 «Cifras», que las pliega (PBI-0187), y su título es
+ * un h3. Desde el lote 23 (ADR-0025, PBI-0222; provisional), el gráfico nombra «Clientes web nuevos» y ya no está
+ * «Pedidos por distrito».
  */
 const tarjetas = [
   { titulo: 'Total de pedidos', destino: '/pedidos' },
@@ -22,8 +23,7 @@ test('el superadministrador ve los bloques del Dashboard en su orden', async ({ 
   // Los títulos de los bloques, en el orden de la página.
   await expect(main.getByRole('heading', { level: 2 })).toHaveText([
     'Cifras',
-    'Pedidos y clientes nuevos por día',
-    'Pedidos por distrito',
+    'Pedidos y clientes web nuevos por día',
     'Alertas de inventario',
     'Últimos pedidos',
     'Pedidos por estado',
@@ -42,7 +42,10 @@ test('el superadministrador ve los bloques del Dashboard en su orden', async ({ 
   // Leyendas del gráfico.
   const leyenda = main.getByRole('list', { name: 'Leyenda' });
   await expect(leyenda).toContainText('Pedidos');
-  await expect(leyenda).toContainText('Clientes nuevos');
+  await expect(leyenda).toContainText('Clientes web nuevos');
+  // PBI-0222 (lote 23): sin «Pedidos por distrito».
+  await expect(main.getByText('Pedidos por distrito')).toHaveCount(0);
+  await expect(main.getByText('Los cinco distritos con más pedidos')).toHaveCount(0);
 
   // La tabla de últimos pedidos tiene sus columnas.
   const tabla = main.getByRole('region', { name: 'Últimos pedidos' }).getByRole('table');
@@ -82,7 +85,8 @@ test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni acti
   for (const oculto of ['Actividad reciente', 'Personas en línea']) {
     await expect(main.getByRole('heading', { name: oculto })).toHaveCount(0);
   }
-  await expect(main.getByText('Clientes nuevos')).toHaveCount(0);
+  await expect(main.getByText(/clientes (web )?nuevos/i)).toHaveCount(0);
+  await expect(main.getByText('Pedidos por distrito')).toHaveCount(0);
   // Con Inventario, el stock bajo lleva allí, como para el administrador.
   await expect(main.getByRole('link', { name: 'Gestionar inventario →' })).toBeVisible();
   await main.getByRole('link', { name: 'Ver más (Stock bajo)' }).click();
@@ -97,8 +101,7 @@ test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni acti
  */
 const BLOQUES_SUPERADMIN = [
   'Cifras',
-  'Pedidos y clientes nuevos por día',
-  'Pedidos por distrito',
+  'Pedidos y clientes web nuevos por día',
   'Alertas de inventario',
   'Últimos pedidos',
   'Pedidos por estado',
@@ -147,22 +150,24 @@ test.describe('Bloques plegables del Dashboard', () => {
     await esperarBloques(page, BLOQUES_SUPERADMIN, []);
   });
 
-  test('plegar «Pedidos por distrito» oculta su contenido sin cambiar los demás, y al desplegarlo vuelven los mismos datos', async ({
+  // Hasta el lote 23 este caso plegaba «Pedidos por distrito», que se quitó (PBI-0222): ahora pliega el gráfico.
+  test('plegar el gráfico por día oculta su contenido sin cambiar los demás, y al desplegarlo vuelven los mismos datos', async ({
     page,
   }) => {
+    const titulo = 'Pedidos y clientes web nuevos por día';
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    const distritos = botonDeBloque(page, 'Pedidos por distrito');
-    const region = await regionDeBloque(page, 'Pedidos por distrito');
-    const otros = BLOQUES_SUPERADMIN.filter((titulo) => titulo !== 'Pedidos por distrito');
+    const grafico = botonDeBloque(page, titulo);
+    const region = await regionDeBloque(page, titulo);
+    const otros = BLOQUES_SUPERADMIN.filter((bloque) => bloque !== titulo);
     const contenido = await region.innerText();
-    expect(contenido).toContain('Los cinco distritos con más pedidos');
+    expect(contenido).toContain('Clientes web nuevos');
 
-    await distritos.click();
-    await esperarBloques(page, otros, ['Pedidos por distrito']);
-    await expect(distritos).toBeVisible();
-    await expect(page.getByText('Los cinco distritos con más pedidos')).toBeHidden();
+    await grafico.click();
+    await esperarBloques(page, otros, [titulo]);
+    await expect(grafico).toBeVisible();
+    await expect(page.getByRole('main').getByRole('list', { name: 'Leyenda' })).toBeHidden();
 
-    await distritos.click();
+    await grafico.click();
     await esperarBloques(page, BLOQUES_SUPERADMIN, []);
     expect(await region.innerText()).toBe(contenido);
   });
@@ -224,7 +229,7 @@ test.describe('Bloques plegables del Dashboard', () => {
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    const plegados = ['Cifras', 'Pedidos por distrito', 'Últimos pedidos'];
+    const plegados = ['Cifras', 'Pedidos por estado', 'Últimos pedidos'];
     const abiertos = BLOQUES_SUPERADMIN.filter((titulo) => !plegados.includes(titulo));
 
     for (const titulo of plegados) await botonDeBloque(page, titulo).click();
@@ -249,7 +254,7 @@ test.describe('Bloques plegables del Dashboard', () => {
 
     // Lote 11 (PBI-0170): con los pedidos, todos los bloques menos la actividad reciente, que es del Dashboard completo.
     const bloques = BLOQUES_SUPERADMIN.filter((titulo) => titulo !== 'Actividad reciente').map((titulo) =>
-      titulo === 'Pedidos y clientes nuevos por día' ? 'Pedidos por día' : titulo,
+      titulo === 'Pedidos y clientes web nuevos por día' ? 'Pedidos por día' : titulo,
     );
     await expect(main.getByRole('heading', { level: 2 }).getByRole('button')).toHaveText(bloques);
     await botonDeBloque(page, 'Alertas de inventario').click();
@@ -273,11 +278,11 @@ test.describe('Bloques plegables del Dashboard', () => {
         page.getByRole('main').getByRole('link', { name: 'Ver todos los pedidos →' }),
       ).toBeVisible();
 
-      await botonDeBloque(page, 'Pedidos por distrito').click();
+      await botonDeBloque(page, 'Pedidos por estado').click();
       await esperarBloques(
         page,
-        otros.filter((titulo) => titulo !== 'Pedidos por distrito'),
-        ['Pedidos por distrito', 'Últimos pedidos'],
+        otros.filter((titulo) => titulo !== 'Pedidos por estado'),
+        ['Pedidos por estado', 'Últimos pedidos'],
       );
 
       const desborde = await page.evaluate(
@@ -350,7 +355,8 @@ test.describe('Presentación del Dashboard con datos propios', () => {
     await expect(tarjeta(page, 'Total de pedidos')).toContainText('Sin datos del mes anterior');
     await expect(tarjeta(page, 'Stock bajo')).toContainText('Productos con 5 unidades o menos');
 
-    await expect(main.getByText('Todavía no hay pedidos.')).toHaveCount(2);
+    // Últimos pedidos (antes del lote 23, también «Pedidos por distrito», que se quitó: PBI-0222).
+    await expect(main.getByText('Todavía no hay pedidos.')).toHaveCount(1);
     await expect(main.getByText('Sin alertas.')).toBeVisible();
     await expect(main.getByText('Todavía no hay actividad.')).toBeVisible();
     // Sin pedidos, las tres barras de estado quedan en 0 %.

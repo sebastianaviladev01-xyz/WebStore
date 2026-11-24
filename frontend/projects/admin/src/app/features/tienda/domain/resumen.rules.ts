@@ -1,6 +1,6 @@
 // Cada import cabe en una línea: resumen.rules.spec.mjs borra las líneas que empiezan por «import» antes de transpilar.
 // prettier-ignore
-import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, PedidosDistrito, TramoMes } from './resumen.model';
+import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, TramoMes } from './resumen.model';
 import type { Cliente, EstadoPedido, EventoActividad, Pedido } from './tienda.model';
 import { ETIQUETAS_ESTADO_PEDIDO } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
@@ -142,25 +142,6 @@ export function serieDelMes(pedidos: readonly Pedido[], ahora: Date): DiaDelMes[
     if (delMes(fecha)) clientesPorDia[fecha.dia - 1]++;
   }
   return pedidosPorDia.map((total, i) => ({ dia: i + 1, pedidos: total, clientesNuevos: clientesPorDia[i] }));
-}
-
-const claveDistrito = (distrito: string) => distrito.trim().toLocaleLowerCase('es-PE');
-
-/**
- * Los distritos con más pedidos, de mayor a menor, contando todos los pedidos (también los cancelados).
- * Agrupa sin distinguir mayúsculas ni espacios y muestra la primera forma escrita; en empate, por nombre.
- */
-export function distritosConMasPedidos(pedidos: readonly Pedido[], limite = 5): PedidosDistrito[] {
-  const grupos = new Map<string, PedidosDistrito>();
-  for (const { district } of pedidos) {
-    const clave = claveDistrito(district);
-    const grupo = grupos.get(clave);
-    if (grupo) grupos.set(clave, { ...grupo, pedidos: grupo.pedidos + 1 });
-    else grupos.set(clave, { distrito: district.trim(), pedidos: 1 });
-  }
-  return [...grupos.values()]
-    .sort((a, b) => b.pedidos - a.pedidos || a.distrito.localeCompare(b.distrito, 'es-PE'))
-    .slice(0, limite);
 }
 
 /** Los pedidos más recientes por `createdAt`, del más nuevo al más antiguo, sin depender del orden recibido. */

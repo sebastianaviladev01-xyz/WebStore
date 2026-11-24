@@ -1,11 +1,17 @@
 /**
  * Reserva y liberación de stock (lote 01, ADR-0017): las líneas repetidas del mismo producto se suman antes de
  * validar y de descontar (PBI-0092), y un producto inactivo no se vende (PBI-0093).
+ * Lote 23 (ADR-0025, PBI-0226; provisional): el stock se gestiona solo en Inventario. Un producto que llega sin stock
+ * desde el registro del producto conserva el vigente, y uno nuevo empieza en 0.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { releaseStock, reserveStock } from '../../../../src/domain/catalogo/inventario.rules.mjs';
+import {
+  conStockVigente,
+  releaseStock,
+  reserveStock,
+} from '../../../../src/domain/catalogo/inventario.rules.mjs';
 
 const productos = () => [
   { id: 'p-1', stock: 9, active: true },
@@ -115,4 +121,24 @@ test('reservar y liberar las mismas líneas deja el stock como estaba', () => {
     { productId: 'p-3', quantity: 2 },
   ];
   assert.deepEqual(releaseStock(reserveStock(productos(), lineas), lineas), productos());
+});
+
+test('PBI-0226: un producto que llega sin stock conserva el vigente, y uno nuevo empieza en 0', () => {
+  const vigentes = productos();
+  const llegan = [
+    { id: 'p-1', active: true }, // la ficha guardada sin el campo: no pisa las 9 unidades
+    { id: 'p-2', stock: 7, active: false }, // Inventario cambia el stock: se toma el que llega
+    { id: 'p-nuevo', active: true }, // nuevo, sin stock: 0
+  ];
+  assert.deepEqual(conStockVigente(llegan, vigentes), [
+    { id: 'p-1', active: true, stock: 9 },
+    { id: 'p-2', stock: 7, active: false },
+    { id: 'p-nuevo', active: true, stock: 0 },
+  ]);
+  assert.equal('stock' in llegan[0], false, 'no cambia la lista recibida');
+});
+
+test('PBI-0226: un stock que llega con otro tipo no se completa: lo rechaza la validación de la colección', () => {
+  const [producto] = conStockVigente([{ id: 'p-1', stock: '5' }], productos());
+  assert.equal(producto.stock, '5');
 });

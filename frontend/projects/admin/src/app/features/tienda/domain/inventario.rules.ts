@@ -27,3 +27,18 @@ export const conPocoStock = (stock: number): boolean => stock <= STOCK_BAJO;
 export function estadoDeStock(stock: number): EstadoStock {
   return stock === 0 ? 'sin-stock' : stock <= STOCK_BAJO ? 'stock-bajo' : 'disponible';
 }
+
+/** Stock con que empieza un producto nuevo (lote 23, PBI-0226): se carga después, en Inventario. */
+export const STOCK_INICIAL = 0;
+
+/**
+ * Lote 23 (ADR-0025, PBI-0226; provisional, por confirmar con Daniel): el stock sale del registro del producto y se
+ * gestiona solo en Inventario. El producto que guarda la ficha lleva el stock con que se abrió (`base`), así el
+ * guardado no lo envía ni choca si Inventario o una venta lo cambiaron mientras tanto; uno nuevo empieza sin stock.
+ */
+export function productoDeLaFicha<T extends { readonly stock: number }>(
+  base: T | null,
+  ficha: Omit<T, 'stock'>,
+): T {
+  return { ...ficha, stock: base?.stock ?? STOCK_INICIAL } as T;
+}

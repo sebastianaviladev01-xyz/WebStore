@@ -198,7 +198,6 @@ test.describe('Filtros y registro de productos del Admin', () => {
         ['textbox', 'URL de foto'],
         ['textbox', 'Características (una por línea)'],
         ['spinbutton', 'Precio'],
-        ['spinbutton', 'Stock'],
         ['combobox', 'Categoría'],
         ['combobox', 'Marca'],
         ['checkbox', 'Activo'],
@@ -206,6 +205,13 @@ test.describe('Filtros y registro de productos del Admin', () => {
         await expect(formulario.getByRole(rol, { name: campo, exact: true })).toBeVisible();
       }
       await expect(formulario.getByRole('group', { name: 'Galería de fotos' })).toBeVisible();
+      // Lote 23 (ADR-0025, PBI-0226; provisional): el stock sale del registro y se gestiona solo en Inventario.
+      await expect(formulario.getByRole('spinbutton', { name: 'Stock' })).toHaveCount(0);
+      await expect(formulario).toContainText('Empieza sin stock: se carga en Inventario');
+      await expect(formulario.getByRole('link', { name: 'Inventario', exact: true })).toHaveAttribute(
+        'href',
+        '/inventario',
+      );
 
       // «Volver a productos» sin guardar conserva filtros y página.
       await page.getByRole('link', { name: 'Volver a productos' }).click();
@@ -224,7 +230,6 @@ test.describe('Filtros y registro de productos del Admin', () => {
         .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
         .fill('Tres velocidades\nTemporizador');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('249');
-      await formulario.getByRole('spinbutton', { name: 'Stock', exact: true }).fill('5');
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
       await formulario.getByRole('button', { name: 'Guardar producto' }).click();
@@ -310,6 +315,9 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(formulario.getByRole('combobox', { name: 'Categoría' })).toBeEnabled();
       await expect(formulario.getByRole('combobox', { name: 'Marca' })).toBeEnabled();
       await expect(formulario.getByRole('checkbox', { name: 'Activo' })).toBeEnabled();
+      // PBI-0226 (lote 23): el stock no está en la ficha; se gestiona en Inventario, que el vendedor tiene.
+      await expect(formulario.getByRole('spinbutton', { name: 'Stock' })).toHaveCount(0);
+      await expect(formulario).toContainText('El stock se gestiona en Inventario');
 
       await formulario
         .getByRole('textbox', { name: 'Nombre', exact: true })
@@ -322,6 +330,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
         name: 'Soundbar Cinema 500 vendedor',
         price: 321,
         sku: antes.sku,
+        stock: antes.stock, // guardar la ficha no cambia el stock (PBI-0226)
       });
 
       // Crea un producto desde «Agregar».
@@ -337,7 +346,6 @@ test.describe('Filtros y registro de productos del Admin', () => {
         .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
         .fill('Batería');
       await nuevo.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('99');
-      await nuevo.getByRole('spinbutton', { name: 'Stock', exact: true }).fill('3');
       await elegir(page, nuevo, 'Categoría', 'Electrohogar');
       await elegir(page, nuevo, 'Marca', 'Zenith');
       await nuevo.getByRole('button', { name: 'Guardar producto' }).click();
@@ -345,7 +353,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       expect((await leerProductos()).find((p) => p.sku === 'E2E-VEND-07')).toMatchObject({
         name: 'Parlante del vendedor',
         price: 99,
-        stock: 3,
+        stock: 0, // PBI-0226 (lote 23): un producto nuevo empieza sin stock
       });
     } finally {
       await restaurar(originales);

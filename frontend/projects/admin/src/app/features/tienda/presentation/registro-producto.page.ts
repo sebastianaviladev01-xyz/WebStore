@@ -19,6 +19,7 @@ import { TiendaFacade } from '../application/tienda.facade';
 import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena } from '../domain/foto.rules';
+import { productoDeLaFicha } from '../domain/inventario.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
@@ -177,11 +178,14 @@ import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './redu
               <input matInput type="number" formControlName="price" />
               <mat-error>{{ mensaje(form.controls.price.errors) }}</mat-error>
             </mat-form-field>
-            <mat-form-field>
-              <mat-label>Stock</mat-label>
-              <input matInput type="number" formControlName="stock" />
-              <mat-error>{{ mensaje(form.controls.stock.errors) }}</mat-error>
-            </mat-form-field>
+            <!--
+              Lote 23 (ADR-0025, PBI-0226; provisional): el stock sale del registro y se gestiona solo en Inventario. Un
+              producto nuevo empieza sin stock.
+            -->
+            <p class="self-center pb-5 text-xs text-muted">
+              {{ editingId() ? 'El stock se gestiona en' : 'Empieza sin stock: se carga en' }}
+              <a class="font-semibold text-link" routerLink="/inventario">Inventario</a>
+            </p>
           </div>
           <mat-form-field>
             <mat-label>Categoría</mat-label>
@@ -277,7 +281,6 @@ export class RegistroProductoPage {
     thumbnailUrl: new FormControl('', { nonNullable: true }),
     highlights: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     price: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
-    stock: new FormControl(0, { nonNullable: true, validators: [Validators.required, Validators.min(0)] }),
     categoryId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     brandId: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     active: new FormControl(true, { nonNullable: true }),
@@ -381,7 +384,6 @@ export class RegistroProductoPage {
       thumbnailUrl: p.thumbnailUrl,
       highlights: p.highlights.join('\n'),
       price: p.price,
-      stock: p.stock,
       categoryId: p.categoryId,
       brandId: p.brandId,
       active: p.active,
@@ -405,7 +407,11 @@ export class RegistroProductoPage {
       thumbnailUrl: value.thumbnailUrl.trim() || value.imageUrl,
       gallery: this.gallery(),
     };
-    const editado: Producto = { id: this.editingId() ?? this.idNuevo, ...parsed };
+    // PBI-0226 (lote 23): la ficha no cambia el stock; conserva el del producto, y uno nuevo empieza sin stock.
+    const editado = productoDeLaFicha<Producto>(this.base, {
+      id: this.editingId() ?? this.idNuevo,
+      ...parsed,
+    });
     // PBI-0129: SKU y dirección de ficha únicos, comprobados antes de enviar (el BFF los vuelve a comprobar).
     // Un choque que ya existía antes de editar (datos anteriores) no bloquea: solo se revisa lo que cambió.
     const repetido = motivoDeProductoRepetido(this.admin.products(), editado);
