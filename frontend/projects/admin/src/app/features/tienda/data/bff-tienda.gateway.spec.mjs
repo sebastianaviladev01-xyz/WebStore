@@ -89,6 +89,9 @@ test('save() traduce los fallos del BFF a errores del dominio', async () => {
   const grande = await rechazo(guardar(falla(413)));
   assert.ok(grande instanceof ReglaTiendaError);
   assert.match(grande.message, /más de 2 MB/);
+  // Lote 27 (PBI-0234): desde el lote 25 solo el logo admite una URL; el mensaje dice lo que sí se puede hacer.
+  assert.doesNotMatch(grande.message, /URL/);
+  assert.match(grande.message, /vuelve a cargarlas desde su archivo/);
   const regla = await rechazo(guardar(falla(422, { error: { message: 'El SKU ya existe.' } })));
   assert.ok(regla instanceof ReglaTiendaError);
   assert.equal(regla.message, 'El SKU ya existe.');

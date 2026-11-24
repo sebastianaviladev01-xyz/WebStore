@@ -32,7 +32,7 @@ import { mensajeDeError } from '../domain/formulario.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { conservarBorrador } from './borrador';
 import { CampoDeLista, FilaDeLista, ListaContenidoComponent } from './lista-contenido.component';
-import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_FOTO_NO_CABE, reducirFoto } from './reducir-foto';
+import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_LOGO_NO_CABE, reducirFoto } from './reducir-foto';
 
 /** Control de texto vacío con sus validadores. */
 const texto = (...validators: ValidatorFn[]) => new FormControl('', { nonNullable: true, validators });
@@ -412,7 +412,7 @@ export class ContenidoPage {
     }
     if (!svg) {
       input.value = '';
-      void reducirFoto(file).then((url) => this.usarLogo(url, MENSAJE_FOTO_NO_CABE));
+      void reducirFoto(file).then((url) => this.usarLogo(url, MENSAJE_LOGO_NO_CABE));
       return;
     }
     const reader = new FileReader();
