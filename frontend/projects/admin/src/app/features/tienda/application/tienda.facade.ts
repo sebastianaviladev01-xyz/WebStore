@@ -15,7 +15,7 @@ import {
 import { SesionVencidaError } from '../../sesion/domain/sesion.gateway';
 import { ROLES } from '../../sesion/domain/rol.rules';
 import { conPocoStock } from '../domain/inventario.rules';
-import { ajustarPreciosTarifas, asignarPrecioTarifa } from '../domain/tarifa-envio.rules';
+import { asignarPrecioTarifa } from '../domain/tarifa-envio.rules';
 import {
   Banner,
   Marca,
@@ -256,9 +256,6 @@ export class TiendaFacade {
     return this.guardarLista<TarifaEnvio>('rates', (rates) =>
       asignarPrecioTarifa(rates, origin, destinations, price, () => crypto.randomUUID()),
     );
-  }
-  adjustRatePrices(percent: number, origin: string | null): Promise<boolean> {
-    return this.guardarLista<TarifaEnvio>('rates', (rates) => ajustarPreciosTarifas(rates, percent, origin));
   }
   /** Cambia el estado de un pedido; si otra persona lo cambió mientras tanto, no lo pisa (PBI-0120). */
   cambiarEstadoPedido(base: Pedido, status: EstadoPedido): Promise<boolean> {

@@ -7,25 +7,14 @@ const source = await readFile(new URL('./tarifa-envio.rules.ts', import.meta.url
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const {
-  leerDistritos,
-  asignarPrecioTarifa,
-  ajustarPreciosTarifas,
-  filtrarTarifas,
-  borradorDeTarifasVigente,
-} = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+const moduleExports = await import(
+  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+);
+const { asignarPrecioTarifa, filtrarTarifas, borradorDeTarifasVigente } = moduleExports;
 
 const rate = (id, origin, destination, price) => ({ id, origin, destination, price });
 let sequence = 0;
 const newId = () => `new-${++sequence}`;
-
-test('los distritos se leen por línea o coma, sin vacíos ni repetidos', () => {
-  assert.deepEqual(leerDistritos('Miraflores, Surco\nmiraflores;;\n  Barranco  '), [
-    'Miraflores',
-    'Surco',
-    'Barranco',
-  ]);
-});
 
 test('un precio para varios distritos actualiza los existentes y crea los que faltan', () => {
   const rates = [rate('r1', 'San Isidro', 'Miraflores', 10), rate('r2', 'Callao', 'Miraflores', 20)];
@@ -37,16 +26,11 @@ test('un precio para varios distritos actualiza los existentes y crea los que fa
   assert.equal(next.length, 3);
 });
 
-test('el ajuste porcentual redondea a céntimos y puede limitarse a un origen', () => {
-  const rates = [rate('r1', 'San Isidro', 'Miraflores', 10), rate('r2', 'Callao', 'Surco', 15)];
-  assert.deepEqual(
-    ajustarPreciosTarifas(rates, 7.5, null).map((item) => item.price),
-    [10.75, 16.13],
-  );
-  assert.deepEqual(
-    ajustarPreciosTarifas(rates, -10, 'callao').map((item) => item.price),
-    [10, 13.5],
-  );
+// Lote 21 (ADR-0025): PBI-0217 quita el ajuste porcentual (el precio se cambia tarifa por tarifa) y PBI-0216 elige
+// los distritos de una lista, así que ya no se leen de un texto escrito a mano.
+test('PBI-0216 y PBI-0217: ya no hay ajuste porcentual ni lectura de distritos escritos a mano', () => {
+  assert.equal('ajustarPreciosTarifas' in moduleExports, false);
+  assert.equal('leerDistritos' in moduleExports, false);
 });
 
 test('la búsqueda ignora tildes y mayúsculas, combina con el origen y ordena', () => {
@@ -78,16 +62,15 @@ test('la búsqueda ignora tildes y mayúsculas, combina con el origen y ordena',
   );
 });
 
-// Lote 07b (ADR-0017), PBI-0157: lo escrito en Tarifas de envío cuando vence la sesión, con sus modos.
-const VACIO = { origin: '', destinations: '', price: 0 };
-const SIN_AJUSTE = { percent: 0, origin: '' };
+// Lote 07b (ADR-0017), PBI-0157: lo escrito en Tarifas de envío cuando vence la sesión, con sus modos. Desde el lote 21
+// (PBI-0216 y PBI-0217) el borrador es solo la tarifa: los distritos elegidos de la lista y sin el ajuste porcentual.
+const VACIO = { origin: '', destinations: [], destination: '', price: 0 };
 
 test('PBI-0157: el borrador de una tarifa en edición vuelve a esa edición si la tarifa sigue existiendo', () => {
   const base = rate('r1', 'San Isidro', 'Miraflores', 10);
   const borrador = {
     editando: base,
-    tarifa: { origin: 'San Isidro', destinations: 'Miraflores', price: 14 },
-    ajuste: SIN_AJUSTE,
+    tarifa: { origin: 'San Isidro', destinations: [], destination: 'Miraflores', price: 14 },
   };
   assert.deepEqual(
     borradorDeTarifasVigente(borrador, [rate('r1', 'San Isidro', 'Miraflores', 11)]),
@@ -98,24 +81,21 @@ test('PBI-0157: el borrador de una tarifa en edición vuelve a esa edición si l
 test('PBI-0157: si la tarifa en edición ya no existe, no se restaura esa edición (no se vuelve a crear)', () => {
   const borrador = {
     editando: rate('r9', 'Callao', 'Comas', 8),
-    tarifa: { origin: 'Callao', destinations: 'Comas', price: 9 },
-    ajuste: SIN_AJUSTE,
+    tarifa: { origin: 'Callao', destinations: [], destination: 'Comas', price: 9 },
   };
   assert.equal(borradorDeTarifasVigente(borrador, [rate('r1', 'San Isidro', 'Miraflores', 10)]), null);
-  const conAjuste = { ...borrador, ajuste: { percent: 5, origin: 'Callao' } };
-  assert.deepEqual(borradorDeTarifasVigente(conAjuste, []), {
-    editando: null,
-    tarifa: VACIO,
-    ajuste: { percent: 5, origin: 'Callao' },
-  });
 });
 
-test('PBI-0157: el precio para varios distritos y el ajuste porcentual se restauran tal como estaban', () => {
+test('PBI-0157 y PBI-0216: el precio para varios distritos elegidos se restaura tal como estaba', () => {
   const borrador = {
     editando: null,
-    tarifa: { origin: 'Callao', destinations: 'Comas, Ate', price: 12 },
-    ajuste: { percent: -3, origin: '' },
+    tarifa: { origin: 'Callao', destinations: ['Comas', 'Ate'], destination: '', price: 12 },
   };
   assert.deepEqual(borradorDeTarifasVigente(borrador, []), borrador);
-  assert.equal(borradorDeTarifasVigente({ editando: null, tarifa: VACIO, ajuste: SIN_AJUSTE }, []), null);
+  assert.equal(borradorDeTarifasVigente({ editando: null, tarifa: VACIO }, []), null);
+  assert.deepEqual(
+    borradorDeTarifasVigente({ editando: null, tarifa: { ...VACIO, destinations: ['Ate'] } }, []),
+    { editando: null, tarifa: { ...VACIO, destinations: ['Ate'] } },
+    'un distrito elegido, sin origen ni precio, ya es algo que restaurar',
+  );
 });
