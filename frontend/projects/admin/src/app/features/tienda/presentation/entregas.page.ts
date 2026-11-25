@@ -25,6 +25,7 @@ import {
   ModoDeDireccion,
   ReglaDePrimeraEntrega,
 } from '../domain/tienda.model';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',
@@ -41,9 +42,17 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
  */
 @Component({
   selector: 'ws-admin-deliveries-page',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatRadioModule, MatSelectModule],
+  imports: [
+    IconoDirective,
+    TituloPaginaDirective,
+    ReactiveFormsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatRadioModule,
+    MatSelectModule,
+  ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Entregas y feriados</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Entregas y feriados</h1>
     <p class="mt-3 max-w-3xl text-sm text-muted">
       Desde qué fecha puede pedir la entrega el comprador y qué días no se trabaja. Los días no laborables
       también cuentan para el plazo de respuesta del libro de reclamaciones.
@@ -90,10 +99,11 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
           }
           <div class="mt-5 flex flex-wrap items-center gap-4">
             <button
-              class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
               type="submit"
               [disabled]="admin.saving()"
             >
+              <svg wsAdminIcono="guardar"></svg>
               {{ admin.saving() ? 'Guardando…' : 'Guardar primera fecha' }}
             </button>
             @if (entregaGuardada()) {
@@ -137,10 +147,11 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
           }
           <div class="mt-5 flex flex-wrap items-center gap-4">
             <button
-              class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+              class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
               type="submit"
               [disabled]="admin.saving()"
             >
+              <svg wsAdminIcono="guardar"></svg>
               {{ admin.saving() ? 'Guardando…' : 'Guardar dirección de entrega' }}
             </button>
             @if (direccionesGuardadas()) {
@@ -172,10 +183,11 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
             <mat-hint>Por ejemplo, «Fiestas Patrias».</mat-hint>
           </mat-form-field>
           <button
-            class="h-14 rounded-full bg-primary px-5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 h-14 rounded-full bg-primary px-5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
+            <svg wsAdminIcono="agregar"></svg>
             Agregar
           </button>
         </form>
@@ -219,12 +231,13 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
                   <td class="px-4 py-3">{{ dia.name || '—' }}</td>
                   <td class="px-4 py-3 text-right">
                     <button
-                      class="font-medium text-danger disabled:opacity-50"
+                      class="inline-flex items-center gap-2 font-medium text-danger disabled:opacity-50"
                       type="button"
                       [disabled]="admin.saving()"
                       [attr.aria-label]="'Quitar el ' + fecha(dia.date)"
                       (click)="quitar(dia)"
                     >
+                      <svg wsAdminIcono="quitar"></svg>
                       Quitar
                     </button>
                   </td>

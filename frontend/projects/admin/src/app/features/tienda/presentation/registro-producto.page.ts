@@ -24,6 +24,7 @@ import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
 import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } from './reducir-foto';
 import { SelectorCategoriaComponent } from './selector-categoria.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -34,6 +35,8 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
 @Component({
   selector: 'ws-product-form-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
@@ -43,10 +46,19 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
     SelectorCategoriaComponent,
   ],
   template: `
-    <a class="text-sm font-semibold text-link" routerLink="/productos" queryParamsHandling="preserve">
-      ← Volver a productos
+    <a
+      class="inline-flex items-center gap-2 text-sm font-semibold text-link"
+      routerLink="/productos"
+      queryParamsHandling="preserve"
+    >
+      <svg wsAdminIcono="volver"></svg>
+      Volver a productos
     </a>
-    <h1 id="titulo-formulario-producto" class="mt-3 text-3xl font-semibold tracking-tight text-ink">
+    <h1
+      wsAdminTitulo
+      id="titulo-formulario-producto"
+      class="mt-3 text-3xl font-semibold tracking-tight text-ink"
+    >
       {{ editingId() ? 'Editar' : 'Nuevo' }} producto
     </h1>
     @if (loadingProduct()) {
@@ -114,8 +126,9 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
               />
             }
             <label
-              class="mt-3 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+              class="mt-3 items-center gap-2 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
             >
+              <svg wsAdminIcono="cargar"></svg>
               {{ form.controls.imageUrl.value ? 'Reemplazar imagen' : 'Cargar imagen' }}
               <input
                 type="file"
@@ -173,8 +186,9 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
               </ul>
             }
             <label
-              class="mt-3 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+              class="mt-3 items-center gap-2 inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
             >
+              <svg wsAdminIcono="cargar"></svg>
               Cargar foto
               <input
                 type="file"
@@ -243,17 +257,19 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
         }
         <div class="mt-5 flex flex-wrap gap-3">
           <button
-            class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving() || preparandoImagen()"
           >
+            <svg wsAdminIcono="guardar"></svg>
             {{ admin.saving() ? 'Guardando…' : 'Guardar producto' }}
           </button>
           <a
-            class="inline-flex min-h-11 items-center rounded-xl border border-line px-5 py-2.5 text-sm font-semibold"
+            class="inline-flex min-h-11 gap-2 items-center rounded-xl border border-line px-5 py-2.5 text-sm font-semibold"
             routerLink="/productos"
             queryParamsHandling="preserve"
           >
+            <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </a>
         </div>

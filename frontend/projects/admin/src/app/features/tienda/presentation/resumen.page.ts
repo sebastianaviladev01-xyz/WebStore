@@ -25,6 +25,7 @@ import { ETIQUETAS_ESTADO_PEDIDO } from '../domain/tienda.model';
 import { clasesDeEstadoPedido } from './estado-pedido';
 import { GraficoPedidosComponent } from './grafico-pedidos.component';
 import { TarjetaIndicadorComponent } from './tarjeta-indicador.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
   month: 'long',
@@ -45,6 +46,8 @@ const AYUDA_VENTAS =
 @Component({
   selector: 'ws-admin-dashboard',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     CurrencyPipe,
     DatePipe,
     DecimalPipe,
@@ -62,17 +65,18 @@ const AYUDA_VENTAS =
     -->
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight text-ink">Dashboard</h1>
+        <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Dashboard</h1>
         <p class="mt-2 text-sm text-muted">
           Hola, {{ session.user()?.name }}. Esto es lo que necesita atención hoy.
         </p>
       </div>
       <button
-        class="min-h-10 rounded-lg border border-line px-4 text-sm font-medium hover:bg-subtle disabled:opacity-50"
+        class="inline-flex items-center gap-2 min-h-10 rounded-lg border border-line px-4 text-sm font-medium hover:bg-subtle disabled:opacity-50"
         type="button"
         [disabled]="actualizando()"
         (click)="actualizar()"
       >
+        <svg wsAdminIcono="actualizar"></svg>
         {{ actualizando() ? 'Actualizando…' : 'Actualizar' }}
       </button>
     </div>
@@ -206,7 +210,11 @@ const AYUDA_VENTAS =
                   <p class="text-sm text-muted">Sin alertas.</p>
                 }
               </div>
-              <a [routerLink]="enlaceStock()" class="mt-5 inline-flex text-sm font-medium text-link">
+              <a
+                data-sin-icono="enlace de texto"
+                [routerLink]="enlaceStock()"
+                class="mt-5 inline-flex text-sm font-medium text-link"
+              >
                 {{ session.can('inventory.manage') ? 'Gestionar inventario →' : 'Gestionar productos →' }}
               </a>
             </div>
@@ -232,7 +240,9 @@ const AYUDA_VENTAS =
                   "
                 />
               </h2>
-              <a routerLink="/pedidos" class="text-sm font-medium text-link">Ver todos los pedidos →</a>
+              <a data-sin-icono="enlace de texto" routerLink="/pedidos" class="text-sm font-medium text-link">
+                Ver todos los pedidos →
+              </a>
             </div>
             <div wsAdminBloquePlegable="ultimos-pedidos" [abierto]="bloqueAbierto('ultimos-pedidos')">
               <div class="ws-plegable-contenido">
@@ -270,10 +280,11 @@ const AYUDA_VENTAS =
                           </td>
                           <td class="px-4 py-3 text-right">
                             <a
-                              class="inline-flex min-h-8 items-center rounded-lg border border-line px-3 text-xs font-medium text-link hover:border-link"
+                              class="inline-flex min-h-8 gap-2 items-center rounded-lg border border-line px-3 text-xs font-medium text-link hover:border-link"
                               routerLink="/pedidos"
                               [queryParams]="{ pedido: order.id }"
                             >
+                              <svg wsAdminIcono="ver"></svg>
                               Ver
                               <span class="sr-only">el pedido {{ order.id }}</span>
                             </a>

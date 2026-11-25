@@ -22,6 +22,7 @@ import {
 } from '../domain/filtro-listado.rules';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const PAYMENT_LABELS: Record<string, string> = {
   card: 'Tarjeta',
@@ -32,6 +33,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 @Component({
   selector: 'ws-admin-orders-page',
   imports: [
+    TituloPaginaDirective,
     CurrencyPipe,
     DatePipe,
     ReactiveFormsModule,
@@ -40,7 +42,7 @@ const PAYMENT_LABELS: Record<string, string> = {
     PanelFiltrosComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Pedidos</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Pedidos</h1>
     <p class="mt-2 text-sm text-muted">{{ filtered().length }} de {{ admin.orders().length }} pedidos</p>
 
     <!-- PBI-0155: el filtro de estado va en el panel estándar de la feature 008, con el estado en la URL. -->
@@ -84,7 +86,12 @@ const PAYMENT_LABELS: Record<string, string> = {
                 (click)="selectedId.set(order.id)"
               >
                 <td class="px-4 py-3">
-                  <button type="button" class="font-semibold text-link" (click)="selectedId.set(order.id)">
+                  <button
+                    data-sin-icono="identificador"
+                    type="button"
+                    class="font-semibold text-link"
+                    (click)="selectedId.set(order.id)"
+                  >
                     {{ order.id }}
                   </button>
                   <p class="text-xs text-muted">

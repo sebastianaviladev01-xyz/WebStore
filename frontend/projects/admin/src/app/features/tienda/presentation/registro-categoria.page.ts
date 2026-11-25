@@ -23,6 +23,7 @@ import { imagenDeCategoria } from './reducir-foto';
 import { LADO_IMAGEN_CATEGORIA, motivoParaNoUsarFotoDeCategoria } from '../domain/foto.rules';
 import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.rules';
 import { Categoria } from '../domain/tienda.model';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Interfaz de registro de una categoría (feature 008): `/categorias/nueva` y `/categorias/:id`. Es el formulario que
@@ -32,12 +33,29 @@ import { Categoria } from '../domain/tienda.model';
  */
 @Component({
   selector: 'ws-category-form-page',
-  imports: [ReactiveFormsModule, RouterLink, MatFormFieldModule, MatInputModule, MatSelectModule],
+  imports: [
+    IconoDirective,
+    TituloPaginaDirective,
+    ReactiveFormsModule,
+    RouterLink,
+    MatFormFieldModule,
+    MatInputModule,
+    MatSelectModule,
+  ],
   template: `
-    <a class="text-sm font-semibold text-link" routerLink="/categorias" queryParamsHandling="preserve">
-      ← Volver a categorías
+    <a
+      class="inline-flex items-center gap-2 text-sm font-semibold text-link"
+      routerLink="/categorias"
+      queryParamsHandling="preserve"
+    >
+      <svg wsAdminIcono="volver"></svg>
+      Volver a categorías
     </a>
-    <h1 id="titulo-formulario-categoria" class="mt-3 text-3xl font-semibold tracking-tight text-ink">
+    <h1
+      wsAdminTitulo
+      id="titulo-formulario-categoria"
+      class="mt-3 text-3xl font-semibold tracking-tight text-ink"
+    >
       {{ editing() ? 'Editar' : 'Nueva' }} categoría
     </h1>
     @if (loadingCategory()) {
@@ -107,8 +125,9 @@ import { Categoria } from '../domain/tienda.model';
             }
             <div class="mt-3 flex flex-wrap items-center gap-3">
               <label
-                class="inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+                class="inline-flex items-center gap-2 cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
               >
+                <svg wsAdminIcono="cargar"></svg>
                 {{ imagen() ? 'Cambiar imagen' : 'Cargar imagen' }}
                 <input
                   type="file"
@@ -120,9 +139,10 @@ import { Categoria } from '../domain/tienda.model';
               @if (imagen()) {
                 <button
                   type="button"
-                  class="min-h-10 text-sm font-semibold text-danger"
+                  class="inline-flex items-center gap-2 min-h-10 text-sm font-semibold text-danger"
                   (click)="quitarImagen()"
                 >
+                  <svg wsAdminIcono="quitar"></svg>
                   Quitar imagen
                 </button>
               }
@@ -139,17 +159,19 @@ import { Categoria } from '../domain/tienda.model';
         }
         <div class="mt-4 flex gap-3">
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
+            <svg wsAdminIcono="guardar"></svg>
             {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
           <a
-            class="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
+            class="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
             routerLink="/categorias"
             queryParamsHandling="preserve"
           >
+            <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </a>
         </div>

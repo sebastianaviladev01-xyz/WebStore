@@ -15,6 +15,7 @@ import { estadoDeStock, leerStock } from '../domain/inventario.rules';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const ETIQUETA_ESTADO = {
   'sin-stock': 'Sin stock',
@@ -29,6 +30,7 @@ const ETIQUETA_ESTADO = {
 @Component({
   selector: 'ws-inventory-page',
   imports: [
+    TituloPaginaDirective,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -37,7 +39,7 @@ const ETIQUETA_ESTADO = {
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Inventario</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Inventario</h1>
     <p class="mt-3 text-sm text-muted">
       El stock se mantiene en un único módulo administrativo; el storefront solo lo consulta.
     </p>

@@ -32,6 +32,7 @@ import { dialogoDeRegistro } from './dialogo-de-registro';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', price: 0 };
 
@@ -43,6 +44,8 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
 @Component({
   selector: 'ws-shipping-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     CurrencyPipe,
     ReactiveFormsModule,
     MatDialogModule,
@@ -53,7 +56,7 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Tarifas de envío</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Tarifas de envío</h1>
     <p class="mt-2 max-w-2xl text-sm text-muted">
       Cada tarifa va de una tienda de origen a un distrito. En el checkout se cobra la tarifa más baja, que
       corresponde a la tienda más cercana.
@@ -120,19 +123,21 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
               <td class="px-4 py-3">
                 <div class="flex justify-end gap-3 font-medium">
                   <button
-                    class="text-link"
+                    class="inline-flex items-center gap-2 text-link"
                     type="button"
                     [attr.aria-label]="'Editar tarifa de ' + rate.origin + ' a ' + rate.destination"
                     (click)="edit(rate.id)"
                   >
+                    <svg wsAdminIcono="editar"></svg>
                     Editar
                   </button>
                   <button
-                    class="text-danger"
+                    class="inline-flex items-center gap-2 text-danger"
                     type="button"
                     [attr.aria-label]="'Eliminar tarifa de ' + rate.origin + ' a ' + rate.destination"
                     (click)="remove(rate.id)"
                   >
+                    <svg wsAdminIcono="eliminar"></svg>
                     Eliminar
                   </button>
                 </div>
@@ -214,17 +219,19 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
         </mat-dialog-content>
         <mat-dialog-actions align="end">
           <button
-            class="rounded-lg border border-line px-5 py-2.5 text-sm font-medium"
+            class="inline-flex items-center gap-2 rounded-lg border border-line px-5 py-2.5 text-sm font-medium"
             type="button"
             mat-dialog-close
           >
+            <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </button>
           <button
-            class="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
+            <svg wsAdminIcono="guardar"></svg>
             {{
               admin.saving()
                 ? 'Guardando…'

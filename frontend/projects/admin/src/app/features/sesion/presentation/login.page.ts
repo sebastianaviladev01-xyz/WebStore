@@ -6,10 +6,11 @@ import { Router } from '@angular/router';
 
 import { CREDENCIALES_DE_PRUEBA } from '../../../core/credenciales-de-prueba';
 import { SesionFacade } from '../application/sesion.facade';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 @Component({
   selector: 'ws-admin-login',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
+  imports: [IconoDirective, TituloPaginaDirective, ReactiveFormsModule, MatFormFieldModule, MatInputModule],
   template: `
     <main class="grid min-h-screen place-items-center bg-canvas px-5 py-12">
       <form
@@ -25,7 +26,7 @@ import { SesionFacade } from '../application/sesion.facade';
           </span>
           <strong class="text-lg">WebStore Admin</strong>
         </div>
-        <h1 class="mt-9 text-3xl font-semibold tracking-[-.025em]">Acceso administrativo</h1>
+        <h1 wsAdminTitulo class="mt-9 text-3xl font-semibold tracking-[-.025em]">Acceso administrativo</h1>
         <p class="mt-3 text-sm leading-6 text-muted">
           Usa una cuenta activa. Los permisos se validan nuevamente en cada solicitud al BFF.
         </p>
@@ -45,10 +46,11 @@ import { SesionFacade } from '../application/sesion.facade';
           </p>
         }
         <button
-          class="mt-4 min-h-11 w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+          class="inline-flex items-center gap-2 justify-center mt-4 min-h-11 w-full rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
           type="submit"
           [disabled]="session.pending()"
         >
+          <svg wsAdminIcono="ingresar"></svg>
           {{ session.pending() ? 'Verificando…' : 'Ingresar al panel' }}
         </button>
         <!-- PBI-0071: las credenciales de prueba solo en modo demo o si el BFF las pide; nunca en la instalación de un cliente. -->

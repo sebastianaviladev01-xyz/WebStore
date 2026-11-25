@@ -10,6 +10,7 @@ import {
   presentacionDelAviso,
 } from '../features/notificaciones/domain/notificacion.rules';
 import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
+import { IconoDirective } from '../shared/ui/icono.directive';
 
 /**
  * Campana de la cabecera del Admin (lote 07b, ADR-0017, PBI-0033; confirmada por Daniel el 2026-11-18). El número
@@ -20,7 +21,7 @@ import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
  */
 @Component({
   selector: 'ws-admin-campana',
-  imports: [CurrencyPipe, DatePipe, MatMenuModule, RouterLink],
+  imports: [IconoDirective, CurrencyPipe, DatePipe, MatMenuModule, RouterLink],
   template: `
     <button
       type="button"
@@ -63,7 +64,7 @@ import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
       <div class="ws-menu-usuario-separador" role="separator"></div>
       @for (aviso of notificaciones.avisos(); track aviso.type + aviso.id) {
         @let vista = presentar(aviso);
-        <a mat-menu-item [routerLink]="vista.ruta" [queryParams]="vista.parametros">
+        <a data-sin-icono="aviso" mat-menu-item [routerLink]="vista.ruta" [queryParams]="vista.parametros">
           <span class="block text-sm font-semibold">{{ vista.titulo }}</span>
           <span class="block text-xs text-muted tabular-nums">
             @if (aviso.type === 'order') {
@@ -78,7 +79,12 @@ import { ZONA_HORARIA_LIMA } from '../features/tienda/domain/pedido.rules';
         <p class="ws-menu-usuario-cuenta">{{ notificaciones.menu().vacio }}</p>
       }
       <div class="ws-menu-usuario-separador" role="separator"></div>
-      <a mat-menu-item routerLink="/pedidos">Ver todos los pedidos</a>
+      <a mat-menu-item routerLink="/pedidos">
+        <span class="inline-flex items-center gap-2">
+          <svg wsAdminIcono="pedidos"></svg>
+          Ver todos los pedidos
+        </span>
+      </a>
     </mat-menu>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

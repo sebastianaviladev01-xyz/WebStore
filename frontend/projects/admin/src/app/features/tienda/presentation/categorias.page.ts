@@ -38,6 +38,7 @@ import {
 import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Categorías abiertas del árbol (lote 22, PBI-0220) mientras dura la sesión del panel: al volver de editar una
@@ -64,6 +65,8 @@ export class EstadoArbolCategorias {
 @Component({
   selector: 'ws-categories-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
@@ -75,7 +78,7 @@ export class EstadoArbolCategorias {
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight text-ink">Categorías</h1>
+        <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Categorías</h1>
         <p class="mt-3 text-sm text-muted">
           Estructura por nombres y subcategorías; el orden puede ser explícito o alfabético.
         </p>
@@ -169,20 +172,22 @@ export class EstadoArbolCategorias {
               <div class="flex gap-3 text-sm font-semibold">
                 <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
                 <a
-                  class="inline-flex items-center text-link"
+                  class="inline-flex items-center gap-2 text-link"
                   [routerLink]="['/categorias', fila.category.id]"
                   queryParamsHandling="preserve"
                   [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
                   [attr.aria-label]="'Editar categoría ' + fila.category.name"
                 >
+                  <svg wsAdminIcono="editar"></svg>
                   Editar
                 </a>
                 <button
-                  class="text-danger"
+                  class="inline-flex items-center gap-2 text-danger"
                   [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
                   [attr.aria-label]="'Eliminar categoría ' + fila.category.name"
                   (click)="remove(fila.category.id)"
                 >
+                  <svg wsAdminIcono="eliminar"></svg>
                   Eliminar
                 </button>
               </div>

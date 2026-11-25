@@ -6,6 +6,7 @@ import { TemasFacade } from '../application/temas.facade';
 import { MENSAJE_TEMA_ACTIVO_EN_USO } from '../domain/tema.rules';
 import { ColoresTema, Tema } from '../domain/tema.model';
 import { DatosTemaDialog, ResultadoTemaDialog, TemaDialog } from './tema.dialog';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /** Los cinco colores en el orden del contrato, con el nombre que se lee en la muestra. */
 const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; readonly nombre: string }[] = [
@@ -26,7 +27,7 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight text-ink">Temas</h1>
+        <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Temas</h1>
         <p class="mt-3 max-w-2xl text-sm text-muted">
           Colores de la tienda y del Admin. El tema activo se aplica a todas las páginas; los predefinidos no
           se editan, pero puedes crear un tema propio a partir de ellos.
@@ -34,10 +35,11 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
       </div>
       <button
         type="button"
-        class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+        class="inline-flex items-center gap-2 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
         [disabled]="!temas.temasAdmin()"
         (click)="nuevo()"
       >
+        <svg wsAdminIcono="agregar"></svg>
         Nuevo tema
       </button>
     </div>
@@ -129,30 +131,33 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
           @if (tema.id !== activo) {
             <button
               type="button"
-              class="min-h-10 rounded-lg border border-line px-4 hover:bg-subtle"
+              class="inline-flex items-center gap-2 min-h-10 rounded-lg border border-line px-4 hover:bg-subtle"
               [attr.aria-label]="'Activar ' + tema.name"
               [disabled]="temas.guardando()"
               (click)="activar(tema)"
             >
+              <svg wsAdminIcono="activar"></svg>
               Activar
             </button>
           }
           @if (tema.kind === 'custom') {
             <button
               type="button"
-              class="min-h-10 text-link"
+              class="inline-flex items-center gap-2 min-h-10 text-link"
               [attr.aria-label]="'Editar ' + tema.name"
               (click)="editar(tema)"
             >
+              <svg wsAdminIcono="editar"></svg>
               Editar
             </button>
             <button
               type="button"
-              class="min-h-10 text-danger"
+              class="inline-flex items-center gap-2 min-h-10 text-danger"
               [attr.aria-label]="'Borrar ' + tema.name"
               [disabled]="temas.guardando()"
               (click)="borrar(tema, activo)"
             >
+              <svg wsAdminIcono="eliminar"></svg>
               Borrar
             </button>
           }
@@ -160,7 +165,7 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
       </li>
     </ng-template>
   `,
-  imports: [NgTemplateOutlet],
+  imports: [IconoDirective, TituloPaginaDirective, NgTemplateOutlet],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TemasPage {

@@ -30,6 +30,7 @@ import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { SelectorCategoriaComponent } from './selector-categoria.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Listado de productos (feature 008): panel de filtros debajo del título, la lista a todo el ancho y la paginación.
@@ -39,6 +40,8 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
 @Component({
   selector: 'ws-products-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     CurrencyPipe,
     ReactiveFormsModule,
     RouterLink,
@@ -52,7 +55,7 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-semibold tracking-tight text-ink">Productos</h1>
+        <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Productos</h1>
         <p class="mt-3 text-sm text-muted">
           Ficha comercial, imágenes, características y stock compartido con el storefront.
         </p>
@@ -109,7 +112,7 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
       <div role="table" aria-label="Productos">
         <div
           role="row"
-          class="grid grid-cols-[minmax(0,1fr)_160px_120px_110px_90px] gap-x-4 bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
+          class="grid grid-cols-[minmax(0,1fr)_160px_120px_110px_170px] gap-x-4 bg-subtle p-4 text-xs font-semibold uppercase text-muted max-md:hidden"
         >
           <span role="columnheader">Producto</span>
           <span role="columnheader">SKU</span>
@@ -120,7 +123,7 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
         @for (p of pagina().items; track p.id) {
           <div
             role="row"
-            class="grid grid-cols-[minmax(0,1fr)_160px_120px_110px_90px] items-center gap-x-4 border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-y-2"
+            class="grid grid-cols-[minmax(0,1fr)_160px_120px_110px_170px] items-center gap-x-4 border-t border-line p-4 text-sm max-md:grid-cols-[minmax(0,1fr)_auto_auto_auto] max-md:gap-y-2"
           >
             <!--
               PBI-0156: en el celular la fila de encabezados se oculta (conserva la medida de admin-productos-movil);
@@ -153,19 +156,21 @@ import { SelectorCategoriaComponent } from './selector-categoria.component';
             <div role="cell" class="flex gap-2">
               <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
               <a
-                class="inline-flex items-center font-semibold text-link"
+                class="inline-flex items-center gap-2 font-semibold text-link"
                 [routerLink]="['/productos', p.id]"
                 queryParamsHandling="preserve"
                 [attr.aria-label]="'Editar producto ' + p.name"
               >
+                <svg wsAdminIcono="editar"></svg>
                 Editar
               </a>
               @if (session.can('products.delete')) {
                 <button
-                  class="min-h-10 font-semibold text-danger"
+                  class="inline-flex items-center gap-2 min-h-10 font-semibold text-danger"
                   [attr.aria-label]="'Eliminar producto ' + p.name"
                   (click)="remove(p.id)"
                 >
+                  <svg wsAdminIcono="eliminar"></svg>
                   Eliminar
                 </button>
               }

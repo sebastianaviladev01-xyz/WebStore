@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 
 import { Pagina } from '../domain/listado.rules';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Barra de páginas de un listado del Admin (feature 008), la misma de Tarifas de envío: «Anterior», «Página N de M»
@@ -8,6 +9,7 @@ import { Pagina } from '../domain/listado.rules';
  */
 @Component({
   selector: 'ws-pagination',
+  imports: [IconoDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
@@ -18,19 +20,21 @@ import { Pagina } from '../domain/listado.rules';
       >
         <button
           type="button"
-          class="rounded-lg border border-line px-4 py-2 font-medium disabled:opacity-40"
+          class="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 font-medium disabled:opacity-40"
           [disabled]="pagina().page === 1"
           (click)="cambiar.emit(pagina().page - 1)"
         >
+          <svg wsAdminIcono="anterior"></svg>
           Anterior
         </button>
         <span class="tabular-nums text-muted">Página {{ pagina().page }} de {{ pagina().pages }}</span>
         <button
           type="button"
-          class="rounded-lg border border-line px-4 py-2 font-medium disabled:opacity-40"
+          class="inline-flex items-center gap-2 rounded-lg border border-line px-4 py-2 font-medium disabled:opacity-40"
           [disabled]="pagina().page === pagina().pages"
           (click)="cambiar.emit(pagina().page + 1)"
         >
+          <svg wsAdminIcono="siguiente"></svg>
           Siguiente
         </button>
       </nav>

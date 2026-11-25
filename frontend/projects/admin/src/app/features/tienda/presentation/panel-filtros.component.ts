@@ -1,14 +1,7 @@
-import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-/** Trazos de los íconos de los botones (24 × 24, trazo de 1.8, como los del menú lateral). */
-const ICONOS = {
-  buscar: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
-  limpiar:
-    'M7 21l-4.3-4.3a2.4 2.4 0 0 1 0-3.4l9.6-9.6a2.4 2.4 0 0 1 3.4 0l5.6 5.6a2.4 2.4 0 0 1 0 3.4L13 21M7 21h14M5 11l9 9',
-  agregar: 'M12 5v14M5 12h14',
-} as const;
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Panel de filtros de un listado del Admin (feature 008): los campos los proyecta la página, que los liga a su
@@ -23,7 +16,7 @@ const ICONOS = {
  */
 @Component({
   selector: 'ws-filter-panel',
-  imports: [NgTemplateOutlet, RouterLink],
+  imports: [IconoDirective, RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
@@ -41,7 +34,7 @@ const ICONOS = {
           type="submit"
           [disabled]="buscando()"
         >
-          <ng-container *ngTemplateOutlet="icono; context: { $implicit: iconos.buscar }" />
+          <svg wsAdminIcono="buscar"></svg>
           {{ buscando() ? 'Buscando…' : 'Buscar' }}
         </button>
         <button
@@ -49,7 +42,7 @@ const ICONOS = {
           type="button"
           (click)="limpiar.emit()"
         >
-          <ng-container *ngTemplateOutlet="icono; context: { $implicit: iconos.limpiar }" />
+          <svg wsAdminIcono="limpiar"></svg>
           Limpiar
           <span class="sr-only">filtros</span>
         </button>
@@ -60,7 +53,7 @@ const ICONOS = {
               [routerLink]="ruta"
               queryParamsHandling="preserve"
             >
-              <ng-container *ngTemplateOutlet="icono; context: { $implicit: iconos.agregar }" />
+              <svg wsAdminIcono="agregar"></svg>
               Agregar
               <span class="sr-only">{{ que }}</span>
             </a>
@@ -70,7 +63,7 @@ const ICONOS = {
               type="button"
               (click)="agregar.emit()"
             >
-              <ng-container *ngTemplateOutlet="icono; context: { $implicit: iconos.agregar }" />
+              <svg wsAdminIcono="agregar"></svg>
               Agregar
               <span class="sr-only">{{ que }}</span>
             </button>
@@ -78,20 +71,6 @@ const ICONOS = {
         }
       </div>
     </form>
-    <ng-template #icono let-trazo>
-      <svg
-        class="h-[18px] w-[18px] shrink-0"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.8"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
-        <path [attr.d]="trazo" />
-      </svg>
-    </ng-template>
     @if (error(); as mensaje) {
       <p
         class="mt-3 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
@@ -103,7 +82,6 @@ const ICONOS = {
   `,
 })
 export class PanelFiltrosComponent {
-  protected readonly iconos = ICONOS;
   /** Nombre accesible del formulario de búsqueda, por ejemplo «Filtros de productos». */
   readonly etiqueta = input.required<string>();
   /** Mientras la página consulta los datos actuales: «Buscando…» y el botón deshabilitado. */

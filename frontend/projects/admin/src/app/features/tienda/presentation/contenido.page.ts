@@ -40,6 +40,7 @@ import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { conservarBorrador } from './borrador';
 import { CampoDeLista, FilaDeLista, ListaContenidoComponent } from './lista-contenido.component';
 import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_LOGO_NO_CABE, reducirFoto } from './reducir-foto';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /** Control de texto vacío con sus validadores. */
 const texto = (...validators: ValidatorFn[]) => new FormControl('', { nonNullable: true, validators });
@@ -101,6 +102,8 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
 @Component({
   selector: 'ws-content-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
@@ -109,7 +112,7 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
     ListaContenidoComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Contenido y configuración</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Contenido y configuración</h1>
     <p class="mt-3 max-w-3xl text-sm text-muted">
       Edita logo gráfico, información fija, contacto y redes, avisos de la barra superior, navegación lateral,
       accesos inferiores y páginas predeterminadas. La tipografía permanece bloqueada a una sola fuente por
@@ -148,17 +151,19 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
           </p>
           <div class="mt-4 flex flex-wrap gap-3">
             <label
-              class="cursor-pointer rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary"
+              class="inline-flex items-center gap-2 cursor-pointer rounded-full bg-primary px-4 py-2.5 text-sm font-semibold text-on-primary"
             >
+              <svg wsAdminIcono="cargar"></svg>
               Cargar logo
               <input type="file" accept="image/*,.svg" class="sr-only" (change)="onLogoSelected($event)" />
             </label>
             @if (form.controls.logoUrl.value) {
               <button
                 type="button"
-                class="rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold"
+                class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold"
                 (click)="removeLogo()"
               >
+                <svg wsAdminIcono="quitar"></svg>
                 Quitar logo
               </button>
             }
@@ -330,10 +335,11 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
       }
       <div class="mt-6 flex flex-wrap items-center gap-4">
         <button
-          class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
           type="submit"
           [disabled]="admin.saving()"
         >
+          <svg wsAdminIcono="guardar"></svg>
           {{ admin.saving() ? 'Guardando…' : 'Guardar configuración' }}
         </button>
         @if (saved()) {

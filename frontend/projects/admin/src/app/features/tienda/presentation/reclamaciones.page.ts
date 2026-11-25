@@ -30,10 +30,13 @@ import { conservarBorrador } from './borrador';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 @Component({
   selector: 'ws-complaints-admin-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     CurrencyPipe,
     DatePipe,
     ReactiveFormsModule,
@@ -44,7 +47,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Reclamaciones</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Reclamaciones</h1>
     <p class="mt-3 max-w-3xl text-sm leading-6 text-muted">
       Consulta la información registrada por el consumidor, actualiza el estado y documenta la respuesta del
       proveedor.
@@ -84,6 +87,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         -->
         @for (item of pagina().items; track item.id) {
           <button
+            data-sin-icono="fila"
             type="button"
             class="grid w-full gap-2 border-b border-line p-5 text-left hover:bg-subtle sm:grid-cols-[150px_1fr_auto]"
             [class.ws-fila-actual]="selected()?.id === item.id"
@@ -168,9 +172,10 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
               <mat-error>{{ mensaje(form.controls.providerResponse.errors) }}</mat-error>
             </mat-form-field>
             <button
-              class="min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
+              class="inline-flex items-center gap-2 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary"
               type="submit"
             >
+              <svg wsAdminIcono="guardar"></svg>
               Guardar atención
             </button>
             @if (saved()) {

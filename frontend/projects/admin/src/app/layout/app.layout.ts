@@ -28,6 +28,7 @@ import { NotificacionesFacade } from '../features/notificaciones/application/not
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
 import { Permiso } from '../features/sesion/domain/rol.rules';
+import { ICONOS, iconoDelModulo } from '../shared/ui/iconos';
 import { alternarPlegable, FlechaPlegableDirective } from '../shared/ui/plegable.directive';
 import { CampanaNotificacionesComponent } from './campana-notificaciones.component';
 import { MenuUsuarioComponent } from './menu-usuario.component';
@@ -36,8 +37,6 @@ interface NavigationItem {
   readonly path: string;
   readonly label: string;
   readonly permission: Permiso;
-  /** Trazos del ícono (SVG de 24 × 24, solo trazo): se ve con la etiqueta y, con el menú reducido, solo él. */
-  readonly icon: string;
 }
 
 type NavigationGroupId = 'general' | 'catalogo' | 'ventas' | 'tienda' | 'accesos';
@@ -49,58 +48,32 @@ interface NavigationGroup {
   readonly items: readonly NavigationItem[];
 }
 
-/**
- * Íconos del menú (lote 07b, PBI-0044): SVG en línea con el mismo trazo que los de la tienda (el camión de «Tarifas
- * de envío» es el de su menú); sin dependencias nuevas ni fuentes de íconos.
- */
-const ICONOS = {
-  dashboard: 'M4 4h7v7H4zM13 4h7v4h-7zM13 10h7v10h-7zM4 13h7v7H4z',
-  productos: 'M3 12V4h8l9 9-8 8zM7.5 7.5h.01',
-  inventario: 'M3 7l9-4 9 4-9 4zM3 7v10l9 4 9-4V7M12 11v10',
-  categorias: 'M3 6h6l2 2h10v11H3z',
-  marcas: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z',
-  pedidos: 'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6',
-  clientes:
-    'M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM3 20a6 6 0 0 1 12 0M16 5.2a3 3 0 0 1 0 5.6M21 20a6 6 0 0 0-4-5.6',
-  reclamaciones: 'M4 4h11a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3zM4 17a3 3 0 0 1 3-3h11',
-  banners: 'M3 5h18v14H3zM3 16l5-5 4 4 3-3 6 6M15 9h.01',
-  contenido: 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5',
-  entregas: 'M4 6h16v14H4zM8 3v5M16 3v5M4 10h16M8 14h2M14 14h2M8 17h2',
-  temas:
-    'M12 3a9 9 0 1 0 0 18c1 0 1.5-.8 1.5-1.6 0-.9-.7-1.4-.7-2.3 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4c0-4.7-4-8.5-9-8.5zM7.5 11h.01M10 7.5h.01M15 7.5h.01',
-  envios:
-    'M2 7h12v10H2zM14 11h4l4 3v3h-8M6 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4zM18 16a2 2 0 1 0 0 4 2 2 0 0 0 0-4z',
-  usuarios:
-    'M12 3l8 3v6c0 4.5-3.4 8.3-8 9-4.6-.7-8-4.5-8-9V6zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM8 17a4 4 0 0 1 8 0',
-} as const;
-
 const NAVIGATION: readonly NavigationGroup[] = [
   {
     id: 'general',
     label: 'General',
-    items: [{ path: '/', label: 'Dashboard', permission: 'dashboard.view', icon: ICONOS.dashboard }],
+    items: [{ path: '/', label: 'Dashboard', permission: 'dashboard.view' }],
   },
   {
     id: 'catalogo',
     label: 'Catálogo',
     items: [
-      { path: '/productos', label: 'Productos', permission: 'products.edit', icon: ICONOS.productos },
-      { path: '/inventario', label: 'Inventario', permission: 'inventory.manage', icon: ICONOS.inventario },
-      { path: '/categorias', label: 'Categorías', permission: 'categories.manage', icon: ICONOS.categorias },
-      { path: '/marcas', label: 'Marcas', permission: 'brands.manage', icon: ICONOS.marcas },
+      { path: '/productos', label: 'Productos', permission: 'products.edit' },
+      { path: '/inventario', label: 'Inventario', permission: 'inventory.manage' },
+      { path: '/categorias', label: 'Categorías', permission: 'categories.manage' },
+      { path: '/marcas', label: 'Marcas', permission: 'brands.manage' },
     ],
   },
   {
     id: 'ventas',
     label: 'Ventas',
     items: [
-      { path: '/pedidos', label: 'Pedidos', permission: 'orders.view', icon: ICONOS.pedidos },
-      { path: '/clientes', label: 'Clientes', permission: 'customers.manage', icon: ICONOS.clientes },
+      { path: '/pedidos', label: 'Pedidos', permission: 'orders.view' },
+      { path: '/clientes', label: 'Clientes', permission: 'customers.manage' },
       {
         path: '/reclamaciones',
         label: 'Reclamaciones',
         permission: 'complaints.manage',
-        icon: ICONOS.reclamaciones,
       },
     ],
   },
@@ -108,25 +81,22 @@ const NAVIGATION: readonly NavigationGroup[] = [
     id: 'tienda',
     label: 'Tienda',
     items: [
-      { path: '/banners', label: 'Banners', permission: 'banners.manage', icon: ICONOS.banners },
-      { path: '/contenido', label: 'Contenido', permission: 'content.manage', icon: ICONOS.contenido },
+      { path: '/banners', label: 'Banners', permission: 'banners.manage' },
+      { path: '/contenido', label: 'Contenido', permission: 'content.manage' },
       // Lote 17 (ADR-0021, PBI-0178 y PBI-0183): configuración de la tienda, del superadministrador como Contenido.
       {
         path: '/entregas',
         label: 'Entregas y feriados',
         permission: 'content.manage',
-        icon: ICONOS.entregas,
       },
-      { path: '/temas', label: 'Temas', permission: 'themes.manage', icon: ICONOS.temas },
-      { path: '/envios', label: 'Tarifas de envío', permission: 'shipping.manage', icon: ICONOS.envios },
+      { path: '/temas', label: 'Temas', permission: 'themes.manage' },
+      { path: '/envios', label: 'Tarifas de envío', permission: 'shipping.manage' },
     ],
   },
   {
     id: 'accesos',
     label: 'Accesos',
-    items: [
-      { path: '/usuarios', label: 'Usuarios y roles', permission: 'users.manage', icon: ICONOS.usuarios },
-    ],
+    items: [{ path: '/usuarios', label: 'Usuarios y roles', permission: 'users.manage' }],
   },
 ];
 
@@ -206,7 +176,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
         [attr.title]="reducido() && !movil ? item.label : null"
         (click)="cerrarMenuMovil()"
       >
-        <ng-container *ngTemplateOutlet="icono; context: { $implicit: item.icon }" />
+        <ng-container *ngTemplateOutlet="icono; context: { $implicit: trazo(item.path) }" />
         <span [class.sr-only]="reducido() && !movil">{{ item.label }}</span>
       </a>
     </ng-template>
@@ -221,6 +191,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
             <a
               routerLink="/"
               class="flex items-center gap-3"
+              data-sin-icono="marca"
               [attr.aria-label]="reducido() ? 'WebStore Admin' : null"
             >
               <ng-container *ngTemplateOutlet="marca; context: { $implicit: !reducido() }" />
@@ -280,7 +251,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
           >
             <ng-container *ngTemplateOutlet="hamburguesa" />
           </button>
-          <a routerLink="/" class="flex items-center gap-3">
+          <a routerLink="/" class="flex items-center gap-3" data-sin-icono="marca">
             <ng-container *ngTemplateOutlet="marca; context: { $implicit: true }" />
           </a>
         </div>
@@ -302,7 +273,12 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
             (keydown.escape)="cerrarMenuMovil()"
           >
             <div class="flex items-center justify-between gap-3">
-              <a routerLink="/" class="flex items-center gap-3" (click)="cerrarMenuMovil()">
+              <a
+                routerLink="/"
+                class="flex items-center gap-3"
+                data-sin-icono="marca"
+                (click)="cerrarMenuMovil()"
+              >
                 <ng-container *ngTemplateOutlet="marca; context: { $implicit: true }" />
               </a>
               <button
@@ -479,6 +455,14 @@ export class AppLayout {
     effect(() => {
       if (this.escritorio()) untracked(() => this.menuMovil.set(false));
     });
+  }
+
+  /**
+   * Trazo del ícono de una entrada del menú (SVG de 24 × 24, solo trazo): se ve con la etiqueta y, con el menú
+   * reducido, solo él. Sale de `iconoDelModulo`, como el del título de cada página (lote 31, PBI-0243).
+   */
+  protected trazo(path: string): string {
+    return ICONOS[iconoDelModulo(path) ?? 'dashboard'];
   }
 
   protected grupoAbierto(id: NavigationGroupId): boolean {

@@ -18,6 +18,7 @@ import {
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Banners y campañas. Lote 21 (ADR-0025, PBI-0211): el banner se crea y se edita en su propia interfaz,
@@ -26,6 +27,8 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
 @Component({
   selector: 'ws-banners-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
@@ -35,7 +38,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Banners y campañas</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Banners y campañas</h1>
     <p class="mt-3 max-w-3xl text-sm leading-6 text-muted">
       Administra hero, promociones y banners secundarios. La tienda publica como máximo tres banners activos
       en el carrusel principal.
@@ -94,19 +97,21 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
           <div class="flex gap-3 text-sm font-semibold">
             <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar», como el botón de antes. -->
             <a
-              class="inline-flex items-center text-link"
+              class="inline-flex items-center gap-2 text-link"
               [routerLink]="['/banners', banner.id]"
               queryParamsHandling="preserve"
               [attr.aria-label]="'Editar banner ' + banner.title"
             >
+              <svg wsAdminIcono="editar"></svg>
               Editar
             </a>
             <button
               type="button"
-              class="text-danger"
+              class="inline-flex items-center gap-2 text-danger"
               [attr.aria-label]="'Eliminar banner ' + banner.title"
               (click)="remove(banner.id)"
             >
+              <svg wsAdminIcono="eliminar"></svg>
               Eliminar
             </button>
           </div>

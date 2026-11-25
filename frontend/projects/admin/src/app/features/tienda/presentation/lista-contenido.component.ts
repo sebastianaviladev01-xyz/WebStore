@@ -4,6 +4,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { mensajeDeError } from '../domain/formulario.rules';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /** Una columna de la lista: el control de cada fila y su etiqueta («Correo» → «Correo 1»). */
 export interface CampoDeLista {
@@ -28,7 +29,7 @@ export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
  */
 @Component({
   selector: 'ws-content-list',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
+  imports: [IconoDirective, ReactiveFormsModule, MatFormFieldModule, MatInputModule],
   template: `
     <fieldset class="sm:col-span-2 rounded-2xl border border-line p-4">
       <legend class="px-1 text-sm font-semibold">{{ titulo() }}</legend>
@@ -66,19 +67,21 @@ export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
             }
             <button
               type="button"
-              class="rounded-full border border-line px-3 py-2 text-xs font-semibold disabled:opacity-40"
+              class="inline-flex items-center gap-2 rounded-full border border-line px-3 py-2 text-xs font-semibold disabled:opacity-40"
               [disabled]="primera"
               [attr.aria-label]="'Subir ' + nombre() + ' ' + (i + 1)"
               (click)="subir(i)"
             >
+              <svg wsAdminIcono="subir"></svg>
               Subir
             </button>
             <button
               type="button"
-              class="rounded-full border border-line px-3 py-2 text-xs font-semibold"
+              class="inline-flex items-center gap-2 rounded-full border border-line px-3 py-2 text-xs font-semibold"
               [attr.aria-label]="'Quitar ' + nombre() + ' ' + (i + 1)"
               (click)="quitar(i)"
             >
+              <svg wsAdminIcono="quitar"></svg>
               Quitar
             </button>
           </div>
@@ -95,10 +98,11 @@ export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
       }
       <button
         type="button"
-        class="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold disabled:opacity-40"
+        class="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold disabled:opacity-40"
         [disabled]="lista().length >= maximo()"
         (click)="agregar()"
       >
+        <svg wsAdminIcono="agregar"></svg>
         Agregar {{ nombre() }}
       </button>
       @if (lista().length >= maximo()) {
