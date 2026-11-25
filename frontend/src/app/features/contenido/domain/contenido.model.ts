@@ -43,6 +43,9 @@ export interface RedSocial {
 export interface AvisoTienda {
   readonly text: string;
   readonly url: string;
+  /** «Desde» y «Hasta» opcionales, instantes ISO con zona (lote 30, PBI-0244). El BFF solo envía los vigentes. */
+  readonly startAt?: string;
+  readonly endAt?: string;
 }
 
 /** Un acceso del pie: la columna (`group`), su texto y su destino (PBI-0185). */

@@ -1,3 +1,4 @@
+import { avisosVigentes } from '../../domain/admin/aviso-programado.rules.mjs';
 import { terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
 import { direccionDeImagen } from '../catalogo/imagenes.queries.mjs';
 
@@ -27,11 +28,22 @@ const bannerToPublic = (banner) => ({
   active: banner.active,
 });
 
-/** Contenido público de la tienda: configuración del CMS y campañas. */
-export function createContenidoQueries({ store }) {
+/**
+ * Contenido público de la tienda: configuración del CMS y campañas. `now` es el reloj (inyectable en las pruebas).
+ *
+ * Lote 30 (ADR-0027, PBI-0244; provisional): los ajustes públicos solo traen los avisos vigentes en el instante de cada
+ * lectura. Filtra el BFF, no la tienda: así la tienda no recibe avisos futuros y un aviso aparece y desaparece sin
+ * guardar ni redesplegar, porque las respuestas JSON no se guardan en caché (`no-store`). El snapshot del Admin trae
+ * todos los avisos.
+ */
+export function createContenidoQueries({ store, now = () => new Date() }) {
   return {
     // Lote 17 (PBI-0177): con la versión vigente de los términos, que el checkout envía al aceptarlos.
-    getSettings: () => ({ ...store.state.config, ...terminosVigentes(store.state.termsVersions) }),
+    getSettings: () => ({
+      ...store.state.config,
+      announcements: avisosVigentes(store.state.config.announcements ?? [], now()),
+      ...terminosVigentes(store.state.termsVersions),
+    }),
     listBanners: () => store.state.banners.map(bannerToPublic),
   };
 }

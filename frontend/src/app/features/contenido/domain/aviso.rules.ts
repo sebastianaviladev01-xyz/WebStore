@@ -16,6 +16,8 @@ export type EnlaceDeAviso =
 export interface AvisoVisible {
   readonly texto: string;
   readonly enlace: EnlaceDeAviso | null;
+  /** Instante (ms) de su «Hasta», o `null` si no tiene (lote 30, PBI-0244). */
+  readonly hasta: number | null;
 }
 
 const esObjeto = (valor: unknown): valor is Record<string, unknown> =>
@@ -28,13 +30,33 @@ function enlaceDe(url: string): EnlaceDeAviso | null {
   return null;
 }
 
+/** El instante de un «Hasta», si se puede leer. */
+function instanteDe(valor: string): number | null {
+  const ms = valor ? Date.parse(valor) : NaN;
+  return Number.isFinite(ms) ? ms : null;
+}
+
 /** Los avisos con texto, en su orden; un enlace que no es de la tienda ni `https://` se ignora. */
 export function avisosVisibles(avisos: readonly AvisoTienda[] | unknown): readonly AvisoVisible[] {
   if (!Array.isArray(avisos)) return [];
   return avisos
     .filter(esObjeto)
-    .map((aviso) => ({ texto: texto(aviso['text']), enlace: enlaceDe(texto(aviso['url'])) }))
+    .map((aviso) => ({
+      texto: texto(aviso['text']),
+      enlace: enlaceDe(texto(aviso['url'])),
+      hasta: instanteDe(texto(aviso['endAt'])),
+    }))
     .filter((aviso) => aviso.texto);
+}
+
+/**
+ * Los avisos que no vencieron en el instante dado (lote 30, ADR-0027, PBI-0244; provisional). El BFF solo envía los
+ * vigentes; con la página abierta, la barra quita el que pasa su «Hasta» (el extremo cuenta). No filtra por el «Desde»:
+ * un aviso programado llega al recargar o al volver a la pestaña, y así un reloj del equipo atrasado no oculta uno que
+ * el BFF ya publicó. La regla recibe el instante: no lee el reloj.
+ */
+export function avisosSinVencer(avisos: readonly AvisoVisible[], instante: number): readonly AvisoVisible[] {
+  return avisos.filter((aviso) => aviso.hasta === null || aviso.hasta >= instante);
 }
 
 /** Posición del aviso siguiente, dando la vuelta; también si la lista se acortó. */

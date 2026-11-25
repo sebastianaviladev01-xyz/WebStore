@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
+import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
+
 /**
  * Contenido en la tienda (lote 15, ADR-0021). Las respuestas del BFF se cambian solo en la prueba (`page.route`), así
  * no se tocan los datos:
@@ -151,4 +153,58 @@ test.describe('Términos: la versión vigente y su fecha', () => {
     await page.goto('/info/terminos');
     await expect(page.getByRole('main').getByText(/^Versión \d/)).toHaveText('Versión 1');
   });
+});
+
+// Lote 30 (ADR-0027, PBI-0244; provisional): cada aviso lleva un «Desde» y un «Hasta» opcionales. El BFF solo publica
+// los vigentes, así que la tienda no recibe los programados ni los vencidos. La prueba deja los avisos como estaban.
+test('PBI-0244: la barra superior solo muestra los avisos vigentes; los programados y los vencidos no llegan', async ({
+  page,
+}) => {
+  const antes = (await leerSnapshot()).config['announcements'];
+  await enviarCambios({
+    config: {
+      announcements: [
+        { text: 'Aviso programado para 2099', url: '', startAt: '2099-01-01T00:00:00.000-05:00' },
+        {
+          text: 'Aviso vigente de prueba',
+          url: '/catalogo',
+          startAt: '2020-01-01T00:00:00.000-05:00',
+          endAt: '2099-12-31T23:59:59.999-05:00',
+        },
+        { text: 'Aviso vencido en 2020', url: '', endAt: '2020-12-31T23:59:59.999-05:00' },
+      ],
+    },
+  });
+  try {
+    // Sin rotar: la barra se queda en el primer aviso que recibió.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    const avisos = page.getByRole('region', { name: 'Avisos de la tienda' });
+    await expect(avisos).toHaveText('Aviso vigente de prueba');
+    // Uno solo queda fijo: ni flechas ni pausa, porque los otros dos no llegaron.
+    await expect(avisos.getByRole('button')).toHaveCount(0);
+  } finally {
+    await enviarCambios({ config: { announcements: antes } });
+  }
+});
+
+// Con la página abierta, el aviso que vence deja de mostrarse sin recargar: la barra lo quita con su temporizador.
+test('PBI-0244: con la página abierta, un aviso desaparece al pasar su «Hasta»', async ({ page }) => {
+  const inicio = new Date('2026-11-27T12:00:00.000-05:00');
+  await page.clock.install({ time: inicio });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await conAjustes(page, {
+    announcements: [
+      { text: 'Black Friday: cierra hoy al mediodía', url: '', endAt: '2026-11-27T12:00:59.999-05:00' },
+      { text: 'Despachos en Lima', url: '' },
+    ],
+  });
+  await page.goto('/');
+  const avisos = page.getByRole('region', { name: 'Avisos de la tienda' });
+  await expect(avisos.getByText('Black Friday: cierra hoy al mediodía')).toBeVisible();
+  await expect(avisos.getByRole('button', { name: 'Aviso siguiente' })).toBeVisible();
+
+  await page.clock.fastForward(70_000);
+  await expect(avisos).toHaveText('Despachos en Lima');
+  await expect(avisos.getByRole('button')).toHaveCount(0);
 });
