@@ -16,6 +16,13 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import {
+  avisoAFormulario,
+  avisoDesdeFormulario,
+  estadoDelAviso,
+  FilaDeAviso,
+  motivoDeVigenciaDeAviso,
+} from '../domain/aviso.rules';
 import { BYTES_MAXIMOS_FOTO } from '../domain/foto.rules';
 import {
   LUGARES_DE_SUGERIDOS,
@@ -60,11 +67,23 @@ const nuevaRed = (): FilaDeLista =>
     label: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.etiqueta)),
     url: texto(conMotivo(motivoDeRed)),
   });
+/** Lote 30 (PBI-0244): con las dos fechas, el «Hasta» va después del «Desde»; el motivo sale bajo la fila. */
+const vigenciaDeAvisoValida: ValidatorFn = (control) => {
+  const fila = (control as FilaDeLista).getRawValue();
+  const motivo = motivoDeVigenciaDeAviso(fila['startAt'] ?? '', fila['endAt'] ?? '');
+  return motivo ? { motivo } : null;
+};
 const nuevoAviso = (): FilaDeLista =>
-  new FormGroup<Record<string, FormControl<string>>>({
-    text: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.textoDeAviso)),
-    url: texto(conMotivo(motivoDeEnlaceDeAviso)),
-  });
+  new FormGroup<Record<string, FormControl<string>>>(
+    {
+      text: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.textoDeAviso)),
+      url: texto(conMotivo(motivoDeEnlaceDeAviso)),
+      // Lote 30 (PBI-0244): «Desde» y «Hasta», opcionales, con fecha y hora de Lima (`AAAA-MM-DDTHH:mm`).
+      startAt: texto(),
+      endAt: texto(),
+    },
+    { validators: vigenciaDeAvisoValida },
+  );
 const nuevoAcceso = (): FilaDeLista =>
   new FormGroup<Record<string, FormControl<string>>>({
     group: texto(Validators.required, Validators.maxLength(MAXIMOS_DE_CONTENIDO.etiqueta)),
@@ -203,17 +222,19 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
           [maximo]="maximos.socialLinks"
           [nueva]="nuevaRed"
         />
-        <!-- PBI-0175: la barra superior de la tienda muestra estos avisos; con varios, pasan uno tras otro. -->
+        <!-- PBI-0175: la barra superior de la tienda muestra estos avisos; con varios, pasan uno tras otro. Lote 30
+             (PBI-0244): cada uno con «Desde» y «Hasta» opcionales y su estado. -->
         <ws-content-list
           class="contents"
           titulo="Avisos de la barra superior"
-          descripcion="Avisos generales para los clientes, como un mantenimiento o una próxima oferta. El enlace es opcional. Con varios, la tienda los muestra uno tras otro."
+          descripcion="Avisos generales para los clientes, como un mantenimiento o una próxima oferta. El enlace es opcional. «Desde» y «Hasta» también: con fecha y hora de Lima, programan cuándo se ve el aviso; sin ellos, se ve siempre. La tienda solo muestra los vigentes y, con varios, uno tras otro."
           vacio="La barra superior no muestra avisos."
           nombre="aviso"
           [lista]="form.controls.announcements"
           [campos]="camposDeAviso"
           [maximo]="maximos.announcements"
           [nueva]="nuevoAviso"
+          [estado]="estadoDeAviso"
         />
         <mat-form-field class="sm:col-span-2">
           <mat-label>Texto footer</mat-label>
@@ -371,7 +392,8 @@ export class ContenidoPage {
     restaurar: (borrador) => {
       if (!borrador.base) return false;
       this.base = borrador.base;
-      this.cargar(borrador.valor as unknown as ConfiguracionTienda);
+      // El borrador ya es el valor del formulario (las fechas de los avisos en hora de Lima): no se convierte.
+      this.rellenar(borrador.valor as unknown as ReturnType<ContenidoPage['form']['getRawValue']>);
       return true;
     },
   });
@@ -461,7 +483,32 @@ export class ContenidoPage {
   protected readonly camposDeAviso: readonly CampoDeLista[] = [
     { clave: 'text', etiqueta: 'Aviso' },
     { clave: 'url', etiqueta: 'Enlace del aviso', pista: 'Opcional: /catalogo o https://…' },
+    // Lote 30 (PBI-0244): la ayuda va en cada fila, porque cada fecha se lee por su cuenta.
+    {
+      clave: 'startAt',
+      etiqueta: 'Desde',
+      etiquetaDeFila: (numero) => `Desde (aviso ${numero})`,
+      tipo: 'datetime-local',
+      pista: 'Opcional. Fecha y hora de Lima.',
+      pistaEnCadaFila: true,
+    },
+    {
+      clave: 'endAt',
+      etiqueta: 'Hasta',
+      etiquetaDeFila: (numero) => `Hasta (aviso ${numero})`,
+      tipo: 'datetime-local',
+      pista: 'Opcional. Fecha y hora de Lima.',
+      pistaEnCadaFila: true,
+    },
   ];
+  /**
+   * Lote 30 (PBI-0244): «Programado», «Vigente» o «Vencido» con lo que hay escrito en la fila, en este momento. La regla
+   * recibe el instante; la página lo lee al dibujar la fila.
+   */
+  protected readonly estadoDeAviso = (fila: FilaDeLista): string | null => {
+    const { startAt = '', endAt = '' } = fila.getRawValue();
+    return estadoDelAviso(startAt, endAt, Date.now());
+  };
   protected readonly camposDeAcceso: readonly CampoDeLista[] = [
     { clave: 'group', etiqueta: 'Grupo', pista: 'La columna, por ejemplo «Ayuda».' },
     { clave: 'label', etiqueta: 'Texto del acceso' },
@@ -473,11 +520,19 @@ export class ContenidoPage {
   protected readonly nuevoAviso = nuevoAviso;
   protected readonly nuevoAcceso = nuevoAcceso;
 
+  /** Lo que llega del BFF, en el formulario: los avisos con su «Desde» y su «Hasta» en hora de Lima (lote 30). */
+  private cargar(config: ConfiguracionTienda): void {
+    this.rellenar({
+      ...config,
+      announcements: (config.announcements ?? []).map(avisoAFormulario),
+    } as unknown as ReturnType<ContenidoPage['form']['getRawValue']>);
+  }
+
   /**
    * Rellena el formulario: cada lista recibe tantas filas como elementos y después se copia el valor. Usa las funciones
    * del módulo, no los campos de la clase: el borrador se restaura mientras la clase aún se está construyendo.
    */
-  private cargar(config: ConfiguracionTienda): void {
+  private rellenar(config: ReturnType<ContenidoPage['form']['getRawValue']>): void {
     const listas = [
       [this.form.controls.contactEmails, config.contactEmails, nuevoCorreo],
       [this.form.controls.contactPhones, config.contactPhones, nuevoTelefono],
@@ -515,8 +570,13 @@ export class ContenidoPage {
       this.form.markAllAsTouched();
       return;
     }
-    // Lo que esta página no edita (lote 17) se queda como estaba: solo viaja lo que cambió.
-    const editado = { ...base, ...this.form.getRawValue() } as unknown as ConfiguracionTienda;
+    // Lo que esta página no edita (lote 17) se queda como estaba: solo viaja lo que cambió. Lote 30 (PBI-0244): cada
+    // aviso vuelve con sus fechas como instantes de Lima; las que no cambiaron conservan el instante guardado.
+    const valor = this.form.getRawValue();
+    const announcements = valor.announcements.map((fila, indice) =>
+      avisoDesdeFormulario(fila as unknown as FilaDeAviso, base.announcements?.[indice]),
+    );
+    const editado = { ...base, ...valor, announcements } as unknown as ConfiguracionTienda;
     if (!(await this.admin.guardarConfiguracion(base, editado))) {
       this.saveError.set(
         this.admin.tomarError() ?? 'No pudimos guardar la configuración. Inténtalo de nuevo.',

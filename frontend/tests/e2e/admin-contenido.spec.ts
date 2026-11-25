@@ -152,3 +152,64 @@ test('lote 16: Contenido elige el panel lateral para los sugeridos y la tienda l
     await enviarCambios({ config: { addToCartDisplay: 'dialog' } });
   }
 });
+
+// Lote 30 (ADR-0027, PBI-0244; provisional): cada aviso lleva un «Desde» y un «Hasta» opcionales, con fecha y hora de
+// Lima, y Contenido marca su estado. Un «Hasta» que no va después del «Desde» se avisa en la fila y no se envía. La
+// tienda solo recibe los vigentes. La prueba deja los avisos como estaban.
+test('PBI-0244: Contenido programa un aviso con «Desde» y «Hasta» en hora de Lima y marca su estado', async ({
+  page,
+}) => {
+  const antes = (await leerSnapshot()).config['announcements'];
+  const vencido = { text: 'Aviso vencido en 2020', url: '', endAt: '2020-12-31T23:59:59.999-05:00' };
+  await enviarCambios({ config: { announcements: [{ text: 'Aviso fijo', url: '' }, vencido] } });
+  await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+  try {
+    await page.goto('/contenido');
+    await expect(page.getByText('Estado del aviso 1: Vigente')).toBeVisible();
+    await expect(page.getByText('Estado del aviso 2: Vencido')).toBeVisible();
+    await expect(page.getByLabel('Desde (aviso 2)')).toHaveValue('');
+    // El 31/12/2020 a las 23:59 en Lima, no en UTC.
+    await expect(page.getByLabel('Hasta (aviso 2)')).toHaveValue('2020-12-31T23:59');
+
+    await page.getByRole('button', { name: 'Agregar aviso' }).click();
+    await page.getByRole('textbox', { name: 'Aviso 3', exact: true }).fill('Black Friday 2099');
+    const desde = page.getByLabel('Desde (aviso 3)');
+    const hasta = page.getByLabel('Hasta (aviso 3)');
+    await expect(desde).toHaveAttribute('type', 'datetime-local');
+    await expect(desde).toHaveAccessibleDescription(/Opcional\. Fecha y hora de Lima\./);
+    await expect(hasta).toHaveAccessibleDescription(/Opcional\. Fecha y hora de Lima\./);
+    await desde.fill('2099-11-27T00:00');
+    await hasta.fill('2099-11-26T23:59');
+    const motivo = page
+      .getByRole('alert')
+      .filter({ hasText: 'El «Hasta» tiene que ser posterior al «Desde».' });
+    await expect(motivo).toBeVisible();
+    await page.getByRole('button', { name: 'Guardar configuración' }).click();
+    await expect(page.getByText('Configuración publicada en la tienda.')).toHaveCount(0);
+
+    await hasta.fill('2099-11-27T23:59');
+    await expect(motivo).toHaveCount(0);
+    await expect(page.getByText('Estado del aviso 3: Programado')).toBeVisible();
+    await page.getByRole('button', { name: 'Guardar configuración' }).click();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Configuración publicada en la tienda.' }),
+    ).toBeVisible();
+
+    // El Admin guarda todos, con la zona de Lima; el vencido conserva su instante tal cual.
+    expect((await leerSnapshot()).config['announcements']).toEqual([
+      { text: 'Aviso fijo', url: '' },
+      vencido,
+      {
+        text: 'Black Friday 2099',
+        url: '',
+        startAt: '2099-11-27T00:00:00.000-05:00',
+        endAt: '2099-11-27T23:59:59.999-05:00',
+      },
+    ]);
+    // La tienda solo recibe el vigente.
+    const publicas = await (await page.request.get(`${urls.bff}/bff/content/settings`)).json();
+    expect(publicas.announcements).toEqual([{ text: 'Aviso fijo', url: '' }]);
+  } finally {
+    await enviarCambios({ config: { announcements: antes } });
+  }
+});
