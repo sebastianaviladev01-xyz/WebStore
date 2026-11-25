@@ -41,7 +41,7 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Color principal configurable | Sustituido por los temas de la feature 002 (filas «Temas configurables»): Contenido ya no tiene colores; el color vive en el tema activo |
 | Contacto configurable | CMS → footer |
 | Header/footer configurables | CMS → Storefront shell |
-| Navegación superior configurable | CMS `topNavigation` → Storefront shell |
+| Navegación superior configurable | CMS `announcements`: avisos con enlace opcional (lote 15, PBI-0175) y con «Desde» y «Hasta» (lote 30, PBI-0244) → barra de avisos del storefront |
 | Navegación lateral configurable | CMS `sideNavigation` → drawer lateral de categorías en Storefront |
 | Tipografía única por defecto | campo read-only en Admin |
 | Contacto/Envíos/Privacidad/Términos | rutas Storefront + toggles CMS + guards que bloquean URL cuando están desactivadas |
