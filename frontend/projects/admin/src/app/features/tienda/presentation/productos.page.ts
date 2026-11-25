@@ -17,7 +17,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
-import { aplanarArbolCategorias } from '../domain/categoria.rules';
 import { EstadoFiltro, FILTROS_PRODUCTOS_VACIOS } from '../domain/filtro-catalogo.model';
 import {
   filtrarProductos,
@@ -30,6 +29,7 @@ import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { SelectorCategoriaComponent } from './selector-categoria.component';
 
 /**
  * Listado de productos (feature 008): panel de filtros debajo del título, la lista a todo el ancho y la paginación.
@@ -47,6 +47,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
     MatSelectModule,
     PanelFiltrosComponent,
     PaginacionComponent,
+    SelectorCategoriaComponent,
   ],
   template: `
     <div class="flex flex-wrap items-end justify-between gap-4">
@@ -76,17 +77,12 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
         <mat-label>SKU</mat-label>
         <input matInput formControlName="sku" />
       </mat-form-field>
-      <mat-form-field>
-        <mat-label>Categoría</mat-label>
-        <mat-select formControlName="categoriaId">
-          <mat-option value="">Todas</mat-option>
-          @for (entry of categoriasEnArbol(); track entry.category.id) {
-            <mat-option [value]="entry.category.id">
-              {{ indent(entry.depth) }}{{ entry.category.name }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
+      <!-- Lote 29 (ADR-0027, PBI-0238; provisional): la categoría se elige con búsqueda en todos los niveles del árbol. -->
+      <ws-admin-selector-categoria
+        [control]="borrador.controls.categoriaId"
+        [categorias]="admin.categories()"
+        textoSinElegir="Todas"
+      />
       <mat-form-field>
         <mat-label>Marca</mat-label>
         <mat-select formControlName="marcaId">
@@ -209,7 +205,6 @@ export class ProductosPage {
   protected readonly pagina = computed(() =>
     paginar(this.resultados(), leerPagina(this.parametros()), ELEMENTOS_POR_PAGINA),
   );
-  protected readonly categoriasEnArbol = computed(() => aplanarArbolCategorias(this.admin.categories()));
   /** Lo que se escribe en el panel; se aplica con «Buscar». */
   protected readonly borrador = new FormGroup({
     nombre: new FormControl('', { nonNullable: true }),
@@ -254,9 +249,6 @@ export class ProductosPage {
       queryParams: { pagina: numero > 1 ? numero : null },
       queryParamsHandling: 'merge',
     });
-  }
-  protected indent(depth: number) {
-    return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
   protected async remove(id: string) {
     if (this.session.can('products.delete') && confirm('¿Eliminar producto?'))

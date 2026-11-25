@@ -5,11 +5,14 @@ import ts from 'typescript';
 
 // TEST-07 (feature 008): caracterización de `categoria.rules.ts` tal como está, antes de que los filtros del
 // catálogo dependan de ella. Fija lo que hace hoy; no cambia la regla.
-const source = await readFile(new URL('./categoria.rules.ts', import.meta.url), 'utf8');
-const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
+// Lote 29 (PBI-0238): la búsqueda usa `textoBuscable` de `listado.rules.ts`, que se antepone sin sus import.
+const leer = async (ruta) =>
+  (await readFile(new URL(ruta, import.meta.url), 'utf8')).replace(/^import [\s\S]*?;$/gm, '');
+const source = [await leer('./listado.rules.ts'), await leer('./categoria.rules.ts')].join('\n');
+const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { aplanarArbolCategorias, idsDescendientes } = await import(
+const { aplanarArbolCategorias, buscarCategorias, idsDescendientes, opcionesDeCategoria } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );
 
@@ -96,4 +99,88 @@ test('TEST-07: idsDescendientes de una categoría sin hijas, o inexistente, est�
 test('TEST-07: idsDescendientes termina con un ciclo y no se incluye a sí misma', () => {
   const categorias = [cat('x', 'Equis', 'y'), cat('y', 'Ye', 'x')];
   assert.deepEqual([...idsDescendientes(categorias, 'x')], ['y']);
+});
+
+// Lote 29 (ADR-0027, PBI-0238; provisional, por confirmar con Daniel): la categoría del filtro de Productos y del registro
+// del producto se elige con búsqueda. Daniel: busca «en todos los niveles donde esté una categoría» (electrodomésticos,
+// refrigeradoras y, dentro, side by side), desde «mínimo tres caracteres», y cada opción muestra su ruta.
+// Electrodomésticos › Refrigeradoras › (Frigobar, Side by side); Electrodomésticos › Lavadoras; TV y audio › OLED;
+// Bebidas › Refrescos.
+const ARBOL = [
+  cat('beb', 'Bebidas', undefined, 3),
+  cat('side', 'Side by side', 'refri'),
+  cat('tv', 'TV y audio', undefined, 2),
+  cat('refri', 'Refrigeradoras', 'elec', 1),
+  cat('frigo', 'Frigobar', 'refri'),
+  cat('elec', 'Electrodomésticos', undefined, 1),
+  cat('lava', 'Lavadoras', 'elec', 2),
+  cat('oled', 'OLED', 'tv'),
+  cat('refrescos', 'Refrescos', 'beb'),
+];
+const rutas = (opciones) => opciones.map(({ ruta }) => ruta);
+
+test('PBI-0238: opcionesDeCategoria da cada categoría con su ruta, en el orden del árbol', () => {
+  const opciones = opcionesDeCategoria(ARBOL);
+  assert.deepEqual(rutas(opciones), [
+    'Electrodomésticos',
+    'Electrodomésticos › Refrigeradoras',
+    'Electrodomésticos › Refrigeradoras › Frigobar',
+    'Electrodomésticos › Refrigeradoras › Side by side',
+    'Electrodomésticos › Lavadoras',
+    'TV y audio',
+    'TV y audio › OLED',
+    'Bebidas',
+    'Bebidas › Refrescos',
+  ]);
+  const side = opciones.find(({ category }) => category.id === 'side');
+  assert.deepEqual(side.ancestros, ['Electrodomésticos', 'Refrigeradoras']);
+  assert.equal(side.category.name, 'Side by side');
+  assert.deepEqual(opciones[0].ancestros, []);
+});
+
+test('PBI-0238: una categoría sin padre existente o atrapada en un ciclo tiene solo su nombre como ruta', () => {
+  const opciones = opcionesDeCategoria([
+    cat('huerfana', 'Huérfana', 'no-existe'),
+    cat('x', 'Equis', 'y'),
+    cat('y', 'Ye', 'x'),
+  ]);
+  assert.deepEqual(rutas(opciones), ['Huérfana', 'Equis', 'Ye']);
+  assert.deepEqual(opcionesDeCategoria([]), []);
+});
+
+test('PBI-0238: con menos de tres caracteres (sin contar espacios ni tildes) no se filtra: están todas', () => {
+  const opciones = opcionesDeCategoria(ARBOL);
+  for (const texto of ['', '   ', 'S', 'sí', '  Re  ']) {
+    assert.deepEqual(rutas(buscarCategorias(opciones, texto)), rutas(opciones), JSON.stringify(texto));
+  }
+});
+
+test('PBI-0238: desde el tercer carácter busca en todos los niveles, sin distinguir mayúsculas ni tildes', () => {
+  const opciones = opcionesDeCategoria(ARBOL);
+  assert.deepEqual(rutas(buscarCategorias(opciones, 'SIDE')), [
+    'Electrodomésticos › Refrigeradoras › Side by side',
+  ]);
+  assert.deepEqual(rutas(buscarCategorias(opciones, 'oled')), ['TV y audio › OLED']);
+  assert.deepEqual(rutas(buscarCategorias(opciones, 'side by')), [
+    'Electrodomésticos › Refrigeradoras › Side by side',
+  ]);
+  assert.deepEqual(rutas(buscarCategorias(opciones, 'ELECTRODOMESTICOS')), [
+    'Electrodomésticos',
+    'Electrodomésticos › Refrigeradoras',
+    'Electrodomésticos › Refrigeradoras › Frigobar',
+    'Electrodomésticos › Refrigeradoras › Side by side',
+    'Electrodomésticos › Lavadoras',
+  ]);
+  assert.deepEqual(rutas(buscarCategorias(opciones, 'Ñandú')), []);
+});
+
+test('PBI-0238: primero las que coinciden por su nombre y después las que están dentro de una que coincide', () => {
+  const opciones = opcionesDeCategoria(ARBOL);
+  // Enter elige la primera coincidencia: una cuyo nombre lleva lo escrito, no una subcategoría de otra.
+  assert.deepEqual(rutas(buscarCategorias(opciones, 'refr')), [
+    'Electrodomésticos › Refrigeradoras',
+    'Bebidas › Refrescos',
+    'Electrodomésticos › Refrigeradoras › Frigobar',
+    'Electrodomésticos › Refrigeradoras › Side by side',
+  ]);
 });

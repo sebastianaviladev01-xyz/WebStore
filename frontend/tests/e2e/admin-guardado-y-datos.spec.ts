@@ -337,7 +337,8 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await cargarImagenPrincipal(page);
     await page.getByRole('textbox', { name: /Características/ }).fill('Una');
     await page.getByRole('combobox', { name: 'Categoría' }).click();
-    await page.getByRole('option', { name: 'TV y audio' }).click();
+    // Lote 29 (PBI-0238): las opciones muestran la ruta; «TV y audio › OLED» también lleva «TV y audio».
+    await page.getByRole('option', { name: 'TV y audio', exact: true }).click();
     await page.getByRole('combobox', { name: 'Marca' }).click();
     await page.getByRole('option', { name: 'Nova' }).click();
     const guardar = page.getByRole('button', { name: 'Guardar producto' });
