@@ -20,6 +20,32 @@ export const MENSAJE_TEMA_ACTIVO_EN_USO = 'Activa otro tema antes de borrar este
 
 const FORMATO_HEX = /^#[0-9A-Fa-f]{6}$/;
 
+/** Ejemplo de código de los mensajes y de la ayuda del editor (lote 29, PBI-0239): el grafito del tema C. */
+export const EJEMPLO_DE_CODIGO_HEXADECIMAL = '#1F2328';
+
+/** Resultado de leer un código hexadecimal escrito: el color `#RRGGBB` en mayúsculas, o por qué no vale. */
+export type LecturaCodigoHexadecimal =
+  { readonly valido: true; readonly color: string } | { readonly valido: false; readonly mensaje: string };
+
+/**
+ * Lee el código hexadecimal que se escribe junto al selector de un color (lote 29, ADR-0027, PBI-0239): con o sin «#»,
+ * en mayúsculas o minúsculas y con espacios alrededor. Lo devuelve como `#RRGGBB` en mayúsculas, como el selector
+ * nativo; un código mal escrito no se aplica y trae su motivo.
+ */
+export function leerCodigoHexadecimal(escrito: string): LecturaCodigoHexadecimal {
+  const recortado = String(escrito ?? '').trim();
+  const digitos = recortado.startsWith('#') ? recortado.slice(1) : recortado;
+  if (!digitos)
+    return { valido: false, mensaje: `Escribe el código del color, como ${EJEMPLO_DE_CODIGO_HEXADECIMAL}.` };
+  const color = `#${digitos}`;
+  if (!FORMATO_HEX.test(color))
+    return {
+      valido: false,
+      mensaje: `Usa seis dígitos del 0 al 9 o letras de la A a la F, como ${EJEMPLO_DE_CODIGO_HEXADECIMAL}.`,
+    };
+  return { valido: true, color: color.toUpperCase() };
+}
+
 /** Convierte `#RRGGBB` en sus tres canales (0 a 255). */
 function canales(color: string): number[] {
   if (typeof color !== 'string' || !FORMATO_HEX.test(color)) {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -12,7 +12,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
 import { TemasFacade } from '../application/temas.facade';
-import { revisarContraste, tokensDelTema, validarNombreTema } from '../domain/tema.rules';
+import {
+  EJEMPLO_DE_CODIGO_HEXADECIMAL,
+  leerCodigoHexadecimal,
+  revisarContraste,
+  tokensDelTema,
+  validarNombreTema,
+} from '../domain/tema.rules';
 import { ColoresTema, ParContraste, Tema } from '../domain/tema.model';
 import { VistaPreviaTemaComponent } from './vista-previa-tema.component';
 
@@ -139,6 +145,10 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
             </mat-form-field>
             <fieldset class="mt-1 grid gap-3">
               <legend class="mb-2 text-sm font-semibold text-ink">Colores</legend>
+              <!-- Lote 29 (PBI-0239): la ayuda de los campos del código, que la nombran en su descripción. -->
+              <p id="tema-colores-ayuda" class="-mt-1 text-xs text-muted">
+                Elige cada color en su muestra o escribe su código hexadecimal, como {{ ejemplo }}.
+              </p>
               @for (c of campos; track c.campo) {
                 <div class="flex items-center gap-3">
                   <input
@@ -159,9 +169,41 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
                       @if (errorDeColor()?.campo === c.campo) {
                         <span class="block font-semibold text-danger">{{ errorDeColor()?.mensaje }}</span>
                       }
+                      @if (erroresDeCodigo()[c.campo]; as motivo) {
+                        <span
+                          class="block font-semibold text-danger"
+                          [id]="'tema-codigo-' + c.campo + '-error'"
+                        >
+                          {{ motivo }}
+                        </span>
+                      }
                     </p>
                   </div>
-                  <span class="shrink-0 text-sm tabular-nums text-muted">{{ colores()[c.campo] }}</span>
+                  <!--
+                    Lote 29 (ADR-0027, PBI-0239): donde se leía el código, un campo para escribirlo. Daniel: «yo quiero
+                    escribir hexadecimal». Se sincroniza con el selector; uno mal escrito no se aplica y se marca al salir.
+                  -->
+                  <label class="sr-only" [for]="'tema-codigo-' + c.campo">
+                    Código hexadecimal de {{ c.etiqueta }}
+                  </label>
+                  <input
+                    type="text"
+                    class="h-11 w-24 shrink-0 rounded-lg border bg-surface px-2 text-sm tabular-nums text-ink"
+                    [class.border-line]="!erroresDeCodigo()[c.campo]"
+                    [class.border-danger]="!!erroresDeCodigo()[c.campo]"
+                    maxlength="9"
+                    spellcheck="false"
+                    autocomplete="off"
+                    [id]="'tema-codigo-' + c.campo"
+                    [value]="codigos()[c.campo]"
+                    [attr.aria-invalid]="erroresDeCodigo()[c.campo] ? 'true' : null"
+                    [attr.aria-describedby]="
+                      'tema-colores-ayuda' +
+                      (erroresDeCodigo()[c.campo] ? ' tema-codigo-' + c.campo + '-error' : '')
+                    "
+                    (input)="escribirCodigo(c.campo, $any($event.target).value)"
+                    (blur)="confirmarCodigo(c.campo)"
+                  />
                 </div>
               }
             </fieldset>
@@ -259,8 +301,18 @@ export class TemaDialog {
   private readonly ref = inject<MatDialogRef<TemaDialog, ResultadoTemaDialog>>(MatDialogRef);
 
   protected readonly campos = CAMPOS_DE_COLOR;
+  protected readonly ejemplo = EJEMPLO_DE_CODIGO_HEXADECIMAL;
   protected readonly describir = describirPar;
   protected readonly colores = signal<ColoresTema>({ ...this.datos.coloresIniciales });
+  /** Lo que se lee en el campo del código de cada color (lote 29, PBI-0239): lo escrito, aunque todavía no valga. */
+  protected readonly codigos = signal<Record<CampoDeColor, string>>(
+    Object.fromEntries(
+      CAMPOS_DE_COLOR.map(({ campo }) => [campo, this.datos.coloresIniciales[campo].toUpperCase()]),
+    ) as Record<CampoDeColor, string>,
+  );
+  /** Motivo de cada código mal escrito; se marca al salir del campo o al guardar. */
+  protected readonly erroresDeCodigo = signal<Partial<Record<CampoDeColor, string>>>({});
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   protected readonly errorDeColor = signal<{ campo: string; mensaje: string } | null>(null);
   protected readonly errorGeneral = signal<string | null>(null);
   /** Aviso de datos desactualizados del último guardado de este diálogo (AC-19). */
@@ -288,11 +340,49 @@ export class TemaDialog {
 
   protected cambiarColor(campo: CampoDeColor, valor: string): void {
     this.colores.update((actuales) => ({ ...actuales, [campo]: valor.toUpperCase() }));
+    this.codigos.update((actuales) => ({ ...actuales, [campo]: valor.toUpperCase() }));
+    this.quitarErrorDeCodigo(campo);
     if (this.errorDeColor()?.campo === campo) this.errorDeColor.set(null);
+  }
+
+  /** Lo escrito en el campo del código: si es un código válido, se aplica al selector, a la vista previa y al contraste. */
+  protected escribirCodigo(campo: CampoDeColor, texto: string): void {
+    this.codigos.update((actuales) => ({ ...actuales, [campo]: texto }));
+    const lectura = leerCodigoHexadecimal(texto);
+    if (!lectura.valido) return;
+    this.colores.update((actuales) => ({ ...actuales, [campo]: lectura.color }));
+    this.quitarErrorDeCodigo(campo);
+    if (this.errorDeColor()?.campo === campo) this.errorDeColor.set(null);
+  }
+
+  /** Al salir del campo: un código válido se muestra como `#RRGGBB` en mayúsculas; uno inválido, con su motivo. */
+  protected confirmarCodigo(campo: CampoDeColor): boolean {
+    const lectura = leerCodigoHexadecimal(this.codigos()[campo]);
+    if (lectura.valido) {
+      this.codigos.update((actuales) => ({ ...actuales, [campo]: lectura.color }));
+      return true;
+    }
+    this.erroresDeCodigo.update((actuales) => ({ ...actuales, [campo]: lectura.mensaje }));
+    return false;
+  }
+
+  private quitarErrorDeCodigo(campo: CampoDeColor): void {
+    if (!this.erroresDeCodigo()[campo]) return;
+    this.erroresDeCodigo.update((actuales) => {
+      const resto = { ...actuales };
+      delete resto[campo];
+      return resto;
+    });
   }
 
   protected async guardar(): Promise<void> {
     this.nombre.markAsTouched();
+    // Lote 29 (PBI-0239): un código mal escrito no se guarda; se marca y el foco va al primero.
+    const invalidos = this.campos.filter(({ campo }) => !this.confirmarCodigo(campo));
+    if (invalidos.length) {
+      this.host.nativeElement.querySelector<HTMLInputElement>(`#tema-codigo-${invalidos[0].campo}`)?.focus();
+      return;
+    }
     if (this.nombre.invalid || this.bloqueos().length > 0) return;
     this.errorGeneral.set(null);
     this.errorDeColor.set(null);

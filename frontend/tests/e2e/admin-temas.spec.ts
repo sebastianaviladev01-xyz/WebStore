@@ -341,6 +341,120 @@ test.describe('Temas del Admin', () => {
     expect(cajaError.y + cajaError.height).toBeLessThanOrEqual(cajaColores.y);
   });
 
+  // Lote 29 (ADR-0027, PBI-0239): junto al selector nativo, cada color tiene un campo de texto con su código hexadecimal.
+  // Daniel: «yo quiero escribir hexadecimal, no me permite». Los dos se sincronizan, el código se acepta con o sin «#» y
+  // en minúsculas, y uno mal escrito se marca, no se aplica ni se guarda. La revisión de contraste mira lo escrito.
+  test('PBI-0239: el código hexadecimal se escribe junto al selector, se sincroniza y uno mal escrito no se guarda', async ({
+    page,
+  }) => {
+    const nombre = nombreUnico('hexadecimal');
+    await abrirTemas(page);
+    await nuevoTema(page).click();
+    const formulario = dialogo(page);
+    const vista = formulario.locator('ws-admin-vista-previa-tema');
+    const codigo = (color: string) =>
+      formulario.getByRole('textbox', { name: `Código hexadecimal de ${color}`, exact: true });
+    const selector = (color: string) => formulario.getByLabel(color, { exact: true });
+
+    // Cada color tiene su campo, con su ayuda, y empieza con el código del selector.
+    for (const color of ['Principal', 'Secundario', 'Fondo principal', 'Fondo secundario', 'Contraste']) {
+      await expect(codigo(color)).toBeVisible();
+      await expect(codigo(color)).toHaveAccessibleDescription(/escribe su código hexadecimal, como #1F2328/);
+      expect((await codigo(color).inputValue()).toLowerCase()).toBe(await selector(color).inputValue());
+    }
+
+    // Escrito sin «#» y en minúsculas: se aplica al selector y a la vista previa, y al salir se normaliza.
+    await codigo('Principal').fill('0f766e');
+    await expect(selector('Principal')).toHaveValue('#0f766e');
+    await expect.poll(async () => (await primarioDe(vista)).toLowerCase()).toBe('#0f766e');
+    await codigo('Principal').press('Tab');
+    await expect(codigo('Principal')).toHaveValue('#0F766E');
+
+    // Del selector al campo.
+    await selector('Principal').fill('#1d4ed8');
+    await expect(codigo('Principal')).toHaveValue('#1D4ED8');
+
+    // La revisión de contraste se aplica al código escrito: bloquea y luego solo avisa.
+    await codigo('Contraste').fill('#C8CDD5');
+    await expect(formulario.locator('[data-contraste="bloqueo"]')).toContainText(
+      /Texto sobre el fondo principal: \d+\.\d:1, mínimo 4\.5:1/,
+    );
+    await expect(formulario.getByRole('button', { name: 'Guardar tema' })).toBeDisabled();
+    await codigo('Contraste').fill('#5F6B7A');
+    await expect(formulario.locator('[data-contraste="aviso"]')).toBeVisible();
+    await expect(formulario.locator('[data-contraste="bloqueo"]')).toHaveCount(0);
+
+    // Un código mal escrito se marca con su error y no cambia el color.
+    const secundarioAntes = await selector('Secundario').inputValue();
+    await codigo('Secundario').fill('#12345G');
+    await codigo('Secundario').press('Tab');
+    const motivo = 'Usa seis dígitos del 0 al 9 o letras de la A a la F, como #1F2328.';
+    await expect(codigo('Secundario')).toHaveAttribute('aria-invalid', 'true');
+    await expect(codigo('Secundario')).toHaveAccessibleDescription(new RegExp(motivo.replace('.', '\\.')));
+    await expect(formulario.getByText(motivo)).toBeVisible();
+    await expect(selector('Secundario')).toHaveValue(secundarioAntes);
+
+    // Con un código mal escrito no se guarda: el diálogo sigue abierto y no llega nada al BFF.
+    let creados = 0;
+    page.on('request', (peticion) => {
+      if (peticion.method() === 'POST' && peticion.url().endsWith('/bff/admin/themes')) creados += 1;
+    });
+    await formulario.getByLabel('Nombre').fill(nombre);
+    await formulario.getByRole('button', { name: 'Guardar tema' }).click();
+    await expect(formulario).toBeVisible();
+    await expect(codigo('Secundario')).toBeFocused();
+    expect(creados).toBe(0);
+
+    // Corregido, el error se va y se guarda con los códigos escritos.
+    await codigo('Secundario').fill('#f2b705');
+    await expect(codigo('Secundario')).not.toHaveAttribute('aria-invalid', 'true');
+    await expect(formulario.getByText(motivo)).toHaveCount(0);
+    await formulario.getByRole('button', { name: 'Guardar tema' }).click();
+    await expect(formulario).toBeHidden();
+    expect(creados).toBe(1);
+    const guardado = await conApi(async (api) =>
+      (await api.listar()).themes.find((tema) => tema.name === nombre),
+    );
+    expect((guardado as unknown as { colors: Record<string, string> }).colors).toMatchObject({
+      primary: '#1D4ED8',
+      secondary: '#F2B705',
+      contrast: '#5F6B7A',
+    });
+  });
+
+  test('PBI-0239: a 375 px, cada color muestra su selector y su código sin desbordar la ventana', async ({
+    page,
+  }) => {
+    await abrirTemas(page);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await nuevoTema(page).click();
+    const formulario = dialogo(page);
+    const cajaDialogo = (await formulario.boundingBox())!;
+    for (const color of ['Principal', 'Secundario', 'Fondo principal', 'Fondo secundario', 'Contraste']) {
+      for (const campo of [
+        formulario.getByLabel(color, { exact: true }),
+        formulario.getByRole('textbox', { name: `Código hexadecimal de ${color}`, exact: true }),
+      ]) {
+        await campo.scrollIntoViewIfNeeded();
+        const caja = (await campo.boundingBox())!;
+        expect(caja.x).toBeGreaterThanOrEqual(cajaDialogo.x);
+        expect(caja.x + caja.width).toBeLessThanOrEqual(cajaDialogo.x + cajaDialogo.width);
+      }
+    }
+    const contenido = formulario.locator('.ws-tema-dialog-contenido');
+    expect(await contenido.evaluate((nodo) => nodo.scrollWidth <= nodo.clientWidth)).toBe(true);
+    await formulario
+      .getByRole('textbox', { name: 'Código hexadecimal de Fondo principal', exact: true })
+      .fill('abc');
+    await formulario
+      .getByRole('textbox', { name: 'Código hexadecimal de Fondo principal', exact: true })
+      .blur();
+    await expect(
+      formulario.getByText('Usa seis dígitos del 0 al 9 o letras de la A a la F, como #1F2328.'),
+    ).toBeVisible();
+    expect(await contenido.evaluate((nodo) => nodo.scrollWidth <= nodo.clientWidth)).toBe(true);
+  });
+
   test('borrar un tema propio que no es el activo lo quita de la lista', async ({ page }) => {
     const nombre = nombreUnico('borrar');
     await conApi((api) => api.crear(nombre));

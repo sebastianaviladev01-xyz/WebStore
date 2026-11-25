@@ -17,6 +17,7 @@ const {
   PARES_DE_CONTRASTE,
   TOKENS_DEL_TEMA,
   coloresCalculados,
+  leerCodigoHexadecimal,
   medirPares,
   mezclarSrgb,
   relacionDeContraste,
@@ -236,4 +237,49 @@ test('PBI-0079: el mensaje de no borrar el tema activo es el mismo que el del BF
   );
   const bff = await import('../../../../../../../../backend/src/domain/temas/tema-propio.rules.mjs');
   assert.equal(MENSAJE_TEMA_ACTIVO_EN_USO, bff.MENSAJE_TEMA_ACTIVO_EN_USO);
+});
+
+// Lote 29 (ADR-0027, PBI-0239): junto al selector nativo, cada color se escribe con su código hexadecimal. Daniel: «yo
+// quiero escribir hexadecimal». Se acepta con o sin «#», en mayúsculas o minúsculas y con espacios alrededor, y se
+// normaliza a «#RRGGBB» en mayúsculas, como el selector. Un código inválido no se aplica: devuelve su motivo.
+test('PBI-0239: leerCodigoHexadecimal normaliza un código válido a #RRGGBB en mayúsculas', () => {
+  for (const [escrito, color] of [
+    ['#1F2328', '#1F2328'],
+    ['#f2b705', '#F2B705'],
+    ['f2b705', '#F2B705'],
+    ['  #AbCdEf  ', '#ABCDEF'],
+    ['000000', '#000000'],
+  ]) {
+    assert.deepEqual(leerCodigoHexadecimal(escrito), { valido: true, color }, escrito);
+  }
+});
+
+test('PBI-0239: leerCodigoHexadecimal rechaza un código vacío con su motivo', () => {
+  for (const escrito of ['', '   ', '#']) {
+    assert.deepEqual(
+      leerCodigoHexadecimal(escrito),
+      { valido: false, mensaje: 'Escribe el código del color, como #1F2328.' },
+      JSON.stringify(escrito),
+    );
+  }
+});
+
+test('PBI-0239: leerCodigoHexadecimal rechaza lo que no son seis dígitos hexadecimales', () => {
+  for (const escrito of [
+    '#FFF',
+    'FFF',
+    '#12345',
+    '#1234567',
+    '#GGGGGG',
+    '##123456',
+    '#12 345',
+    'rojo',
+    '#12345G',
+  ]) {
+    assert.deepEqual(
+      leerCodigoHexadecimal(escrito),
+      { valido: false, mensaje: 'Usa seis dígitos del 0 al 9 o letras de la A a la F, como #1F2328.' },
+      escrito,
+    );
+  }
 });
