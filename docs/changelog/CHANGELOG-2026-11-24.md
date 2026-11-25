@@ -20,3 +20,26 @@ Daniel y Walther revisaron la demo el 2026-11-17, y de esa revisión salieron PB
 ## Lo que queda abierto
 
 Las decisiones provisionales, por confirmar con Daniel, en las [decisiones pendientes](../planning/PENDING-DECISIONS.md), sobre todo PBI-0211 y PBI-0217; ADR-0026, propuesto; el cronograma (PBI-0225), que Sebastián prepara con Daniel y Walther; y lo que ya estaba fuera, con su motivo en el [backlog](../planning/backlog.md) ([cierre de ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md#cierre)).
+
+## Lo que salió de la reunión del 2026-11-20, por lotes (ADR-0027)
+
+Daniel y Sebastián se reunieron el 2026-11-20, y de esa reunión salieron PBI-0238 a PBI-0244 (PR #87). Sebastián Avila pidió cerrarlos el 2026-11-24, por lotes, menos lo de terceros y lo similar. Se entregaron en cinco lotes, como excepción al flujo SDD ([ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md)). Cada lote tuvo su rama, su PR y la auditoría de la sesión principal. Lo que la reunión no decidió se construyó con la opción más apegada a lo que dijo Daniel, o con la más conservadora, y quedó como «Provisional, por confirmar con Daniel» en las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (filas «Reunión del 2026-11-20»).
+
+- **Color secundario de los temas (lote 28, [PR #90](https://github.com/sebastianaviladev01-xyz/WebStore/pull/90)):** el tema C pasa a negro de principal y amarillo de secundario. En A, B y C, los botones secundarios se rellenan del secundario, el fondo con el puntero encima o con el foco usa el secundario suave, al 20 %, y la insignia «Oferta» de la ficha y el contador del carrito llevan el secundario ([ADR-0028](../adrs/0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md); PBI-0240).
+- **Editor de temas y filtro de categoría (lote 29, [PR #91](https://github.com/sebastianaviladev01-xyz/WebStore/pull/91)):** cada color del editor de temas tiene un campo para escribir su código hexadecimal (PBI-0239). La categoría del filtro de Productos y la del registro del producto se eligen con búsqueda en todos los niveles del árbol, con la ruta de cada una (PBI-0238).
+- **Avisos programados (lote 30, [PR #89](https://github.com/sebastianaviladev01-xyz/WebStore/pull/89)):** cada aviso de la navegación superior lleva un «Desde» y un «Hasta» opcionales, en hora de Lima. La tienda solo muestra los vigentes y quita, con la página abierta, el que vence; Contenido marca cada aviso como «Programado», «Vigente» o «Vencido» (PBI-0244).
+- **Íconos del backoffice (lote 31, [PR #92](https://github.com/sebastianaviladev01-xyz/WebStore/pull/92)):** todos los botones con texto llevan su ícono a la izquierda, y el título de cada página, el ícono de su módulo, el mismo del menú lateral (PBI-0243).
+- **Cierre (lote 32):** el backlog, las decisiones pendientes, la trazabilidad, la funcionalidad, las historias de usuario y este historial al día, con los hallazgos de los lotes (PBI-0246 a PBI-0250); la sección «Admin» del sistema visual describe el menú del celular como un panel lateral (PBI-0250); y el cierre de la excepción.
+
+### Verificación
+
+- Cada lote: `npm run verify` y `npm run test:e2e` completos, repetidos por la sesión principal en la punta de la rama, porque el CI no arranca sin minutos de GitHub Actions; capturas antes y después, guardadas en `frontend/output/visual-qa/lote-NN-*/` (no se versionan).
+- Lote 28: 34 pruebas de arquitectura, 402 del frontend, 728 del BFF y el smoke test, en verde; e2e, 372 de 372.
+- Lote 30: 34 de arquitectura, 410 del frontend, 739 del BFF y el smoke test, en verde; e2e, 370 de 370.
+- Lote 29, con `dev` fusionado (lotes 28 y 30): 34 de arquitectura, 418 del frontend, 744 del BFF y el smoke test, en verde; e2e, 379 de 379.
+- Lote 31: 34 de arquitectura, 425 del frontend, 744 del BFF y el smoke test, en verde; e2e, 383 de 383.
+- Lote 32: solo documentos. `npm run validate:structure`, `npm run check:agents` y `npm run verify` en verde: 34 de arquitectura, 425 del frontend, 744 del BFF y el smoke test, las mismas cifras del lote 31.
+
+### Lo que queda abierto
+
+Las decisiones provisionales, por confirmar con Daniel, sobre todo el reparto del color secundario (PBI-0240) y el alcance de los íconos (PBI-0243); el acceso a WhatsApp (PBI-0241), que Daniel dejó para el backlog; el reparto de modelos por etapa (PBI-0242), que deciden Sebastián Avila y Daniel; los hallazgos PBI-0246 a PBI-0249; y lo que ya estaba fuera, con su motivo en el [backlog](../planning/backlog.md) ([cierre de ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md#cierre)).
