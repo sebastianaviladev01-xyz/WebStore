@@ -850,6 +850,8 @@ try {
   for (const [cambio, campo] of [
     [{ imageUrl: 'https://example.com/banner.jpg' }, 'imageUrl'],
     [{ startAt: '2026-12-01' }, 'startAt'],
+    [{ startAt: '2026-02-30T10:00:00.000-05:00' }, 'startAt'], // lote 33 (PBI-0246): fecha que no existe
+    [{ endAt: '2026-04-31T18:00:00.000-05:00' }, 'endAt'],
   ]) {
     const rechazo = await esperarError(
       await raw('/bff/admin/snapshot', {

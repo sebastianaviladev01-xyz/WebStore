@@ -17,6 +17,7 @@ import {
   MAX_MINIATURA_DE_PRODUCTO,
 } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
+import { esInstanteConZona } from '../comun/reloj.mjs';
 import { LISTAS_DE_CONTENIDO, esModoDeSugeridos, validarListaDeContenido } from './contenido.rules.mjs';
 import { esModoDeDireccion } from '../pedidos/direcciones-por-producto.rules.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
@@ -355,13 +356,11 @@ function requireValidBannerImages(banner, previous) {
   }
 }
 
-/** Instante ISO 8601 con fecha, hora y zona (`Z` o `±hh:mm`), como lo envía el backoffice en hora de Lima. */
-const INSTANTE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
-const esInstante = (valor) => isText(valor) && INSTANTE.test(valor) && Number.isFinite(Date.parse(valor));
-
 /**
- * Lote 24 (ADR-0025, PBI-0221; provisional): un inicio o un fin nuevos o cambiados son instantes con hora y zona. Una
- * vigencia guardada antes que no cambia sigue valiendo, para no bloquear otros guardados.
+ * Lote 24 (ADR-0025, PBI-0221; provisional): un inicio o un fin nuevos o cambiados son instantes con hora y zona
+ * (`Z` o `±hh:mm`), como los envía el backoffice en hora de Lima. Lote 33 (ADR-0029, PBI-0246): además su fecha existe
+ * en el calendario, con la misma comprobación que los avisos (`esInstanteConZona`). Una vigencia guardada antes que no
+ * cambia sigue valiendo, para no bloquear otros guardados.
  */
 function requireValidBannerSchedule(banner, previous) {
   const anterior = previous.find((item) => item?.id === banner.id);
@@ -371,7 +370,7 @@ function requireValidBannerSchedule(banner, previous) {
   ]) {
     const valor = banner[campo];
     if (valor === undefined || valor === anterior?.[campo]) continue;
-    if (!esInstante(valor))
+    if (!esInstanteConZona(valor))
       throw invalid(
         'banners',
         campo,
