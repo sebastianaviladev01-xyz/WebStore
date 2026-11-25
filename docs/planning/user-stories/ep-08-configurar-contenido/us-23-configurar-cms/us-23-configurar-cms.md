@@ -83,3 +83,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** los sugeridos salen en el diálogo (por defecto) o en un panel lateral; el tema solo se cambia en el backoffice: el storefront no tiene tuerca.
 
 > Añadido el 2026-11-23 por el lote 16 y el 14 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0179 y PBI-0188; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-contenido.spec.ts` y `storefront-modo-demo.spec.ts`.
+
+### Escenario 10 – Avisos programados
+
+- **Dado** que el superadministrador está en Contenido
+- **Cuando** da a un aviso un «Desde», un «Hasta» o los dos, en hora de Lima
+- **Entonces** el backoffice muestra si el aviso está «Programado», «Vigente» o «Vencido», y no guarda un «Hasta» que no sea posterior al «Desde».
+
+> Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-contenido.spec.ts`. El BFF rechaza también una fecha inválida (`400 INVALID_COLLECTION`).
