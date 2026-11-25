@@ -26,6 +26,7 @@ import { filter, map } from 'rxjs';
 
 import { NotificacionesFacade } from '../features/notificaciones/application/notificaciones.facade';
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
+import { TemasFacade } from '../features/temas/application/temas.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
 import { Permiso } from '../features/sesion/domain/rol.rules';
 import { ICONOS, iconoDelModulo } from '../shared/ui/iconos';
@@ -346,7 +347,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
             </div>
           </div>
         </header>
-        <main class="admin-container py-7">
+        <main class="admin-container py-7" [class.admin-con-tuerca]="temas.modoDemo()">
           @if (admin.error()) {
             <div
               class="mb-5 rounded-xl border border-danger-line bg-danger-soft p-4 text-sm text-danger"
@@ -376,6 +377,8 @@ export class AppLayout {
   protected readonly session = inject(SesionFacade);
   protected readonly admin = inject(TiendaFacade);
   protected readonly notificaciones = inject(NotificacionesFacade);
+  /** Lote 35 (PBI-0249): en el modo demo, `main` reserva al final el espacio de la tuerca. */
+  protected readonly temas = inject(TemasFacade);
   private readonly router = inject(Router);
 
   /** Escritorio (desde 1024 px): menú lateral fijo; por debajo, botón de hamburguesa y panel lateral (PBI-0044). */

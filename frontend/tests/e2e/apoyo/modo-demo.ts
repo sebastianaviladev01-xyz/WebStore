@@ -108,3 +108,35 @@ export async function sinCruceConLaTuerca(page: Page, control: Locator, nombre: 
     expect(cruce, `${nombre} (${block}) frente a la tuerca`).toBe(0);
   }
 }
+
+/** Cruce, en píxeles cuadrados, entre la caja de `control` y la de la tuerca (0 si no se tocan o no se ven). */
+async function cruceConLaTuerca(page: Page, control: Locator): Promise<number> {
+  const a = await control.boundingBox();
+  const t = await tuerca(page).boundingBox();
+  if (!a || !t) return 0;
+  const ancho = Math.min(a.x + a.width, t.x + t.width) - Math.max(a.x, t.x);
+  const alto = Math.min(a.y + a.height, t.y + t.height) - Math.max(a.y, t.y);
+  return ancho > 0 && alto > 0 ? Math.round(ancho * alto) : 0;
+}
+
+/**
+ * Lote 35 (PBI-0249): con la página desplazada hasta el final, ningún botón, enlace ni campo de `main` queda bajo la
+ * tuerca. `nombre` dice qué página se midió; cada cruce se informa con el nombre del control.
+ */
+export async function sinNadaBajoLaTuercaAlFinal(page: Page, nombre: string): Promise<void> {
+  await expect(tuerca(page), nombre).toBeVisible();
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() =>
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }),
+  );
+  const principal = page.getByRole('main');
+  let medidos = 0;
+  for (const rol of ['button', 'link', 'textbox', 'checkbox', 'combobox'] as const) {
+    for (const control of await principal.getByRole(rol).all()) {
+      const etiqueta = (await control.getAttribute('aria-label')) ?? (await control.innerText()).trim();
+      expect(await cruceConLaTuerca(page, control), `${nombre}: ${rol} «${etiqueta}» bajo la tuerca`).toBe(0);
+      medidos++;
+    }
+  }
+  expect(medidos, `${nombre}: la página tiene controles`).toBeGreaterThan(0);
+}

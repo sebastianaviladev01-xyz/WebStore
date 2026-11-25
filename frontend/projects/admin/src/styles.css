@@ -63,6 +63,14 @@ label:has(> input[type='file']:focus-visible) {
   margin-inline: auto;
 }
 
+/*
+ * Modo demo (lote 35, PBI-0249): la tuerca es fija abajo a la derecha. Al final del contenido se reserva su alto
+ * y su margen, más el espacio de siempre (28 px), para que al llegar abajo ningún control quede bajo ella.
+ */
+.admin-container.admin-con-tuerca {
+  padding-bottom: calc(var(--ws-tuerca-alto) + var(--ws-tuerca-fondo) + 1.75rem);
+}
+
 .mat-mdc-form-field {
   width: 100%;
 }
@@ -135,18 +143,32 @@ label:has(> input[type='file']:focus-visible) {
  * carrusel (que terminan a 32 px o más del borde), para que ni al hacer scroll pasen por debajo.
  * Queda debajo de la cabecera, del drawer y de las capas de Material (diálogos, avisos y su propio
  * menú). Solo tokens.
+ *
+ * Lote 35 (PBI-0249): su alto y su distancia al borde de abajo son variables para que el contenido del
+ * Admin reserve ese mismo espacio al final en el modo demo (`.admin-con-tuerca`).
  */
+:root {
+  --ws-tuerca-alto: 44px;
+  --ws-tuerca-fondo: max(16px, env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --ws-tuerca-fondo: 24px;
+  }
+}
+
 .ws-selector-tema {
   position: fixed;
   right: 0;
-  bottom: max(16px, env(safe-area-inset-bottom));
+  bottom: var(--ws-tuerca-fondo);
   z-index: 30;
 }
 
 .ws-selector-tema-boton {
   display: grid;
   width: 28px;
-  height: 44px;
+  height: var(--ws-tuerca-alto);
   place-items: center;
   border: 1px solid var(--ws-border);
   border-right: 0;
@@ -184,7 +206,6 @@ label:has(> input[type='file']:focus-visible) {
 @media (min-width: 768px) {
   .ws-selector-tema {
     right: 24px;
-    bottom: 24px;
   }
 
   .ws-selector-tema-boton {
