@@ -21,6 +21,7 @@ import {
 } from '../domain/tema.rules';
 import { ColoresTema, ParContraste, Tema } from '../domain/tema.model';
 import { VistaPreviaTemaComponent } from './vista-previa-tema.component';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /** Lo que recibe el diálogo: el tema propio que se edita (o null para crear uno) y los colores de partida. */
 export interface DatosTemaDialog {
@@ -102,6 +103,7 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
 @Component({
   selector: 'ws-admin-tema-dialog',
   imports: [
+    IconoDirective,
     CdkScrollable,
     MatDialogModule,
     MatFormFieldModule,
@@ -253,16 +255,18 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
       <mat-dialog-actions align="end">
         <button
           type="button"
-          class="min-h-11 rounded-xl border border-line px-5 text-sm font-semibold hover:bg-subtle"
+          class="inline-flex items-center gap-2 min-h-11 rounded-xl border border-line px-5 text-sm font-semibold hover:bg-subtle"
           mat-dialog-close
         >
+          <svg wsAdminIcono="cancelar"></svg>
           Cancelar
         </button>
         <button
           type="submit"
-          class="min-h-11 rounded-xl bg-primary px-5 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
+          class="inline-flex items-center gap-2 min-h-11 rounded-xl bg-primary px-5 text-sm font-semibold text-on-primary disabled:cursor-not-allowed disabled:opacity-50"
           [disabled]="bloqueos().length > 0 || temas.guardando()"
         >
+          <svg wsAdminIcono="guardar"></svg>
           {{ temas.guardando() ? 'Guardando…' : 'Guardar tema' }}
         </button>
       </mat-dialog-actions>

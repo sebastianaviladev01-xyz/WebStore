@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
 import { FlechaPlegableDirective } from '../shared/ui/plegable.directive';
 import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rules';
+import { IconoDirective } from '../shared/ui/icono.directive';
 
 /**
  * Menú de usuario de la cabecera del Admin (feature 003, REQ-05 a REQ-07, AC-08 a AC-10). El botón muestra el
@@ -15,7 +16,7 @@ import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rule
  */
 @Component({
   selector: 'ws-admin-menu-usuario',
-  imports: [FlechaPlegableDirective, MatMenuModule, RouterLink],
+  imports: [IconoDirective, FlechaPlegableDirective, MatMenuModule, RouterLink],
   template: `
     <!-- Bajo sm: solo las iniciales; el nombre y el rol siguen en el nombre accesible del botón (AC-13). Las
          iniciales también lo integran, porque son lo que se ve: quien usa control por voz las nombra (PBI-0070). -->
@@ -50,8 +51,18 @@ import { inicialesDeUsuario } from '../features/sesion/domain/usuario-admin.rule
         <span>{{ session.roleLabel() }}</span>
       </div>
       <div class="ws-menu-usuario-separador" role="separator"></div>
-      <a mat-menu-item routerLink="/perfil">Perfil</a>
-      <button mat-menu-item type="button" (click)="cerrarSesion()">Cerrar sesión</button>
+      <a mat-menu-item routerLink="/perfil">
+        <span class="inline-flex items-center gap-2">
+          <svg wsAdminIcono="perfil"></svg>
+          Perfil
+        </span>
+      </a>
+      <button mat-menu-item type="button" (click)="cerrarSesion()">
+        <span class="inline-flex items-center gap-2">
+          <svg wsAdminIcono="salir"></svg>
+          Cerrar sesión
+        </span>
+      </button>
     </mat-menu>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

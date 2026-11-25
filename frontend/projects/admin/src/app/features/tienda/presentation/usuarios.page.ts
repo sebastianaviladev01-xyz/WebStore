@@ -18,6 +18,7 @@ import {
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Usuarios y roles. Lote 21 (ADR-0025): el usuario se crea y se edita en su propia interfaz, `/usuarios/nuevo` y
@@ -27,6 +28,8 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
 @Component({
   selector: 'ws-users-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
@@ -36,7 +39,7 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Usuarios y roles</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Usuarios y roles</h1>
     <p class="mt-2 max-w-2xl text-sm text-muted">
       Los roles son fijos: se asignan a cada usuario, pero no se crean ni se modifican. El BFF valida el rol
       en cada operación.
@@ -106,20 +109,22 @@ import { PanelFiltrosComponent } from './panel-filtros.component';
           <div class="flex gap-3 text-sm font-medium">
             <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar», como el botón de antes. -->
             <a
-              class="inline-flex items-center text-link"
+              class="inline-flex items-center gap-2 text-link"
               [routerLink]="['/usuarios', user.id]"
               queryParamsHandling="preserve"
               [attr.aria-label]="'Editar usuario ' + user.name"
             >
+              <svg wsAdminIcono="editar"></svg>
               Editar
             </a>
             @if (session.can('users.delete') && user.id !== session.user()?.id) {
               <button
-                class="text-danger"
+                class="inline-flex items-center gap-2 text-danger"
                 type="button"
                 [attr.aria-label]="'Eliminar usuario ' + user.name"
                 (click)="remove(user.id)"
               >
+                <svg wsAdminIcono="eliminar"></svg>
                 Eliminar
               </button>
             }

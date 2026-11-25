@@ -23,6 +23,7 @@ import { SesionFacade } from '../application/sesion.facade';
 import { PerfilError } from '../domain/sesion.gateway';
 import { esContrasenaSegura, MENSAJE_CONTRASENA_DEBIL } from '../domain/perfil.rules';
 import { definicionDeRol } from '../domain/rol.rules';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const contrasenaSegura = (control: AbstractControl): ValidationErrors | null =>
   !control.value || esContrasenaSegura(control.value) ? null : { debil: true };
@@ -41,9 +42,9 @@ const repetidaIgual = (grupo: AbstractControl): ValidationErrors | null => {
  */
 @Component({
   selector: 'ws-admin-perfil',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule],
+  imports: [IconoDirective, TituloPaginaDirective, ReactiveFormsModule, MatFormFieldModule, MatInputModule],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Perfil</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Perfil</h1>
     <p class="mt-2 max-w-2xl text-sm text-muted">Datos de la cuenta con la que iniciaste sesión.</p>
 
     @if (session.user()) {
@@ -87,10 +88,11 @@ const repetidaIgual = (grupo: AbstractControl): ValidationErrors | null => {
           </p>
         }
         <button
-          class="mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+          class="inline-flex items-center gap-2 mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
           type="submit"
           [disabled]="guardandoDatos()"
         >
+          <svg wsAdminIcono="guardar"></svg>
           {{ guardandoDatos() ? 'Guardando…' : 'Guardar datos' }}
         </button>
       </form>
@@ -137,10 +139,11 @@ const repetidaIgual = (grupo: AbstractControl): ValidationErrors | null => {
           </p>
         }
         <button
-          class="mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+          class="inline-flex items-center gap-2 mt-5 min-h-11 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
           type="submit"
           [disabled]="cambiando()"
         >
+          <svg wsAdminIcono="contrasena"></svg>
           {{ cambiando() ? 'Cambiando…' : 'Cambiar contraseña' }}
         </button>
       </form>

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { MatMenuModule } from '@angular/material/menu';
 
 import { TemasFacade } from '../application/temas.facade';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Tuerca del modo demo: un botón flotante que abre un menú con los temas predefinidos (A, B y C) y «Volver al tema
@@ -11,7 +12,7 @@ import { TemasFacade } from '../application/temas.facade';
  */
 @Component({
   selector: 'ws-admin-selector-tema',
-  imports: [MatMenuModule],
+  imports: [IconoDirective, MatMenuModule],
   template: `
     <div class="ws-selector-tema">
       <button
@@ -47,6 +48,7 @@ import { TemasFacade } from '../application/temas.facade';
       </p>
       @for (tema of temas.temasDeLaTuerca(); track tema.id) {
         <button
+          data-sin-icono="muestra del tema"
           mat-menu-item
           type="button"
           role="menuitemradio"
@@ -79,7 +81,10 @@ import { TemasFacade } from '../application/temas.facade';
       }
       <div class="ws-selector-tema-separador" role="separator"></div>
       <button mat-menu-item type="button" [disabled]="!esVistaPrevia()" (click)="temas.volverAlActivo()">
-        Volver al tema activo
+        <span class="inline-flex items-center gap-2">
+          <svg wsAdminIcono="deshacer"></svg>
+          Volver al tema activo
+        </span>
       </button>
     </mat-menu>
   `,

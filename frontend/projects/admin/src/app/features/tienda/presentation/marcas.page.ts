@@ -37,6 +37,7 @@ import { conservarBorrador } from './borrador';
 import { dialogoDeRegistro } from './dialogo-de-registro';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const MARCA_VACIA = { name: '', active: true };
 
@@ -57,6 +58,8 @@ interface BorradorMarca {
 @Component({
   selector: 'ws-brands-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     MatCheckboxModule,
     MatDialogModule,
@@ -67,7 +70,7 @@ interface BorradorMarca {
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Marcas</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Marcas</h1>
     <ws-filter-panel
       class="mt-7"
       etiqueta="Filtros de marcas"
@@ -105,10 +108,20 @@ interface BorradorMarca {
             <p class="text-xs text-muted">{{ b.active ? 'Activa' : 'Inactiva' }}</p>
           </div>
           <div class="flex gap-3 text-sm font-semibold">
-            <button class="text-link" [attr.aria-label]="'Editar marca ' + b.name" (click)="editar(b.id)">
+            <button
+              class="inline-flex items-center gap-2 text-link"
+              [attr.aria-label]="'Editar marca ' + b.name"
+              (click)="editar(b.id)"
+            >
+              <svg wsAdminIcono="editar"></svg>
               Editar
             </button>
-            <button class="text-danger" [attr.aria-label]="'Eliminar marca ' + b.name" (click)="remove(b.id)">
+            <button
+              class="inline-flex items-center gap-2 text-danger"
+              [attr.aria-label]="'Eliminar marca ' + b.name"
+              (click)="remove(b.id)"
+            >
+              <svg wsAdminIcono="eliminar"></svg>
               Eliminar
             </button>
           </div>
@@ -151,16 +164,18 @@ interface BorradorMarca {
         <mat-dialog-actions align="end">
           <button
             type="button"
-            class="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
+            class="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
             mat-dialog-close
           >
+            <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </button>
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
+            <svg wsAdminIcono="guardar"></svg>
             {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
         </mat-dialog-actions>

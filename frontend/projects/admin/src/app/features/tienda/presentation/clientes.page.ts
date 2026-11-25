@@ -27,6 +27,7 @@ import { dialogoDeRegistro } from './dialogo-de-registro';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const CLIENTE_VACIO = { name: '', email: '', document: '' };
 
@@ -45,6 +46,8 @@ interface BorradorCliente {
 @Component({
   selector: 'ws-customers-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
@@ -53,7 +56,7 @@ interface BorradorCliente {
     PaginacionComponent,
   ],
   template: `
-    <h1 class="text-3xl font-semibold tracking-tight text-ink">Clientes</h1>
+    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Clientes</h1>
     <p class="mt-3 text-sm text-muted">
       Cliente y usuario son registros distintos: una compra como invitado genera cliente sin obligar a crear
       cuenta.
@@ -85,7 +88,7 @@ interface BorradorCliente {
         @for (c of pagina().items; track c.id) {
           <div
             role="row"
-            class="grid grid-cols-[1fr_140px_90px] items-center border-b border-line p-3 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-4 max-md:gap-y-2"
+            class="grid grid-cols-[1fr_140px_auto] items-center border-b border-line p-3 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-4 max-md:gap-y-2"
           >
             <div role="cell" class="min-w-0 max-md:col-span-full">
               <strong class="break-words">{{ c.name }}</strong>
@@ -93,14 +96,20 @@ interface BorradorCliente {
             </div>
             <span role="cell" class="text-sm">{{ c.orders }} pedidos</span>
             <div role="cell" class="flex gap-2 text-sm font-semibold">
-              <button class="text-link" [attr.aria-label]="'Editar cliente ' + c.name" (click)="edit(c.id)">
+              <button
+                class="inline-flex items-center gap-2 text-link"
+                [attr.aria-label]="'Editar cliente ' + c.name"
+                (click)="edit(c.id)"
+              >
+                <svg wsAdminIcono="editar"></svg>
                 Editar
               </button>
               <button
-                class="text-danger"
+                class="inline-flex items-center gap-2 text-danger"
                 [attr.aria-label]="'Eliminar cliente ' + c.name"
                 (click)="remove(c.id)"
               >
+                <svg wsAdminIcono="eliminar"></svg>
                 Eliminar
               </button>
             </div>
@@ -155,16 +164,18 @@ interface BorradorCliente {
         <mat-dialog-actions align="end">
           <button
             type="button"
-            class="rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
+            class="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
             mat-dialog-close
           >
+            <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </button>
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
+            <svg wsAdminIcono="guardar"></svg>
             {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
         </mat-dialog-actions>

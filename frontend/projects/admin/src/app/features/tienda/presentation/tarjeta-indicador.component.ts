@@ -53,6 +53,7 @@ import {
         }
       </div>
       <a
+        data-sin-icono="enlace de texto"
         class="mt-4 flex items-center gap-1 border-t border-line pt-3 text-sm font-medium text-link hover:text-on-primary-soft"
         [routerLink]="enlace()"
       >

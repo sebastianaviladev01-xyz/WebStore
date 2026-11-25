@@ -37,6 +37,7 @@ import { Banner, ETIQUETAS_UBICACION_BANNER, UbicacionBanner } from '../domain/t
 import { TonoDeFoto } from '../domain/tono-de-foto.rules';
 import { conservarBorrador } from './borrador';
 import { imagenDelBanner } from './reducir-foto';
+import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /** Las dos imágenes del banner (lote 24, PBI-0214): la de escritorio, obligatoria, y la del celular, opcional. */
 type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
@@ -52,6 +53,8 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
 @Component({
   selector: 'ws-banner-form-page',
   imports: [
+    IconoDirective,
+    TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
     MatCheckboxModule,
@@ -60,10 +63,19 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
     MatSelectModule,
   ],
   template: `
-    <a class="text-sm font-semibold text-link" routerLink="/banners" queryParamsHandling="preserve">
-      ← Volver a banners
+    <a
+      class="inline-flex items-center gap-2 text-sm font-semibold text-link"
+      routerLink="/banners"
+      queryParamsHandling="preserve"
+    >
+      <svg wsAdminIcono="volver"></svg>
+      Volver a banners
     </a>
-    <h1 id="titulo-formulario-banner" class="mt-3 text-3xl font-semibold tracking-tight text-ink">
+    <h1
+      wsAdminTitulo
+      id="titulo-formulario-banner"
+      class="mt-3 text-3xl font-semibold tracking-tight text-ink"
+    >
       {{ editing() ? 'Editar' : 'Nuevo' }} banner
     </h1>
     @if (loadingBanner()) {
@@ -156,8 +168,9 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
               }
               <div class="mt-3 flex flex-wrap gap-2">
                 <label
-                  class="inline-flex cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
+                  class="inline-flex items-center gap-2 cursor-pointer rounded-xl border border-line px-4 py-2.5 text-sm font-semibold"
                 >
+                  <svg wsAdminIcono="cargar"></svg>
                   {{ form.controls[imagen.campo].value ? 'Reemplazar' : 'Cargar' }} {{ imagen.accion }}
                   <input
                     type="file"
@@ -169,9 +182,10 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
                 @if (imagen.opcional && form.controls[imagen.campo].value) {
                   <button
                     type="button"
-                    class="rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-danger"
+                    class="inline-flex items-center gap-2 rounded-xl border border-line px-4 py-2.5 text-sm font-semibold text-danger"
                     (click)="quitarImagen(imagen.campo)"
                   >
+                    <svg wsAdminIcono="quitar"></svg>
                     Quitar {{ imagen.accion }}
                   </button>
                 }
@@ -252,17 +266,19 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
         }
         <div class="mt-5 flex gap-3">
           <button
-            class="rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving() || preparando() !== null"
           >
+            <svg wsAdminIcono="guardar"></svg>
             {{ admin.saving() ? 'Guardando…' : 'Guardar' }}
           </button>
           <a
-            class="inline-flex items-center rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
+            class="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
             routerLink="/banners"
             queryParamsHandling="preserve"
           >
+            <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </a>
         </div>
