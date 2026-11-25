@@ -4,13 +4,15 @@
  * - `contactEmails` y `contactPhones` (PBI-0169): `{ value, label }`; el primero es el principal donde la tienda solo
  *   muestra uno. `socialLinks`: `{ label, url }`, con `https://`.
  * - `announcements` (PBI-0175): los avisos de la barra superior, `{ text, url }`, con el enlace opcional (una ruta de
- *   la tienda o `https://`).
+ *   la tienda o `https://`). Desde el lote 30 (ADR-0027, PBI-0244; provisional), cada aviso puede llevar `startAt` y
+ *   `endAt`, instantes con hora y zona (`aviso-programado.rules.mjs`); vacíos no se guardan, y `endAt` va después.
  * - `quickLinks` (PBI-0185): los accesos del pie, `{ group, label, url }`; cada grupo es una columna del pie.
  *
  * `validarListaDeContenido` recibe lo que llegó del Admin y devuelve la lista normalizada (texto recortado y solo los
  * campos conocidos) o el motivo del rechazo, que el Admin muestra tal cual. `listasDesdeContenidoAnterior` migra los
  * campos de texto de antes del lote.
  */
+import { esInstanteConZona } from '../comun/reloj.mjs';
 
 export const LISTAS_DE_CONTENIDO = Object.freeze([
   'contactEmails',
@@ -78,6 +80,16 @@ export function esEnlaceHttps(url) {
   }
 }
 
+/**
+ * Un extremo de la vigencia del aviso (lote 30, PBI-0244): nada si llega vacío o no llega; si no, el campo con su valor
+ * (recortado si es texto), para que la validación diga si es un instante.
+ */
+function extremoDelAviso(campo, valor) {
+  if (valor === undefined || valor === null) return {};
+  if (typeof valor !== 'string') return { [campo]: valor };
+  return valor.trim() ? { [campo]: valor.trim() } : {};
+}
+
 const digitos = (telefono) => telefono.replace(/\D/g, '').length;
 const esTelefono = (valor) => TELEFONO.test(valor) && digitos(valor) >= 6 && digitos(valor) <= 15;
 
@@ -114,13 +126,27 @@ const LISTAS = {
   },
   announcements: {
     maximo: 5,
-    elemento: (item) => ({ text: recortar(item.text), url: recortar(item.url) }),
-    error: ({ text, url }) => {
+    // Lote 30 (PBI-0244): el «Desde» y el «Hasta» solo se guardan si tienen valor; sin ellos, el aviso es el de antes.
+    elemento: (item) => ({
+      text: recortar(item.text),
+      url: recortar(item.url),
+      ...extremoDelAviso('startAt', item.startAt),
+      ...extremoDelAviso('endAt', item.endAt),
+    }),
+    error: ({ text, url, startAt, endAt }) => {
       if (!text) return 'cada aviso necesita su texto';
       if (text.length > MAXIMO_TEXTO_DE_AVISO)
         return `el texto de cada aviso admite hasta ${MAXIMO_TEXTO_DE_AVISO} caracteres`;
       if (url && !esRutaDeLaTienda(url) && !esEnlaceHttps(url))
         return `el enlace del aviso «${text}» debe ser una ruta de la tienda (/catalogo) o una dirección https://`;
+      for (const [valor, nombre] of [
+        [startAt, 'Desde'],
+        [endAt, 'Hasta'],
+      ])
+        if (valor !== undefined && !esInstanteConZona(valor))
+          return `el «${nombre}» del aviso «${text}» necesita una fecha y una hora válidas`;
+      if (startAt !== undefined && endAt !== undefined && Date.parse(endAt) <= Date.parse(startAt))
+        return `el «Hasta» del aviso «${text}» debe ser posterior a su «Desde»`;
       return null;
     },
     nombre: 'avisos',

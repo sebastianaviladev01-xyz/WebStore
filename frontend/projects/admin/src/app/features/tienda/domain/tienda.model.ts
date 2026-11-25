@@ -162,6 +162,9 @@ export interface RedSocial {
 export interface AvisoTienda {
   readonly text: string;
   readonly url: string;
+  /** «Desde» y «Hasta» opcionales, instantes ISO con zona (lote 30, PBI-0244; `aviso.rules.ts`). */
+  readonly startAt?: string;
+  readonly endAt?: string;
 }
 
 /** Un acceso del pie de la tienda: su columna (`group`), su texto y su destino (PBI-0185). */

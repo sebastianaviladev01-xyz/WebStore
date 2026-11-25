@@ -27,3 +27,19 @@ export function finDelDiaDeLima(fecha) {
   }
   return new Date(dentro).toISOString();
 }
+
+/** Instante ISO 8601 con fecha, hora y zona (`Z` o `±hh:mm`), como el que envía el backoffice en hora de Lima. */
+const INSTANTE_CON_ZONA = /^(\d{4})-(\d{2})-(\d{2})T\d{2}:\d{2}(:\d{2}(\.\d{1,3})?)?(Z|[+-]\d{2}:\d{2})$/;
+
+/**
+ * Lote 30 (PBI-0244): el texto es un instante con hora y zona cuya fecha existe. `Date.parse` acepta el 30 de febrero
+ * (lo pasa al 2 de marzo), así que la fecha se comprueba aparte.
+ */
+export function esInstanteConZona(valor) {
+  if (typeof valor !== 'string') return false;
+  const partes = INSTANTE_CON_ZONA.exec(valor);
+  if (!partes || !Number.isFinite(Date.parse(valor))) return false;
+  const [anio, mes, dia] = partes.slice(1, 4).map(Number);
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia));
+  return fecha.getUTCFullYear() === anio && fecha.getUTCMonth() === mes - 1 && fecha.getUTCDate() === dia;
+}

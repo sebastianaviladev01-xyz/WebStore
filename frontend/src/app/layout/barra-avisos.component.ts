@@ -13,6 +13,7 @@ import { Router, RouterLink, UrlTree } from '@angular/router';
 import {
   avisoAnterior,
   avisoSiguiente,
+  avisosSinVencer,
   AvisoVisible,
   INTERVALO_DE_AVISOS_MS,
 } from '../features/contenido/domain/aviso.rules';
@@ -106,30 +107,36 @@ export class BarraAvisosComponent {
   protected readonly pausado = signal(prefiereMenosMovimiento());
   /** El ratón o el foco están en la barra. */
   protected readonly enfocado = signal(false);
-  protected readonly varios = computed(() => this.avisos().length > 1);
+  /** Lote 30 (PBI-0244): el instante con el que se quitan los avisos vencidos; avanza con el temporizador de la barra. */
+  private readonly ahora = signal(Date.now());
+  /** Los avisos que la barra muestra: los que llegaron del BFF, sin los que vencieron con la página abierta. */
+  protected readonly vigentes = computed(() => avisosSinVencer(this.avisos(), this.ahora()));
+  protected readonly varios = computed(() => this.vigentes().length > 1);
   protected readonly detenido = computed(() => this.pausado() || this.enfocado());
   protected readonly actual = computed<AvisoVisible | null>(() => {
-    const avisos = this.avisos();
+    const avisos = this.vigentes();
     return avisos.length ? avisos[Math.min(this.indice(), avisos.length - 1)] : null;
   });
 
   constructor() {
-    // Si llega otro contenido con menos avisos, se vuelve al primero.
+    // Si llega otro contenido con menos avisos, o uno venció, se vuelve al primero.
     effect(() => {
-      if (this.indice() >= this.avisos().length) this.indice.set(0);
+      if (this.indice() >= this.vigentes().length) this.indice.set(0);
     });
+    // El mismo temporizador que pasa los avisos recalcula cuáles siguen vigentes (lote 30, PBI-0244).
     const temporizador = setInterval(() => {
+      this.ahora.set(Date.now());
       if (this.varios() && !this.detenido()) this.siguiente();
     }, INTERVALO_DE_AVISOS_MS);
     inject(DestroyRef).onDestroy(() => clearInterval(temporizador));
   }
 
   protected siguiente(): void {
-    this.indice.update((indice) => avisoSiguiente(indice, this.avisos().length));
+    this.indice.update((indice) => avisoSiguiente(indice, this.vigentes().length));
   }
 
   protected anterior(): void {
-    this.indice.update((indice) => avisoAnterior(indice, this.avisos().length));
+    this.indice.update((indice) => avisoAnterior(indice, this.vigentes().length));
   }
 
   protected ruta(url: string): UrlTree {

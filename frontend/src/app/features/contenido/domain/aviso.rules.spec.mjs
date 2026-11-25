@@ -13,9 +13,8 @@ const source = await readFile(new URL('./aviso.rules.ts', import.meta.url), 'utf
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { avisosVisibles, avisoSiguiente, avisoAnterior, INTERVALO_DE_AVISOS_MS } = await import(
-  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
-);
+const { avisosVisibles, avisosSinVencer, avisoSiguiente, avisoAnterior, INTERVALO_DE_AVISOS_MS } =
+  await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 test('PBI-0175: cada aviso lleva su texto y el tipo de su enlace', () => {
   assert.deepEqual(
@@ -25,9 +24,17 @@ test('PBI-0175: cada aviso lleva su texto y el tipo de su enlace', () => {
       { text: 'Síguenos', url: 'https://www.instagram.com/tienda' },
     ]),
     [
-      { texto: 'Mantenimiento el domingo', enlace: null },
-      { texto: 'Ofertas de verano', enlace: { tipo: 'ruta', url: '/catalogo?categoria=cat-tv' } },
-      { texto: 'Síguenos', enlace: { tipo: 'externo', url: 'https://www.instagram.com/tienda' } },
+      { texto: 'Mantenimiento el domingo', enlace: null, hasta: null },
+      {
+        texto: 'Ofertas de verano',
+        enlace: { tipo: 'ruta', url: '/catalogo?categoria=cat-tv' },
+        hasta: null,
+      },
+      {
+        texto: 'Síguenos',
+        enlace: { tipo: 'externo', url: 'https://www.instagram.com/tienda' },
+        hasta: null,
+      },
     ],
   );
 });
@@ -41,9 +48,9 @@ test('PBI-0175: un aviso sin texto no se muestra; un enlace que no es de la tien
       { text: 'Inseguro', url: 'http://x.com' },
     ]),
     [
-      { texto: 'Aviso', enlace: null },
-      { texto: 'Otro', enlace: null },
-      { texto: 'Inseguro', enlace: null },
+      { texto: 'Aviso', enlace: null, hasta: null },
+      { texto: 'Otro', enlace: null, hasta: null },
+      { texto: 'Inseguro', enlace: null, hasta: null },
     ],
   );
   assert.deepEqual(avisosVisibles(undefined), []);
@@ -63,4 +70,50 @@ test('PBI-0175: con varios avisos, el siguiente y el anterior dan la vuelta', ()
 
 test('PBI-0175: los avisos rotan cada 6 s (más de 5 s, con pausa: WCAG 2.2.2)', () => {
   assert.equal(INTERVALO_DE_AVISOS_MS, 6000);
+});
+
+// Lote 30 (ADR-0027, PBI-0244; provisional): el BFF solo envía los avisos vigentes. La tienda, además, deja de mostrar
+// el que vence mientras la página sigue abierta: cada aviso lleva el instante de su «Hasta» y la barra los filtra con
+// el instante que recibe, sin leer el reloj en la regla. Un aviso programado no llega hasta recargar o volver a la
+// pestaña, y la tienda no filtra por el «Desde», para no ocultar por un reloj del equipo adelantado o atrasado uno que el
+// BFF ya publicó.
+test('PBI-0244: cada aviso lleva el instante de su «Hasta»; sin «Hasta» o con uno ilegible, ninguno', () => {
+  assert.deepEqual(
+    avisosVisibles([
+      {
+        text: 'Black Friday',
+        url: '/catalogo',
+        startAt: '2026-11-27T00:00:00.000-05:00',
+        endAt: '2026-11-27T23:59:59.999-05:00',
+      },
+      { text: 'Sin fin', url: '', startAt: '2026-11-27T00:00:00.000-05:00' },
+      { text: 'Ilegible', url: '', endAt: 'mañana' },
+    ]),
+    [
+      {
+        texto: 'Black Friday',
+        enlace: { tipo: 'ruta', url: '/catalogo' },
+        hasta: Date.parse('2026-11-27T23:59:59.999-05:00'),
+      },
+      { texto: 'Sin fin', enlace: null, hasta: null },
+      { texto: 'Ilegible', enlace: null, hasta: null },
+    ],
+  );
+});
+
+test('PBI-0244: con la página abierta, un aviso deja de mostrarse cuando pasa su «Hasta» (el extremo cuenta)', () => {
+  const hasta = Date.parse('2026-11-27T23:59:59.999-05:00');
+  const avisos = [
+    { texto: 'Siempre', enlace: null, hasta: null },
+    { texto: 'Hoy', enlace: null, hasta },
+  ];
+  assert.deepEqual(
+    avisosSinVencer(avisos, hasta).map((aviso) => aviso.texto),
+    ['Siempre', 'Hoy'],
+  );
+  assert.deepEqual(
+    avisosSinVencer(avisos, hasta + 1).map((aviso) => aviso.texto),
+    ['Siempre'],
+  );
+  assert.deepEqual(avisosSinVencer([], hasta), []);
 });

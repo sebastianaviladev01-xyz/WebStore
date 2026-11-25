@@ -10,6 +10,12 @@ export interface CampoDeLista {
   readonly clave: string;
   readonly etiqueta: string;
   readonly pista?: string;
+  /** Lote 30 (PBI-0244): `datetime-local` para el «Desde» y el «Hasta» de los avisos; por omisión, texto. */
+  readonly tipo?: 'text' | 'datetime-local';
+  /** La etiqueta de la fila `numero`, si no es «etiqueta número» (lote 30: «Desde (aviso 2)»). */
+  readonly etiquetaDeFila?: (numero: number) => string;
+  /** La pista en todas las filas, no solo en la primera (lote 30: la hora de Lima de cada fecha). */
+  readonly pistaEnCadaFila?: boolean;
 }
 
 export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
@@ -38,15 +44,26 @@ export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
         >
           @for (campo of campos(); track campo.clave) {
             <mat-form-field>
-              <mat-label>{{ campo.etiqueta }} {{ i + 1 }}</mat-label>
-              <input matInput [formControl]="fila.controls[campo.clave]" />
-              @if (campo.pista && primera) {
+              <mat-label>
+                {{ campo.etiquetaDeFila ? campo.etiquetaDeFila(i + 1) : campo.etiqueta + ' ' + (i + 1) }}
+              </mat-label>
+              <input matInput [type]="campo.tipo ?? 'text'" [formControl]="fila.controls[campo.clave]" />
+              @if (campo.pista && (primera || campo.pistaEnCadaFila)) {
                 <mat-hint>{{ campo.pista }}</mat-hint>
               }
               <mat-error>{{ mensaje(fila.controls[campo.clave].errors) }}</mat-error>
             </mat-form-field>
           }
-          <div class="flex gap-2 pb-5 sm:pt-2">
+          <div class="flex flex-wrap items-center gap-2 pb-5 sm:pt-2">
+            <!-- Lote 30 (PBI-0244): el estado de la fila, si la lista lo calcula (los avisos: programado, vigente o vencido). -->
+            @if (estado(); as estadoDe) {
+              @if (estadoDe(fila); as valor) {
+                <span class="rounded-full border border-line px-2.5 py-1 text-xs font-semibold">
+                  <span class="sr-only">Estado del {{ nombre() }} {{ i + 1 }}:</span>
+                  {{ valor }}
+                </span>
+              }
+            }
             <button
               type="button"
               class="rounded-full border border-line px-3 py-2 text-xs font-semibold disabled:opacity-40"
@@ -66,6 +83,10 @@ export type FilaDeLista = FormGroup<Record<string, FormControl<string>>>;
             </button>
           </div>
         </div>
+        <!-- Lote 30 (PBI-0244): lo que falla entre campos de la fila, como un «Hasta» anterior al «Desde». -->
+        @if (mensaje(fila.errors); as aviso) {
+          <p class="mb-3 text-xs font-semibold text-danger" role="alert">{{ aviso }}</p>
+        }
       } @empty {
         <p class="mb-3 text-sm text-muted">{{ vacio() }}</p>
       }
@@ -98,12 +119,18 @@ export class ListaContenidoComponent {
   readonly maximo = input.required<number>();
   /** Fila vacía para «Agregar». */
   readonly nueva = input.required<() => FilaDeLista>();
+  /** Lote 30 (PBI-0244): el estado que se muestra junto a cada fila, o `null` si la lista no lo tiene. */
+  readonly estado = input<((fila: FilaDeLista) => string | null) | null>(null);
   protected readonly mensaje = mensajeDeError;
-  /** Columnas de cada fila según el número de campos, más la de los botones. */
+  /**
+   * Columnas de cada fila según el número de campos, más la de los botones. Con cuatro (los avisos, desde el lote 30),
+   * dos por línea (el texto y el enlace; el «Desde» y el «Hasta») y los botones debajo: en una sola no se leen.
+   */
   protected readonly columnas: Readonly<Record<number, string>> = {
     1: 'sm:grid-cols-[minmax(0,1fr)_auto]',
     2: 'sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]',
     3: 'sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]',
+    4: 'sm:grid-cols-2',
   };
 
   protected agregar(): void {
