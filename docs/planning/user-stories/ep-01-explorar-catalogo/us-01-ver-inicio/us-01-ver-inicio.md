@@ -59,6 +59,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0215; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueban `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts` y `destacados.rules.spec.mjs`. Los datos de ejemplo marcan los cuatro de siempre, así que la demo se ve igual.
 
+### Escenario 07 – Avisos programados
+
+- **Dado** que un aviso de Contenido tiene un «Desde» o un «Hasta»
+- **Cuando** el comprador abre la tienda
+- **Entonces** solo ve el aviso entre esas fechas; si pasa su «Hasta» con la página abierta, el aviso desaparece sin recargar.
+
+> Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-contenido.spec.ts`, con el reloj simulado. Un aviso sin fechas se ve siempre, como en el escenario 04.
+
 ## Fuera de alcance y pendientes
 
 - Queda el inicio actual (Daniel, 2026-11-20, PBI-0019); `/inicio-anterior` se quitó en el lote 16 (PBI-0193).

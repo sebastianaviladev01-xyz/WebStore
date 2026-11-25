@@ -1,6 +1,6 @@
 # Funcionalidad — WebStore MVP
 
-Implementación funcional del alcance **WebStore** consolidado a partir de las sesiones y reuniones del proyecto, con los cambios que pidió Daniel entregados el 2026-11-23 por lotes ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); detalle en la [trazabilidad](TRACEABILITY.md#respuestas-de-daniel-lotes-11-a-20-2026-11-23)) y lo que salió de la revisión de la demo, entregado el 2026-11-24 por lotes ([ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); detalle en la [trazabilidad](TRACEABILITY.md#revisión-de-la-demo-lotes-21-a-26-2026-11-24)). El workspace contiene dos aplicaciones Angular independientes, el storefront y el backoffice ([glosario](../architecture/glosario.md#aplicaciones)), y un BFF de prueba compartido para demostrar la arquitectura final sin exigir un backend productivo.
+Implementación funcional del alcance **WebStore** consolidado a partir de las sesiones y reuniones del proyecto, con los cambios que pidió Daniel entregados el 2026-11-23 por lotes ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); detalle en la [trazabilidad](TRACEABILITY.md#respuestas-de-daniel-lotes-11-a-20-2026-11-23)) y lo que salió de la revisión de la demo, entregado el 2026-11-24 por lotes ([ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); detalle en la [trazabilidad](TRACEABILITY.md#revisión-de-la-demo-lotes-21-a-26-2026-11-24)), y lo que salió de la reunión del 2026-11-20, entregado el mismo 2026-11-24 por lotes ([ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); detalle en la [trazabilidad](TRACEABILITY.md#reunión-del-2026-11-20-lotes-28-a-32-2026-11-24)). El workspace contiene dos aplicaciones Angular independientes, el storefront y el backoffice ([glosario](../architecture/glosario.md#aplicaciones)), y un BFF de prueba compartido para demostrar la arquitectura final sin exigir un backend productivo.
 
 Cómo levantarlo y verificarlo: [README](../../README.md). Arquitectura: [docs/architecture](../architecture/README.md).
 
@@ -27,7 +27,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 
 - Home y banners con vigencia (fecha y hora de Lima), cada uno con hasta dos botones (paleta primaria y secundaria); los enlaces externos se abren en otra pestaña.
 - Productos destacados que elige el backoffice: todos los que tienen stock, en un carrusel si son más de cuatro; sin ninguno, la sección no sale.
-- Avisos para los clientes en la parte superior, con enlace opcional, que rotan si hay varios.
+- Avisos para los clientes en la parte superior, con enlace opcional, que rotan si hay varios. Cada uno puede llevar un «Desde» y un «Hasta»: solo se ven los vigentes.
 - Categorías jerárquicas por nombre, sin dependencia de iconografía.
 - Catálogo con filtros acordados: nombre, categoría (con su imagen, si la tiene) y un rango de precio con mínimo y máximo.
 - Comparador de hasta 4 productos (`/comparar`), con la lista en la URL.
@@ -47,13 +47,14 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Contacto (varios correos, teléfonos y redes), información de envíos, privacidad y términos (con su versión vigente) administrables, pie armado con los accesos inferiores, además de libro de reclamaciones persistente con código de recepción.
 - Estados vacíos, sin resultados, sin stock y 404, y un aviso de mantenimiento si el contenido nunca llega del BFF.
 - Sin tuerca de temas: el tema solo se configura en el backoffice.
+- El color secundario del tema se ve en los botones secundarios, en el fondo con el puntero encima o con el foco, en la insignia «Oferta» y en el contador del carrito. El tema C lleva el negro de principal y el amarillo de secundario.
 
 ## Backoffice (proyecto `admin`)
 
 - Dashboard con cifras plegables (ventas sin el envío), el gráfico de pedidos y «Clientes web nuevos» a todo el ancho (sin «Pedidos por distrito»), últimos pedidos, alertas y actividad reciente.
 - Campana de avisos: pedidos nuevos, reclamos nuevos y errores de compra.
 - Mantenimientos estándar: un registro de más de tres campos tiene su propia interfaz y uno de hasta tres, una ventana emergente; ningún formulario va al costado de una lista. Los campos usan el contorno del storefront.
-- Productos, con la casilla «Es destacado», la imagen y la galería cargadas como archivo, el precio con dos decimales y el SKU en su columna. El stock no está en el registro: se gestiona en Inventario.
+- Productos, con la casilla «Es destacado», la imagen y la galería cargadas como archivo, el precio con dos decimales, el SKU en su columna y la categoría elegida con búsqueda, en el registro y en el filtro. El stock no está en el registro: se gestiona en Inventario.
 - Inventario único compartido con Storefront, el único lugar donde se cambia el stock; un producto nuevo empieza sin stock.
 - Categorías jerárquicas y ordenables (orden explícito; fallback alfabético), en un árbol que se abre por niveles, con una imagen opcional de 100 × 100 px.
 - Marcas, en una ventana emergente.
@@ -62,12 +63,14 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Reclamos con estado y respuesta del proveedor; la lista marca el abierto.
 - Pedidos y estados.
 - Banners en su propia interfaz, con las imágenes cargadas como archivo, fecha y hora de inicio y fin, el tono de los controles calculado al cargar la foto y hasta dos botones.
-- CMS: logo gráfico cargable/configurable, contacto múltiple, avisos para los clientes, navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
+- CMS: logo gráfico cargable/configurable, contacto múltiple, avisos para los clientes (con «Desde» y «Hasta» opcionales), navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
 - Contacto, Envíos, Privacidad y Términos con activación/desactivación efectiva mediante guards; al desactivarlas, tampoco son accesibles por URL directa.
 - Tipografía única bloqueada en el MVP.
 - Tabla configurable origen → destino, con el distrito elegido de una lista y sin ajuste porcentual.
 - «Entregas y feriados» (superadministrador): días no laborables, primera fecha de entrega y una dirección por pedido o por producto.
 - Listados con panel de filtros estándar: «Buscar», «Limpiar» y «Agregar», a la derecha.
+- Temas con el código hexadecimal de cada color escrito o elegido con el selector.
+- Botones con su ícono a la izquierda, y el ícono del módulo junto al título de cada página.
 - Tuerca de temas solo en el modo demo, con los tres temas predefinidos.
 
 ### Roles
