@@ -2,6 +2,7 @@ import { expect, request as nuevoRequest, test, type Page, type Route } from '@p
 
 import { activarTema } from './apoyo/contraste';
 import { cuentasAdmin, urls } from './apoyo/entorno';
+import { PRIMARIO } from './apoyo/modo-demo';
 
 /**
  * Temas en la tienda (feature 002). TEST-20 (AC-02, AC-08, AC-17): con C activo, ningún elemento visible usa un
@@ -220,7 +221,7 @@ test.describe('TEST-20: con C activo, la tienda no conserva colores de B', () =>
       await abrir(page, ruta(producto));
 
       const conC = await inspeccionar(page);
-      expect(conC.primario).toBe('#F2B705');
+      expect(conC.primario).toBe(PRIMARIO.c);
       expect(conC.revisados).toBeGreaterThan(20);
       expect(conC.restosDeB).toEqual([]);
       expect(conC.imagenes).toContain(LOGO);
@@ -228,7 +229,7 @@ test.describe('TEST-20: con C activo, la tienda no conserva colores de B', () =>
 
       await page.reload({ waitUntil: 'networkidle' });
       const recargada = await inspeccionar(page);
-      expect(recargada.primario).toBe('#F2B705');
+      expect(recargada.primario).toBe(PRIMARIO.c);
       expect(recargada.fondo).toBe(FONDO_DE_LA_TIENDA.c);
       expect(recargada.restosDeB).toEqual([]);
     });
@@ -257,7 +258,7 @@ test.describe('tema activo en la primera carga', () => {
     expect(medida.finDeLaHoja).not.toBeNull();
     expect(medida.fcp!).toBeGreaterThan(medida.finDeLaHoja!);
     expect(medida.fondo).toBe(FONDO_DE_LA_TIENDA.c);
-    expect(medida.primario).toBe('#F2B705');
+    expect(medida.primario).toBe(PRIMARIO.c);
   });
 
   test('si theme.css no llega, la tienda se ve con B', async ({ page }) => {

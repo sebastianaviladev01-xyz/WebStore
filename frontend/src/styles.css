@@ -177,16 +177,18 @@ img {
   color: var(--ws-ink);
 }
 
+/* Lote 28 (PBI-0240, ADR-0028): el botón secundario se rellena con el secundario del tema y escribe con su texto,
+   como el de los banners. Daniel: «El botón podría ser amarillo con icono negro». */
 .ws-btn-secondary {
-  border: 1px solid var(--ws-border-strong);
-  background: var(--ws-surface);
-  color: var(--ws-ink);
+  border: 1px solid var(--ws-accent-line);
+  background: var(--ws-accent);
+  color: var(--ws-on-accent);
 }
 
 .ws-btn-secondary:hover {
-  border-color: var(--ws-link);
-  background: var(--ws-primary-soft);
-  color: var(--ws-on-primary-soft);
+  border-color: var(--ws-accent-strong);
+  background: var(--ws-accent-strong);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ws-accent) 22%, transparent);
   transform: translateY(-1px);
 }
 
@@ -234,8 +236,11 @@ img {
   color: var(--ws-text);
 }
 
-.ws-btn-ghost:hover {
-  background: var(--ws-surface-soft);
+/* Lote 28 (ADR-0028): con el puntero encima o con el foco, el secundario suave y el texto en el contraste. */
+.ws-btn-ghost:hover,
+.ws-btn-ghost:focus-visible {
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
 }
 
 .ws-btn-primary:active,
@@ -247,11 +252,13 @@ img {
   transform: scale(0.98);
 }
 
-.ws-btn-primary:disabled {
+.ws-btn-primary:disabled,
+.ws-btn-secondary:disabled {
   border-color: var(--ws-disabled);
   background: var(--ws-disabled);
   color: var(--ws-disabled-text);
   box-shadow: none;
+  transform: none;
 }
 
 .ws-btn-primary:focus-visible,
@@ -353,9 +360,14 @@ summary:focus-visible {
     transform 160ms ease;
 }
 
+.ws-icon-button:hover,
+.ws-icon-button:focus-visible {
+  border-color: var(--ws-accent-line);
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
+}
+
 .ws-icon-button:hover {
-  border-color: var(--ws-border-strong);
-  background: var(--ws-surface-soft);
   transform: translateY(-1px);
 }
 
@@ -376,9 +388,12 @@ summary:focus-visible {
     color 150ms ease;
 }
 
-.ws-header-action:hover {
-  background: var(--ws-surface-soft);
-  color: var(--ws-link);
+/* Lote 28 (PBI-0240, ADR-0028): «fondo amarillo cuando le haga foco». El texto pasa al contraste, que se lee sobre el
+   secundario suave en cualquier tema (contrast/accentSoft); el color de los enlaces no siempre (3.36:1 en un tema oscuro). */
+.ws-header-action:hover,
+.ws-header-action:focus-visible {
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
 }
 
 .ws-carousel-control {
@@ -397,8 +412,13 @@ summary:focus-visible {
     transform 160ms ease;
 }
 
+.ws-carousel-control:hover,
+.ws-carousel-control:focus-visible {
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
+}
+
 .ws-carousel-control:hover {
-  background: var(--ws-surface-soft);
   transform: scale(1.06);
 }
 

@@ -325,7 +325,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
                         routerLink="/catalogo"
                         [queryParams]="{ categoria: entry.category.id }"
                         [style.padding-left.px]="12 + entry.depth * 14"
-                        class="rounded-xl px-3 py-2 text-sm text-muted hover:bg-soft"
+                        class="rounded-xl px-3 py-2 text-sm text-muted hover:bg-accent-soft focus-visible:bg-accent-soft"
                         (click)="sideOpen.set(false)"
                       >
                         {{ entry.category.name }}

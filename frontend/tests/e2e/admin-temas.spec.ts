@@ -32,7 +32,8 @@ const COLORES_PROPIOS = {
   surface: '#FFFFFF',
   contrast: '#16202E',
 } as const;
-const PRIMARIO_C = 'rgb(242, 183, 5)';
+// Lote 28 (PBI-0240): C lleva el grafito de principal (antes, el ámbar rgb(242, 183, 5)).
+const PRIMARIO_C = 'rgb(31, 35, 40)';
 /** TEST-15 (feature 004): el lienzo del Admin con B sigue en `--ws-bg`; el de la tienda no llega al Admin. */
 const FONDO_PRINCIPAL = { b: 'rgb(243, 245, 248)' } as const;
 

@@ -75,7 +75,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                   >
                     <button
                       type="button"
-                      class="grid h-8 w-8 place-items-center rounded-full hover:bg-soft"
+                      class="grid h-8 w-8 place-items-center rounded-full hover:bg-accent-soft focus-visible:bg-accent-soft"
                       [attr.aria-label]="'Reducir cantidad de ' + item.product.name"
                       (click)="cart.setQuantity(item.product.id, item.quantity - 1)"
                     >
@@ -86,7 +86,7 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
                     </span>
                     <button
                       type="button"
-                      class="grid h-8 w-8 place-items-center rounded-full hover:bg-soft"
+                      class="grid h-8 w-8 place-items-center rounded-full hover:bg-accent-soft focus-visible:bg-accent-soft"
                       [attr.aria-label]="'Aumentar cantidad de ' + item.product.name"
                       (click)="cart.setQuantity(item.product.id, item.quantity + 1)"
                     >
