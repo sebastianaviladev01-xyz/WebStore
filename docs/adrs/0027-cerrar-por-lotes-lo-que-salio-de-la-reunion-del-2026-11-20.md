@@ -98,4 +98,25 @@ Mientras la cuenta no tenga minutos de GitHub Actions, el CI no arranca. La evid
 
 ## Cierre
 
-Pendiente: lo completa el lote 32.
+Se ejecutaron cinco lotes el 2026-11-24, cada uno con su rama y su PR en borrador hacia `dev`, auditados por la sesión principal (diff, `npm run verify` y e2e completo, y capturas cuando tocaba la interfaz). Los fusiona Sebastián Avila:
+
+| Lote | Elementos | PR |
+|---|---|---|
+| 28, color secundario de los temas ([ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md)) | PBI-0240 | [#90](https://github.com/sebastianaviladev01-xyz/WebStore/pull/90), fusionado en `dev` (`dfdf15f`) |
+| 29, editor de temas y filtro de categoría | PBI-0239 y PBI-0238 | [#91](https://github.com/sebastianaviladev01-xyz/WebStore/pull/91) |
+| 30, avisos programados de la navegación superior | PBI-0244 | [#89](https://github.com/sebastianaviladev01-xyz/WebStore/pull/89), fusionado en `dev` (`3ea8ac4`) |
+| 31, íconos de los botones y de los títulos del backoffice | PBI-0243 | [#92](https://github.com/sebastianaviladev01-xyz/WebStore/pull/92) |
+| 32, cierre documental | Los registros y este cierre | El PR del lote 32 |
+
+Cada lote cerró sus elementos con `npm run verify` y la suite e2e completa en verde en la sesión principal: 372 de 372 en el lote 28, 370 de 370 en el 30, 379 de 379 en el 29 y 383 de 383 en el 31. El lote 28 registró su decisión de arquitectura en [ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md). Los hallazgos fuera de alcance que anotaron los PR tienen su PBI en el [backlog](../planning/backlog.md): PBI-0246 (la vigencia de los banners acepta fechas inexistentes), PBI-0247 (el botón principal de un tema propio con un principal casi igual a su contraste), PBI-0248 (el hueco de la barra fija de la ficha a 375 px) y PBI-0249 (la tuerca del modo demo tapa un «Eliminar» de Productos), en `propuesta`; y PBI-0250, la contradicción de `VISUAL-SYSTEM.md` sobre el menú del celular, que corrigió el lote 32.
+
+Los registros quedaron al día en el lote 32: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (las filas «Reunión del 2026-11-20» dicen qué quedó construido, y cada detalle que no se decidió en la reunión dice «Provisional, por confirmar con Daniel»), la [trazabilidad](../planning/TRACEABILITY.md#reunión-del-2026-11-20-lotes-28-a-32-2026-11-24), la [funcionalidad](../planning/FUNCIONALIDAD.md), las [historias de usuario](../planning/user-stories/user-stories.md) (US01, US15 y US23) y el [historial del 2026-11-24](../changelog/CHANGELOG-2026-11-24.md).
+
+**Lo que queda abierto**, con su motivo en la fila de cada elemento del backlog:
+
+- **Daniel:** confirmar las decisiones provisionales, sobre todo el reparto del color secundario (PBI-0240, [ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md)) y el alcance de los íconos (PBI-0243); decidir el acceso a WhatsApp o un asistente propio (PBI-0241), que dejó para el backlog; y la marca del producto (nombre y logo).
+- **Sebastián Avila y Daniel:** el reparto de modelos por etapa (PBI-0242), que choca con el tope vigente y se decide en un ADR si cambia.
+- **Hallazgos de los lotes:** PBI-0246 a PBI-0249, sin priorizar.
+- **Lo que ya estaba fuera:** terceros, personas (PBI-0165 y PBI-0225) y el backend de producción, como al [cerrar ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md#cierre).
+
+Falta informar a Daniel Avila, como decía la aprobación. Los PR de los lotes 29 y 31 seguían abiertos al cerrar este ADR. Están apilados: el lote 31 parte del 29 y el 32 parte del 31, así que conviene fusionar el #91, después el #92 y al final el del lote 32. No queda ninguna excepción vigente: esta termina al fusionar el PR del lote 32, el último, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
