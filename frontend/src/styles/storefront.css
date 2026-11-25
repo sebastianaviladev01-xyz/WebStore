@@ -1,5 +1,25 @@
 /* Storefront composition. Data and content remain owned by the BFF. */
 
+/*
+ * Lote 28 (PBI-0240, ADR-0028): las opciones de las listas desplegables y de los menús de la tienda toman el secundario
+ * suave con el puntero encima o con el foco del teclado, en lugar del velo gris de Material. Solo la tienda:
+ * tokens.css también lo carga el Admin, que no cambia. La opción seleccionada sigue con el tinte del principal.
+ */
+:root {
+  --mat-option-hover-state-layer-color: var(--ws-accent-soft);
+  --mat-option-focus-state-layer-color: var(--ws-accent-soft);
+  --mat-menu-item-hover-state-layer-color: var(--ws-accent-soft);
+  --mat-menu-item-focus-state-layer-color: var(--ws-accent-soft);
+}
+
+/* El botón secundario de Material de la tienda («Seguir comprando» de «Producto agregado»), como `ws-btn-secondary`. */
+.ws-mat-btn-secondary {
+  --mat-button-filled-container-color: var(--ws-accent);
+  --mat-button-filled-label-text-color: var(--ws-on-accent);
+  --mat-button-filled-state-layer-color: var(--ws-on-accent);
+  box-shadow: inset 0 0 0 1px var(--ws-accent-line);
+}
+
 .ws-desktop-navigation {
   position: relative;
   display: none;
@@ -372,9 +392,11 @@
   font-weight: 500;
 }
 
-/* Lote 14 (PBI-0189, ADR-0023): la oferta va con el secundario del tema, su texto y su borde. Antes llevaba el texto
-   del principal: con C, grafito sobre grafito (1:1), y con un ámbar, blanco sobre ámbar (2:1). */
-.ws-product-badge.is-offer {
+/* Lote 14 (PBI-0189, ADR-0023): la oferta va con el secundario del tema, su texto y su borde (en la ficha, desde el
+   lote 28). Antes llevaba el texto del principal: con C, grafito sobre grafito (1:1), y con un ámbar, blanco sobre
+   ámbar (2:1). */
+.ws-product-badge.is-offer,
+.ws-pdp-badge.is-offer {
   background: var(--ws-accent);
   box-shadow: inset 0 0 0 1px var(--ws-accent-line);
   color: var(--ws-on-accent);
@@ -398,10 +420,12 @@
     color 160ms ease;
 }
 
+/* Lote 28 (ADR-0028): el secundario suave con el puntero encima o con el foco, como las acciones de la cabecera. */
 .ws-product-more:hover,
 .ws-product-more:focus-visible {
-  border-color: var(--ws-link);
-  color: var(--ws-link);
+  border-color: var(--ws-accent-line);
+  background: var(--ws-accent-soft);
+  color: var(--ws-ink);
 }
 
 .ws-product-more svg {

@@ -24,6 +24,8 @@ import { enlaceDelCarrito, urls } from './apoyo/entorno';
  * - PBI-0062: con un principal muy claro sobre una base oscura, el texto del botón principal se lee.
  * - PBI-0189 (lote 14, ADR-0023): con A, B, C y un tema propio de ámbar, la oferta y el contador del carrito llevan el
  *   secundario con su texto (4.5:1) y su borde del acento, que se distingue del fondo (3:1).
+ * - PBI-0240 (lote 28, ADR-0028): con A, B y C, los botones secundarios se rellenan con el secundario, el fondo con el
+ *   puntero encima o con el foco es el secundario suave y el contador lleva el secundario; C es negro y amarillo.
  * Las medidas solo leen colores con `getComputedStyle`. Al terminar, B queda activo y los temas de prueba se borran.
  */
 const PREFIJO = 'Lote03 Tienda';
@@ -184,6 +186,117 @@ test.describe('Temas y contraste en la tienda', () => {
         expect(await elemento.evaluate((el) => getComputedStyle(el).boxShadow)).toContain(bordeCrudo);
     });
   }
+
+  // Lote 28 (PBI-0240, ADR-0028). Daniel: «no veo ni un solo botón secundario», «El botón podría ser amarillo con icono
+  // negro», «Los fonditos que tiene aquí podrían ser fondo amarillo cuando le haga foco». Con A, B y C: los botones
+  // secundarios se rellenan con el secundario y su texto se lee; lo que tenía un fondo neutro con el puntero encima o
+  // con el foco pasa al secundario suave, con el texto legible; el contador del carrito lleva el secundario.
+  for (const tema of TEMAS) {
+    test(`PBI-0240: con ${tema.toUpperCase()}, los botones secundarios, el fondo con el puntero encima y el contador llevan el secundario`, async ({
+      page,
+      request,
+    }) => {
+      await activarTema(tema);
+      const productos: { id: string; name: string; stock: number }[] = await (
+        await request.get(`${urls.bff}/bff/catalog/products`)
+      ).json();
+      const conStock = productos.find((producto) => producto.stock > 1)!;
+      await page.addInitScript(
+        (id) => localStorage.setItem('webstore-cart-v1', JSON.stringify([{ productId: id, quantity: 1 }])),
+        conStock.id,
+      );
+      await page.goto('/carrito');
+      const acento = await colorDelToken(page, '--ws-accent');
+      const sobreAcento = await colorDelToken(page, '--ws-on-accent');
+      const suave = await colorDelToken(page, '--ws-accent-soft');
+
+      // El botón secundario del carrito: relleno del secundario y texto en su color de contraste.
+      const seguir = page.getByRole('main').getByRole('link', { name: 'Seguir comprando' });
+      const textoSeguir = await medirTexto(seguir);
+      expect(enRgb(textoSeguir.fondo), 'relleno de «Seguir comprando»').toBe(acento);
+      expect(enRgb(textoSeguir.color), 'texto de «Seguir comprando»').toBe(sobreAcento);
+      exigir(tema, '«Seguir comprando»', textoSeguir.color, textoSeguir.fondo, MINIMO.texto);
+
+      // El contador del carrito: fondo del secundario y número en su color de contraste.
+      const contador = enlaceDelCarrito(page).getByText('1', { exact: true });
+      const textoContador = await medirTexto(contador);
+      expect(enRgb(textoContador.fondo), 'fondo del contador').toBe(acento);
+      expect(enRgb(textoContador.color), 'número del contador').toBe(sobreAcento);
+
+      // Con el puntero encima: la acción «Carrito» de la cabecera y el botón «+» de la cantidad.
+      const carrito = enlaceDelCarrito(page);
+      await carrito.hover();
+      const conPuntero = await medirTexto(carrito);
+      expect(enRgb(conPuntero.fondo), '«Carrito» con el puntero encima').toBe(suave);
+      exigir(tema, '«Carrito» con el puntero encima', conPuntero.color, conPuntero.fondo, MINIMO.texto);
+
+      const mas = page.getByRole('button', { name: `Aumentar cantidad de ${conStock.name}` });
+      await mas.hover();
+      const masConPuntero = await medirTexto(mas);
+      expect(enRgb(masConPuntero.fondo), '«+» con el puntero encima').toBe(suave);
+      exigir(tema, '«+» con el puntero encima', masConPuntero.color, masConPuntero.fondo, MINIMO.texto);
+
+      // Con el foco del teclado, el mismo fondo.
+      await page.mouse.move(0, 0);
+      await mas.focus();
+      expect(enRgb((await medirTexto(mas)).fondo), '«+» con el foco').toBe(suave);
+
+      // Un menú de la tienda: la opción con el puntero encima.
+      await page.goto('/catalogo');
+      await page
+        .getByRole('button', { name: `Más opciones para ${conStock.name}` })
+        .first()
+        .click();
+      const verDetalle = page.getByRole('menuitem', { name: 'Ver detalle' });
+      await verDetalle.hover();
+      await asentar(page);
+      const opcion = await medirTexto(verDetalle);
+      expect(enRgb(opcion.fondo), '«Ver detalle» con el puntero encima').toBe(suave);
+      exigir(tema, '«Ver detalle» con el puntero encima', opcion.color, opcion.fondo, MINIMO.texto);
+    });
+  }
+
+  test('PBI-0240: en la ficha, la insignia «Oferta» lleva el secundario, como en la tarjeta del catálogo', async ({
+    page,
+    request,
+  }) => {
+    await activarTema('c');
+    const productos: { id: string; slug: string }[] = await (
+      await request.get(`${urls.bff}/bff/catalog/products`)
+    ).json();
+    const elegido = productos[0]!;
+    await page.route('**/bff/catalog/products', async (ruta) => {
+      const respuesta = await ruta.fetch();
+      const lista: { id: string }[] = await respuesta.json();
+      await ruta.fulfill({
+        response: respuesta,
+        json: lista.map((producto) =>
+          producto.id === elegido.id ? { ...producto, badge: 'Oferta' } : producto,
+        ),
+      });
+    });
+    await page.goto(`/catalogo/${elegido.slug}`);
+    const oferta = page.getByRole('main').getByText('Oferta', { exact: true });
+    const texto = await medirTexto(oferta);
+    expect(enRgb(texto.fondo), 'fondo de la oferta en la ficha').toBe(
+      await colorDelToken(page, '--ws-accent'),
+    );
+    expect(enRgb(texto.color), 'texto de la oferta en la ficha').toBe(
+      await colorDelToken(page, '--ws-on-accent'),
+    );
+    exigir('c', 'oferta de la ficha', texto.color, texto.fondo, MINIMO.texto);
+  });
+
+  test('PBI-0240: C lleva el negro de principal y el amarillo de secundario, con el número del carrito negro', async ({
+    page,
+  }) => {
+    await activarTema('c');
+    await page.goto('/');
+    expect(await colorDelToken(page, '--ws-primary')).toBe('rgb(31, 35, 40)');
+    expect(await colorDelToken(page, '--ws-on-primary')).toBe('rgb(255, 255, 255)');
+    expect(await colorDelToken(page, '--ws-accent')).toBe('rgb(242, 183, 5)');
+    expect(await colorDelToken(page, '--ws-on-accent')).toBe('rgb(31, 35, 40)');
+  });
 
   test('PBI-0062: con un principal muy claro sobre una base oscura, el texto del botón principal se lee', async ({
     page,

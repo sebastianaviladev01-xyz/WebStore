@@ -8,7 +8,8 @@ import { urls } from './entorno';
  * manejan y miden lo que debe cumplir (AC-15, AC-16, AC-21).
  */
 export const COOKIE_VISTA_PREVIA = 'ws_tema_vista_previa';
-export const PRIMARIO = { b: '#1D4ED8', c: '#F2B705' } as const;
+// Lote 28 (PBI-0240): C lleva el grafito de principal y el ámbar de secundario.
+export const PRIMARIO = { b: '#1D4ED8', c: '#1F2328' } as const;
 export const ANCHOS = [
   { ancho: 1440, alto: 900 },
   { ancho: 390, alto: 844 },

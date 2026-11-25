@@ -14,7 +14,9 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-Ninguna.
+| Excepción | Ámbito | Vigencia |
+|---|---|---|
+| [ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md): cerrar por lotes lo que salió de la reunión del 2026-11-20, sin las etapas SDD por elemento | PBI-0238, PBI-0239, PBI-0240, PBI-0243 y PBI-0244 y los hallazgos de sus lotes, en el storefront, el backoffice y el BFF | Desde el 2026-11-24 hasta que se fusione el lote 32. Responsable: Sebastián Avila |
 
 ## Excepciones cerradas
 

@@ -108,8 +108,8 @@ test('la barra superior de un tema propio es su principal fuerte, con el texto m
   });
 });
 
-test('se miden 27 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
-  assert.equal(PARES_DE_CONTRASTE.length, 27);
+test('se miden 29 pares; solo los del contraste sobre los fondos bloquean (D7) y el foco y el contorno piden 3:1', () => {
+  assert.equal(PARES_DE_CONTRASTE.length, 29);
   assert.deepEqual(
     PARES_DE_CONTRASTE.filter(({ bloquea }) => bloquea).map(({ par }) => par),
     ['contrast/background', 'contrast/surface'],
@@ -314,11 +314,11 @@ for (const { nombre, colores, bajoMinimo } of casos.revisarContraste) {
   });
 }
 
-test('revisarContraste devuelve siempre los 27 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
+test('revisarContraste devuelve siempre los 29 pares, en orden, congelados y con solo par, relación, mínimo y bloqueo (AC-14)', () => {
   for (const { colores } of casos.revisarContraste) {
     const pares = revisarContraste(colores, casos.predefinidos);
     assert.ok(Object.isFrozen(pares));
-    assert.equal(pares.length, 27);
+    assert.equal(pares.length, 29);
     assert.deepEqual(
       pares.map(({ par }) => par),
       PARES_DE_CONTRASTE.map(({ par }) => par),
@@ -400,9 +400,9 @@ test('sobre una base oscura, el error y la alerta pasan a su variante clara, con
   assert.equal(tokens['--ws-warning-soft'], 'color-mix(in srgb, #FEC84B 12%, #1B1E25)');
 });
 
-test('los seis pares del error y la alerta van al final, piden 4.5:1 y solo avisan (PBI-0061)', () => {
+test('los seis pares del error y la alerta van después del contorno y antes de los del secundario suave, piden 4.5:1 y solo avisan (PBI-0061)', () => {
   assert.deepEqual(
-    PARES_DE_CONTRASTE.slice(21).map(({ par, texto, fondo, minimo, bloquea }) => [
+    PARES_DE_CONTRASTE.slice(21, 27).map(({ par, texto, fondo, minimo, bloquea }) => [
       par,
       texto,
       fondo,
@@ -422,7 +422,8 @@ test('los seis pares del error y la alerta van al final, piden 4.5:1 y solo avis
 
 test('sobre la superficie #1B1E25 de un tema oscuro, el error y la alerta pasan de 2.54:1 y 2.45:1 a 4.5:1 o más en sus seis pares', () => {
   const pares = medirPares(tokensDelTema(caso('base oscura').colores, casos.predefinidos));
-  for (const { par } of PARES_DE_CONTRASTE.slice(21)) assert.ok(pares[par] >= 4.5, `${par}: ${pares[par]}`);
+  for (const { par } of PARES_DE_CONTRASTE.slice(21, 27))
+    assert.ok(pares[par] >= 4.5, `${par}: ${pares[par]}`);
 });
 
 // Lote 03 (PBI-0062, ADR-0019): el texto sobre el principal, el más legible entre más candidatos.
@@ -589,4 +590,41 @@ test('con el puntero encima, el secundario cambia a la vista (1.3:1) y su texto 
     assert.ok(relacionDeContraste(fuerte, calculados['--ws-accent']) >= 1.3, `${nombre}: no cambia`);
     assert.ok(relacionDeContraste(calculados['--ws-on-accent'], fuerte) >= 4.5, `${nombre}: texto`);
   }
+});
+
+// Lote 28 (PBI-0240, ADR-0028): el secundario suave pasa a ser el fondo con el puntero encima o con el foco en la
+// tienda. Lo que se escribe sobre él (el texto y el texto tenue de los menús) se mide en dos pares nuevos, al final,
+// que piden 4.5:1 y solo avisan. Con el puntero encima, la tienda escribe con el contraste y no con el color de los
+// enlaces: en la base oscura de los casos, el enlace #3B82F6 sobre el secundario suave daría 3.36:1.
+test('el secundario suave es el secundario al 20 % sobre la superficie, en una base clara y en una oscura', () => {
+  const claro = tokensDelTema({ ...BASE_B, secondary: '#F2B705' }, casos.predefinidos);
+  assert.equal(claro['--ws-accent-soft'], 'color-mix(in srgb, #F2B705 20%, #FFFFFF)');
+  const oscuro = tokensDelTema({ ...caso('base oscura').colores, secondary: '#F97316' }, casos.predefinidos);
+  assert.equal(oscuro['--ws-accent-soft'], 'color-mix(in srgb, #F97316 20%, #1B1E25)');
+});
+
+test('los dos pares del secundario suave van al final: texto y texto tenue, a 4.5:1 y sin bloquear', () => {
+  assert.deepEqual(PARES_DE_CONTRASTE.slice(-2), [
+    { par: 'contrast/accentSoft', texto: '--ws-ink', fondo: '--ws-accent-soft', minimo: 4.5, bloquea: false },
+    { par: 'muted/accentSoft', texto: '--ws-muted', fondo: '--ws-accent-soft', minimo: 4.5, bloquea: false },
+  ]);
+});
+
+test('con un secundario oscuro y un contraste justo, el par del texto sobre el secundario suave avisa', () => {
+  // #767676 sobre el blanco da 4.54:1 (pasa los pares que bloquean); un 20 % de un azul marino lo baja de 4.5:1.
+  const justo = {
+    primary: '#1D4ED8',
+    secondary: '#000080',
+    background: '#FFFFFF',
+    surface: '#FFFFFF',
+    contrast: '#767676',
+  };
+  const pares = revisarContraste(justo, casos.predefinidos);
+  assert.deepEqual(
+    pares.filter(({ bloquea, relacion, minimo }) => bloquea && relacion < minimo),
+    [],
+    'se puede guardar',
+  );
+  const sobreSuave = pares.find(({ par }) => par === 'contrast/accentSoft');
+  assert.ok(sobreSuave.relacion < 4.5, `contrast/accentSoft: ${sobreSuave.relacion}`);
 });

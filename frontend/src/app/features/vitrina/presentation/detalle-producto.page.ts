@@ -59,8 +59,10 @@ export function cargadorDeLaFicha({ src, width, loaderParams }: ImageLoaderConfi
               class="ws-pdp-gallery relative grid min-h-[300px] place-items-center overflow-hidden p-6 sm:min-h-[540px] sm:p-10"
             >
               @if (item.badge) {
+                <!-- Lote 28 (PBI-0240): la oferta lleva el secundario, como en la tarjeta del catálogo. -->
                 <span
-                  class="absolute left-6 top-6 z-10 rounded-full bg-surface px-4 py-2 text-xs font-semibold shadow-sm"
+                  class="ws-pdp-badge absolute left-6 top-6 z-10 rounded-full bg-surface px-4 py-2 text-xs font-semibold shadow-sm"
+                  [class.is-offer]="item.badge === 'Oferta'"
                 >
                   {{ item.badge }}
                 </span>
@@ -166,7 +168,7 @@ export function cargadorDeLaFicha({ src, width, loaderParams }: ImageLoaderConfi
                 <div class="inline-flex h-12 items-center rounded-full border border-line bg-surface p-1">
                   <button
                     type="button"
-                    class="grid h-9 w-9 place-items-center rounded-full hover:bg-soft"
+                    class="grid h-9 w-9 place-items-center rounded-full hover:bg-accent-soft focus-visible:bg-accent-soft"
                     (click)="decreaseQuantity()"
                     aria-label="Disminuir cantidad"
                   >
@@ -177,7 +179,7 @@ export function cargadorDeLaFicha({ src, width, loaderParams }: ImageLoaderConfi
                   </span>
                   <button
                     type="button"
-                    class="grid h-9 w-9 place-items-center rounded-full hover:bg-soft"
+                    class="grid h-9 w-9 place-items-center rounded-full hover:bg-accent-soft focus-visible:bg-accent-soft"
                     (click)="increaseQuantity(item.stock)"
                     aria-label="Aumentar cantidad"
                   >

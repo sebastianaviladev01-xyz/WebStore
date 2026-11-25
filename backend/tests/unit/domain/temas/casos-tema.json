@@ -117,7 +117,7 @@
         "--ws-on-primary-soft": "#3A1F72",
         "--ws-accent": "#F5A524",
         "--ws-accent-strong": "color-mix(in srgb, #F5A524 78%, #17151C)",
-        "--ws-accent-soft": "color-mix(in srgb, #F5A524 9%, #FFFFFF)",
+        "--ws-accent-soft": "color-mix(in srgb, #F5A524 20%, #FFFFFF)",
         "--ws-on-accent": "#2B1700",
         "--ws-accent-line": "color-mix(in srgb, #F5A524 70%, #17151C)",
         "--ws-link": "#4C2A92",
@@ -168,7 +168,7 @@
         "--ws-on-primary-soft": "var(--ws-primary-strong)",
         "--ws-accent": "#c2410c",
         "--ws-accent-strong": "color-mix(in srgb, var(--ws-accent) 78%, #0f172a)",
-        "--ws-accent-soft": "color-mix(in srgb, var(--ws-accent) 9%, #ffffff)",
+        "--ws-accent-soft": "color-mix(in srgb, var(--ws-accent) 20%, #ffffff)",
         "--ws-on-accent": "#ffffff",
         "--ws-accent-line": "var(--ws-accent)",
         "--ws-link": "var(--ws-primary)",
@@ -205,23 +205,23 @@
       "id": "c",
       "name": "Grafito y ámbar",
       "colors": {
-        "primary": "#F2B705",
-        "secondary": "#1F2328",
+        "primary": "#1F2328",
+        "secondary": "#F2B705",
         "background": "#F2F3F5",
         "surface": "#FFFFFF",
         "contrast": "#1F2328"
       },
       "tokens": {
-        "--ws-primary": "#F2B705",
-        "--ws-primary-strong": "color-mix(in srgb, #F2B705 88%, #1F2328)",
-        "--ws-primary-soft": "#FFF6D6",
-        "--ws-on-primary": "#1F2328",
-        "--ws-on-primary-soft": "#8A5A00",
-        "--ws-accent": "#1F2328",
-        "--ws-accent-strong": "color-mix(in srgb, #1F2328 90%, #FFFFFF)",
-        "--ws-accent-soft": "color-mix(in srgb, #1F2328 9%, #FFFFFF)",
-        "--ws-on-accent": "#F2B705",
-        "--ws-accent-line": "#1F2328",
+        "--ws-primary": "#1F2328",
+        "--ws-primary-strong": "color-mix(in srgb, #1F2328 90%, #FFFFFF)",
+        "--ws-primary-soft": "color-mix(in srgb, #1F2328 10%, #FFFFFF)",
+        "--ws-on-primary": "#FFFFFF",
+        "--ws-on-primary-soft": "color-mix(in srgb, #1F2328 62%, #1F2328)",
+        "--ws-accent": "#F2B705",
+        "--ws-accent-strong": "color-mix(in srgb, #F2B705 78%, #1F2328)",
+        "--ws-accent-soft": "color-mix(in srgb, #F2B705 20%, #FFFFFF)",
+        "--ws-on-accent": "#1F2328",
+        "--ws-accent-line": "color-mix(in srgb, #F2B705 60%, #1F2328)",
         "--ws-link": "#1F2328",
         "--ws-on-link": "#FFFFFF",
         "--ws-focus-ring": "#1F2328",
@@ -245,7 +245,7 @@
         "--ws-border-strong": "color-mix(in srgb, #1F2328 50%, #FFFFFF)",
         "--ws-disabled": "color-mix(in srgb, #1F2328 10%, #FFFFFF)",
         "--ws-disabled-text": "color-mix(in srgb, #1F2328 68%, #FFFFFF)",
-        "--ws-dot": "color-mix(in srgb, #F2B705 30%, #FFFFFF)",
+        "--ws-dot": "color-mix(in srgb, #1F2328 30%, #FFFFFF)",
         "--ws-footer": "#16181C",
         "--ws-footer-text": "#C9CDD3",
         "--ws-footer-rule": "color-mix(in srgb, #FFFFFF 15%, #1F2328)",
@@ -281,7 +281,9 @@
       "danger/dangerSoft": 6.05,
       "warning/background": 6.19,
       "warning/surface": 6.79,
-      "warning/warningSoft": 6.33
+      "warning/warningSoft": 6.33,
+      "contrast/accentSoft": 15.71,
+      "muted/accentSoft": 6.01
     },
     "b": {
       "contrast/background": 16.35,
@@ -310,16 +312,18 @@
       "danger/dangerSoft": 6.05,
       "warning/background": 6.22,
       "warning/surface": 6.79,
-      "warning/warningSoft": 6.33
+      "warning/warningSoft": 6.33,
+      "contrast/accentSoft": 13.29,
+      "muted/accentSoft": 4.75
     },
     "c": {
       "contrast/background": 14.23,
       "contrast/surface": 15.8,
       "muted/background": 6.16,
       "muted/surface": 6.84,
-      "onPrimary/primary": 8.69,
-      "onPrimary/primaryStrong": 7.02,
-      "onPrimarySoft/primarySoft": 5.48,
+      "onPrimary/primary": 15.8,
+      "onPrimary/primaryStrong": 11.64,
+      "onPrimarySoft/primarySoft": 13.02,
       "onAccent/accent": 8.69,
       "link/background": 14.23,
       "link/surface": 15.8,
@@ -339,7 +343,9 @@
       "danger/dangerSoft": 6.05,
       "warning/background": 6.12,
       "warning/surface": 6.79,
-      "warning/warningSoft": 6.33
+      "warning/warningSoft": 6.33,
+      "contrast/accentSoft": 13.99,
+      "muted/accentSoft": 6.06
     }
   },
   "tokensDelTema": [
@@ -361,7 +367,7 @@
         "--ws-on-primary-soft": "#0F172A",
         "--ws-accent": "#C2410C",
         "--ws-accent-strong": "color-mix(in srgb, #C2410C 78%, #0F172A)",
-        "--ws-accent-soft": "color-mix(in srgb, #C2410C 9%, #FFFFFF)",
+        "--ws-accent-soft": "color-mix(in srgb, #C2410C 20%, #FFFFFF)",
         "--ws-on-accent": "#FFFFFF",
         "--ws-accent-line": "#C2410C",
         "--ws-link": "#0F172A",
@@ -420,7 +426,9 @@
         "danger/dangerSoft": 6.05,
         "warning/background": 6.22,
         "warning/surface": 6.79,
-        "warning/warningSoft": 6.33
+        "warning/warningSoft": 6.33,
+        "contrast/accentSoft": 13.29,
+        "muted/accentSoft": 4.75
       }
     },
     {
@@ -441,7 +449,7 @@
         "--ws-on-primary-soft": "color-mix(in srgb, #123456 62%, #0F172A)",
         "--ws-accent": "#C2410C",
         "--ws-accent-strong": "color-mix(in srgb, #C2410C 78%, #0F172A)",
-        "--ws-accent-soft": "color-mix(in srgb, #C2410C 9%, #FFFFFF)",
+        "--ws-accent-soft": "color-mix(in srgb, #C2410C 20%, #FFFFFF)",
         "--ws-on-accent": "#FFFFFF",
         "--ws-accent-line": "#C2410C",
         "--ws-link": "#123456",
@@ -500,7 +508,9 @@
         "danger/dangerSoft": 6.05,
         "warning/background": 6.22,
         "warning/surface": 6.79,
-        "warning/warningSoft": 6.33
+        "warning/warningSoft": 6.33,
+        "contrast/accentSoft": 13.29,
+        "muted/accentSoft": 4.75
       }
     },
     {
@@ -521,7 +531,7 @@
         "--ws-on-primary-soft": "color-mix(in srgb, #3B82F6 88%, #F5F7FA)",
         "--ws-accent": "#F97316",
         "--ws-accent-strong": "color-mix(in srgb, #F97316 70%, #FFFFFF)",
-        "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
+        "--ws-accent-soft": "color-mix(in srgb, #F97316 20%, #1B1E25)",
         "--ws-on-accent": "#1B1E25",
         "--ws-accent-line": "#F97316",
         "--ws-link": "#3B82F6",
@@ -580,7 +590,9 @@
         "danger/dangerSoft": 6.78,
         "warning/background": 12.01,
         "warning/surface": 10.78,
-        "warning/warningSoft": 8.25
+        "warning/warningSoft": 8.25,
+        "contrast/accentSoft": 11.53,
+        "muted/accentSoft": 5.81
       }
     },
     {
@@ -600,7 +612,7 @@
         "--ws-on-primary-soft": "color-mix(in srgb, #FFFFBB 88%, #F5F7FA)",
         "--ws-accent": "#F97316",
         "--ws-accent-strong": "color-mix(in srgb, #F97316 70%, #FFFFFF)",
-        "--ws-accent-soft": "color-mix(in srgb, #F97316 9%, #1B1E25)",
+        "--ws-accent-soft": "color-mix(in srgb, #F97316 20%, #1B1E25)",
         "--ws-on-accent": "#1B1E25",
         "--ws-accent-line": "#F97316",
         "--ws-link": "#FFFFBB",
@@ -659,7 +671,9 @@
         "danger/dangerSoft": 6.78,
         "warning/background": 12.01,
         "warning/surface": 10.78,
-        "warning/warningSoft": 8.25
+        "warning/warningSoft": 8.25,
+        "contrast/accentSoft": 11.53,
+        "muted/accentSoft": 5.81
       }
     },
     {
@@ -680,7 +694,7 @@
         "--ws-on-primary-soft": "color-mix(in srgb, #1D4ED8 62%, #0F172A)",
         "--ws-accent": "#FFB300",
         "--ws-accent-strong": "color-mix(in srgb, #FFB300 78%, #0F172A)",
-        "--ws-accent-soft": "color-mix(in srgb, #FFB300 9%, #FFFFFF)",
+        "--ws-accent-soft": "color-mix(in srgb, #FFB300 20%, #FFFFFF)",
         "--ws-on-accent": "#0F172A",
         "--ws-accent-line": "color-mix(in srgb, #FFB300 70%, #0F172A)",
         "--ws-link": "#1D4ED8",
@@ -739,7 +753,9 @@
         "danger/dangerSoft": 6.05,
         "warning/background": 6.22,
         "warning/surface": 6.79,
-        "warning/warningSoft": 6.33
+        "warning/warningSoft": 6.33,
+        "contrast/accentSoft": 15.8,
+        "muted/accentSoft": 5.65
       }
     },
     {
@@ -760,7 +776,7 @@
         "--ws-on-primary-soft": "color-mix(in srgb, #1D4ED8 62%, #0F172A)",
         "--ws-accent": "#D97706",
         "--ws-accent-strong": "color-mix(in srgb, #D97706 70%, #FFFFFF)",
-        "--ws-accent-soft": "color-mix(in srgb, #D97706 9%, #FFFFFF)",
+        "--ws-accent-soft": "color-mix(in srgb, #D97706 20%, #FFFFFF)",
         "--ws-on-accent": "#0F172A",
         "--ws-accent-line": "color-mix(in srgb, #D97706 90%, #0F172A)",
         "--ws-link": "#1D4ED8",
@@ -819,7 +835,9 @@
         "danger/dangerSoft": 6.05,
         "warning/background": 6.22,
         "warning/surface": 6.79,
-        "warning/warningSoft": 6.33
+        "warning/warningSoft": 6.33,
+        "contrast/accentSoft": 14.4,
+        "muted/accentSoft": 5.15
       }
     }
   ],
@@ -892,6 +910,18 @@
           "par": "borderStrong/surface",
           "relacion": 1.5,
           "minimo": 3,
+          "bloquea": false
+        },
+        {
+          "par": "contrast/accentSoft",
+          "relacion": 1.8,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "muted/accentSoft",
+          "relacion": 1.3,
+          "minimo": 4.5,
           "bloquea": false
         }
       ]
@@ -974,6 +1004,18 @@
           "par": "borderStrong/surface",
           "relacion": 1.9,
           "minimo": 3,
+          "bloquea": false
+        },
+        {
+          "par": "contrast/accentSoft",
+          "relacion": 3.6,
+          "minimo": 4.5,
+          "bloquea": false
+        },
+        {
+          "par": "muted/accentSoft",
+          "relacion": 1.9,
+          "minimo": 4.5,
           "bloquea": false
         }
       ]

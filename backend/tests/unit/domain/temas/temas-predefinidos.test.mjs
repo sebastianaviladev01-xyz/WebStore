@@ -50,8 +50,8 @@ test('hay tres predefinidos, A, B y C, con sus nombres y sus cinco colores', () 
         id: 'c',
         name: 'Grafito y ámbar',
         colors: {
-          primary: '#F2B705',
-          secondary: '#1F2328',
+          primary: '#1F2328',
+          secondary: '#F2B705',
           background: '#F2F3F5',
           surface: '#FFFFFF',
           contrast: '#1F2328',
@@ -85,15 +85,17 @@ test('A conserva los valores presentados', () => {
   for (const [nombre, valor] of Object.entries(presentados)) assert.equal(tokens[nombre], valor, nombre);
 });
 
-test('C conserva los valores presentados y usa el grafito para texto, enlaces, foco y la barra superior', () => {
+// Lote 28 (PBI-0240, ADR-0028): Daniel, en la reunión del 2026-11-20: «Principal negro, secundario, amarillo». El
+// grafito pasa a principal y el ámbar a secundario; los tokens de la marca se derivan de nuevo de los cinco colores, y
+// C solo fija lo presentado que no depende de cuál es el principal: la franja, el lienzo, el texto tenue y el pie.
+test('C lleva el grafito de principal y el ámbar de secundario, con el texto negro sobre el amarillo (PBI-0240)', () => {
   const tokens = tema('c').tokens;
-  const presentados = {
-    '--ws-primary': '#F2B705',
-    '--ws-primary-soft': '#FFF6D6',
-    '--ws-on-primary': '#1F2328',
-    '--ws-on-primary-soft': '#8A5A00',
-    '--ws-accent': '#1F2328',
-    '--ws-on-accent': '#F2B705',
+  const esperados = {
+    '--ws-primary': '#1F2328',
+    '--ws-on-primary': '#FFFFFF',
+    '--ws-primary-soft': 'color-mix(in srgb, #1F2328 10%, #FFFFFF)',
+    '--ws-accent': '#F2B705',
+    '--ws-on-accent': '#1F2328',
     '--ws-link': '#1F2328',
     '--ws-focus-ring': '#1F2328',
     '--ws-topbar': '#1F2328',
@@ -106,8 +108,17 @@ test('C conserva los valores presentados y usa el grafito para texto, enlaces, f
     '--ws-footer-text': '#C9CDD3',
     '--ws-footer-heading': '#FFFFFF',
   };
-  for (const [nombre, valor] of Object.entries(presentados)) assert.equal(tokens[nombre], valor, nombre);
-  assert.equal(tokens['--ws-primary-strong'], 'color-mix(in srgb, #F2B705 88%, #1F2328)', 'derivado');
+  for (const [nombre, valor] of Object.entries(esperados)) assert.equal(tokens[nombre], valor, nombre);
+});
+
+test('en C, el principal fuerte (el botón principal con el puntero encima) se distingue del grafito y su texto se lee', () => {
+  // Antes del lote, con el grafito de principal y de contraste, la mezcla al 62 % daba el mismo grafito (1.00:1).
+  assert.equal(tema('c').tokens['--ws-primary-strong'], 'color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+  const colores = coloresCalculados(tema('c').tokens);
+  const fuerte = colores['--ws-primary-strong'];
+  assert.ok(relacionDeContraste(fuerte, colores['--ws-primary']) >= 1.3, `no cambia: ${fuerte}`);
+  assert.ok(relacionDeContraste(colores['--ws-on-primary'], fuerte) >= 4.5, 'texto');
+  assert.ok(relacionDeContraste(colores['--ws-on-primary-soft'], colores['--ws-primary-soft']) >= 4.5);
 });
 
 test('B copia los tokens de tokens.css, con var() y color-mix()', () => {
@@ -219,14 +230,14 @@ test('A, B y C conservan los colores de error y de alerta que antes eran fijos e
   assert.equal(tema('b').tokens['--ws-danger'], '#b42318', 'B en minúsculas, como tokens.css');
 });
 
-test('A, B y C conservan el texto sobre el principal: blanco, blanco y grafito', () => {
+test('el texto sobre el principal es blanco en A, B y C (C desde el lote 28, con el grafito de principal)', () => {
   const colores = (id) => coloresCalculados(tema(id).tokens)['--ws-on-primary'];
-  assert.deepEqual(['a', 'b', 'c'].map(colores), ['#FFFFFF', '#FFFFFF', '#1F2328']);
+  assert.deepEqual(['a', 'b', 'c'].map(colores), ['#FFFFFF', '#FFFFFF', '#FFFFFF']);
 });
 
-test('en C, el texto sobre el principal, los enlaces y el foco se calculan en grafito', () => {
+test('en C, los enlaces y el foco son el grafito, y el texto sobre el secundario también', () => {
   const colores = coloresCalculados(tema('c').tokens);
-  for (const nombre of ['--ws-on-primary', '--ws-link', '--ws-focus-ring'])
+  for (const nombre of ['--ws-link', '--ws-focus-ring', '--ws-on-accent'])
     assert.equal(colores[nombre], '#1F2328', nombre);
 });
 
@@ -246,7 +257,8 @@ test('el tema por defecto es uno de los predefinidos y es el activo del seed', a
 test('A, B y C tienen su borde del acento, que llega a 3:1 sobre el fondo principal y la superficie', () => {
   assert.equal(tema('a').tokens['--ws-accent-line'], 'color-mix(in srgb, #F5A524 70%, #17151C)');
   assert.equal(tema('b').tokens['--ws-accent-line'], 'var(--ws-accent)');
-  assert.equal(tema('c').tokens['--ws-accent-line'], '#1F2328');
+  // Lote 28: el ámbar de C (1.82:1 sobre el blanco) se contornea con su mezcla con el grafito, como el de A.
+  assert.equal(tema('c').tokens['--ws-accent-line'], 'color-mix(in srgb, #F2B705 60%, #1F2328)');
   for (const id of ['a', 'b', 'c']) {
     const colores = coloresCalculados(tema(id).tokens);
     for (const fondo of ['--ws-bg', '--ws-surface', '--ws-store-bg'])
@@ -260,11 +272,30 @@ test('A, B y C tienen su borde del acento, que llega a 3:1 sobre el fondo princi
 test('con el puntero encima, el botón secundario de A, B y C cambia a la vista y su texto se lee a 4.5:1', () => {
   assert.equal(tema('a').tokens['--ws-accent-strong'], 'color-mix(in srgb, #F5A524 78%, #17151C)');
   assert.equal(tema('b').tokens['--ws-accent-strong'], 'color-mix(in srgb, var(--ws-accent) 78%, #0f172a)');
-  assert.equal(tema('c').tokens['--ws-accent-strong'], 'color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+  // Lote 28: con el ámbar de secundario, C vuelve a la mezcla de siempre con el contraste.
+  assert.equal(tema('c').tokens['--ws-accent-strong'], 'color-mix(in srgb, #F2B705 78%, #1F2328)');
   for (const id of ['a', 'b', 'c']) {
     const colores = coloresCalculados(tema(id).tokens);
     const fuerte = colores['--ws-accent-strong'];
     assert.ok(relacionDeContraste(fuerte, colores['--ws-accent']) >= 1.3, `${id}: no cambia`);
     assert.ok(relacionDeContraste(colores['--ws-on-accent'], fuerte) >= 4.5, `${id}: texto`);
+  }
+});
+
+// Lote 28 (PBI-0240, ADR-0028): el secundario suave es el fondo de lo que tiene el puntero encima o el foco en la tienda
+// (acciones de la cabecera, botones de íconos, menús y opciones). Era el secundario al 9 % sobre la superficie y no lo
+// usaba nadie (ADR-0023); pasa al 20 % para que se vea como el secundario, y el texto y el texto tenue se leen sobre él
+// a 4.5:1 en A, B y C.
+test('el secundario suave de A, B y C es el secundario al 20 % sobre la superficie, y lo que se escribe encima se lee', () => {
+  assert.equal(tema('a').tokens['--ws-accent-soft'], 'color-mix(in srgb, #F5A524 20%, #FFFFFF)');
+  assert.equal(tema('b').tokens['--ws-accent-soft'], 'color-mix(in srgb, var(--ws-accent) 20%, #ffffff)');
+  assert.equal(tema('c').tokens['--ws-accent-soft'], 'color-mix(in srgb, #F2B705 20%, #FFFFFF)');
+  for (const id of ['a', 'b', 'c']) {
+    const colores = coloresCalculados(tema(id).tokens);
+    const suave = colores['--ws-accent-soft'];
+    // Se distingue de la superficie más que el gris neutro que usaba la tienda al pasar el puntero en C (1.05:1 al 9 %).
+    assert.ok(relacionDeContraste(suave, colores['--ws-surface']) >= 1.1, `${id}: no se distingue`);
+    for (const texto of ['--ws-ink', '--ws-muted'])
+      assert.ok(relacionDeContraste(colores[texto], suave) >= 4.5, `${id}: ${texto}`);
   }
 });

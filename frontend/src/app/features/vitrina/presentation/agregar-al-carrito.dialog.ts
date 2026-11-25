@@ -47,7 +47,7 @@ interface DatosDelDialogo extends ResultadoAgregarAlCarrito {
               <li>
                 <a
                   [routerLink]="['/catalogo', sugerido.slug]"
-                  class="flex items-center gap-3 rounded-xl p-2 hover:bg-soft"
+                  class="flex items-center gap-3 rounded-xl p-2 hover:bg-accent-soft focus-visible:bg-accent-soft"
                   (click)="close()"
                 >
                   <img
@@ -82,7 +82,9 @@ interface DatosDelDialogo extends ResultadoAgregarAlCarrito {
         </div>
         <div class="ws-added-panel-actions">
           <button mat-flat-button type="button" cdkFocusInitial (click)="verCarrito()">Ver carrito</button>
-          <button mat-stroked-button type="button" (click)="close()">Seguir comprando</button>
+          <button mat-flat-button class="ws-mat-btn-secondary" type="button" (click)="close()">
+            Seguir comprando
+          </button>
         </div>
       </div>
     } @else {
@@ -91,7 +93,9 @@ interface DatosDelDialogo extends ResultadoAgregarAlCarrito {
         <ng-container [ngTemplateOutlet]="detalle" />
       </mat-dialog-content>
       <mat-dialog-actions align="end">
-        <button mat-button type="button" (click)="close()">Seguir comprando</button>
+        <button mat-flat-button class="ws-mat-btn-secondary" type="button" (click)="close()">
+          Seguir comprando
+        </button>
         <button mat-flat-button type="button" cdkFocusInitial (click)="verCarrito()">Ver carrito</button>
       </mat-dialog-actions>
     }

@@ -3,7 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 import { TokensTema } from '../domain/tema.model';
 
 /**
- * Vista previa de un tema dentro del formulario (AC-07): cabecera, botón principal, botón secundario,
+ * Vista previa de un tema dentro del formulario (AC-07): cabecera, botón principal, botón secundario, fondo con el puntero encima,
  * tarjeta, texto sobre los dos fondos y pie. Escribe los tokens del tema como variables CSS de su propio
  * elemento, no de `<html>`, así que el resto del Admin y la tienda no cambian. Las utilidades de Tailwind
  * (`bg-primary`, `text-muted`…) leen esas variables, por eso se usan las mismas clases que en la interfaz.
@@ -51,6 +51,10 @@ import { TokensTema } from '../domain/tema.model';
               >
                 Botón secundario
               </span>
+            </div>
+            <!-- Lote 28 (PBI-0240, ADR-0028): el fondo de los menús y de las acciones con el puntero encima. -->
+            <div class="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm font-medium text-ink">
+              Opción con el puntero encima
             </div>
             <div class="mt-3 rounded-lg border border-line bg-surface px-3 py-2 text-sm text-muted ws-foco">
               Campo con el foco
