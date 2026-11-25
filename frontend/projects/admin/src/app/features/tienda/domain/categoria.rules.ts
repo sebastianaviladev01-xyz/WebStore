@@ -1,3 +1,4 @@
+import { textoBuscable } from './listado.rules';
 import { Categoria } from './tienda.model';
 
 export interface EntradaArbolCategorias {
@@ -53,4 +54,50 @@ export function idsDescendientes(categories: readonly Categoria[], id: string): 
     }
   }
   return found;
+}
+
+/** Una categoría como opción de la selección con búsqueda (lote 29, PBI-0238), con su ruta en el árbol. */
+export interface OpcionDeCategoria {
+  readonly category: Categoria;
+  /** Los nombres de las categorías que la contienen, desde el primer nivel; vacío en una de primer nivel. */
+  readonly ancestros: readonly string[];
+  /** «Electrodomésticos › Refrigeradoras › Side by side»: los ancestros y su nombre. */
+  readonly ruta: string;
+}
+
+/** Separador de los niveles en la ruta de una categoría. */
+export const SEPARADOR_DE_RUTA = ' › ';
+
+/** Desde cuántos caracteres (sin espacios en los extremos ni tildes) se filtra la lista. Daniel: «mínimo tres». */
+export const MINIMO_PARA_BUSCAR_CATEGORIA = 3;
+
+/** Cada categoría con su ruta, en el orden del árbol (`aplanarArbolCategorias`): cada una justo debajo de su padre. */
+export function opcionesDeCategoria(categories: readonly Categoria[]): readonly OpcionDeCategoria[] {
+  const camino: string[] = [];
+  return aplanarArbolCategorias(categories).map(({ category, depth }) => {
+    camino.length = depth;
+    const ancestros = [...camino];
+    camino.push(category.name);
+    return { category, ancestros, ruta: [...ancestros, category.name].join(SEPARADOR_DE_RUTA) };
+  });
+}
+
+/**
+ * Las opciones que coinciden con lo escrito (lote 29, ADR-0027, PBI-0238; provisional, por confirmar con Daniel). Con
+ * menos de `MINIMO_PARA_BUSCAR_CATEGORIA` caracteres no se filtra: están todas, para elegir sin escribir. Desde ahí, sin
+ * distinguir mayúsculas ni tildes, primero las que lo llevan en su nombre y después las que lo llevan solo en la ruta
+ * (están dentro de una que coincide), cada grupo en el orden del árbol. Así Enter, que elige la primera, elige una cuyo
+ * nombre coincide.
+ */
+export function buscarCategorias(
+  opciones: readonly OpcionDeCategoria[],
+  texto: string,
+): readonly OpcionDeCategoria[] {
+  const buscado = textoBuscable(texto);
+  if (buscado.length < MINIMO_PARA_BUSCAR_CATEGORIA) return opciones;
+  const porNombre = opciones.filter(({ category }) => textoBuscable(category.name).includes(buscado));
+  const porRuta = opciones.filter(
+    (opcion) => !porNombre.includes(opcion) && textoBuscable(opcion.ruta).includes(buscado),
+  );
+  return [...porNombre, ...porRuta];
 }

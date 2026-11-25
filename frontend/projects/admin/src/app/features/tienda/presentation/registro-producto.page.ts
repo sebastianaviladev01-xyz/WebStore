@@ -23,6 +23,7 @@ import { productoDeLaFicha } from '../domain/inventario.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
 import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } from './reducir-foto';
+import { SelectorCategoriaComponent } from './selector-categoria.component';
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -39,6 +40,7 @@ import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } fr
     MatInputModule,
     MatSelectModule,
     MatCheckboxModule,
+    SelectorCategoriaComponent,
   ],
   template: `
     <a class="text-sm font-semibold text-link" routerLink="/productos" queryParamsHandling="preserve">
@@ -205,15 +207,11 @@ import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } fr
               <a class="font-semibold text-link" routerLink="/inventario">Inventario</a>
             </p>
           </div>
-          <mat-form-field>
-            <mat-label>Categoría</mat-label>
-            <mat-select formControlName="categoryId">
-              @for (c of admin.categories(); track c.id) {
-                <mat-option [value]="c.id">{{ c.name }}</mat-option>
-              }
-            </mat-select>
-            <mat-error>{{ mensaje(form.controls.categoryId.errors) }}</mat-error>
-          </mat-form-field>
+          <!-- Lote 29 (ADR-0027, PBI-0238; provisional): la categoría se elige con búsqueda, con su ruta en el árbol. -->
+          <ws-admin-selector-categoria
+            [control]="form.controls.categoryId"
+            [categorias]="admin.categories()"
+          />
           <mat-form-field>
             <mat-label>Marca</mat-label>
             <mat-select formControlName="brandId">
