@@ -13,7 +13,7 @@ import {
  * solo ve sus módulos y no llega a Usuarios ni escribiendo la URL.
  */
 const modulos = [
-  { enlace: 'Dashboard', titulo: 'WebStore Admin | Dashboard', encabezado: 'Dashboard' },
+  { enlace: 'Dashboard', titulo: 'WebStore Admin | Dashboard', encabezado: 'Dashboard de la tienda' },
   { enlace: 'Productos', titulo: 'WebStore Admin | Productos', encabezado: 'Productos' },
   { enlace: 'Inventario', titulo: 'WebStore Admin | Inventario', encabezado: 'Inventario' },
   { enlace: 'Categorías', titulo: 'WebStore Admin | Categorías', encabezado: 'Categorías' },

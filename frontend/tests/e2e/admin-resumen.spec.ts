@@ -7,12 +7,14 @@ import { cuentasAdmin, ingresarAlAdmin, menuAdmin } from './apoyo/entorno';
  * con «Ver más», gráfico, alertas, últimos pedidos y estados). No comprueba cifras: dependen de los pedidos que hayan
  * creado otras specs. Desde el lote 13 las tarjetas van bajo el h2 «Cifras», que las pliega (PBI-0187), y su título es
  * un h3. Desde el lote 23 (ADR-0025, PBI-0222; provisional), el gráfico nombra «Clientes web nuevos» y ya no está
- * «Pedidos por distrito».
+ * «Pedidos por distrito». Desde el lote 45 (ADR-0033, PBI-0270), el filtro principal («Periodo del Dashboard») va antes
+ * de las cifras, la tarjeta de clientes cuenta los clientes web nuevos del periodo y, tras «Pedidos por estado», va
+ * «Distribución de ventas por categoría»; el periodo tiene su propia spec, admin-dashboard-periodo.
  */
 const tarjetas = [
   { titulo: 'Total de pedidos', destino: '/pedidos' },
   { titulo: 'Total de ventas', destino: '/pedidos' },
-  { titulo: 'Total de clientes', destino: '/clientes' },
+  { titulo: 'Clientes web nuevos', destino: '/clientes' },
   { titulo: 'Stock bajo', destino: '/inventario' },
 ];
 
@@ -22,11 +24,14 @@ test('el superadministrador ve los bloques del Dashboard en su orden', async ({ 
 
   // Los títulos de los bloques, en el orden de la página.
   await expect(main.getByRole('heading', { level: 2 })).toHaveText([
+    // Lote 45 (PBI-0270): el filtro principal, sin botón plegable.
+    'Periodo del Dashboard',
     'Cifras',
     'Pedidos y clientes web nuevos por día',
     'Alertas de inventario',
     'Últimos pedidos',
     'Pedidos por estado',
+    'Distribución de ventas por categoría',
     // Lote 07b (PBI-0028): al final, para no mover los bloques que ya había. Sin «Personas en línea» (PBI-0172).
     'Actividad reciente',
   ]);
@@ -66,7 +71,7 @@ test('el superadministrador ve los bloques del Dashboard en su orden', async ({ 
 
 test('«Ver más» de una tarjeta lleva al módulo', async ({ page }) => {
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-  await page.getByRole('main').getByRole('link', { name: 'Ver más (Total de clientes)' }).click();
+  await page.getByRole('main').getByRole('link', { name: 'Ver más (Clientes web nuevos)' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Clientes' })).toBeVisible();
 });
 
@@ -81,7 +86,12 @@ test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni acti
     await expect(main.getByRole('heading', { level: 3, name: visible })).toBeVisible();
   }
   await expect(main.getByRole('heading', { level: 2, name: 'Pedidos por día' })).toBeVisible();
-  await expect(main.getByRole('heading', { level: 3, name: 'Total de clientes' })).toHaveCount(0);
+  await expect(main.getByRole('heading', { level: 3, name: 'Clientes web nuevos' })).toHaveCount(0);
+  // Lote 45 (PBI-0270): ve el filtro principal y la distribución de las ventas, que ve.
+  await expect(main.getByRole('combobox', { name: 'Periodo' })).toBeVisible();
+  await expect(
+    main.getByRole('heading', { level: 2, name: 'Distribución de ventas por categoría' }),
+  ).toBeVisible();
   for (const oculto of ['Actividad reciente', 'Personas en línea']) {
     await expect(main.getByRole('heading', { name: oculto })).toHaveCount(0);
   }
@@ -105,6 +115,7 @@ const BLOQUES_SUPERADMIN = [
   'Alertas de inventario',
   'Últimos pedidos',
   'Pedidos por estado',
+  'Distribución de ventas por categoría',
   'Actividad reciente',
 ] as const;
 
@@ -349,7 +360,7 @@ test.describe('Presentación del Dashboard con datos propios', () => {
 
     await expect(tarjeta(page, 'Total de pedidos')).toContainText(/\b0\b/);
     await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?0\.00/);
-    await expect(tarjeta(page, 'Total de clientes')).toContainText(/\b0\b/);
+    await expect(tarjeta(page, 'Clientes web nuevos')).toContainText(/\b0\b/);
     // Sin pedidos del mes anterior no hay porcentaje: «—» y, para un lector de pantalla, qué significa.
     await expect(tarjeta(page, 'Total de pedidos')).toContainText('—');
     await expect(tarjeta(page, 'Total de pedidos')).toContainText('Sin datos del mes anterior');
@@ -376,6 +387,9 @@ test.describe('Presentación del Dashboard con datos propios', () => {
         pedidoDe(2, hoy.toISOString(), 100),
         // El día 1 del mes anterior, dentro del mismo tramo: 1 pedido y S/ 500.00.
         pedidoDe(3, primeroDelMesAnterior.toISOString(), 500, 'cancelled'),
+        // Lote 45 (PBI-0270): las cifras y los estados son los del periodo («Mes actual»); un cancelado de hoy cuenta
+        // como pedido, pero no en las ventas.
+        pedidoDe(4, hoy.toISOString(), 999, 'cancelled'),
       ];
     });
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -383,7 +397,7 @@ test.describe('Presentación del Dashboard con datos propios', () => {
 
     const pedidos = tarjeta(page, 'Total de pedidos');
     await expect(pedidos).toContainText(/\b3\b/);
-    await expect(pedidos).toContainText('+100 %');
+    await expect(pedidos).toContainText('+200 %');
     await expect(pedidos).toContainText('Sube');
     await expect(pedidos).toContainText('frente al mismo tramo del mes anterior');
     // Las ventas no cuentan el envío (PBI-0186) ni el pedido cancelado: 1,334.50 contra 0 del tramo anterior.
@@ -394,7 +408,8 @@ test.describe('Presentación del Dashboard con datos propios', () => {
     // La tabla de últimos pedidos muestra el total del pedido (con el envío) y la fecha en formato de día.
     const tabla = main.getByRole('region', { name: 'Últimos pedidos' }).getByRole('table');
     await expect(tabla.getByRole('row', { name: /WS-RES-1/ })).toContainText(/S\/\s?1,244\.50/);
-    // Estados: 1 de 3 completado, 1 en proceso y 1 cancelado; el resto del reparto va al primer grupo (34, 33 y 33).
+    // Estados del mes: 1 de 3 completado, 1 en proceso y 1 cancelado; el resto del reparto va al primer grupo (34, 33 y
+    // 33). El pedido del mes anterior ya no cuenta (lote 45).
     await expect(main.getByText('34 %', { exact: true })).toHaveCount(1);
     await expect(main.getByText('33 %', { exact: true })).toHaveCount(2);
   });

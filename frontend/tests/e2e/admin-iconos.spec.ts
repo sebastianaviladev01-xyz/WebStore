@@ -26,7 +26,7 @@ interface Pagina {
 }
 
 const PAGINAS: readonly Pagina[] = [
-  { ruta: '/', titulo: 'Dashboard', modulo: 'Dashboard' },
+  { ruta: '/', titulo: 'Dashboard de la tienda', modulo: 'Dashboard' },
   { ruta: '/productos', titulo: 'Productos', modulo: 'Productos' },
   { ruta: '/productos/nuevo', titulo: 'Nuevo producto', modulo: 'Productos' },
   { ruta: '/productos/p-004', titulo: 'Editar producto', modulo: 'Productos' },

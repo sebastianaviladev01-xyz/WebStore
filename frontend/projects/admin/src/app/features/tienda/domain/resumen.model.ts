@@ -13,6 +13,15 @@ export interface TramoMes {
   readonly hasta: number;
 }
 
+/**
+ * Tramo de tiempo de un periodo del Dashboard (lote 45, PBI-0270), en milisegundos desde la época: `desde` incluido y
+ * `hasta` excluido.
+ */
+export interface TramoDeTiempo {
+  readonly desde: number;
+  readonly hasta: number;
+}
+
 /** Cifra de una tarjeta y su variación en % entero; `null` si el tramo anterior vale 0 (se muestra «—»). */
 export interface Indicador {
   readonly total: number;

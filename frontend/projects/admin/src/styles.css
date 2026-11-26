@@ -37,6 +37,14 @@ label:has(> input[type='file']:focus-visible) {
   outline-offset: -2px;
 }
 
+/*
+ * Lote 45 (PBI-0270): sobre las tarjetas de color del Dashboard, el contorno del foco va en el color del texto de la
+ * tarjeta, que el tema calcula para su fondo; el del tema (--ws-focus-ring) puede ser el mismo fondo.
+ */
+.ws-tarjeta-cifra :is(a, button):focus-visible {
+  outline-color: currentColor;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--ws-primary) 24%, var(--ws-surface));
   color: var(--ws-ink);

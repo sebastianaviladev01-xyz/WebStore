@@ -1,55 +1,14 @@
 // Cada import cabe en una línea: resumen.rules.spec.mjs borra las líneas que empiezan por «import» antes de transpilar.
 // prettier-ignore
-import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, TramoMes } from './resumen.model';
-import type { Cliente, EstadoPedido, EventoActividad, Pedido } from './tienda.model';
+import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, TramoDeTiempo } from './resumen.model';
+import type { EstadoPedido, EventoActividad, Pedido } from './tienda.model';
 import { ETIQUETAS_ESTADO_PEDIDO } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
+// prettier-ignore
+import { diasDelMes, estaEnTramo, fechaEnLima, opcionDelPeriodo, PERIODO_POR_OMISION, type Periodo, tramosDelPeriodo } from './periodo.rules';
 
-/** Zona horaria de la tienda: las fechas del Dashboard son las de Lima (PBI-0080: una sola vez en el Admin). */
-export const ZONA_IANA_LIMA = 'America/Lima';
-
-const FORMATO_FECHA_LIMA = new Intl.DateTimeFormat('en-CA', {
-  timeZone: ZONA_IANA_LIMA,
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-});
-
-/** Fecha civil de Lima de un instante, sin depender de la zona del navegador o del CI. */
-export function fechaEnLima(instante: string | Date): FechaLima {
-  const partes = FORMATO_FECHA_LIMA.formatToParts(new Date(instante));
-  const valor = (tipo: Intl.DateTimeFormatPartTypes) => Number(partes.find((p) => p.type === tipo)?.value);
-  return { anio: valor('year'), mes: valor('month'), dia: valor('day') };
-}
-
-/** Último día de un mes (`mes` de 1 a 12), con el calendario gregoriano y sin depender de la zona horaria. */
-function diasDelMes(anio: number, mes: number): number {
-  return new Date(Date.UTC(anio, mes, 0)).getUTCDate();
-}
-
-/**
- * Tramos que se comparan: del día 1 a hoy en el mes en curso y los mismos días del mes anterior,
- * recortados a su último día si es más corto (en enero, el anterior es diciembre del año anterior).
- */
-export function tramosDeComparacion(hoy: FechaLima): { actual: TramoMes; anterior: TramoMes } {
-  const anioAnterior = hoy.mes === 1 ? hoy.anio - 1 : hoy.anio;
-  const mesAnterior = hoy.mes === 1 ? 12 : hoy.mes - 1;
-  return {
-    actual: { anio: hoy.anio, mes: hoy.mes, desde: 1, hasta: hoy.dia },
-    anterior: {
-      anio: anioAnterior,
-      mes: mesAnterior,
-      desde: 1,
-      hasta: Math.min(hoy.dia, diasDelMes(anioAnterior, mesAnterior)),
-    },
-  };
-}
-
-/**
- * Fecha de Lima del primer pedido (el de menor `createdAt`) de cada cliente, por correo normalizado como
- * en el BFF. Cuenta también los pedidos cancelados (D6 no los excluye). Los clientes sin pedidos no aparecen.
- */
-export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, FechaLima> {
+/** Instante del primer pedido (el de menor `createdAt`) de cada cliente, por correo normalizado como en el BFF. */
+function primerPedidoDeCadaCliente(pedidos: readonly Pedido[]): Map<string, number> {
   const primeros = new Map<string, number>();
   for (const pedido of pedidos) {
     const correo = normalizarCorreo(pedido.customerEmail);
@@ -57,7 +16,20 @@ export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, 
     const previo = primeros.get(correo);
     if (previo === undefined || instante < previo) primeros.set(correo, instante);
   }
-  return new Map([...primeros].map(([correo, instante]) => [correo, fechaEnLima(new Date(instante))]));
+  return primeros;
+}
+
+/**
+ * Fecha de Lima del primer pedido (el de menor `createdAt`) de cada cliente, por correo normalizado como
+ * en el BFF. Cuenta también los pedidos cancelados (D6 no los excluye). Los clientes sin pedidos no aparecen.
+ */
+export function clientesNuevosPorFecha(pedidos: readonly Pedido[]): Map<string, FechaLima> {
+  return new Map(
+    [...primerPedidoDeCadaCliente(pedidos)].map(([correo, instante]) => [
+      correo,
+      fechaEnLima(new Date(instante)),
+    ]),
+  );
 }
 
 const redondearMonto = (valor: number) => Math.round(valor * 100) / 100;
@@ -69,12 +41,6 @@ const redondearMonto = (valor: number) => Math.round(valor * 100) / 100;
 const sumarVentas = (pedidos: readonly Pedido[]) =>
   redondearMonto(pedidos.filter((p) => p.status !== 'cancelled').reduce((suma, p) => suma + p.subtotal, 0));
 
-const estaEnTramo = (fecha: FechaLima, tramo: TramoMes) =>
-  fecha.anio === tramo.anio &&
-  fecha.mes === tramo.mes &&
-  fecha.dia >= tramo.desde &&
-  fecha.dia <= tramo.hasta;
-
 /** Variación en % entero de `actual` respecto de `anterior`; `null` si `anterior` es 0 (nunca Infinity ni NaN). */
 export function variacionPorcentual(actual: number, anterior: number): number | null {
   if (anterior === 0) return null;
@@ -84,47 +50,55 @@ export function variacionPorcentual(actual: number, anterior: number): number | 
 }
 
 /** Pedidos y ventas (sin cancelados) de un tramo, y los clientes nuevos de ese tramo. */
-function cifrasDelTramo(
-  pedidos: readonly { fecha: FechaLima; pedido: Pedido }[],
-  nuevos: readonly FechaLima[],
-  tramo: TramoMes,
-) {
-  const delTramo = pedidos.filter(({ fecha }) => estaEnTramo(fecha, tramo)).map(({ pedido }) => pedido);
+function cifrasDelTramo(pedidos: readonly Pedido[], nuevos: readonly number[], tramo: TramoDeTiempo) {
+  const delTramo = pedidos.filter((pedido) => estaEnTramo(pedido.createdAt, tramo));
   return {
     pedidos: delTramo.length,
     ventas: sumarVentas(delTramo),
-    clientes: nuevos.filter((fecha) => estaEnTramo(fecha, tramo)).length,
+    clientes: nuevos.filter((instante) => estaEnTramo(new Date(instante), tramo)).length,
   };
 }
 
 /**
- * Cifras de las tarjetas del Dashboard. El total es histórico (pedidos con cancelados, ventas con el `subtotal` de los
- * no cancelados, todos los clientes); la variación compara el mes en curso con el mismo tramo del mes anterior.
+ * Cifras de las tarjetas del Dashboard para el periodo del filtro principal (lote 45, ADR-0033, PBI-0270; «Mes actual»
+ * por omisión): los pedidos creados en el tramo actual (con los cancelados), sus ventas (el `subtotal` de los no
+ * cancelados) y los clientes web nuevos (su primer pedido cae en el tramo), y la variación de cada una frente al tramo
+ * equivalente anterior (`tramosDelPeriodo`). Hasta el lote 45 la cifra era el total histórico (feature 001, REQ-02) y
+ * la variación, siempre la del mes en curso.
  */
 export function calcularIndicadores(
   pedidos: readonly Pedido[],
-  clientes: readonly Cliente[],
   ahora: Date,
+  periodo: Periodo = PERIODO_POR_OMISION,
 ): IndicadoresResumen {
-  const { actual, anterior } = tramosDeComparacion(fechaEnLima(ahora));
-  const conFecha = pedidos.map((pedido) => ({ fecha: fechaEnLima(pedido.createdAt), pedido }));
-  const nuevos = [...clientesNuevosPorFecha(pedidos).values()];
-  const ahoraTramo = cifrasDelTramo(conFecha, nuevos, actual);
-  const antesTramo = cifrasDelTramo(conFecha, nuevos, anterior);
+  const { actual, anterior } = tramosDelPeriodo(periodo, ahora);
+  const nuevos = [...primerPedidoDeCadaCliente(pedidos).values()];
+  const ahoraTramo = cifrasDelTramo(pedidos, nuevos, actual);
+  const antesTramo = cifrasDelTramo(pedidos, nuevos, anterior);
   return {
     pedidos: {
-      total: pedidos.length,
+      total: ahoraTramo.pedidos,
       variacion: variacionPorcentual(ahoraTramo.pedidos, antesTramo.pedidos),
     },
     ventas: {
-      total: sumarVentas(pedidos),
+      total: ahoraTramo.ventas,
       variacion: variacionPorcentual(ahoraTramo.ventas, antesTramo.ventas),
     },
     clientes: {
-      total: clientes.length,
+      total: ahoraTramo.clientes,
       variacion: variacionPorcentual(ahoraTramo.clientes, antesTramo.clientes),
     },
   };
+}
+
+/** Los pedidos creados en el tramo actual del periodo, en el orden recibido: «Pedidos por estado» y la distribución. */
+export function pedidosDelPeriodo(
+  pedidos: readonly Pedido[],
+  ahora: Date,
+  periodo: Periodo = PERIODO_POR_OMISION,
+): Pedido[] {
+  const { actual } = tramosDelPeriodo(periodo, ahora);
+  return pedidos.filter((pedido) => estaEnTramo(pedido.createdAt, actual));
 }
 
 /** Un punto por día del mes en curso de Lima, con los pedidos creados y los clientes nuevos de ese día. */
@@ -224,7 +198,7 @@ export function gruposDeEstado(pedidos: readonly Pedido[]): BarraDeEstado[] {
   }));
 }
 
-/** Cómo cambió una cifra frente al mismo tramo del mes anterior; sin dato si el tramo anterior valía 0. */
+/** Cómo cambió una cifra frente al tramo anterior del periodo; sin dato si el tramo anterior valía 0. */
 export type Tendencia = 'sube' | 'baja' | 'igual' | 'sin-dato';
 
 /** `variacion` sin valor (`undefined`) es una tarjeta sin variación; `null`, un tramo anterior sin datos. */
@@ -242,9 +216,24 @@ export function textoDeVariacion(variacion: number | null | undefined): string {
   return variacion < 0 ? `−${Math.abs(variacion)} %` : '0 %';
 }
 
-/** Lo que lee un lector de pantalla en lugar de la flecha de la tendencia. */
-export function lecturaDeTendencia(tendencia: Tendencia): string {
-  return { sube: 'Sube', baja: 'Baja', igual: 'Sin cambio', 'sin-dato': 'Sin datos del mes anterior' }[
-    tendencia
-  ];
+/**
+ * Lo que lee un lector de pantalla en lugar de la flecha de la tendencia. Sin dato, nombra el tramo anterior del
+ * periodo (lote 45, PBI-0270): «Sin datos de ayer», «Sin datos del mes anterior»…
+ */
+export function lecturaDeTendencia(tendencia: Tendencia, periodo: Periodo = PERIODO_POR_OMISION): string {
+  if (tendencia === 'sin-dato') return opcionDelPeriodo(periodo).sinDatos;
+  return { sube: 'Sube', baja: 'Baja', igual: 'Sin cambio' }[tendencia];
+}
+
+/** Insignia de cada tipo de evento de «Actividad reciente» (lote 45, PBI-0270), como «Últimos movimientos» del SGC. */
+const TIPOS_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
+  'order-created': 'Pedido',
+  'order-status-changed': 'Estado',
+  'account-registered': 'Cuenta',
+  'complaint-registered': 'Reclamo',
+};
+
+/** El nombre de la insignia de un evento; «Evento» para un tipo que el panel aún no conoce. */
+export function tipoDeEvento(tipo: string): string {
+  return Object.hasOwn(TIPOS_DE_EVENTO, tipo) ? TIPOS_DE_EVENTO[tipo as EventoActividad['type']] : 'Evento';
 }

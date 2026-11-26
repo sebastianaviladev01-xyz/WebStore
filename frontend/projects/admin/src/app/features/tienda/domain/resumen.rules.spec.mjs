@@ -7,6 +7,8 @@ import ts from 'typescript';
 const source = [
   await readFile(new URL('./tienda.model.ts', import.meta.url), 'utf8'),
   await readFile(new URL('./correo.rules.ts', import.meta.url), 'utf8'),
+  // Lote 45 (PBI-0270): la fecha de Lima y los tramos de cada periodo viven en periodo.rules.ts.
+  await readFile(new URL('./periodo.rules.ts', import.meta.url), 'utf8'),
   await readFile(new URL('./resumen.rules.ts', import.meta.url), 'utf8'),
 ].join('\n');
 const moduleSource = ts.transpileModule(source.replace(/^import .*$/gm, ''), {
@@ -18,6 +20,7 @@ const {
   clientesNuevosPorFecha,
   variacionPorcentual,
   calcularIndicadores,
+  pedidosDelPeriodo,
   serieDelMes,
   ultimosPedidos,
   distribucionPorEstado,
@@ -109,24 +112,66 @@ const venta = (createdAt, subtotal, customerEmail, status = 'delivered') => ({
   customerEmail,
   status,
 });
-const clientesDe = (cantidad) => Array.from({ length: cantidad }, (_, i) => ({ id: `c-${i + 1}` }));
 // 15/11/2026 12:00 en Lima: el mes en curso va del 1 al 15/11 y el anterior, del 1 al 15/10.
 const ahora = new Date('2026-11-15T17:00:00Z');
 
-test('los totales cuentan todos los pedidos, las ventas sin cancelados y todos los clientes', () => {
+// Lote 45 (ADR-0033, PBI-0270): las cifras son las del periodo del filtro principal («Mes actual» por omisión), ya no
+// el total histórico de la feature 001 (REQ-02): pedidos con cancelados, ventas sin cancelados y clientes web nuevos.
+test('con «Mes actual», las cifras son las del mes en curso hasta hoy: pedidos, ventas sin cancelados y clientes nuevos', () => {
   const { pedidos, ventas, clientes } = calcularIndicadores(
     [
       venta('2026-11-02T15:00:00Z', 100.1, 'ana@correo.pe', 'confirmed'),
       venta('2026-11-03T15:00:00Z', 50.2, 'ana@correo.pe'),
-      venta('2026-10-10T15:00:00Z', 30, 'luis@correo.pe', 'cancelled'),
-      venta('2025-09-01T15:00:00Z', 20.05, 'rosa@correo.pe'),
+      venta('2026-11-04T15:00:00Z', 30, 'luis@correo.pe', 'cancelled'),
+      venta('2026-10-10T15:00:00Z', 70, 'rosa@correo.pe'),
+      venta('2025-09-01T15:00:00Z', 20.05, 'bea@correo.pe'),
     ],
-    clientesDe(4),
     ahora,
   );
-  assert.equal(pedidos.total, 4, 'el pedido cancelado cuenta como pedido');
-  assert.equal(ventas.total, 170.35, 'suma los productos sin cancelados y redondea a céntimos');
-  assert.equal(clientes.total, 4, 'incluye al cliente sin pedidos');
+  assert.equal(pedidos.total, 3, 'los tres de noviembre: el cancelado cuenta como pedido');
+  assert.equal(ventas.total, 150.3, 'suma los productos de noviembre sin el cancelado y redondea a céntimos');
+  assert.equal(clientes.total, 2, 'ana y luis hicieron su primer pedido en noviembre; rosa y bea, antes');
+});
+
+test('cada periodo da sus cifras y su variación frente al tramo equivalente anterior', () => {
+  // 15/11/2026 12:00 en Lima.
+  const pedidos = [
+    venta('2026-11-15T14:00:00Z', 10, 'ana@correo.pe'), // hoy, 09:00
+    venta('2026-11-14T17:00:00Z', 20, 'bea@correo.pe'), // ayer a la misma hora: cuenta
+    venta('2026-11-14T17:00:00.001Z', 40, 'bea@correo.pe'), // ayer, un instante después: no cuenta en «Hoy»
+    venta('2026-11-10T15:00:00Z', 80, 'carla@correo.pe'), // hace 5 días
+    venta('2026-11-03T15:00:00Z', 160, 'dora@correo.pe'), // hace 12 días: los 7 anteriores
+    venta('2026-08-20T15:00:00Z', 320, 'eva@correo.pe'), // tercer trimestre
+    venta('2025-03-01T15:00:00Z', 640, 'fina@correo.pe'), // año anterior
+  ];
+  const cifras = (periodo) => {
+    const { pedidos: p, ventas: v, clientes: c } = calcularIndicadores(pedidos, ahora, periodo);
+    return [p.total, p.variacion, v.total, v.variacion, c.total, c.variacion];
+  };
+  assert.deepEqual(cifras('hoy'), [1, 0, 10, -50, 1, 0], 'hoy contra ayer hasta las 12:00');
+  assert.deepEqual(cifras('7-dias'), [4, 300, 150, -6, 3, 200], 'del 09 al 15/11 contra el 02 al 08/11');
+  assert.deepEqual(
+    cifras('30-dias'),
+    [5, null, 310, null, 4, null],
+    'del 17/10 al 15/11: el anterior no tiene',
+  );
+  assert.deepEqual(cifras('mes'), [5, null, 310, null, 4, null]);
+  assert.deepEqual(cifras('trimestre'), [5, null, 310, null, 4, null], 'agosto no entra en el 01/07–15/08');
+  assert.deepEqual(cifras('anio'), [6, 500, 630, -2, 5, 400], '2026 contra el 01/01–15/11 de 2025');
+  assert.deepEqual(cifras(undefined), cifras('mes'), 'sin periodo, «Mes actual»');
+});
+
+test('los pedidos del periodo son los de su tramo actual, en hora de Lima', () => {
+  const pedidos = [
+    venta('2026-11-15T05:00:00Z', 10, 'ana@correo.pe'), // 00:00 de hoy
+    venta('2026-11-15T04:59:59Z', 10, 'bea@correo.pe'), // 23:59:59 de ayer
+    venta('2026-11-01T05:00:00Z', 10, 'carla@correo.pe'), // 00:00 del 1/11
+    venta('2026-11-01T04:59:59Z', 10, 'dora@correo.pe'), // 23:59:59 del 31/10
+  ];
+  const ids = (periodo) => pedidosDelPeriodo(pedidos, ahora, periodo).map((p) => p.customerEmail);
+  assert.deepEqual(ids('hoy'), ['ana@correo.pe']);
+  assert.deepEqual(ids('mes'), ['ana@correo.pe', 'bea@correo.pe', 'carla@correo.pe']);
+  assert.deepEqual(ids('anio'), ['ana@correo.pe', 'bea@correo.pe', 'carla@correo.pe', 'dora@correo.pe']);
 });
 
 test('PBI-0186: las ventas suman el valor de los productos, sin el costo del envío', () => {
@@ -146,10 +191,13 @@ test('PBI-0186: las ventas suman el valor de los productos, sin el costo del env
       pedido('2026-10-03T15:00:00Z', 100, 12.5),
       pedido('2026-10-04T15:00:00Z', 80, 10, 'cancelled'),
     ],
-    clientesDe(1),
     ahora,
   );
-  assert.equal(ventas.total, 349.95, '199.90 + 50.05 + 100: ni el envío ni el cancelado');
+  assert.equal(
+    ventas.total,
+    249.95,
+    '199.90 + 50.05 de noviembre: sin el envío (y el cancelado de octubre tampoco cuenta)',
+  );
   assert.equal(ventas.variacion, 150, '249.95 contra 100, los dos sin envío');
 });
 
@@ -175,7 +223,6 @@ test('las variaciones comparan el mes en curso con el mismo tramo del mes anteri
       venta('2026-10-06T15:00:00Z', 500, 'bea@correo.pe', 'cancelled'),
       venta('2026-10-20T15:00:00Z', 1000, 'ana@correo.pe'),
     ],
-    clientesDe(5),
     ahora,
   );
   assert.equal(pedidos.variacion, 50, '3 pedidos del 1 al 15/11 contra 2 del 1 al 15/10');
@@ -184,31 +231,22 @@ test('las variaciones comparan el mes en curso con el mismo tramo del mes anteri
 });
 
 test('sin pedidos en el tramo anterior no hay variación; sin pedidos en el actual es -100', () => {
-  const soloNoviembre = calcularIndicadores(
-    [venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe')],
-    clientesDe(1),
-    ahora,
-  );
+  const soloNoviembre = calcularIndicadores([venta('2026-11-02T15:00:00Z', 100, 'ana@correo.pe')], ahora);
   assert.deepEqual(
     [soloNoviembre.pedidos.variacion, soloNoviembre.ventas.variacion, soloNoviembre.clientes.variacion],
     [null, null, null],
   );
-  const soloOctubre = calcularIndicadores(
-    [venta('2026-10-02T15:00:00Z', 100, 'ana@correo.pe')],
-    clientesDe(1),
-    ahora,
-  );
+  const soloOctubre = calcularIndicadores([venta('2026-10-02T15:00:00Z', 100, 'ana@correo.pe')], ahora);
   assert.deepEqual(
     [soloOctubre.pedidos.variacion, soloOctubre.ventas.variacion, soloOctubre.clientes.variacion],
     [-100, -100, -100],
   );
   const igual = calcularIndicadores(
     [venta('2026-10-02T15:00:00Z', 80, 'ana@correo.pe'), venta('2026-11-02T15:00:00Z', 80, 'bea@correo.pe')],
-    clientesDe(2),
     ahora,
   );
   assert.deepEqual([igual.pedidos.variacion, igual.ventas.variacion, igual.clientes.variacion], [0, 0, 0]);
-  const vacio = calcularIndicadores([], [], ahora);
+  const vacio = calcularIndicadores([], ahora);
   assert.deepEqual(vacio, {
     pedidos: { total: 0, variacion: null },
     ventas: { total: 0, variacion: null },
@@ -336,10 +374,13 @@ test('un pedido del mismo mes del año anterior no cuenta en el tramo actual ni 
       // Mismo mes del tramo anterior (octubre), un año antes.
       venta('2025-10-05T15:00:00Z', 700, 'bea@correo.pe'),
     ],
-    clientesDe(3),
     ahora,
   );
-  assert.equal(pedidos.total, 3, 'el total es histórico: cuenta los tres');
+  assert.equal(
+    pedidos.total,
+    1,
+    'desde el lote 45 la cifra es la del mes en curso: solo el de este noviembre',
+  );
   assert.equal(
     pedidos.variacion,
     null,
@@ -347,11 +388,7 @@ test('un pedido del mismo mes del año anterior no cuenta en el tramo actual ni 
   );
   assert.equal(ventas.variacion, null);
   assert.equal(clientes.variacion, null, 'luis y bea son nuevos de 2025, no de este noviembre ni de octubre');
-  const solo2025 = calcularIndicadores(
-    [venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe')],
-    clientesDe(1),
-    ahora,
-  );
+  const solo2025 = calcularIndicadores([venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe')], ahora);
   assert.equal(
     solo2025.pedidos.variacion,
     null,
@@ -364,7 +401,6 @@ test('un pedido del mismo mes del año anterior no cuenta en el tramo actual ni 
       venta('2026-10-02T15:00:00Z', 50, 'ana@correo.pe'),
       venta('2025-11-02T15:00:00Z', 900, 'luis@correo.pe'),
     ],
-    clientesDe(2),
     ahora,
   );
   assert.equal(noviembreContraOctubre.pedidos.variacion, 0, '1 contra 1: el de 2025 no suma al actual');
@@ -396,7 +432,6 @@ test('en enero el mes anterior es diciembre del año anterior, no diciembre del 
       venta('2026-12-06T15:00:00Z', 10, 'ana@correo.pe'),
       venta('2027-12-05T15:00:00Z', 10, 'ana@correo.pe'),
     ],
-    clientesDe(1),
     enero,
   );
   assert.equal(pedidos.variacion, -50, '1 de enero contra 2 de diciembre de 2026');
@@ -423,6 +458,10 @@ test('PBI-0077: la variación se escribe con signo y la tendencia dice si sube, 
   assert.equal(lecturaDeTendencia('baja'), 'Baja');
   assert.equal(lecturaDeTendencia('igual'), 'Sin cambio');
   assert.equal(lecturaDeTendencia('sin-dato'), 'Sin datos del mes anterior');
+  // Lote 45 (PBI-0270): sin datos, la lectura nombra el tramo anterior del periodo elegido.
+  assert.equal(lecturaDeTendencia('sin-dato', 'hoy'), 'Sin datos de ayer');
+  assert.equal(lecturaDeTendencia('sin-dato', 'anio'), 'Sin datos del año anterior');
+  assert.equal(lecturaDeTendencia('baja', 'anio'), 'Baja');
 });
 
 test('PBI-0079: los estados se agrupan en completados, en proceso y otros con su nombre y su detalle (D8)', () => {
@@ -447,5 +486,22 @@ test('PBI-0079: los estados se agrupan en completados, en proceso y otros con su
     gruposDeEstado([]).map((g) => g.porcentaje),
     [0, 0, 0],
     'sin pedidos, cada barra queda en 0',
+  );
+});
+
+// Lote 45 (ADR-0033, PBI-0270): «Actividad reciente» con la forma de «Últimos movimientos» del SGC; cada evento lleva
+// una insignia con su tipo.
+test('PBI-0270: cada tipo de evento de la actividad tiene su insignia', async () => {
+  const { tipoDeEvento } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  assert.deepEqual(
+    ['order-created', 'order-status-changed', 'account-registered', 'complaint-registered'].map(tipoDeEvento),
+    ['Pedido', 'Estado', 'Cuenta', 'Reclamo'],
+  );
+  assert.equal(
+    tipoDeEvento('otro-tipo'),
+    'Evento',
+    'un tipo que el panel aún no conoce no queda sin insignia',
   );
 });
