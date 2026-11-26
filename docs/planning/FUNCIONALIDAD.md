@@ -62,7 +62,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Usuarios administrativos, en su propia interfaz; login y roles aplicados en frontend y BFF. Las tarjetas de los roles no cuentan usuarios.
 - Reclamos con estado y respuesta del proveedor; la lista marca el abierto.
 - Pedidos y estados.
-- Banners en su propia interfaz, con las imágenes cargadas como archivo, fecha y hora de inicio y fin, el tono de los controles calculado al cargar la foto y hasta dos botones.
+- Banners en su propia interfaz, con las imágenes cargadas como archivo, fecha y hora de inicio y fin (que deben existir en el calendario), el tono de los controles calculado al cargar la foto y hasta dos botones.
 - CMS: logo gráfico cargable/configurable, contacto múltiple, avisos para los clientes (con «Desde» y «Hasta» opcionales), navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
 - Contacto, Envíos, Privacidad y Términos con activación/desactivación efectiva mediante guards; al desactivarlas, tampoco son accesibles por URL directa.
 - Tipografía única bloqueada en el MVP.
@@ -71,7 +71,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Listados con panel de filtros estándar: «Buscar», «Limpiar» y «Agregar», a la derecha.
 - Temas con el código hexadecimal de cada color escrito o elegido con el selector.
 - Botones con su ícono a la izquierda, y el ícono del módulo junto al título de cada página.
-- Tuerca de temas solo en el modo demo, con los tres temas predefinidos.
+- Tuerca de temas solo en el modo demo, con los tres temas predefinidos: en la barra superior, junto a la campana, y flotante solo en el acceso.
 
 ### Roles
 
