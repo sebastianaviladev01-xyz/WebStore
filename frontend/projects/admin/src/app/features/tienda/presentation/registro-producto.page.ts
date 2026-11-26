@@ -26,6 +26,7 @@ import { Producto } from '../domain/tienda.model';
 import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } from './reducir-foto';
 import { SelectorCategoriaComponent } from './selector-categoria.component';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { SinDatosComponent } from '../../../shared/ui/sin-datos.component';
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -37,6 +38,7 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
   selector: 'ws-product-form-page',
   imports: [
     IconoDirective,
+    SinDatosComponent,
     TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
@@ -73,18 +75,7 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
       </div>
     } @else if (sinDatos()) {
       <!-- PBI-0256: la consulta falló y el panel no tenía el producto; no se sabe si existe. -->
-      <div class="admin-card mt-7 max-w-2xl p-6" role="alert">
-        <p class="font-semibold">No pudimos traer los datos del producto</p>
-        <p class="mt-2 text-sm text-muted">El panel no respondió. Vuelve a intentarlo en un momento.</p>
-        <button
-          class="inline-flex min-h-11 gap-2 items-center mt-5 rounded-xl border border-line px-5 py-2.5 text-sm font-semibold"
-          type="button"
-          (click)="reintentar()"
-        >
-          <svg wsAdminIcono="actualizar"></svg>
-          Reintentar
-        </button>
-      </div>
+      <ws-admin-sin-datos registro="del producto" (reintentar)="reintentar()" />
     } @else {
       @if (borrador.aviso(); as aviso) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
