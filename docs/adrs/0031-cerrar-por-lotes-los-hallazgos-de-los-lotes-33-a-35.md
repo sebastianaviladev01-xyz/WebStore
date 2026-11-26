@@ -84,3 +84,20 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros se actual
 - Responsable: Sebastián Avila. Termina cuando se fusiona el lote 39 o cuando él la retira.
 - Aprobación: Sebastián Avila, 2026-11-25.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+Se ejecutaron tres lotes el 2026-11-25, auditados por la sesión principal. Los fusiona Sebastián Avila:
+
+| Lote | Elementos | PR |
+|---|---|---|
+| 37, herramientas de capturas | PBI-0252 y PBI-0253 | [PR #98](https://github.com/sebastianaviladev01-xyz/WebStore/pull/98) |
+| 38, e2e intermitente | PBI-0254 (descartado) | Sin PR: no cambió el código |
+| 39, cierre documental | Los registros y este cierre | El PR del lote 39 |
+
+- **Lote 37:** `npm run verify` en verde (frontend 441, con 15 pruebas nuevas de las herramientas; BFF 755) y la suite e2e completa, 391 de 391. La comprobación real dio «Iguales» entre tomas del mismo código con la máquina libre y cargada, con el ruido aparte, y cuatro cambios reales a propósito salieron como diferencia. La regla del entorno se añadió durante el lote, porque sin ella un cambio de color sutil casi pasaba como ruido.
+- **Lote 38:** el fallo no se reprodujo en 1 029 vistas medidas, con y sin carga: el registro aparece en 1,2 s como mucho, frente a los 10 s de margen. No se cambió el código y PBI-0254 se descartó. El diagnóstico encontró dos defectos que explicarían un fallo así, con su PBI: PBI-0256 y PBI-0257.
+
+Los registros quedaron al día en el lote 39: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md), la [trazabilidad](../planning/TRACEABILITY.md#hallazgos-de-los-lotes-33-a-35-lotes-37-a-39-2026-11-25), el [índice de features](../specs/features/README.md) y el [historial del 2026-11-25](../changelog/CHANGELOG-2026-11-25.md). Los hallazgos de los lotes tienen su PBI, en `propuesta`: PBI-0256 (el registro del producto dice «ya no existe» si falla la consulta), PBI-0257 (la sesión se cierra con un fallo pasajero), PBI-0258 (conservar el trace de una e2e intermitente), PBI-0259 (TEST-18 en un solo test), PBI-0260 (el umbral de 30), PBI-0261 (el escenario del lote 34 deja un tema propio activo) y PBI-0262 (el alcance `qa` de los commits).
+
+**Lo que queda abierto:** esos hallazgos, sin priorizar, y lo que ya estaba fuera, como al [cerrar ADR-0029](0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md#cierre). El PR del lote 39 parte del lote 37, así que se fusiona después del [PR #98](https://github.com/sebastianaviladev01-xyz/WebStore/pull/98). Esta excepción termina al fusionarlo, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.

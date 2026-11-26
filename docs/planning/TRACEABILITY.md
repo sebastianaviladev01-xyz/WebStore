@@ -210,3 +210,12 @@ Los hallazgos de los lotes 28 a 31 (PBI-0246 a PBI-0249) se cerraron por lotes, 
 | El botón principal de un tema propio cambia con el puntero encima aunque el principal casi sea su contraste (lote 34, PR #94: PBI-0247, [ADR-0030](../adrs/0030-alejar-el-principal-fuerte-que-no-se-distingue-del-principal.md)) | `principalAlPasar` y `alejadoConBlancoONegro` en `tema.rules.mjs`, con su réplica `tema.rules.ts` del backoffice; `casos-tema.json` compara las dos. Pruebas: `tema.rules.test.mjs` y `tema.rules.spec.mjs` |
 | La tuerca del modo demo no tapa el contenido del backoffice (lote 35, PR #96: PBI-0249) | `layout/selector-tema.component.ts` (`enBarra`), `app.layout.ts` (en la barra, a la izquierda de la campana) y `app.ts` (flotante solo en el acceso). Pruebas: `admin-modo-demo.spec.ts` |
 | El plan de la feature 003 enlaza la ruta nueva de la tuerca (lote 36: PBI-0255) | [`003-ajustes-del-admin/planning.md`](../specs/features/003-ajustes-del-admin/planning.md) |
+
+## Hallazgos de los lotes 33 a 35: lotes 37 a 39 (2026-11-25)
+
+Los hallazgos de los lotes 33 a 35 (PBI-0252 a PBI-0254) se cerraron por lotes, sin features nuevas ([ADR-0031](../adrs/0031-cerrar-por-lotes-los-hallazgos-de-los-lotes-33-a-35.md)). Son herramientas de QA visual: no cambian ningún requisito de la tienda ni del backoffice. El detalle está en el [backlog](backlog.md).
+
+| Requisito consolidado | Evidencia de implementación |
+|---|---|
+| Las capturas de una página con elementos fijos o pegados se pueden tomar también de la ventana, en posiciones de desplazamiento (lote 37, PR #98: PBI-0252) | `tools/qa/capturas.mjs` y `tools/qa/lib/tomas.mjs`; [Comparar capturas](../development/agent-execution.md#comparar-capturas). Pruebas: `tools/qa/lib/tomas.spec.mjs` |
+| La comparación de capturas separa el ruido de antialiasado sin esconder un cambio real (lote 37, PR #98: PBI-0253) | `tools/qa/comparar.mjs` y `tools/qa/lib/ruido.mjs` (`clasificarDiferencias`, `LIMITES_DE_RUIDO`). Pruebas: `tools/qa/lib/ruido.spec.mjs` |
