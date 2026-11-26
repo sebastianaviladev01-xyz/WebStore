@@ -7,6 +7,7 @@ import {
   PerfilError,
   SesionError,
   SesionGateway,
+  ServicioNoDisponibleError,
   SesionConcedida,
   SesionVencidaError,
 } from '../domain/sesion.gateway';
@@ -34,11 +35,20 @@ export class BffSesionGateway implements SesionGateway {
     }
   }
 
+  /**
+   * Usuario de la sesión. Un `401` (la sesión ya no vale) sale como `SesionVencidaError`; cualquier otro fallo (sin
+   * conexión, `5xx`), como `ServicioNoDisponibleError`, para que la facade conserve el token (lote 40, PBI-0257).
+   */
   async current(token: string): Promise<UsuarioAdmin> {
-    const response = await firstValueFrom(
-      this.http.get<{ user: UsuarioAdmin }>(`${SESSIONS_URL}/current`, { headers: bearer(token) }),
-    );
-    return response.user;
+    try {
+      const response = await firstValueFrom(
+        this.http.get<{ user: UsuarioAdmin }>(`${SESSIONS_URL}/current`, { headers: bearer(token) }),
+      );
+      return response.user;
+    } catch (error) {
+      if (!(error instanceof HttpErrorResponse)) throw error;
+      throw error.status === 401 ? new SesionVencidaError() : new ServicioNoDisponibleError(error.status);
+    }
   }
 
   async logout(token: string): Promise<void> {
