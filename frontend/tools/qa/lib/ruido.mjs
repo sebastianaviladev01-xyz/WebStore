@@ -29,6 +29,28 @@
  */
 export const LIMITES_DE_RUIDO = { pixelesPorGrupo: 16, excesoMaximo: 10, pixelesPorCaptura: 48 };
 
+/**
+ * Umbral por píxel por omisión de `comparar.mjs`: la diferencia mínima, suma de los tres canales, para contar un píxel
+ * como distinto. Se queda en 30 tras medirlo en el lote 41 (PBI-0260, ADR-0032), con los límites de ruido de arriba.
+ *
+ * Tomas repetidas del mismo código: la tienda del lote 37 (inicio y ficha con A, B y C, a 1440 y 375 px, y la ficha en
+ * la ventana) y cinco páginas del backoffice del lote 35 (B y C), 40 capturas por toma. Cuatro tomas con la máquina
+ * libre y cuatro con los cuatro núcleos ocupados; 10 pares (4 libres, 2 cargados y 4 de una libre con una cargada), 400
+ * comparaciones. Capturas con diferencias, que serían falsos positivos:
+ *   - 30: 0 de 400 (el ruido de la foto de la ficha con C, hasta 35 con la máquina cargada, sale aparte como ruido);
+ *   - 24: 12, en 4 de los 6 pares con una toma cargada (la foto de la ficha con C, 2 píxeles que pasan de 24 en 11);
+ *   - 20: 21, también con la máquina libre (32 píxeles del pie del inicio con C a 1440 px, en 2 de los 4 pares libres);
+ *   - 15: 21, y con la máquina cargada hasta 211 píxeles en la foto de la ficha; 10: 28.
+ * Cambios reales sutiles aplicados a propósito en una toma, sin commit (capturas en que salen, de 40):
+ *   - un borde de 1 px que cambia 22 en total: 0 con 30 y con 24; 40 con 20;
+ *   - un botón que cambia 21 en total (unos 7 % más claro): 0 con 30 y con 24; 37 con 20;
+ *   - un botón que cambia 12 en total (unos 4 % más claro): 0 con 30, 24, 20 y 15; 37 con 10.
+ * Bajarlo a 24 no hace salir ninguno de esos cambios y da falsos positivos con carga; a 20 los haría salir, pero con
+ * falsos positivos también con la máquina libre, y evitarlos pediría ensanchar los límites de ruido hasta esconder
+ * cambios pequeños de verdad. Es un límite conocido: un cambio de color de menos de 30 en total no sale.
+ */
+export const UMBRAL_POR_OMISION = 30;
+
 /** Diferencia de cada píxel entre dos imágenes RGBA del mismo tamaño: la suma de las diferencias de los tres canales. */
 export function diferenciasPorPixel(a, b) {
   const diferencias = new Uint16Array(a.length / 4);
