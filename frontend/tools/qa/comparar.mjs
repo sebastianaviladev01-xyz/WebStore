@@ -2,8 +2,10 @@
 // rojo (y el ruido de antialiasado en ámbar) y un `resumen.md` (PBI-0057, STD-12). Uso, desde frontend/:
 //   node tools/qa/comparar.mjs <carpeta> [umbral] [--estricto]
 // `<carpeta>` es la que contiene `antes/` y `despues/` (por omisión de `capturas.mjs`: `output/visual-qa/<nombre>`).
-// `umbral` es la diferencia mínima, suma de los tres canales, para contar un píxel como distinto (30 por omisión): deja
-// fuera el ruido de rasterizado de las fotos y de los bordes suavizados, y no oculta un cambio de color. El resumen
+// `umbral` es la diferencia mínima, suma de los tres canales, para contar un píxel como distinto (30 por omisión,
+// `UMBRAL_POR_OMISION`): deja fuera el ruido de rasterizado de las fotos y de los bordes suavizados. Un cambio de color
+// de menos de 30 en total no sale (un borde de 1 px que cambia 22, un botón un 4 a 7 % más claro); el lote 41 midió que
+// bajarlo da falsos positivos entre tomas del mismo código (PBI-0260; las cifras, en `lib/ruido.mjs`). El resumen
 // dice, por captura, el tamaño de cada toma, los píxeles distintos y la zona que ocupan; con 0, las tomas son iguales.
 // Desde el lote 37 (PBI-0253), el antialiasado que cambia entre tomas del mismo código (pocos píxeles aislados, apenas
 // por encima del umbral; límites en `lib/ruido.mjs`) sale aparte, en la columna «Ruido», y no cuenta como diferencia.
@@ -13,14 +15,19 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright';
 
-import { clasificarDiferencias, diferenciasPorPixel, LIMITES_DE_RUIDO } from './lib/ruido.mjs';
+import {
+  clasificarDiferencias,
+  diferenciasPorPixel,
+  LIMITES_DE_RUIDO,
+  UMBRAL_POR_OMISION,
+} from './lib/ruido.mjs';
 
 const argumentos = process.argv.slice(2);
 const estricto = argumentos.includes('--estricto');
 const [carpeta, umbralTexto] = argumentos.filter((argumento) => argumento !== '--estricto');
 if (!carpeta) throw new Error('Uso: comparar.mjs <carpeta con antes/ y despues/> [umbral] [--estricto]');
 const raiz = resolve(carpeta);
-const umbral = Number(umbralTexto ?? 30);
+const umbral = Number(umbralTexto ?? UMBRAL_POR_OMISION);
 const opciones = { umbral, ...LIMITES_DE_RUIDO, estricto };
 await mkdir(join(raiz, 'comparacion'), { recursive: true });
 

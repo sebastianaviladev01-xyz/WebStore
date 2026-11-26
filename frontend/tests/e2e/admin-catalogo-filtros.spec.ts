@@ -54,7 +54,8 @@ import { cargarImagenPrincipal } from './apoyo/fotos';
  *   orden vertical, sin formulario de registro; desde el lote 11 (PBI-0171), «Agregar» va en el panel, a la derecha
  *   de «Buscar» y «Limpiar»; la lista ocupa el ancho del panel y los bordes coinciden en las tres páginas.
  * - TEST-18 (AC-12): a 360, 375 y 390 px con A, B y C, las tres listas y sus registros (nuevo y edición) sin
- *   desplazamiento horizontal y con sus controles dentro de la pantalla. B queda activo al terminar.
+ *   desplazamiento horizontal y con sus controles dentro de la pantalla. B queda activo al terminar. Desde el lote 41
+ *   (PBI-0259), un test por tema y ancho; si una vista no carga, adjunta el texto que había en pantalla.
  * - TEST-19 (AC-15): con 30 productos, 25 en la página 1 y «Página 1 de 2»; «Siguiente» lleva a la 2; una búsqueda
  *   nueva vuelve a la 1; con 25 resultados o menos no hay paginación.
  * - TEST-20 (REQ-02, caso límite): si la consulta del snapshot falla al «Buscar», el aviso sale junto al panel y se
@@ -681,6 +682,36 @@ const VISTAS_DEL_CATALOGO: readonly {
 
 const MOVILES = [360, 375, 390] as const;
 
+/** La URL y el texto de `main` o, si la página no tiene (o no se puede leer), el de `body`. */
+async function loQueHayEnPantalla(page: Page): Promise<string> {
+  const principal = page.locator('main');
+  const enMain = (await principal.count()) > 0;
+  const zona = enMain ? principal.first() : page.locator('body');
+  const texto = await zona
+    .innerText({ timeout: 2_000 })
+    .catch((error: Error) => `(no se pudo leer: ${error.message.split('\n')[0]})`);
+  return [`URL: ${page.url()}`, `Texto de ${enMain ? 'main' : 'body'}:`, '', texto.trim() || '(vacío)'].join(
+    '\n',
+  );
+}
+
+/**
+ * Espera a que la vista de TEST-18 esté lista. Si no lo está, adjunta al informe lo que había en pantalla antes de
+ * fallar, para saber si era el acceso, un error o una carga a medias (lote 41, PBI-0259; el fallo de PBI-0254 no lo
+ * decía).
+ */
+async function esperarVista(page: Page, listo: Locator, lugar: string): Promise<void> {
+  try {
+    await expect(listo, lugar).toBeVisible();
+  } catch (error) {
+    await test.info().attach(`En pantalla · ${lugar}`, {
+      body: await loQueHayEnPantalla(page),
+      contentType: 'text/plain',
+    });
+    throw error;
+  }
+}
+
 /** Motivo del `400` simulado de TEST-21, con el formato de error del BFF. */
 const MOTIVO_RECHAZO = 'El BFF rechazó el cambio (prueba e2e 008).';
 
@@ -751,18 +782,20 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
   test.describe('TEST-18 · móvil sin desplazamiento horizontal', () => {
     test.afterAll(() => restablecerTemas());
 
+    // Lote 41 (PBI-0259): un test por tema y ancho, con las siete vistas cada uno. Si uno falla, los demás temas y
+    // anchos se siguen comprobando, y el informe dice cuál fue.
     for (const tema of TEMAS) {
-      test(`tema ${tema.toUpperCase()} a 360, 375 y 390 px`, async ({ page }) => {
-        test.setTimeout(240_000);
-        await activarTema(tema);
-        await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-
-        for (const ancho of MOVILES) {
+      for (const ancho of MOVILES) {
+        test(`tema ${tema.toUpperCase()} a ${ancho} px`, async ({ page }) => {
+          test.setTimeout(120_000);
+          await activarTema(tema);
+          await ingresarAlAdmin(page, cuentasAdmin.superadmin);
           await page.setViewportSize({ width: ancho, height: 812 });
+
           for (const vista of VISTAS_DEL_CATALOGO) {
             const lugar = `${tema.toUpperCase()} · ${ancho} px · ${vista.ruta}`;
             await page.goto(vista.ruta);
-            await expect(vista.listo(page), lugar).toBeVisible();
+            await esperarVista(page, vista.listo(page), lugar);
             await page.evaluate(() => document.fonts.ready);
 
             const medida = await page.evaluate(() => ({
@@ -781,8 +814,8 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
                 .toBe(true);
             }
           }
-        }
-      });
+        });
+      }
     }
   });
 
