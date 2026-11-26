@@ -16,6 +16,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena, motivoParaNoUsarFoto } from '../domain/foto.rules';
@@ -25,6 +26,7 @@ import { Producto } from '../domain/tienda.model';
 import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } from './reducir-foto';
 import { SelectorCategoriaComponent } from './selector-categoria.component';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { SinDatosComponent } from '../../../shared/ui/sin-datos.component';
 
 /**
  * Interfaz de registro de un producto (feature 008): `/productos/nuevo` y `/productos/:id`. Es el formulario que
@@ -36,6 +38,7 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
   selector: 'ws-product-form-page',
   imports: [
     IconoDirective,
+    SinDatosComponent,
     TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
@@ -70,6 +73,9 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
           Otra persona lo eliminó. Vuelve al listado para ver los productos actuales.
         </p>
       </div>
+    } @else if (sinDatos()) {
+      <!-- PBI-0256: la consulta falló y el panel no tenía el producto; no se sabe si existe. -->
+      <ws-admin-sin-datos registro="del producto" (reintentar)="reintentar()" />
     } @else {
       @if (borrador.aviso(); as aviso) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
@@ -288,8 +294,13 @@ export class RegistroProductoPage {
   private readonly idNuevo = crypto.randomUUID();
   /** Mientras la edición trae los datos actuales: «Cargando…» en lugar del formulario. */
   protected readonly loadingProduct = signal(false);
-  /** El producto en edición ya no está en el snapshot actual: otra persona lo eliminó. */
+  /** La consulta respondió y el producto en edición no está en el snapshot actual: otra persona lo eliminó. */
   protected readonly missing = signal(false);
+  /**
+   * PBI-0256 (lote 40, ADR-0032; provisional, por confirmar con Daniel): la consulta falló y el panel no tenía el
+   * producto (por ejemplo, en una carga nueva). No se dice que no existe: se avisa del fallo con «Reintentar».
+   */
+  protected readonly sinDatos = signal(false);
   /** Aviso si no se pudieron traer los datos actuales y el formulario usa los que había en memoria. */
   protected readonly staleNotice = signal<string | null>(null);
   /** Motivo del último guardado rechazado, junto al botón; el formulario conserva lo escrito. */
@@ -403,24 +414,36 @@ export class RegistroProductoPage {
     }
     this.gallery.update((items) => [...items, url]);
   }
-  /** Trae el snapshot actual y rellena el formulario; si ya no existe, lo dice; si la consulta falla, avisa. */
+  /**
+   * Trae el snapshot actual y rellena el formulario. Si la consulta responde sin el producto, dice que ya no existe;
+   * si falla, usa los datos que ya tenía el panel con un aviso o, si no los tenía, avisa del fallo (PBI-0256).
+   */
   private async edit(id: string) {
     this.loadingProduct.set(true);
     this.missing.set(false);
+    this.sinDatos.set(false);
     this.staleNotice.set(null);
-    const current = await this.admin.refresh();
-    if (!current) {
+    const consultaRespondio = await this.admin.refresh();
+    const p = this.admin.products().find((item) => item.id === id);
+    const estado = estadoDeLaEdicion({ consultaRespondio, registroEncontrado: !!p });
+    if (estado === 'desactualizada') {
       this.staleNotice.set(
         'No pudimos traer los datos actuales: la ficha muestra los últimos que cargó el panel.',
       );
     }
-    const p = this.admin.products().find((item) => item.id === id);
+    this.missing.set(estado === 'no-existe');
+    this.sinDatos.set(estado === 'sin-datos');
     this.base = p ?? null;
     if (p) {
       this.fill(p);
       this.borrador.aplicar();
-    } else this.missing.set(true);
+    }
     this.loadingProduct.set(false);
+  }
+  /** «Reintentar» del aviso de PBI-0256: vuelve a pedir el snapshot. */
+  protected reintentar() {
+    const id = this.editingId();
+    if (id) void this.edit(id);
   }
   private fill(p: Producto) {
     this.marcaActual.set(p.brandId);

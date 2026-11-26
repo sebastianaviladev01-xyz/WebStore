@@ -19,10 +19,12 @@ import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
 import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
 import { TiendaFacade } from '../application/tienda.facade';
+import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { usuarioConElMismoCorreo } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { SinDatosComponent } from '../../../shared/ui/sin-datos.component';
 
 const EMPTY_USER = {
   name: '',
@@ -44,6 +46,7 @@ const EMPTY_USER = {
   selector: 'ws-user-form-page',
   imports: [
     IconoDirective,
+    SinDatosComponent,
     TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
@@ -77,6 +80,9 @@ const EMPTY_USER = {
           Otra persona lo eliminó. Vuelve al listado para ver los usuarios actuales.
         </p>
       </div>
+    } @else if (sinDatos()) {
+      <!-- PBI-0256: la consulta falló y el panel no tenía el usuario; no se sabe si existe. -->
+      <ws-admin-sin-datos registro="del usuario" (reintentar)="reintentar()" />
     } @else {
       @if (borrador.aviso(); as aviso) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
@@ -171,6 +177,8 @@ export class RegistroUsuarioPage {
   protected readonly loadingUser = signal(false);
   /** El usuario en edición ya no está en el snapshot (otra persona lo eliminó, o el rol de la sesión no lo gestiona). */
   protected readonly missing = signal(false);
+  /** PBI-0256: la consulta falló y el panel no tenía el usuario; se avisa del fallo con «Reintentar». */
+  protected readonly sinDatos = signal(false);
   protected readonly staleNotice = signal<string | null>(null);
   /** Motivo del último guardado rechazado, junto al botón (p. ej. dejar la tienda sin superadministrador). */
   protected readonly saveError = signal<string | null>(null);
@@ -216,19 +224,26 @@ export class RegistroUsuarioPage {
       else untracked(() => this.borrador.aplicar());
     });
   }
-  /** Trae el snapshot actual y rellena el formulario; si ya no existe, lo dice; si la consulta falla, avisa. */
+  /**
+   * Trae el snapshot actual y rellena el formulario. Si la consulta responde sin el usuario, dice que ya no existe; si
+   * falla, usa los datos que ya tenía el panel con un aviso o, si no los tenía, avisa del fallo (PBI-0256).
+   */
   private async edit(id: string) {
     this.loadingUser.set(true);
     this.missing.set(false);
+    this.sinDatos.set(false);
     this.staleNotice.set(null);
     this.saveError.set(null);
-    const current = await this.admin.refresh();
-    if (!current) {
+    const consultaRespondio = await this.admin.refresh();
+    const user = this.admin.users().find((candidate) => candidate.id === id);
+    const estado = estadoDeLaEdicion({ consultaRespondio, registroEncontrado: !!user });
+    if (estado === 'desactualizada') {
       this.staleNotice.set(
         'No pudimos traer los datos actuales: la ficha muestra los últimos que cargó el panel.',
       );
     }
-    const user = this.admin.users().find((candidate) => candidate.id === id);
+    this.missing.set(estado === 'no-existe');
+    this.sinDatos.set(estado === 'sin-datos');
     this.base = user ?? null;
     if (user) {
       this.form.setValue({
@@ -239,8 +254,13 @@ export class RegistroUsuarioPage {
         active: user.active,
       });
       this.borrador.aplicar();
-    } else this.missing.set(true);
+    }
     this.loadingUser.set(false);
+  }
+  /** «Reintentar» del aviso de PBI-0256: vuelve a pedir el snapshot. */
+  protected reintentar() {
+    const id = this.editing();
+    if (id) void this.edit(id);
   }
   protected async save(): Promise<void> {
     if (this.admin.saving()) return;

@@ -16,6 +16,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 
 import { TiendaFacade } from '../application/tienda.facade';
+import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { motivoDeCategoriaRepetida, slugDe } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
@@ -24,6 +25,7 @@ import { LADO_IMAGEN_CATEGORIA, motivoParaNoUsarFotoDeCategoria } from '../domai
 import { idsDescendientes, aplanarArbolCategorias } from '../domain/categoria.rules';
 import { Categoria } from '../domain/tienda.model';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { SinDatosComponent } from '../../../shared/ui/sin-datos.component';
 
 /**
  * Interfaz de registro de una categoría (feature 008): `/categorias/nueva` y `/categorias/:id`. Es el formulario que
@@ -35,6 +37,7 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
   selector: 'ws-category-form-page',
   imports: [
     IconoDirective,
+    SinDatosComponent,
     TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
@@ -67,6 +70,9 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
           Otra persona la eliminó. Vuelve al listado para ver las categorías actuales.
         </p>
       </div>
+    } @else if (sinDatos()) {
+      <!-- PBI-0256: la consulta falló y el panel no tenía la categoría; no se sabe si existe. -->
+      <ws-admin-sin-datos registro="de la categoría" (reintentar)="reintentar()" />
     } @else {
       @if (borrador.aviso(); as aviso) {
         <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
@@ -192,8 +198,10 @@ export class RegistroCategoriaPage {
   private base: Categoria | null = null;
   /** Mientras la edición trae los datos actuales: «Cargando…» en lugar del formulario. */
   protected readonly loadingCategory = signal(false);
-  /** La categoría en edición ya no está en el snapshot actual: otra persona la eliminó. */
+  /** La consulta respondió y la categoría en edición no está en el snapshot actual: otra persona la eliminó. */
   protected readonly missing = signal(false);
+  /** PBI-0256: la consulta falló y el panel no tenía la categoría; se avisa del fallo con «Reintentar». */
+  protected readonly sinDatos = signal(false);
   /** Aviso si no se pudieron traer los datos actuales y el formulario usa los que había en memoria. */
   protected readonly staleNotice = signal<string | null>(null);
   /** Aviso de ciclo o motivo del último guardado rechazado, junto al botón; el formulario conserva lo escrito. */
@@ -264,19 +272,26 @@ export class RegistroCategoriaPage {
   protected indent(depth: number) {
     return '  '.repeat(depth) + (depth ? '↳ ' : '');
   }
-  /** Trae el snapshot actual y rellena el formulario; si ya no existe, lo dice; si la consulta falla, avisa. */
+  /**
+   * Trae el snapshot actual y rellena el formulario. Si la consulta responde sin la categoría, dice que ya no existe;
+   * si falla, usa los datos que ya tenía el panel con un aviso o, si no los tenía, avisa del fallo (PBI-0256).
+   */
   private async edit(id: string) {
     this.loadingCategory.set(true);
     this.missing.set(false);
+    this.sinDatos.set(false);
     this.staleNotice.set(null);
     this.error.set(null);
-    const current = await this.admin.refresh();
-    if (!current) {
+    const consultaRespondio = await this.admin.refresh();
+    const c = this.admin.categories().find((x) => x.id === id);
+    const estado = estadoDeLaEdicion({ consultaRespondio, registroEncontrado: !!c });
+    if (estado === 'desactualizada') {
       this.staleNotice.set(
         'No pudimos traer los datos actuales: la ficha muestra los últimos que cargó el panel.',
       );
     }
-    const c = this.admin.categories().find((x) => x.id === id);
+    this.missing.set(estado === 'no-existe');
+    this.sinDatos.set(estado === 'sin-datos');
     this.base = c ?? null;
     if (c) {
       this.form.setValue({
@@ -286,8 +301,13 @@ export class RegistroCategoriaPage {
         imageUrl: c.imageUrl ?? '',
       });
       this.borrador.aplicar();
-    } else this.missing.set(true);
+    }
     this.loadingCategory.set(false);
+  }
+  /** «Reintentar» del aviso de PBI-0256: vuelve a pedir el snapshot. */
+  protected reintentar() {
+    const id = this.editing();
+    if (id) void this.edit(id);
   }
   protected async save() {
     if (this.admin.saving()) return;
