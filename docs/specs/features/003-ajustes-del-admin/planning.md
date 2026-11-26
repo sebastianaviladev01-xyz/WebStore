@@ -236,7 +236,7 @@ Evidencia: `isActive(url, router, matchOptions)` es pública desde Angular 21.1 
 | B. CDK Menu (`cdkMenuTriggerFor`) | Sin estilos de Material: todo el panel se diseña desde cero. Sería el primer uso en el proyecto, con un patrón distinto al de la tuerca |
 | C. Panel propio con CDK Overlay, sin rol de menú | Encaja mejor con un bloque de información, pero hay que programar el foco, Escape y el clic fuera, y STD-04 pide Material o CDK para los menús |
 
-Evidencia: [`selector-tema.component.ts`](../../../../frontend/projects/admin/src/app/features/temas/presentation/selector-tema.component.ts) del Admin ya usa `MatMenu` con un título que no es una opción, y [`styles.css`](../../../../frontend/projects/admin/src/styles.css) del Admin le pone los tokens del tema. La especificación pide los menús «con Angular Material o CDK (STD-04)».
+Evidencia: [`selector-tema.component.ts`](../../../../frontend/projects/admin/src/app/layout/selector-tema.component.ts) del Admin ya usa `MatMenu` con un título que no es una opción, y [`styles.css`](../../../../frontend/projects/admin/src/styles.css) del Admin le pone los tokens del tema. La especificación pide los menús «con Angular Material o CDK (STD-04)».
 
 ### Respuestas del hito
 

@@ -14,14 +14,13 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-| Excepción | Ámbito | Vigencia |
-|---|---|---|
-| [ADR-0029](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md): cerrar por lotes los hallazgos de los lotes 28 a 31, sin las etapas SDD por elemento | PBI-0246, PBI-0247, PBI-0248 y PBI-0249 y los hallazgos de sus lotes, en el storefront, el backoffice y el BFF | Desde el 2026-11-25 hasta que se fusione el lote 36. Responsable: Sebastián Avila |
+Ninguna.
 
 ## Excepciones cerradas
 
 | Excepción | Ámbito | Cierre |
 |---|---|---|
+| [ADR-0029](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md): cerrar por lotes los hallazgos de los lotes 28 a 31, sin las etapas SDD por elemento | PBI-0246, PBI-0247, PBI-0248 y PBI-0249 y los hallazgos de sus lotes (PBI-0252 a PBI-0255), en el storefront, el backoffice y el BFF | 2026-11-25, al fusionar el PR del lote 36 ([cierre](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md): cerrar por lotes lo que salió de la reunión del 2026-11-20, sin las etapas SDD por elemento | PBI-0238, PBI-0239, PBI-0240, PBI-0243 y PBI-0244 y los hallazgos de sus lotes (PBI-0246 a PBI-0250), en el storefront, el backoffice y el BFF | 2026-11-24, al fusionar el PR del lote 32 ([cierre](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md): cerrar por lotes lo que salió de la revisión de la demo, sin las etapas SDD por elemento | PBI-0211 a PBI-0224 y PBI-0226 y los hallazgos de sus lotes (PBI-0227 a PBI-0236), en el storefront, el backoffice y el BFF | 2026-11-24, al fusionar el [PR #86](https://github.com/sebastianaviladev01-xyz/WebStore/pull/86) ([cierre](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md): aplicar por lotes los cambios que pidió Daniel, sin las etapas SDD por elemento | PBI-0168 a PBI-0194, el resto del backlog que no depende de terceros (ampliación del 2026-11-23) y los hallazgos de sus lotes (PBI-0195 a PBI-0210), en el storefront, el backoffice y el BFF | 2026-11-23, al fusionar el PR del lote 18 ([cierre](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md#cierre)). Responsable: Sebastián Avila |

@@ -81,3 +81,33 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros (backlog,
 - Responsable: Sebastián Avila. Termina cuando se fusiona el lote 36 o cuando él la retira.
 - Aprobación: Sebastián Avila, 2026-11-25. Falta informar a Daniel Avila.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+Se ejecutaron cuatro lotes el 2026-11-25, cada uno con su rama y su PR en borrador hacia `dev`, auditados por la sesión principal (diff, `npm run verify`, la suite e2e completa y las capturas cuando tocaba la interfaz). Los fusiona Sebastián Avila:
+
+| Lote | Elementos | PR |
+|---|---|---|
+| 33, vigencia de los banners en el BFF | PBI-0246 | [PR #95](https://github.com/sebastianaviladev01-xyz/WebStore/pull/95) |
+| 34, botón principal de los temas propios y ficha a 375 px ([ADR-0030](0030-alejar-el-principal-fuerte-que-no-se-distingue-del-principal.md)) | PBI-0247 y PBI-0248 (descartado) | [PR #94](https://github.com/sebastianaviladev01-xyz/WebStore/pull/94) |
+| 35, tuerca del modo demo | PBI-0249 | [PR #96](https://github.com/sebastianaviladev01-xyz/WebStore/pull/96) |
+| 36, cierre documental | Los registros y este cierre | El PR del lote 36 |
+
+Resultados de la auditoría:
+
+- **Lote 33:** `npm run verify` en verde (BFF 748). La suite e2e completa dio 382 de 383: falló una prueba del registro del producto a 375 px mientras otro lote compilaba en la misma máquina; repetida sola tres veces, pasó las tres (PBI-0254).
+- **Lote 34:** `npm run verify` en verde (frontend 426, BFF 751) y la suite e2e completa, 383 de 383. En las capturas solo cambia el botón con el puntero encima del tema propio que tenía el defecto.
+- **Lote 35:** `npm run verify` en verde y la suite e2e completa, 391 de 391. Sin el modo demo, las capturas no cambian.
+- **Lote 36, con los tres lotes juntos:** `npm run verify` en verde (frontend 426, BFF 755) y la suite e2e completa, 391 de 391.
+
+Lo que cambió durante la ejecución:
+
+- **PBI-0248** se descartó: el hueco de la ficha a 375 px solo sale en la captura de página completa, no en una ventana real.
+- **PBI-0249:** la decisión de partida, reservar al final del contenido el espacio de la tuerca, no resolvía que la tuerca tapara un «Eliminar» al cargar la página. La auditoría la rechazó, y Sebastián Avila eligió el 2026-11-25 mover la tuerca a la barra superior del panel en lugar de quitarla; en el acceso, que no tiene barra, sigue flotando.
+- **PBI-0247:** el lote fijó 1.1:1 para detectar el defecto y 1.3:1 como objetivo, y lo registró en [ADR-0030](0030-alejar-el-principal-fuerte-que-no-se-distingue-del-principal.md).
+
+Los registros quedaron al día en el lote 36: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (filas «Hallazgos de los lotes 28 a 31: …», provisionales, por confirmar con Daniel), la [trazabilidad](../planning/TRACEABILITY.md#hallazgos-de-los-lotes-28-a-31-lotes-33-a-36-2026-11-25), la [funcionalidad](../planning/FUNCIONALIDAD.md), el [índice de features](../specs/features/README.md) y el [historial del 2026-11-25](../changelog/CHANGELOG-2026-11-25.md). Los hallazgos de los lotes tienen su PBI: PBI-0252 (las capturas de página completa con elementos fijos o pegados), PBI-0253 (el ruido de `comparar.mjs` en esquinas redondeadas) y PBI-0254 (la e2e intermitente), en `propuesta`; y PBI-0255, el enlace del plan de la feature 003 a la ruta antigua de la tuerca, que corrigió el lote 36.
+
+**Lo que queda abierto:** confirmar con Daniel las decisiones provisionales de los lotes 34 y 35 y si la tuerca del backoffice se queda en el modo demo (PBI-0188); los hallazgos PBI-0252 a PBI-0254, sin priorizar; y lo que ya estaba fuera, como al [cerrar ADR-0027](0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md#cierre).
+
+Falta informar a Daniel Avila, como decía la aprobación. Los PR de los lotes 33 a 35 parten de `dev` y no comparten archivos; el del lote 36 los incluye, así que se fusiona al final, después del #95 (que trae este ADR), el #94 y el #96. Esta excepción termina al fusionarlo, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
