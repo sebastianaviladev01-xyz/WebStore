@@ -31,3 +31,7 @@ export const escenarios = {
 
 // Los anchos por omisión son escritorio y móvil; para otros, exporta `anchos`:
 // export const anchos = [{ width: 1440, height: 900 }, { width: 375, height: 812 }];
+
+// Si un escenario cambia la copia de datos (por ejemplo, activa un tema con `activarTema`), exporta `alTerminar` para
+// dejarla como estaba: `capturas.mjs` la llama al acabar, también si una toma falla. Ver el escenario del lote 34.
+// export async function alTerminar() { ... }

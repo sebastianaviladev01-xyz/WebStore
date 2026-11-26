@@ -32,11 +32,15 @@ const json = (cuerpo, cabeceras = {}, metodo = 'POST') => ({
   body: JSON.stringify(cuerpo),
 });
 
-/** Carga un archivo de escenarios: exporta `escenarios` y, opcionalmente, `anchos`. */
+/**
+ * Carga un archivo de escenarios: exporta `escenarios` y, opcionalmente, `anchos` y `alTerminar`. `alTerminar` es una
+ * función que `capturas.mjs` llama al acabar las tomas, también si fallan, para dejar la copia de datos como estaba (por
+ * ejemplo, el tema activo; lote 41, PBI-0261).
+ */
 export async function cargarEscenarios(ruta) {
   const modulo = await import(pathToFileURL(resolve(ruta)).href);
   if (!modulo.escenarios) throw new Error(`«${ruta}» no exporta \`escenarios\``);
-  return { escenarios: modulo.escenarios, anchos: modulo.anchos ?? ANCHOS };
+  return { escenarios: modulo.escenarios, anchos: modulo.anchos ?? ANCHOS, alTerminar: modulo.alTerminar };
 }
 
 /** Carpeta de salida de una etapa (`antes` o `despues`), creada si falta. */

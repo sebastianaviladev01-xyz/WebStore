@@ -6,7 +6,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { clasificarDiferencias, diferenciasPorPixel, LIMITES_DE_RUIDO } from './ruido.mjs';
+import {
+  clasificarDiferencias,
+  diferenciasPorPixel,
+  LIMITES_DE_RUIDO,
+  UMBRAL_POR_OMISION,
+} from './ruido.mjs';
 
 const UMBRAL = 30;
 
@@ -166,5 +171,73 @@ test('PBI-0253: muchos píxeles sueltos en una captura no son ruido de antialias
 test('PBI-0253: en modo estricto, sin límites de ruido, el antialiasado vuelve a contar como diferencia', () => {
   const resultado = clasificar(botonesConEsquinas(0), botonesConEsquinas(11), { estricto: true });
   assert.equal(resultado.distintos, 16);
+  assert.equal(resultado.ruido, 0);
+});
+
+/**
+ * PBI-0260 (lote 41): el umbral por omisión se queda en 30. Con tomas repetidas del mismo código, 24 ya da falsos
+ * positivos con la máquina cargada (la foto de la ficha con C) y 20, también con la máquina libre. Estas pruebas fijan
+ * los dos lados de la decisión: si alguien cambia el umbral, tiene que volver a medir.
+ */
+test('PBI-0260: el umbral por omisión es 30', () => {
+  assert.equal(UMBRAL_POR_OMISION, 30);
+});
+
+/** Una foto (gris uniforme) con píxeles sueltos que cambian entre tomas con la máquina cargada, como la de la ficha. */
+function fotoConPixelesSueltos(cambiada) {
+  const foto = imagen(240, 160, [128, 128, 128]);
+  if (!cambiada) return foto;
+  // Tres píxeles que cambian 35 (12 + 12 + 11) y cinco que cambian 26 (9 + 9 + 8), cada uno con su entorno igual.
+  for (const [x, y] of [
+    [20, 20],
+    [120, 60],
+    [200, 140],
+  ]) {
+    foto.pintar(x, y, [140, 140, 139]);
+  }
+  for (const [x, y] of [
+    [40, 100],
+    [80, 30],
+    [150, 120],
+    [180, 40],
+    [220, 90],
+  ]) {
+    foto.pintar(x, y, [137, 137, 136]);
+  }
+  return foto;
+}
+
+test('PBI-0260: con el umbral de 30, los píxeles sueltos de una foto con la máquina cargada son ruido, no diferencia', () => {
+  const resultado = clasificar(fotoConPixelesSueltos(false), fotoConPixelesSueltos(true), {
+    umbral: UMBRAL_POR_OMISION,
+  });
+  assert.equal(resultado.distintos, 0);
+  assert.equal(resultado.ruido, 3);
+  assert.equal(resultado.maximoDelRuido, 35);
+});
+
+test('PBI-0260: con un umbral de 24, la misma foto daría un falso positivo: por eso no se baja', () => {
+  const resultado = clasificar(fotoConPixelesSueltos(false), fotoConPixelesSueltos(true), { umbral: 24 });
+  // Los de 35 pasan el umbral en 11, más que `excesoMaximo`: ya no parecen antialiasado.
+  assert.equal(resultado.distintos, 3);
+});
+
+test('PBI-0260: límite conocido del umbral de 30: un borde de 1 px que cambia 22 en total no sale como diferencia', () => {
+  const a = imagen(400, 60);
+  const b = imagen(400, 60);
+  a.rectangulo(20, 30, 300, 1, [221, 227, 236]);
+  b.rectangulo(20, 30, 300, 1, [214, 220, 228]);
+  const resultado = clasificar(a, b, { umbral: UMBRAL_POR_OMISION });
+  assert.equal(resultado.distintos, 0);
+  assert.equal(resultado.ruido, 0);
+});
+
+test('PBI-0260: límite conocido del umbral de 30: un botón que cambia 21 en total (unos 7 % más claro) no sale', () => {
+  const a = imagen(200, 100);
+  const b = imagen(200, 100);
+  a.rectangulo(20, 20, 168, 46, [29, 78, 216]);
+  b.rectangulo(20, 20, 168, 46, [36, 85, 223]);
+  const resultado = clasificar(a, b, { umbral: UMBRAL_POR_OMISION });
+  assert.equal(resultado.distintos, 0);
   assert.equal(resultado.ruido, 0);
 });
