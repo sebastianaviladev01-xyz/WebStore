@@ -76,6 +76,12 @@ const TEXTO_MINIMO = 4.5;
 const INTERFAZ_MINIMO = 3;
 /** Cuánto se distingue, como mínimo, el acento con el puntero encima del acento (lote 20). */
 const DIFERENCIA_AL_PASAR = 1.3;
+/**
+ * Bajo esta relación, el principal fuerte derivado no se distingue del principal y se aleja (lote 34, ADR-0030): los que
+ * se ven cambiar con el puntero encima están en 1.16:1 o más, y los de un principal casi igual a su contraste, en 1.09:1
+ * o menos.
+ */
+const DIFERENCIA_MINIMA_DEL_PRINCIPAL = 1.1;
 /** Cuánto secundario lleva el secundario suave sobre la superficie (lote 28, ADR-0028; antes, 9 % y sin uso). */
 const PESO_DEL_SECUNDARIO_SUAVE = 20;
 
@@ -167,13 +173,34 @@ function bordeDelAcento(S, F, Sf, C) {
  * sirva; con un secundario oscuro, el blanco. Si ninguna sirve, el acento, como antes.
  */
 function acentoFuerte(S, C, texto) {
-  const sirve = (color) =>
-    relacionDeContraste(texto, color) >= TEXTO_MINIMO && relacionDeContraste(color, S) >= DIFERENCIA_AL_PASAR;
-  if (sirve(mezclarSrgb(S, 0.78, C))) return mezcla(S, 78, C);
+  if (sirveAlPasar(mezclarSrgb(S, 0.78, C), S, texto)) return mezcla(S, 78, C);
+  return alejadoConBlancoONegro(S, texto) ?? S;
+}
+
+/** Un color con el puntero encima sirve si deja el texto a 4.5:1 y se distingue del color de partida (lote 20). */
+const sirveAlPasar = (color, partida, texto) =>
+  relacionDeContraste(texto, color) >= TEXTO_MINIMO &&
+  relacionDeContraste(color, partida) >= DIFERENCIA_AL_PASAR;
+
+/**
+ * La primera mezcla de `color` con el blanco o el negro, de 10 en 10 % (90 %, 80 %…; el blanco primero en cada peso),
+ * que sirve con el puntero encima; `undefined` si ninguna sirve. La usan el acento fuerte y el principal fuerte.
+ */
+function alejadoConBlancoONegro(color, texto) {
   for (let peso = 90; peso > 0; peso -= 10)
     for (const polo of [BLANCO, NEGRO])
-      if (sirve(mezclarSrgb(S, peso / 100, polo))) return mezcla(S, peso, polo);
-  return S;
+      if (sirveAlPasar(mezclarSrgb(color, peso / 100, polo), color, texto)) return mezcla(color, peso, polo);
+  return undefined;
+}
+
+/**
+ * Principal fuerte: el botón principal con el puntero encima. Es la mezcla derivada (`principalFuerte`) si se distingue
+ * del principal a 1.1:1; si no (un principal casi igual a su contraste), se aleja como el acento fuerte (lote 34,
+ * ADR-0030). La franja superior y el texto sobre el tinte siguen con la mezcla derivada, como en C.
+ */
+function principalAlPasar(P, principalFuerte, colorFuerte, texto) {
+  if (relacionDeContraste(colorFuerte, P) >= DIFERENCIA_MINIMA_DEL_PRINCIPAL) return principalFuerte;
+  return alejadoConBlancoONegro(P, texto) ?? principalFuerte;
 }
 
 function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, contrast: C }) {
@@ -192,7 +219,7 @@ function tokensDeMarca({ primary: P, secondary: S, background: F, surface: Sf, c
   const sobreAcento = textoMasLegible(S, [BLANCO, C, Sf]);
   return {
     '--ws-primary': P,
-    '--ws-primary-strong': principalFuerte,
+    '--ws-primary-strong': principalAlPasar(P, principalFuerte, colorFuerte, sobrePrincipal),
     '--ws-primary-soft': mezcla(P, 10, Sf),
     '--ws-on-primary': sobrePrincipal,
     '--ws-on-primary-soft':

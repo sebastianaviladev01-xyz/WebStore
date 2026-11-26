@@ -628,3 +628,96 @@ test('con un secundario oscuro y un contraste justo, el par del texto sobre el s
   const sobreSuave = pares.find(({ par }) => par === 'contrast/accentSoft');
   assert.ok(sobreSuave.relacion < 4.5, `contrast/accentSoft: ${sobreSuave.relacion}`);
 });
+
+// Lote 34 (PBI-0247, ADR-0030): en un tema propio cuyo principal casi es su contraste, la mezcla derivada del principal
+// fuerte (el botón principal con el puntero encima) apenas se distingue del principal. Solo a esos temas, los que no
+// llegan a 1.1:1, se les aplica la regla del acento fuerte del lote 20: la primera mezcla con el blanco o el negro, de 10
+// en 10 %, que se distingue del principal a 1.3:1 y deja su texto a 4.5:1. Los que ya se distinguen no cambian, y la
+// franja superior y el texto sobre el tinte siguen siendo la mezcla derivada, como en C.
+const NO_SE_DISTINGUEN = [
+  { ...BASE_B, secondary: '#C2410C', primary: '#0F172A' },
+  { ...BASE_B, secondary: '#C2410C', primary: '#1F2328' },
+  { ...BASE_B, secondary: '#C2410C', primary: '#111111' },
+  { ...BASE_B, secondary: '#C2410C', primary: '#1E293B' },
+  { ...BASE_OSCURA, secondary: '#F97316', primary: '#FFFFBB' },
+  { ...BASE_OSCURA, secondary: '#F97316', primary: '#F5F7FA' },
+  { ...BASE_OSCURA, secondary: '#F97316', primary: '#FFFFFF' },
+  {
+    primary: '#000000',
+    secondary: '#F2B705',
+    background: '#FFFFFF',
+    surface: '#FFFFFF',
+    contrast: '#000000',
+  },
+];
+
+test('un principal igual o casi igual a su contraste se aleja con el puntero encima: 1.3:1 del principal y su texto a 4.5:1', () => {
+  for (const colores of NO_SE_DISTINGUEN) {
+    const calculados = coloresCalculados(tokensDelTema(colores, casos.predefinidos));
+    const fuerte = calculados['--ws-primary-strong'];
+    const nombre = `${colores.primary} con el contraste ${colores.contrast}`;
+    assert.ok(relacionDeContraste(fuerte, calculados['--ws-primary']) >= 1.3, `${nombre}: no cambia`);
+    assert.ok(relacionDeContraste(calculados['--ws-on-primary'], fuerte) >= 4.5, `${nombre}: texto`);
+  }
+});
+
+test('un principal oscuro igual a su contraste se aclara con el blanco al 90 %, y uno claro se oscurece con el negro', () => {
+  const pizarra = tokensDelTema({ ...BASE_B, secondary: '#C2410C', primary: '#0F172A' }, casos.predefinidos);
+  assert.equal(pizarra['--ws-primary-strong'], 'color-mix(in srgb, #0F172A 90%, #FFFFFF)');
+  const negro = tokensDelTema(NO_SE_DISTINGUEN.at(-1), casos.predefinidos);
+  assert.equal(negro['--ws-primary-strong'], 'color-mix(in srgb, #000000 80%, #FFFFFF)', 'al 90 %, 1.2:1');
+  const blanco = tokensDelTema(
+    { ...BASE_OSCURA, secondary: '#F97316', primary: '#FFFFFF' },
+    casos.predefinidos,
+  );
+  assert.equal(blanco['--ws-primary-strong'], 'color-mix(in srgb, #FFFFFF 80%, #000000)');
+});
+
+test('un tema propio con los colores de C da el principal fuerte que C fija desde el lote 28', () => {
+  const coloresC = casos.predefinidos.find(({ id }) => id === 'c').colors;
+  const tokensC = casos.predefinidos.find(({ id }) => id === 'c').tokens;
+  const propio = tokensDelTema(coloresC, casos.predefinidos);
+  assert.equal(propio['--ws-primary-strong'], tokensC['--ws-primary-strong']);
+  assert.equal(propio['--ws-primary-strong'], 'color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+});
+
+test('con el principal fuerte alejado, la franja superior y el texto sobre el tinte siguen siendo la mezcla derivada', () => {
+  const tokens = tokensDelTema({ ...BASE_B, secondary: '#C2410C', primary: '#1F2328' }, casos.predefinidos);
+  assert.equal(tokens['--ws-primary-strong'], 'color-mix(in srgb, #1F2328 90%, #FFFFFF)');
+  assert.equal(tokens['--ws-topbar'], 'color-mix(in srgb, #1F2328 62%, #0F172A)');
+  assert.equal(tokens['--ws-on-topbar'], '#FFFFFF');
+  assert.equal(tokens['--ws-on-primary-soft'], 'color-mix(in srgb, #1F2328 62%, #0F172A)');
+});
+
+test('un principal fuerte que ya se distingue del principal (1.1:1 o más) sigue siendo la mezcla derivada', () => {
+  const derivados = [
+    [{ ...BASE_B, secondary: '#C2410C', primary: '#123456' }, 'color-mix(in srgb, #123456 62%, #0F172A)'],
+    [{ ...BASE_B, secondary: '#C2410C', primary: '#333333' }, 'color-mix(in srgb, #333333 62%, #0F172A)'],
+    [{ ...BASE_B, secondary: '#C2410C', primary: '#FFD400' }, 'color-mix(in srgb, #FFD400 88%, #0F172A)'],
+    [
+      { ...BASE_OSCURA, secondary: '#F97316', primary: '#3B82F6' },
+      'color-mix(in srgb, #3B82F6 88%, #F5F7FA)',
+    ],
+    [{ ...BASE_B, secondary: '#C2410C' }, 'color-mix(in srgb, #1D4ED8 62%, #0F172A)'],
+  ];
+  for (const [colores, fuerte] of derivados) {
+    const tokens = tokensDelTema(colores, casos.predefinidos);
+    assert.equal(tokens['--ws-primary-strong'], fuerte, colores.primary);
+    assert.equal(tokens['--ws-topbar'], fuerte, `${colores.primary}: franja`);
+  }
+});
+
+test('al alejar el principal fuerte, los pares de contraste no empeoran: el texto sobre él sigue a 4.5:1 y los demás no cambian', () => {
+  for (const colores of NO_SE_DISTINGUEN) {
+    const pares = medirPares(tokensDelTema(colores, casos.predefinidos));
+    // El mismo tema con el principal fuerte de antes: la mezcla derivada, que conservan la franja y el texto sobre el tinte.
+    const antes = medirPares({
+      ...tokensDelTema(colores, casos.predefinidos),
+      '--ws-primary-strong': tokensDelTema(colores, casos.predefinidos)['--ws-topbar'],
+    });
+    for (const { par } of PARES_DE_CONTRASTE) {
+      if (par === 'onPrimary/primaryStrong') assert.ok(pares[par] >= 4.5, `${colores.primary}: ${par}`);
+      else assert.equal(pares[par], antes[par], `${colores.primary}: ${par}`);
+    }
+  }
+});

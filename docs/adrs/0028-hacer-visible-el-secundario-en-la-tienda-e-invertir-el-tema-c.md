@@ -45,3 +45,5 @@ En la reunión del 2026-11-20, sobre el storefront del modo demo, Daniel dijo qu
 
 - En un tema propio cuyo principal se parece a su contraste (un principal negro sobre un contraste negro), `--ws-primary-strong` también queda igual al principal y el botón principal no cambia con el puntero encima. Aplicarle la regla del acento fuerte del lote 20 cambiaría el principal fuerte, la franja superior y el texto sobre el tinte de 4 de los 6 temas propios de `casos-tema.json`; queda como hallazgo para el backlog.
 - El Admin no cambia su forma de usar el acento: solo recibe los colores nuevos de C y la vista previa de Temas muestra el fondo con el puntero encima.
+
+> Nota (2026-11-25, lote 34, PBI-0247): el principal fuerte de los temas propios que no se distingue del principal lo resuelve [ADR-0030](0030-alejar-el-principal-fuerte-que-no-se-distingue-del-principal.md), con la misma regla que el acento fuerte. Con los colores de C da el literal que C fija.
