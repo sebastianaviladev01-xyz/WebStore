@@ -64,3 +64,45 @@ test('PBI-0221: una vigencia guardada antes que no es un instante sigue valiendo
   const anterior = banner({ startAt: '2026-12-01', endAt: '2026-12-31' });
   assert.doesNotThrow(() => requireValidBanners([{ ...anterior, title: 'Otro' }], [anterior]));
 });
+
+test('PBI-0246: rechaza una fecha que no existe en el calendario, aunque Date.parse la acepte', () => {
+  for (const [field, valor] of [
+    ['startAt', '2026-02-30T10:00-05:00'],
+    ['endAt', '2026-02-30T10:00:00.000-05:00'],
+    ['startAt', '2026-04-31T09:30:00-05:00'],
+    ['endAt', '2026-04-31T18:00:00.000Z'],
+    ['endAt', '2026-02-29T10:00-05:00'], // 2026 no es bisiesto
+    ['startAt', '2026-06-31T10:00Z'],
+  ])
+    assert.throws(() => requireValidBanners([banner({ [field]: valor })], []), rechazaEn(field));
+});
+
+test('PBI-0246: acepta el 29 de febrero de un año bisiesto y el último día de cada mes', () => {
+  for (const cambios of [
+    { startAt: '2028-02-29T09:30-05:00', endAt: '2028-02-29T18:00:00.000-05:00' },
+    { startAt: '2028-02-29T00:00:00Z', endAt: '2028-03-01T00:00:00Z' },
+    { startAt: '2026-04-30T09:30:00-05:00', endAt: '2026-05-31T18:00:00.000-05:00' },
+    { startAt: '2026-12-31T09:30:00-05:00', endAt: '2027-02-28T18:00:00-05:00' },
+  ])
+    assert.doesNotThrow(() => requireValidBanners([banner(cambios)], []));
+});
+
+test('PBI-0246: los formatos válidos de antes siguen valiendo (con segundos, con milisegundos y con Z)', () => {
+  for (const cambios of [
+    { startAt: '2026-12-01T09:30-05:00', endAt: '2026-12-01T18:00-05:00' },
+    { startAt: '2026-12-01T09:30:15-05:00', endAt: '2026-12-01T18:00:45+01:00' },
+    { startAt: '2026-12-01T09:30:15.5-05:00', endAt: '2026-12-01T18:00:45.12-05:00' },
+    { startAt: '2026-12-01T09:30:15.123Z', endAt: '2026-12-01T18:00:45.999Z' },
+    { startAt: '2026-12-01T09:30Z', endAt: '2026-12-01T18:00Z' },
+  ])
+    assert.doesNotThrow(() => requireValidBanners([banner(cambios)], []));
+});
+
+test('PBI-0246: una vigencia con fecha inexistente guardada antes sigue valiendo mientras no cambie', () => {
+  const anterior = banner({ startAt: '2026-02-30T10:00-05:00', endAt: '2026-04-31T10:00-05:00' });
+  assert.doesNotThrow(() => requireValidBanners([{ ...anterior, title: 'Otro' }], [anterior]));
+  assert.throws(
+    () => requireValidBanners([{ ...anterior, startAt: '2026-02-31T10:00-05:00' }], [anterior]),
+    rechazaEn('startAt'),
+  );
+});
