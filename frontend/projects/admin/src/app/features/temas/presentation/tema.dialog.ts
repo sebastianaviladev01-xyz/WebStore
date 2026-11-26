@@ -6,6 +6,7 @@ import {
   ReactiveFormsModule,
   ValidationErrors,
 } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +20,7 @@ import {
   tokensDelTema,
   validarNombreTema,
 } from '../domain/tema.rules';
+import { DONDE_SE_VE_EL_PAR, SugerenciaDeColor, sugerirColores } from '../domain/sugerencia-contraste.rules';
 import { ColoresTema, ParContraste, Tema } from '../domain/tema.model';
 import { VistaPreviaTemaComponent } from './vista-previa-tema.component';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
@@ -108,6 +110,7 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    NgTemplateOutlet,
     ReactiveFormsModule,
     VistaPreviaTemaComponent,
   ],
@@ -211,6 +214,15 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
             </fieldset>
             <section class="mt-5" aria-labelledby="tema-contraste-titulo">
               <h3 id="tema-contraste-titulo" class="text-sm font-semibold text-ink">Revisión de contraste</h3>
+              <!--
+                Lote 47 (ADR-0033, PBI-0267): qué es la relación y qué mínimos se piden, siempre a la vista y fuera de la
+                región que se anuncia, para no repetirse en cada cambio. Daniel: «que sea explicativo, informativo».
+              -->
+              <p id="tema-contraste-explicacion" class="mt-1 text-xs text-muted">
+                La relación de contraste dice cuánto se distinguen dos colores: va de 1:1 (iguales) a 21:1
+                (negro sobre blanco). Se pide al menos 4.5:1 para el texto y 3:1 para los bordes y los
+                controles; por debajo, a algunas personas les cuesta leer o ver ese elemento.
+              </p>
               <div class="mt-2 grid gap-2" aria-live="polite">
                 @if (bloqueos().length) {
                   <div
@@ -218,9 +230,14 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
                     data-contraste="bloqueo"
                   >
                     <p class="font-semibold">No se puede guardar: el color de contraste no se lee bien.</p>
-                    <ul class="mt-1 grid gap-0.5">
+                    <ul class="mt-1 grid gap-2">
                       @for (par of bloqueos(); track par.par) {
-                        <li>{{ describir(par) }}</li>
+                        <li>
+                          <ng-container
+                            [ngTemplateOutlet]="detalleDelPar"
+                            [ngTemplateOutletContext]="{ $implicit: par }"
+                          />
+                        </li>
                       }
                     </ul>
                   </div>
@@ -228,13 +245,63 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
                 @if (avisos().length) {
                   <div class="rounded-lg bg-warning-soft p-3 text-sm text-warning" data-contraste="aviso">
                     <p class="font-semibold">Puedes guardar, pero estos pares no alcanzan su mínimo:</p>
-                    <ul class="mt-1 grid gap-0.5">
+                    <ul class="mt-1 grid gap-2">
                       @for (par of avisos(); track par.par) {
-                        <li>{{ describir(par) }}</li>
+                        <li>
+                          <ng-container
+                            [ngTemplateOutlet]="detalleDelPar"
+                            [ngTemplateOutletContext]="{ $implicit: par }"
+                          />
+                        </li>
                       }
                     </ul>
                   </div>
                 }
+                <!--
+                  Lote 47 (PBI-0267): cada par que no llega dice dónde se ve y propone el color más cercano que lo hace
+                  llegar, con un botón que lo aplica a su campo; si no hay ninguno, lo dice. Hereda el color del aviso.
+                -->
+                <ng-template #detalleDelPar let-par>
+                  <span class="block">{{ describir(par) }}</span>
+                  <span class="block">Se ve en {{ dondeSeVe(par) }}.</span>
+                  @if (sugerenciaDe(par); as sugerencia) {
+                    @switch (sugerencia.tipo) {
+                      @case ('color') {
+                        <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span [id]="'tema-sugerencia-' + idDelPar(par.par)">
+                            Para que llegue, {{ sugerencia.sentido === 'aclarar' ? 'aclara' : 'oscurece' }} el
+                            color «{{ etiquetaDe(sugerencia.campo) }}»:
+                          </span>
+                          <button
+                            type="button"
+                            class="inline-flex min-h-9 items-center gap-2 rounded-lg border border-current bg-surface px-3 text-xs font-semibold tabular-nums hover:bg-subtle"
+                            [attr.aria-describedby]="'tema-sugerencia-' + idDelPar(par.par)"
+                            (click)="usarSugerencia(sugerencia.campo, sugerencia.color)"
+                          >
+                            <span
+                              class="h-4 w-4 shrink-0 rounded border border-current"
+                              aria-hidden="true"
+                              [style.background-color]="sugerencia.color"
+                            ></span>
+                            Usar {{ sugerencia.color }}
+                          </button>
+                        </span>
+                      }
+                      @case ('imposible') {
+                        <span class="block">
+                          Aclarar u oscurecer el color «{{ etiquetaDe(sugerencia.campo) }}» no basta para que
+                          llegue: prueba con otra combinación de colores.
+                        </span>
+                      }
+                      @case ('bloquearia') {
+                        <span class="block">
+                          Aclarar u oscurecer el color «{{ etiquetaDe(sugerencia.campo) }}» lo haría llegar,
+                          pero entonces no podrías guardar el tema: prueba con otra combinación de colores.
+                        </span>
+                      }
+                    }
+                  }
+                </ng-template>
                 @if (!bloqueos().length && !avisos().length) {
                   <p class="text-sm text-muted" data-contraste="correcto">
                     Todos los pares de texto y fondo alcanzan su mínimo de contraste.
@@ -334,6 +401,8 @@ export class TemaDialog {
   protected readonly avisos = computed(() =>
     this.pares().filter(({ bloquea, relacion, minimo }) => !bloquea && relacion < minimo),
   );
+  /** Lote 47 (PBI-0267): el color sugerido para cada par que no llega, o por qué no hay ninguno. */
+  protected readonly sugerencias = computed(() => sugerirColores(this.colores(), this.predefinidos()));
 
   protected readonly nombre = new FormControl(this.datos.tema?.name ?? '', {
     nonNullable: true,
@@ -347,6 +416,35 @@ export class TemaDialog {
     this.codigos.update((actuales) => ({ ...actuales, [campo]: valor.toUpperCase() }));
     this.quitarErrorDeCodigo(campo);
     if (this.errorDeColor()?.campo === campo) this.errorDeColor.set(null);
+  }
+
+  /** Dónde se ve un par, en palabras (lote 47, PBI-0267). */
+  protected dondeSeVe({ par }: ParContraste): string {
+    return DONDE_SE_VE_EL_PAR[par];
+  }
+
+  /** El color sugerido para un par que no llega, o por qué no hay ninguno. */
+  protected sugerenciaDe({ par }: ParContraste): SugerenciaDeColor | undefined {
+    return this.sugerencias()[par];
+  }
+
+  /** Nombre del color como lo ve la persona («Fondo secundario»). */
+  protected etiquetaDe(campo: CampoDeColor): string {
+    return CAMPOS_DE_COLOR.find((c) => c.campo === campo)?.etiqueta ?? campo;
+  }
+
+  /** Identificador de un par que vale en un atributo `id` («muted/background» → «muted-background»). */
+  protected idDelPar(par: ParContraste['par']): string {
+    return par.replace('/', '-');
+  }
+
+  /**
+   * «Usar #XXXXXX» (lote 47, PBI-0267): aplica el color sugerido a su campo, como si se hubiera elegido, y lleva el foco a
+   * su código, porque el botón desaparece cuando el par ya llega.
+   */
+  protected usarSugerencia(campo: CampoDeColor, color: string): void {
+    this.cambiarColor(campo, color);
+    this.host.nativeElement.querySelector<HTMLInputElement>(`#tema-codigo-${campo}`)?.focus();
   }
 
   /** Lo escrito en el campo del código: si es un código válido, se aplica al selector, a la vista previa y al contraste. */
