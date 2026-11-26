@@ -90,3 +90,21 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros se actual
 - Responsable: Sebastián Avila. Termina cuando se fusiona el lote 42 o cuando él la retira.
 - Aprobación: Sebastián Avila, 2026-11-25. Falta informar a Daniel Avila de lo que cambia en el backoffice.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+Se ejecutaron tres lotes entre el 2026-11-25 y el 2026-11-26, auditados por la sesión principal (diff, `npm run verify`, la suite e2e completa y las capturas cuando tocaba la interfaz). Los fusiona Sebastián Avila:
+
+| Lote | Elementos | PR |
+|---|---|---|
+| 40, registros y sesión del backoffice | PBI-0256, PBI-0257 y PBI-0263 | [PR #101](https://github.com/sebastianaviladev01-xyz/WebStore/pull/101) |
+| 41, e2e y herramientas de QA visual | PBI-0259, PBI-0260 y PBI-0261 | [PR #100](https://github.com/sebastianaviladev01-xyz/WebStore/pull/100) |
+| 42, proceso y cierre documental | PBI-0258, PBI-0262, los registros y este cierre | El PR del lote 42 |
+
+- **Lote 40:** `npm run verify` en verde (frontend 461, 20 pruebas nuevas). La suite e2e completa dio 401 de 402: falló por 0,34 px una prueba del diálogo de temas que el lote no toca; repetida cinco veces, pasó todas, y su trace se guardó (PBI-0264). Capturas del estado normal: 20 de 20 iguales. Durante la auditoría se amplió a los registros de categoría, usuario y banner, que tenían el mismo defecto (PBI-0263).
+- **Lote 41:** `npm run verify` en verde (frontend 446) y la suite e2e completa, 397 de 397. El umbral de las capturas se queda en 30, con las mediciones que lo justifican.
+- **Lote 42:** con los lotes 40 y 41 juntos, `npm run verify` en verde (frontend 466, BFF 755) y la suite e2e completa, 408 de 408. Además, dos cambios de documentación del proceso, provisionales, por confirmar con Sebastián Avila: el trace de una e2e intermitente al cerrar el worktree (PBI-0258) y los ámbitos de los commits (PBI-0262).
+
+Los registros quedaron al día en el lote 42: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (fila «Hallazgos de los lotes 37 y 38: …», provisional, por confirmar con Daniel), la [trazabilidad](../planning/TRACEABILITY.md#hallazgos-de-los-lotes-37-y-38-lotes-40-a-42-2026-11-26), la [funcionalidad](../planning/FUNCIONALIDAD.md), el [índice de features](../specs/features/README.md) y el [historial del 2026-11-26](../changelog/CHANGELOG-2026-11-26.md). Otros comentarios de los informes se revisaron y no son defectos: `agent-execution.md` no pasa Prettier, pero los `.md` no se revisan con él; `npm ci` avisa de scripts de instalación que no hacen falta; y `npm run verify` ejecuta las pruebas del frontend dentro de `validate:contract`.
+
+**Lo que queda abierto:** confirmar con Daniel los avisos de los registros y de la sesión, y con Sebastián Avila las dos reglas de proceso; PBI-0264, sin priorizar; y lo que ya estaba fuera, como al [cerrar ADR-0031](0031-cerrar-por-lotes-los-hallazgos-de-los-lotes-33-a-35.md#cierre). El PR del lote 42 incluye los lotes 40 y 41, así que se fusiona al final, después del [PR #101](https://github.com/sebastianaviladev01-xyz/WebStore/pull/101), que trae este ADR, y del [PR #100](https://github.com/sebastianaviladev01-xyz/WebStore/pull/100). Esta excepción termina al fusionarlo, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
