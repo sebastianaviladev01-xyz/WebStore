@@ -1,23 +1,31 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
 import { MatMenuModule } from '@angular/material/menu';
 
-import { TemasFacade } from '../application/temas.facade';
-import { IconoDirective } from '../../../shared/ui/icono.directive';
+import { TemasFacade } from '../features/temas/application/temas.facade';
+import { IconoDirective } from '../shared/ui/icono.directive';
 
 /**
- * Tuerca del modo demo: un botón flotante que abre un menú con los temas predefinidos (A, B y C) y «Volver al tema
- * activo». Elegir un tema solo cambia este navegador (cookie de la vista previa, ADR-0012), y la tienda, que ya no
- * tiene tuerca, lo lee en el mismo host (PBI-0188, ADR-0022). `App` la monta únicamente si el BFF publica `demoMode`
- * (AC-15, AC-16). Estilos en `styles.css` del Admin, solo con tokens.
+ * Tuerca del modo demo: un botón que abre un menú con los temas predefinidos (A, B y C) y «Volver al tema activo».
+ * Elegir un tema solo cambia este navegador (cookie de la vista previa, ADR-0012), y la tienda, que ya no tiene
+ * tuerca, lo lee en el mismo host (PBI-0188, ADR-0022). Solo existe si el BFF publica `demoMode` (AC-15, AC-16).
+ *
+ * Lote 35 (ADR-0029, PBI-0249): en el panel va en la barra superior (`enBarra`), un botón de ícono a la izquierda de
+ * la campana, y no flota sobre el contenido. En el acceso, que no tiene barra, sigue siendo una pestaña flotante
+ * abajo a la derecha. Vive en `layout/` como la campana: la usan `App` (acceso) y `AppLayout` (barra). Estilos en
+ * `styles.css` del Admin, solo con tokens.
  */
 @Component({
   selector: 'ws-admin-selector-tema',
   imports: [IconoDirective, MatMenuModule],
   template: `
-    <div class="ws-selector-tema">
+    <div [class.ws-selector-tema]="!enBarra()">
       <button
         type="button"
-        class="ws-selector-tema-boton"
+        [class]="
+          enBarra()
+            ? 'ws-selector-tema-boton-barra grid h-10 w-10 cursor-pointer place-items-center rounded-lg text-muted hover:bg-subtle hover:text-ink'
+            : 'ws-selector-tema-boton'
+        "
         aria-label="Cambiar tema"
         title="Cambiar tema"
         [matMenuTriggerFor]="menuTemas"
@@ -40,7 +48,7 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
       class="ws-selector-tema-panel"
       aria-label="Temas"
       xPosition="before"
-      yPosition="above"
+      [yPosition]="enBarra() ? 'below' : 'above'"
     >
       <p class="ws-selector-tema-titulo">
         Probar un tema
@@ -91,6 +99,8 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SelectorTemaComponent {
+  /** `true` en la barra superior del panel; `false` (por omisión), la pestaña flotante del acceso. */
+  readonly enBarra = input(false);
   protected readonly temas = inject(TemasFacade);
   protected readonly idVisible = computed(() => this.temas.temaVisible()?.tema.id ?? null);
   protected readonly idActivo = computed(() => this.temas.temaActivo()?.id ?? null);

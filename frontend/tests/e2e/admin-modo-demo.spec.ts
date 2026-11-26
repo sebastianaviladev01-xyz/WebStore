@@ -10,10 +10,12 @@ import {
   primario,
   sigueSinRecargar,
   sinCruceConLaTuerca,
-  sinNadaBajoLaTuercaAlFinal,
+  sinTuercaSobre,
+  sinNadaBajoLaTuerca,
   sinModoDemo,
   temaActivoDelBff,
   tuerca,
+  tuercaEnLaBarra,
   vistaPrevia,
   volverAlActivoConTeclado,
 } from './apoyo/modo-demo';
@@ -111,7 +113,9 @@ for (const { ancho, alto } of ANCHOS) {
         const abrir = page.getByRole('button', { name: 'Abrir el menú' });
         await sinCruceConLaTuerca(page, abrir, `Botón del menú en ${ruta}`);
         await abrir.click();
-        await sinCruceConLaTuerca(page, menu(page), `Menú del Admin en ${ruta}`);
+        // Lote 35: la tuerca está en la barra y el panel del menú es una capa por encima de ella; lo que no puede pasar
+        // es que la tuerca quede sobre el panel (ningún punto del menú es la tuerca).
+        await sinTuercaSobre(page, menu(page), `Menú del Admin en ${ruta}`);
         await page.keyboard.press('Escape');
       } else await sinCruceConLaTuerca(page, menu(page), `Menú del Admin en ${ruta}`);
       await sinCruceConLaTuerca(page, botonMenuUsuario(page), `Menú de usuario en ${ruta}`);
@@ -120,9 +124,9 @@ for (const { ancho, alto } of ANCHOS) {
 }
 
 /**
- * Lote 35 (ADR-0029, PBI-0249): el contenido reserva al final el espacio de la tuerca. Con la página desplazada
- * hasta el final, nada de `main` queda bajo ella: ni el último «Eliminar» de Productos ni un botón de otra página
- * con el mismo contenedor. Sin modo demo no hay tuerca ni reserva.
+ * Lote 35 (ADR-0029, PBI-0249, decisión afinada): en el panel la tuerca no flota, está en la barra superior, a la
+ * izquierda de la campana; solo el acceso, que no tiene barra ni contenido que tapar, conserva la tuerca flotante.
+ * Por eso ningún control de `main` queda bajo ella en ninguna posición de desplazamiento.
  */
 const PAGINAS_CON_TUERCA = [
   { ruta: '/productos', titulo: 'Productos' },
@@ -141,18 +145,67 @@ for (const { ancho, alto } of [
   { ancho: 1440, alto: 900 },
   { ancho: 375, alto: 812 },
 ]) {
-  test(`a ${ancho} px, al llegar al final de cada página nada queda bajo la tuerca`, async ({ page }) => {
+  test(`a ${ancho} px, ningún control de cada página queda bajo la tuerca en ninguna posición`, async ({
+    page,
+  }) => {
     await page.setViewportSize({ width: ancho, height: alto });
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     for (const { ruta, titulo } of PAGINAS_CON_TUERCA) {
       await page.goto(ruta);
       await expect(page.getByRole('heading', { level: 1, name: titulo })).toBeVisible();
-      await sinNadaBajoLaTuercaAlFinal(page, `${titulo} a ${ancho} px`);
+      await sinNadaBajoLaTuerca(page, `${titulo} a ${ancho} px`);
     }
   });
 }
 
-test('sin modo demo, el contenido no reserva espacio para la tuerca', async ({ page }) => {
+for (const { ancho, alto } of [
+  { ancho: 1440, alto: 900 },
+  { ancho: 1024, alto: 768 },
+  { ancho: 768, alto: 1024 },
+  { ancho: 375, alto: 812 },
+  { ancho: 320, alto: 640 },
+]) {
+  test(`a ${ancho} px la tuerca está en la barra superior, se maneja con teclado y su menú abre dentro de la ventana`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: ancho, height: alto });
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    for (const ruta of ['/', '/productos']) {
+      await page.goto(ruta);
+      await tuercaEnLaBarra(page, `${ruta} a ${ancho} px`);
+    }
+
+    // Con el teclado se llega a ella desde la campana y su foco se ve.
+    await page.getByRole('button', { name: /^Notificaciones/ }).focus();
+    await page.keyboard.press('Shift+Tab');
+    await expect(tuerca(page)).toBeFocused();
+    const contorno = await tuerca(page).evaluate((el) => {
+      const estilo = getComputedStyle(el);
+      return { estilo: estilo.outlineStyle, ancho: parseFloat(estilo.outlineWidth) };
+    });
+    expect(contorno.estilo).not.toBe('none');
+    expect(contorno.ancho).toBeGreaterThan(0);
+
+    // El menú abre bajo la barra y entero dentro de la ventana; Escape lo cierra y devuelve el foco a la tuerca.
+    await page.keyboard.press('Enter');
+    const temas = menuDeTemas(page);
+    await expect(temas).toBeVisible();
+    const m = await temas.boundingBox();
+    const t = await tuerca(page).boundingBox();
+    expect(m).not.toBeNull();
+    expect(t).not.toBeNull();
+    expect(m!.y, 'el menú abre por debajo de la tuerca').toBeGreaterThanOrEqual(t!.y + t!.height - 1);
+    expect(m!.x, 'el menú no sale por la izquierda').toBeGreaterThanOrEqual(0);
+    expect(m!.x + m!.width, 'el menú no sale por la derecha').toBeLessThanOrEqual(ancho);
+    expect(m!.y + m!.height, 'el menú no sale por abajo').toBeLessThanOrEqual(alto);
+    await expect(temas.getByRole('menuitemradio')).toHaveCount(3);
+    await page.keyboard.press('Escape');
+    await expect(temas).toBeHidden();
+    await expect(tuerca(page)).toBeFocused();
+  });
+}
+
+test('sin modo demo, el panel no tiene tuerca ni deja espacio para ella', async ({ page }) => {
   await sinModoDemo(page);
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   await page.goto('/productos');
