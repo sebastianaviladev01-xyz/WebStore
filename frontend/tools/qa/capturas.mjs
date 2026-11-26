@@ -6,6 +6,9 @@
 // Admin (QA_ADMIN, 4300) y la tienda (QA_TIENDA, 4200). Ver `escenarios/ejemplo.mjs` y la sección «Comparar capturas»
 // de docs/development/agent-execution.md. Las tomas emulan movimiento reducido salvo en los escenarios con
 // `conMovimiento: true`: sin eso, lo que aparece al desplazarse (`wsReveal`) sale vacío en la página completa.
+// La página completa dibuja los elementos fijos o pegados en su lugar del primer viewport (PBI-0252): un escenario con
+// `desplazamientos` (por ejemplo, `[0, 'mitad', 'final']`) toma además la ventana en esas posiciones, cada una en
+// `<escenario>-<ancho>-ventana-<posición>.png`. Sin `desplazamientos`, las tomas y sus nombres son los de siempre.
 import { basename, extname, join } from 'node:path';
 import { chromium } from 'playwright';
 
@@ -20,6 +23,18 @@ import {
   TIENDA,
   tokensDeAdmin,
 } from './lib/qa.mjs';
+import { resolverDesplazamiento, tomasDeEscenario } from './lib/tomas.mjs';
+
+/** Lleva la ventana a una posición de `desplazamientos` sin animación y espera a que se asiente. */
+async function desplazar(page, posicion) {
+  const medidas = await page.evaluate(() => ({
+    altoDelDocumento: document.documentElement.scrollHeight,
+    altoDeLaVentana: window.innerHeight,
+  }));
+  const y = resolverDesplazamiento(posicion, medidas);
+  await page.evaluate((destino) => window.scrollTo({ top: destino, behavior: 'instant' }), y);
+  await asentar(page);
+}
 
 const argumentos = process.argv.slice(2);
 const posicion = argumentos.indexOf('--salida');
@@ -32,6 +47,8 @@ if (!archivo || !['antes', 'despues'].includes(etapa)) {
 const { escenarios, anchos } = await cargarEscenarios(archivo);
 const raiz = salidaIndicada ?? join('output', 'visual-qa', basename(archivo, extname(archivo)));
 const salida = await carpetaDeSalida(raiz, etapa);
+// Un `desplazamientos` mal escrito se dice antes de abrir el navegador, no a mitad de las tomas.
+for (const [nombre, escenario] of Object.entries(escenarios)) tomasDeEscenario(nombre, escenario, 0);
 const tokens = await tokensDeAdmin();
 
 const navegador = await chromium.launch({ channel: 'chrome', headless: true });
@@ -61,9 +78,13 @@ try {
         console.log(`  ${nombre}-${viewport.width}: la acción falló (${error.message.split('\n')[0]})`);
       }
       await dejarLimpia(page);
-      await page.screenshot({ path: join(salida, `${nombre}-${viewport.width}.png`), fullPage: true });
+      // La de página completa y, si el escenario pide `desplazamientos`, una de la ventana en cada posición (PBI-0252).
+      for (const { archivo, posicion } of tomasDeEscenario(nombre, escenario, viewport.width)) {
+        if (posicion !== null) await desplazar(page, posicion);
+        await page.screenshot({ path: join(salida, archivo), fullPage: posicion === null });
+        console.log(`${etapa}/${archivo}`);
+      }
       await context.close();
-      console.log(`${etapa}/${nombre}-${viewport.width}.png`);
     }
   }
 } finally {

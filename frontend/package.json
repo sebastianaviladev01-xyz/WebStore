@@ -19,7 +19,7 @@
     "lint": "eslint src projects tests playwright.config.ts",
     "format": "prettier --write \"src/**/*.{ts,html,css,mjs}\" \"projects/**/*.{ts,html,css,mjs}\" \"tests/**/*.{mjs,ts}\" \"tools/**/*.mjs\" \"*.{mjs,ts}\"",
     "format:check": "prettier --check \"src/**/*.{ts,html,css,mjs}\" \"projects/**/*.{ts,html,css,mjs}\" \"tests/**/*.{mjs,ts}\" \"tools/**/*.mjs\" \"*.{mjs,ts}\"",
-    "test": "node --test \"src/**/*.spec.mjs\" \"projects/**/*.spec.mjs\"",
+    "test": "node --test \"src/**/*.spec.mjs\" \"projects/**/*.spec.mjs\" \"tools/**/*.spec.mjs\"",
     "test:architecture": "node --test \"tests/architecture/*.test.mjs\"",
     "test:e2e": "playwright test",
     "verify": "npm run lint && npm run typecheck && npm test && npm run test:architecture && npm run build:all"
