@@ -31,3 +31,8 @@ Sebastián Avila pidió el 2026-11-25 cerrar todos los pendientes que se pueden 
 - **Por confirmar con Sebastián Avila:** las dos reglas de proceso.
 - **Sin priorizar:** PBI-0264, la e2e intermitente.
 - **Lo que ya estaba fuera**, con su motivo en el [backlog](../planning/backlog.md) ([cierre de ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md#cierre)).
+
+## Después del cierre de ADR-0032
+
+- **Reglas de proceso confirmadas:** Sebastián Avila confirmó las dos reglas del lote 42: conservar el trace de una e2e intermitente al cerrar el worktree (PBI-0258) y los ámbitos `storefront`, `admin`, `bff` y `qa` de los commits (PBI-0262).
+- **E2e del diálogo de temas (PBI-0264):** la prueba «PBI-0237: a 375 px, el error del nombre no se monta sobre «Colores»» espera a que el diálogo y el error terminen de entrar antes de comparar sus cajas. Medido: al verse el error, el espacio con «Colores» es de 0,8 a 1,9 px y las posiciones aún se mueven; asentado, 4 px. La prueba pasó 10 de 10 con --repeat-each=10.

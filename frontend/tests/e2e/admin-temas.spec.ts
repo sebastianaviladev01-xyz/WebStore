@@ -336,9 +336,20 @@ test.describe('Temas del Admin', () => {
     await nombre.blur();
     const error = formulario.getByText('El nombre del tema debe tener entre 1 y 40 caracteres.');
     await expect(error).toBeVisible();
-    const cajaError = (await error.boundingBox())!;
-    const cajaColores = (await formulario.getByText('Colores', { exact: true }).boundingBox())!;
-    expect(cajaError.y + cajaError.height).toBeLessThanOrEqual(cajaColores.y);
+    // PBI-0264: el diálogo y el error entran con animación (la escala del diálogo y el desplazamiento del error), y
+    // medir las dos cajas en un instante de la animación dio una vez 0,34 px de cruce. Se mide hasta que la posición se
+    // asienta: si el error sigue sobre «Colores» al terminar, la espera se agota y la prueba falla igual.
+    const colores = formulario.getByText('Colores', { exact: true });
+    await expect
+      .poll(
+        async () => {
+          const cajaError = (await error.boundingBox())!;
+          const cajaColores = (await colores.boundingBox())!;
+          return cajaColores.y - (cajaError.y + cajaError.height);
+        },
+        { message: 'espacio entre el final del error y «Colores»' },
+      )
+      .toBeGreaterThanOrEqual(0);
   });
 
   // Lote 29 (ADR-0027, PBI-0239): junto al selector nativo, cada color tiene un campo de texto con su código hexadecimal.
