@@ -27,7 +27,7 @@ test('la tuerca de temas solo está en el Admin: la tienda no tiene selector ni 
   assert.equal(existsSync(root + TIENDA + 'presentation/selector-tema.component.ts'), false);
   assert.doesNotMatch(leer('src/app/app.ts'), /selector-tema|SelectorTema/);
   assert.doesNotMatch(leer('src/styles/storefront.css'), /ws-selector-tema/);
-  assert.ok(existsSync(root + ADMIN + 'presentation/selector-tema.component.ts'));
+  assert.ok(existsSync(root + 'projects/admin/src/app/layout/selector-tema.component.ts'));
 });
 
 /** Declaración exportada `nombre` de un archivo TypeScript, tal como está escrita. */

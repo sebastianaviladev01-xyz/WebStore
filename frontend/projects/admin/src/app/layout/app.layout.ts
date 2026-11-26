@@ -26,12 +26,14 @@ import { filter, map } from 'rxjs';
 
 import { NotificacionesFacade } from '../features/notificaciones/application/notificaciones.facade';
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
+import { TemasFacade } from '../features/temas/application/temas.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
 import { Permiso } from '../features/sesion/domain/rol.rules';
 import { ICONOS, iconoDelModulo } from '../shared/ui/iconos';
 import { alternarPlegable, FlechaPlegableDirective } from '../shared/ui/plegable.directive';
 import { CampanaNotificacionesComponent } from './campana-notificaciones.component';
 import { MenuUsuarioComponent } from './menu-usuario.component';
+import { SelectorTemaComponent } from './selector-tema.component';
 
 interface NavigationItem {
   readonly path: string;
@@ -124,6 +126,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    SelectorTemaComponent,
   ],
   template: `
     <ng-template #icono let-trazo>
@@ -313,8 +316,15 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
       }
       <div class="min-w-0">
         <header class="border-b border-line bg-surface px-5 py-3">
-          <div class="admin-container flex flex-wrap items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
+          <!--
+            Lote 35 (PBI-0249): con la tuerca en la barra, el texto cede (se acorta) en lugar de partir la barra en dos líneas;
+            sin modo demo la barra queda como estaba.
+          -->
+          <div
+            class="admin-container flex items-center justify-between gap-3"
+            [class.flex-wrap]="!temas.modoDemo()"
+          >
+            <div class="flex items-center gap-3" [class.min-w-0]="temas.modoDemo()">
               @if (escritorio()) {
                 <!--
                   PBI-0044: reduce el menú lateral a íconos, como en OpenCart. Solo en la memoria de la página (STD-08),
@@ -331,14 +341,29 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
                   <ng-container *ngTemplateOutlet="hamburguesa" />
                 </button>
               }
-              <p class="text-sm text-muted">Backoffice de la tienda</p>
+              <p
+                class="text-sm text-muted"
+                [class.min-w-0]="temas.modoDemo()"
+                [class.truncate]="temas.modoDemo()"
+              >
+                Backoffice de la tienda
+              </p>
             </div>
             <!--
               ml-auto: si la cabecera se parte en dos líneas, el menú de usuario sigue a la derecha. Sin «Actualizar»
               (PBI-0140): cada página consulta sus datos al entrar y el Dashboard tiene su propio botón. La campana
-              (PBI-0033) solo está para los roles que reciben avisos (PBI-0173).
+              (PBI-0033) solo está para los roles que reciben avisos (PBI-0173). Lote 35 (PBI-0249): en el modo demo, la
+              tuerca «Cambiar tema» va aquí, a la izquierda de la campana, y no flota sobre el contenido.
             -->
-            <div class="ml-auto flex min-w-0 items-center gap-2">
+            <div
+              class="ml-auto flex min-w-0 items-center gap-2"
+              [class]="temas.modoDemo() ? 'max-sm:gap-1' : ''"
+            >
+              @if (temas.modoDemo()) {
+                @defer {
+                  <ws-admin-selector-tema [enBarra]="true" />
+                }
+              }
               @if (notificaciones.disponible()) {
                 <ws-admin-campana />
               }
@@ -376,6 +401,7 @@ export class AppLayout {
   protected readonly session = inject(SesionFacade);
   protected readonly admin = inject(TiendaFacade);
   protected readonly notificaciones = inject(NotificacionesFacade);
+  protected readonly temas = inject(TemasFacade);
   private readonly router = inject(Router);
 
   /** Escritorio (desde 1024 px): menú lateral fijo; por debajo, botón de hamburguesa y panel lateral (PBI-0044). */
