@@ -9,6 +9,7 @@
 // La página completa dibuja los elementos fijos o pegados en su lugar del primer viewport (PBI-0252): un escenario con
 // `desplazamientos` (por ejemplo, `[0, 'mitad', 'final']`) toma además la ventana en esas posiciones, cada una en
 // `<escenario>-<ancho>-ventana-<posición>.png`. Sin `desplazamientos`, las tomas y sus nombres son los de siempre.
+// Si el archivo de escenarios exporta `alTerminar`, se llama al acabar, también si una toma falla (PBI-0261).
 import { basename, extname, join } from 'node:path';
 import { chromium } from 'playwright';
 
@@ -44,7 +45,7 @@ if (!archivo || !['antes', 'despues'].includes(etapa)) {
   throw new Error('Uso: capturas.mjs <escenarios.mjs> antes|despues [escenario] [--salida carpeta]');
 }
 
-const { escenarios, anchos } = await cargarEscenarios(archivo);
+const { escenarios, anchos, alTerminar } = await cargarEscenarios(archivo);
 const raiz = salidaIndicada ?? join('output', 'visual-qa', basename(archivo, extname(archivo)));
 const salida = await carpetaDeSalida(raiz, etapa);
 // Un `desplazamientos` mal escrito se dice antes de abrir el navegador, no a mitad de las tomas.
@@ -89,4 +90,6 @@ try {
   }
 } finally {
   await navegador.close();
+  // Lo que el archivo de escenarios cambió en la copia de datos (por ejemplo, el tema activo) vuelve a como estaba.
+  await alTerminar?.();
 }

@@ -8,7 +8,8 @@
 // crean una vez, antes de la primera toma, por la API del Admin (`POST /bff/admin/themes`), con los nombres y colores de
 // `TEMAS_PROPIOS`; este archivo solo los busca. Un tema propio no se elige con la cookie de la vista previa (ADR-0022):
 // el escenario lo activa por la API antes de abrir la página, sobre la copia, y deja la cookie con su id, que la tienda
-// descarta. Las dos tomas activan los mismos temas en el mismo orden.
+// descarta. Las dos tomas activan los mismos temas en el mismo orden y, al acabar, `alTerminar` vuelve a activar el tema
+// que estaba activo antes (lote 41, PBI-0261).
 import { activarTema, BFF, tokensDeAdmin } from '../lib/qa.mjs';
 
 /** Temas propios de las capturas: el principal fuerte del primero no se distingue (1.06:1) y el del segundo sí (1.16:1). */
@@ -56,11 +57,25 @@ const quieto = (page) =>
       plazo === 8000 || plazo === 6000 ? 0 : original(manejador, plazo, ...resto);
   });
 
+/** El tema activo antes del primer `activarTema` de las tomas: `alTerminar` lo vuelve a activar (lote 41, PBI-0261). */
+let temaAnterior;
+
 /** Antes de abrir la página: quieta y, con un tema propio, ese tema activo en el BFF. */
 const preparar = (idPropio) => async (page) => {
   await quieto(page);
-  if (idPropio) await activarTema(superadmin, idPropio);
+  if (!idPropio) return;
+  const activo = await activarTema(superadmin, idPropio);
+  temaAnterior ??= activo;
 };
+
+/**
+ * Al acabar las tomas, también si fallan, deja activo en la copia el tema que lo estaba antes: si no, otra toma con la
+ * misma copia arranca con un tema propio. Si ninguna toma activó un tema propio, no cambia nada.
+ */
+export async function alTerminar() {
+  if (temaAnterior === undefined) return;
+  await activarTema(superadmin, temaAnterior);
+}
 
 /** El puntero encima de «Agregar al carrito», el botón principal de la ficha (el de la barra fija a 375 px). */
 const punteroEnAgregar = (page) =>
