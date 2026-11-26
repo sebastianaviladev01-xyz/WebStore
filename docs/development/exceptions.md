@@ -14,7 +14,9 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-Ninguna.
+| Excepción | Ámbito | Vigencia |
+|---|---|---|
+| [ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md): cerrar por lotes los hallazgos de los lotes 37 y 38, sin las etapas SDD por elemento | PBI-0256 a PBI-0262 y los hallazgos de sus lotes, en el backoffice, las e2e, las herramientas de QA visual y la documentación del proceso | Desde el 2026-11-25 hasta que se fusione el lote 42. Responsable: Sebastián Avila |
 
 ## Excepciones cerradas
 
