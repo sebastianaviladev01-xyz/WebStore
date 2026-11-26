@@ -42,3 +42,31 @@ Los lotes 28 a 31 ([ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-r
 - **Por confirmar con Daniel:** las decisiones provisionales de los lotes 34 y 35, y si la tuerca del backoffice se queda en el modo demo (PBI-0188).
 - **Sin priorizar:** los hallazgos PBI-0252 a PBI-0254.
 - **Lo que ya estaba fuera,** con su motivo en el [backlog](../planning/backlog.md) ([cierre de ADR-0029](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md#cierre)).
+
+## Los hallazgos de los lotes 33 a 35, por lotes (ADR-0031)
+
+Sebastián Avila pidió cerrar también PBI-0252 a PBI-0254, los hallazgos de los lotes 33 a 35. Se cerraron en tres lotes, como excepción al flujo SDD ([ADR-0031](../adrs/0031-cerrar-por-lotes-los-hallazgos-de-los-lotes-33-a-35.md)). Son herramientas de calidad: no cambian la tienda ni el backoffice.
+
+- **Herramientas de capturas (lote 37, [PR #98](https://github.com/sebastianaviladev01-xyz/WebStore/pull/98)):**
+  - Un escenario de capturas puede tomar también la ventana en varias posiciones de desplazamiento. Sirve para las páginas con elementos fijos o pegados, que la captura de página completa coloca mal (PBI-0252).
+  - La comparación cuenta aparte, como ruido, unos pocos píxeles de antialiasado, sin esconder un cambio real (PBI-0253).
+- **E2e intermitente (lote 38):**
+  - El fallo del registro del producto a 375 px no se reprodujo, ni con la máquina cargada, y PBI-0254 se descartó.
+  - El diagnóstico encontró dos defectos que explicarían un fallo así (PBI-0256 y PBI-0257), registrados en el backlog.
+- **Cierre (lote 39):**
+  - El backlog, las decisiones pendientes, la trazabilidad, el índice de features y este historial, al día.
+  - Los hallazgos registrados (PBI-0256 a PBI-0262).
+  - El cierre de la excepción.
+
+### Verificación
+
+- **Lote 37:**
+  - 34 pruebas de arquitectura, 441 del frontend (15 nuevas, de las herramientas), 755 del BFF y el smoke test, en verde.
+  - e2e: 391 de 391.
+  - La comparación real separó el ruido y marcó como diferencia cuatro cambios a propósito.
+- **Lote 38:** 1 029 vistas medidas, sin carga y con carga, todas en verde. Sin cambios de código.
+- **Lote 39:** solo documentos. `npm run validate:structure`, `npm run check:agents` y `npm run verify` en verde, con las cifras del lote 37.
+
+### Lo que queda abierto
+
+Los hallazgos PBI-0256 a PBI-0262, sin priorizar, entre ellos el defecto del registro del producto (PBI-0256), y lo que ya estaba fuera ([cierre de ADR-0031](../adrs/0031-cerrar-por-lotes-los-hallazgos-de-los-lotes-33-a-35.md#cierre)).
