@@ -18,6 +18,7 @@ import {
   terminosAceptados,
   urls,
 } from './apoyo/entorno';
+import { aceptarEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { cargarImagenPrincipal } from './apoyo/fotos';
 import { conservarElStock } from './apoyo/pedidos';
 
@@ -242,8 +243,9 @@ test.describe('Guardado del Admin', () => {
     await page.keyboard.press('Escape');
     await expect(nuevo).toBeHidden();
 
-    page.once('dialog', (dialogo) => void dialogo.accept());
+    // Lote 43 (PBI-0269): la ventana propia de confirmación, con el nombre del cliente.
     await eliminar.click();
+    await aceptarEliminacion(page, nombre);
     await expect(eliminar).toHaveCount(0);
     const clientes = (await leerSnapshot()).customers;
     expect(clientes.some((cliente) => cliente.email === correo)).toBe(false);
@@ -286,6 +288,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
       'No se puede eliminar la categoría «TV y audio»: tiene 1 subcategoría. Muévela o elimínala antes.',
     );
     expect(dialogos(), 'no pide confirmar algo que no se puede hacer').toBe(0);
+    await expect(ventanaDeConfirmacion(page), 'ni con la ventana propia (PBI-0269)').toHaveCount(0);
     expect(guardados()).toBe(0);
     expect(await leerMarcas()).toEqual(marcas);
   });
@@ -420,10 +423,14 @@ test.describe('Pedidos', () => {
       page.getByText(/Aceptados el \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}\s*Versión \d+/),
     ).toBeVisible();
 
-    // PBI-0126: responder «Cancelar» a la confirmación deja el selector como estaba.
-    page.once('dialog', (dialogo) => void dialogo.dismiss());
+    // PBI-0126: responder «No, volver» a la confirmación deja el selector como estaba. Lote 43 (PBI-0269): la ventana
+    // propia «Cancelar pedido», con el código del pedido.
     await cambiar.click();
     await page.getByRole('option', { name: 'Cancelado' }).click();
+    const cancelacion = ventanaDeConfirmacion(page, 'Cancelar pedido');
+    await expect(cancelacion).toContainText(`«${id}»`);
+    await cancelacion.getByRole('button', { name: 'No, volver' }).click();
+    await expect(cancelacion).toHaveCount(0);
     await expect(cambiar).toHaveText('Confirmado');
     expect(await estadoDelPedido(id)).toBe('confirmed');
 

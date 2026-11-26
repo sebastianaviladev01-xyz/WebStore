@@ -13,7 +13,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -37,6 +37,7 @@ import { conservarBorrador } from './borrador';
 import { dialogoDeRegistro } from './dialogo-de-registro';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const MARCA_VACIA = { name: '', active: true };
@@ -188,6 +189,7 @@ export class MarcasPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   /** Parámetros de consulta de la URL; con un parámetro repetido, el primero. */
   private readonly parametros = toSignal(
     this.route.queryParamMap.pipe(
@@ -351,6 +353,7 @@ export class MarcasPage {
       this.avisoEliminar.set(motivo);
       return;
     }
-    if (confirm('¿Eliminar marca?')) await this.admin.eliminarMarca(id);
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre de la marca.
+    if (await confirmarEliminacion(this.dialog, marca.name)) await this.admin.eliminarMarca(id);
   }
 }

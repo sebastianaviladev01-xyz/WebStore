@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -30,6 +31,7 @@ import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { SelectorCategoriaComponent } from './selector-categoria.component';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
@@ -193,6 +195,7 @@ export class ProductosPage {
   protected readonly session = inject(SesionFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   /** Parámetros de consulta de la URL; con un parámetro repetido, el primero. */
   private readonly parametros = toSignal(
     this.route.queryParamMap.pipe(
@@ -255,8 +258,10 @@ export class ProductosPage {
       queryParamsHandling: 'merge',
     });
   }
+  /** Lote 43 (ADR-0033, PBI-0269): se confirma en la ventana propia, con el nombre del producto. */
   protected async remove(id: string) {
-    if (this.session.can('products.delete') && confirm('¿Eliminar producto?'))
-      await this.admin.eliminarProducto(id);
+    const producto = this.admin.products().find((p) => p.id === id);
+    if (!producto || !this.session.can('products.delete')) return;
+    if (await confirmarEliminacion(this.dialog, producto.name)) await this.admin.eliminarProducto(id);
   }
 }

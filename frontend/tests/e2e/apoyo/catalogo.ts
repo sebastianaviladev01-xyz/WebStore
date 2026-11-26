@@ -176,7 +176,7 @@ export const cambiarMarcas = (cambio: (actuales: MarcaApi[]) => MarcaApi[]) =>
 export interface SnapshotApi {
   revision: number;
   orders: { id: string; status: string }[];
-  customers: { email: string }[];
+  customers: { id: string; name: string; email: string }[];
   banners: { id: string; ctaUrl: string; cta: string }[];
   config: Record<string, unknown>;
   /** Lote 07: usuarios del Admin, para dejar como estaban los que crea una prueba. */

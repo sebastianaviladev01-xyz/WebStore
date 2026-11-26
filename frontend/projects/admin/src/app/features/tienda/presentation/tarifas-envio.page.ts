@@ -11,11 +11,12 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { distritoDeLasOpciones, opcionesDeDistrito } from '../domain/distrito.rules';
@@ -248,6 +249,7 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
 })
 export class TarifasEnvioPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly dialog = inject(MatDialog);
   /** La plantilla del formulario, que se abre en la ventana emergente (PBI-0211). */
   private readonly registro = viewChild.required<TemplateRef<unknown>>('registro');
   protected readonly editing = signal<string | null>(null);
@@ -360,12 +362,19 @@ export class TarifasEnvioPage {
 
   protected async remove(id: string): Promise<void> {
     await eliminarRegistro({
-      pregunta: '¿Eliminar tarifa?',
+      nombre: this.nombreDeTarifa(id),
       id,
+      confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
       editando: () => this.editing(),
       eliminar: (idEliminado) => this.admin.eliminarTarifa(idEliminado),
       salirDeLaEdicion: () => this.reset(),
     });
+  }
+
+  /** Nombre de la tarifa en la ventana de confirmación (PBI-0269): «Miraflores → Surco». */
+  private nombreDeTarifa(id: string): string {
+    const tarifa = this.admin.rates().find((rate) => rate.id === id);
+    return tarifa ? `${tarifa.origin} → ${tarifa.destination}` : '';
   }
 
   /** «Agregar» (PBI-0171): abre la ventana para fijar el precio de uno o varios distritos. */

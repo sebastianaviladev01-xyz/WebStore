@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { vigenciaVisible } from '../domain/banner.rules';
@@ -134,6 +136,7 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
 })
 export class BannersPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly dialog = inject(MatDialog);
   protected readonly placementLabels = ETIQUETAS_UBICACION_BANNER;
   protected readonly vigencia = vigenciaVisible;
   protected readonly filtros = filtrosDeListado({
@@ -148,8 +151,9 @@ export class BannersPage {
 
   protected async remove(id: string): Promise<void> {
     await eliminarRegistro({
-      pregunta: '¿Eliminar banner?',
+      nombre: this.admin.banners().find((b) => b.id === id)?.title ?? '',
       id,
+      confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
       // El registro está en su propia página: aquí no hay un formulario en edición.
       editando: () => null,
       eliminar: (idEliminado) => this.admin.eliminarBanner(idEliminado),

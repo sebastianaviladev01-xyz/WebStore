@@ -2,6 +2,8 @@ import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+
 import { TemasFacade } from '../application/temas.facade';
 import { MENSAJE_TEMA_ACTIVO_EN_USO } from '../domain/tema.rules';
 import { ColoresTema, Tema } from '../domain/tema.model';
@@ -213,7 +215,8 @@ export class TemasPage {
       this.errorDeAccion.set(MENSAJE_TEMA_ACTIVO_EN_USO);
       return;
     }
-    if (!confirm(`¿Borrar el tema «${tema.name}»? No se puede deshacer.`)) return;
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre del tema.
+    if (!(await confirmarEliminacion(this.dialog, tema.name))) return;
     if (await this.temas.borrar(tema.id)) this.mensaje.set(`Tema «${tema.name}» borrado.`);
     else this.mostrarFallo();
   }

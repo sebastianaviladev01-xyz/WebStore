@@ -1,6 +1,7 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/select';
 
@@ -22,6 +23,7 @@ import {
 } from '../domain/filtro-listado.rules';
 import { filtrosDeListado } from './filtros-de-listado';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { confirmarCancelacionDePedido } from '../../../shared/ui/confirmacion.dialog';
 import { TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -222,6 +224,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 export class PedidosPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly session = inject(SesionFacade);
+  private readonly dialog = inject(MatDialog);
   /** Solo quien gestiona los pedidos cambia su estado; el vendedor los ve (PBI-0170). El BFF lo vuelve a validar. */
   protected readonly puedeCambiarEstado = computed(() => this.session.can('orders.manage'));
   protected readonly statuses = Object.keys(ETIQUETAS_ESTADO_PEDIDO) as EstadoPedido[];
@@ -263,10 +266,8 @@ export class PedidosPage {
     const status = cambio.value;
     const volver = (select: MatSelect) => (select.value = order.status);
     if (status === order.status) return;
-    if (
-      status === 'cancelled' &&
-      !confirm(`¿Cancelar el pedido ${order.id}? El stock se devolverá al inventario.`)
-    ) {
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, «Cancelar pedido».
+    if (status === 'cancelled' && !(await confirmarCancelacionDePedido(this.dialog, order.id))) {
       volver(cambio.source);
       return;
     }

@@ -9,9 +9,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
@@ -186,6 +187,7 @@ interface BorradorCliente {
 })
 export class ClientesPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly dialog = inject(MatDialog);
   protected readonly filtros = filtrosDeListado({
     leer: leerFiltrosClientes,
     escribir: parametrosDeFiltrosClientes,
@@ -277,8 +279,9 @@ export class ClientesPage {
   /** Si se elimina el cliente en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
   protected async remove(id: string) {
     await eliminarRegistro({
-      pregunta: '¿Eliminar cliente?',
+      nombre: this.admin.customers().find((c) => c.id === id)?.name ?? '',
       id,
+      confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
       editando: () => this.editing(),
       eliminar: (idEliminado) => this.admin.eliminarCliente(idEliminado),
       salirDeLaEdicion: () => this.reset(),

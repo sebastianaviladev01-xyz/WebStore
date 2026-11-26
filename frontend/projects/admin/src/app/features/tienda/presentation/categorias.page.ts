@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
@@ -38,6 +39,7 @@ import {
 import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
 import { PaginacionComponent } from './paginacion.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /**
@@ -210,6 +212,7 @@ export class CategoriasPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
   private readonly estado = inject(EstadoArbolCategorias);
   private readonly injector = inject(Injector);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
@@ -355,6 +358,7 @@ export class CategoriasPage {
       this.avisoEliminar.set(motivo);
       return;
     }
-    if (confirm('¿Eliminar categoría?')) await this.admin.eliminarCategoria(id);
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre de la categoría.
+    if (await confirmarEliminacion(this.dialog, categoria.name)) await this.admin.eliminarCategoria(id);
   }
 }

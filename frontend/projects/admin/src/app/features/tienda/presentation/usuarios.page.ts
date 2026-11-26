@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
@@ -147,6 +149,7 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
 export class UsuariosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly session = inject(SesionFacade);
+  private readonly dialog = inject(MatDialog);
   /**
    * Roles que el rol de la sesión gestiona (PBI-0013): el administrador solo ve «Vendedor». El BFF solo le envía esos
    * usuarios y rechaza cualquier otro cambio.
@@ -172,8 +175,9 @@ export class UsuariosPage {
   protected async remove(id: string): Promise<void> {
     if (!this.session.can('users.delete')) return;
     await eliminarRegistro({
-      pregunta: '¿Eliminar usuario?',
+      nombre: this.admin.users().find((u) => u.id === id)?.name ?? '',
       id,
+      confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
       // El registro está en su propia página: aquí no hay un formulario en edición.
       editando: () => null,
       eliminar: (idEliminado) => this.admin.eliminarUsuario(idEliminado),

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
@@ -25,6 +26,7 @@ import {
   ModoDeDireccion,
   ReglaDePrimeraEntrega,
 } from '../domain/tienda.model';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
@@ -259,6 +261,7 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
 })
 export class EntregasPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly dialog = inject(MatDialog);
   protected readonly reglas = REGLAS_DE_PRIMERA_ENTREGA;
   protected readonly maximoNombre = MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE;
   protected readonly diaDeLaSemana = diaDeLaSemana;
@@ -387,7 +390,8 @@ export class EntregasPage {
   protected async quitar(dia: DiaNoLaborable): Promise<void> {
     this.errorDeDia.set(null);
     const nombre = dia.name ? ` (${dia.name})` : '';
-    if (!confirm(`¿Quitar el ${this.fecha(dia.date)}${nombre} de los días no laborables?`)) return;
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con la fecha y su nombre.
+    if (!(await confirmarEliminacion(this.dialog, `${this.fecha(dia.date)}${nombre}`))) return;
     if (!(await this.admin.quitarDiaNoLaborable(dia.id)))
       this.errorDeDia.set(this.admin.tomarError() ?? 'No pudimos quitar el día. Inténtalo de nuevo.');
   }
