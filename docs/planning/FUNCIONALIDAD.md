@@ -72,6 +72,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Temas con el código hexadecimal de cada color escrito o elegido con el selector.
 - Botones con su ícono a la izquierda, y el ícono del módulo junto al título de cada página.
 - Tuerca de temas solo en el modo demo, con los tres temas predefinidos: en la barra superior, junto a la campana, y flotante solo en el acceso.
+- Si falla la consulta al abrir un registro que el panel no tenía, aviso con «Reintentar» en lugar de «ya no existe»; si no se puede comprobar la sesión por un fallo pasajero, el acceso lo avisa con «Reintentar» y la sesión no se pierde.
 
 ### Roles
 

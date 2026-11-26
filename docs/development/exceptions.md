@@ -14,14 +14,13 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-| Excepción | Ámbito | Vigencia |
-|---|---|---|
-| [ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md): cerrar por lotes los hallazgos de los lotes 37 y 38, sin las etapas SDD por elemento | PBI-0256 a PBI-0262 y los hallazgos de sus lotes, en el backoffice, las e2e, las herramientas de QA visual y la documentación del proceso | Desde el 2026-11-25 hasta que se fusione el lote 42. Responsable: Sebastián Avila |
+Ninguna.
 
 ## Excepciones cerradas
 
 | Excepción | Ámbito | Cierre |
 |---|---|---|
+| [ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md): cerrar por lotes los hallazgos de los lotes 37 y 38, sin las etapas SDD por elemento | PBI-0256 a PBI-0262 y los hallazgos de sus lotes (PBI-0263 y PBI-0264), en el backoffice, las e2e, las herramientas de QA visual y la documentación del proceso | 2026-11-26, al fusionar el PR del lote 42 ([cierre](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0031](../adrs/0031-cerrar-por-lotes-los-hallazgos-de-los-lotes-33-a-35.md): cerrar por lotes los hallazgos de los lotes 33 a 35, sin las etapas SDD por elemento | PBI-0252, PBI-0253 y PBI-0254 y los hallazgos de sus lotes (PBI-0256 a PBI-0262), en las herramientas de QA visual, las e2e y la guía de ejecución | 2026-11-25, al fusionar el PR del lote 39 ([cierre](../adrs/0031-cerrar-por-lotes-los-hallazgos-de-los-lotes-33-a-35.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0029](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md): cerrar por lotes los hallazgos de los lotes 28 a 31, sin las etapas SDD por elemento | PBI-0246, PBI-0247, PBI-0248 y PBI-0249 y los hallazgos de sus lotes (PBI-0252 a PBI-0255), en el storefront, el backoffice y el BFF | 2026-11-25, al fusionar el PR del lote 36 ([cierre](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md#cierre)). Responsable: Sebastián Avila |
 | [ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md): cerrar por lotes lo que salió de la reunión del 2026-11-20, sin las etapas SDD por elemento | PBI-0238, PBI-0239, PBI-0240, PBI-0243 y PBI-0244 y los hallazgos de sus lotes (PBI-0246 a PBI-0250), en el storefront, el backoffice y el BFF | 2026-11-24, al fusionar el PR del lote 32 ([cierre](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md#cierre)). Responsable: Sebastián Avila |

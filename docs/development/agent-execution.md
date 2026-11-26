@@ -42,7 +42,7 @@ Todos los comandos se ejecutan desde el checkout principal:
 4. Si `git worktree list --porcelain` lo muestra bloqueado por la sesión de una herramienta (`locked … (pid N)`), comprueba ese proceso con `Get-Process -Id N`. Si ya no existe, desbloquéalo con `git worktree unlock .worktrees/NNN-slug`. Si existe, la sesión que lo usa sigue abierta: ciérrala antes de seguir.
 5. `git worktree remove .worktrees/NNN-slug`. Las carpetas ignoradas (`node_modules`, `dist`, `.angular`, `frontend/output`) y las copias `backend/data*.json` se borran con él. Si git no puede borrar la carpeta, ya no la tiene registrada: bórrala cuando se libere.
 6. `git branch -D feature/NNN-slug`. Hace falta `-D` porque `-d` compara con la rama actual, no con `origin/dev`, y el paso 1 ya lo comprobó.
-7. Antes del paso 5, copia las capturas que citan `verification.md` o el PR a `frontend/output/visual-qa/<nombre>/` del checkout principal: `frontend/output` está ignorado y se borra con el worktree.
+7. Antes del paso 5, copia las capturas que citan `verification.md` o el PR a `frontend/output/visual-qa/<nombre>/` del checkout principal: `frontend/output` está ignorado y se borra con el worktree. Si una e2e falló de forma intermitente en la feature, copia también su carpeta de `frontend/test-results/` (con el trace de `retain-on-failure`) y cítala en su PBI: sin ella, el fallo no se puede diagnosticar después (PBI-0258).
 8. Si la feature guardó copias de datos o capturas fuera del worktree (por ejemplo, en el directorio temporal de la sesión), bórralas. No toques `backend/data.json` del checkout principal.
 9. [Actualiza `dev` local](#actualizar-dev-local).
 

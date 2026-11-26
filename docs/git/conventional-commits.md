@@ -13,7 +13,7 @@ Este repositorio adopta [Conventional Commits 1.0.0](https://www.conventionalcom
 ```
 
 - Escribe el tipo y el ámbito en minúsculas y en inglés: son términos técnicos ([ADR-0003](../adrs/0003-usar-espanol-para-el-vocabulario-de-negocio.md)).
-- Usa como ámbito la carpeta de primer nivel afectada: `frontend` o `backend`. Omítelo cuando el cambio sea transversal o solo de documentación del sistema (`docs:`, `ci:`, `build:`).
+- Usa como ámbito la carpeta de primer nivel afectada: `frontend` o `backend`. Si el cambio es de una sola aplicación o herramienta, puedes usar un ámbito más fino: `storefront`, `admin`, `bff` o `qa` (las herramientas de `frontend/tools/qa/`). Omítelo cuando el cambio sea transversal o solo de documentación del sistema (`docs:`, `ci:`, `build:`). Los commits anteriores con otros ámbitos (`temas`, `tienda`, `tools`…) no se reescriben (PBI-0262).
 - Redacta la descripción en español, de forma breve, en infinitivo y sin punto final. Usa los términos del [glosario](../architecture/glosario.md).
 - Separa el cuerpo y las notas al pie con una línea en blanco.
 - En el cuerpo, explica qué cambia y por qué, en viñetas si hay varios puntos y con líneas de unos 72 caracteres. Puedes resumir la verificación; la evidencia completa va en `verification.md` o en el PR.

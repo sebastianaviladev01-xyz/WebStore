@@ -219,3 +219,16 @@ Los hallazgos de los lotes 33 a 35 (PBI-0252 a PBI-0254) se cerraron por lotes, 
 |---|---|
 | Las capturas de una página con elementos fijos o pegados se pueden tomar también de la ventana, en posiciones de desplazamiento (lote 37, PR #98: PBI-0252) | `tools/qa/capturas.mjs` y `tools/qa/lib/tomas.mjs`; [Comparar capturas](../development/agent-execution.md#comparar-capturas). Pruebas: `tools/qa/lib/tomas.spec.mjs` |
 | La comparación de capturas separa el ruido de antialiasado sin esconder un cambio real (lote 37, PR #98: PBI-0253) | `tools/qa/comparar.mjs` y `tools/qa/lib/ruido.mjs` (`clasificarDiferencias`, `LIMITES_DE_RUIDO`). Pruebas: `tools/qa/lib/ruido.spec.mjs` |
+
+## Hallazgos de los lotes 37 y 38: lotes 40 a 42 (2026-11-26)
+
+Los hallazgos de los lotes 37 y 38 (PBI-0256 a PBI-0262) se cerraron por lotes, sin features nuevas ([ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones provisionales están en las [decisiones pendientes](PENDING-DECISIONS.md) («Hallazgos de los lotes 37 y 38: …») y el detalle, en el [backlog](backlog.md).
+
+| Requisito consolidado | Evidencia de implementación |
+|---|---|
+| Un registro del backoffice no dice que no existe si solo falló la consulta (lote 40, PR #101: PBI-0256 y PBI-0263) | `estadoDeLaEdicion` (`tienda/domain/edicion.rules.ts`), `shared/ui/sin-datos.component.ts` y los registros del producto, la categoría, el usuario y el banner. Pruebas: `edicion.rules.spec.mjs`, `admin-registro-producto-sin-datos.spec.ts` y `admin-registros-sin-datos.spec.ts` |
+| Un fallo pasajero al comprobar la sesión no la cierra (lote 40, PR #101: PBI-0257) | `BffSesionGateway.current()`, `SesionFacade` (`sesionSinComprobar`, `reintentarComprobacion`), `sesionGuard` y `login.page.ts`. Pruebas: `bff-sesion.gateway.spec.mjs`, `sesion.facade.spec.mjs` y `admin-sesion-restaurar.spec.ts` |
+| TEST-18 por tema y ancho, con lo que había en pantalla al fallar (lote 41, PR #100: PBI-0259) | `admin-catalogo-filtros.spec.ts` (`esperarVista`) |
+| El umbral de las capturas, medido y documentado (lote 41, PR #100: PBI-0260) | `UMBRAL_POR_OMISION` (`tools/qa/lib/ruido.mjs`) y [Comparar capturas](../development/agent-execution.md#comparar-capturas). Pruebas: `ruido.spec.mjs` |
+| Los escenarios de capturas restauran el tema activo (lote 41, PR #100: PBI-0261) | `alTerminar` en `tools/qa/capturas.mjs` y `lote-34-hover-y-ficha-de-la-tienda.mjs` |
+| Reglas de proceso: el trace de una e2e intermitente y los ámbitos de los commits (lote 42: PBI-0258 y PBI-0262) | [Cerrar el worktree](../development/agent-execution.md#cerrar-el-worktree) y [convención de commits](../git/conventional-commits.md#formato) |
