@@ -30,6 +30,22 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
         <p class="mt-3 text-sm leading-6 text-muted">
           Usa una cuenta activa. Los permisos se validan nuevamente en cada solicitud al BFF.
         </p>
+        @if (session.sesionSinComprobar()) {
+          <!-- PBI-0257: hay sesión guardada, pero el BFF no respondió al comprobarla; el token se conserva. -->
+          <div class="mt-7 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="alert">
+            <p class="font-semibold">No pudimos comprobar tu sesión</p>
+            <p class="mt-1">El panel no respondió. Reintenta en un momento o vuelve a ingresar.</p>
+            <button
+              class="inline-flex min-h-11 gap-2 items-center mt-3 rounded-xl border border-line bg-surface px-5 py-2.5 text-sm font-semibold text-ink disabled:opacity-50"
+              type="button"
+              [disabled]="session.comprobando()"
+              (click)="reintentar()"
+            >
+              <svg wsAdminIcono="actualizar"></svg>
+              {{ session.comprobando() ? 'Comprobando…' : 'Reintentar' }}
+            </button>
+          </div>
+        }
         <div class="mt-7 grid gap-3">
           <mat-form-field>
             <mat-label>Correo</mat-label>
@@ -83,6 +99,11 @@ export class LoginPage {
     const value = this.form.getRawValue();
     // PBI-0151: tras una sesión vencida, vuelve a la página donde estaba (y a su borrador); si no, al Dashboard.
     if (await this.session.login(value.email, value.password))
+      await this.router.navigateByUrl(this.session.tomarRetorno());
+  }
+  /** PBI-0257: vuelve a comprobar la sesión guardada y, si responde, entra a la página que se quiso abrir. */
+  protected async reintentar() {
+    if (await this.session.reintentarComprobacion())
       await this.router.navigateByUrl(this.session.tomarRetorno());
   }
 }

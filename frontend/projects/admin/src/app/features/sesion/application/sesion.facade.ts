@@ -34,6 +34,18 @@ export class SesionFacade {
   readonly pending = signal(false);
   readonly error = signal<string | null>(null);
   /**
+   * Lote 40 (ADR-0032, PBI-0257; provisional, por confirmar con Daniel): hay token, pero el BFF no respondió o falló
+   * al comprobarlo. El token se conserva y el acceso ofrece «Reintentar»; sin usuario, los guards no dejan entrar al
+   * panel. Solo un `401` borra el token.
+   */
+  private readonly sinComprobarState = signal(false);
+  readonly sesionSinComprobar = this.sinComprobarState.asReadonly();
+  /** Hay un reintento de la comprobación en curso: el acceso desactiva «Reintentar». */
+  private readonly comprobandoState = signal(false);
+  readonly comprobando = this.comprobandoState.asReadonly();
+  /** Página que se quiso abrir mientras la sesión estaba sin comprobar; el acceso lleva a ella tras reintentar. */
+  private rutaSinComprobar: string | null = null;
+  /**
    * PBI-0151: quién tenía la sesión que venció y en qué página estaba. Lo escrito en los formularios se guarda en
    * `borradores`, solo en memoria; se recupera al volver a ingresar la misma persona en la misma pestaña.
    */
@@ -64,6 +76,8 @@ export class SesionFacade {
       this.borradores = borradoresAlIngresar(this.borradores, grant.user.id);
       this.retorno = rutaDeRetorno(misma ? this.vencimiento?.ruta : null);
       this.vencimiento = null;
+      this.sinComprobarState.set(false);
+      this.rutaSinComprobar = null;
       this.tokenState.set(grant.token);
       this.userState.set(grant.user);
       sessionStorage.setItem(SESSION_KEY, grant.token);
@@ -126,6 +140,34 @@ export class SesionFacade {
     return borrador?.valor ?? null;
   }
 
+  /** Anota la página que se quiso abrir con la sesión sin comprobar (`sesionGuard`), para volver a ella al reintentar. */
+  anotarRutaSinComprobar(ruta: string): void {
+    if (this.sinComprobarState() && !this.userState()) this.rutaSinComprobar = ruta;
+  }
+
+  /**
+   * Vuelve a comprobar la sesión sin comprobar (PBI-0257). Si responde, queda el usuario y `tomarRetorno()` lleva a la
+   * página anotada; si es un `401`, se borra el token y el acceso dice que la sesión venció; si vuelve a fallar, todo
+   * sigue igual. Devuelve `true` si ya hay usuario.
+   */
+  async reintentarComprobacion(): Promise<boolean> {
+    const token = this.tokenState();
+    if (!token || !this.sinComprobarState() || this.comprobandoState()) return false;
+    this.comprobandoState.set(true);
+    this.error.set(null);
+    try {
+      if (await this.comprobar(token)) {
+        this.retorno = rutaDeRetorno(this.rutaSinComprobar);
+        this.rutaSinComprobar = null;
+        return true;
+      }
+      if (!this.tokenState()) this.error.set(AVISO_SESION_VENCIDA);
+      return false;
+    } finally {
+      this.comprobandoState.set(false);
+    }
+  }
+
   /** Página a la que lleva el acceso tras ingresar: donde venció la sesión de la misma persona, o el Dashboard. */
   tomarRetorno(): string {
     const ruta = this.retorno;
@@ -178,17 +220,34 @@ export class SesionFacade {
 
   private async restore(): Promise<void> {
     const token = this.tokenState();
-    if (!token) return;
+    if (token) await this.comprobar(token);
+  }
+
+  /**
+   * Pide el usuario del token. Solo un `401` (la sesión ya no vale) borra el token; un fallo de red o del servidor lo
+   * conserva y deja la sesión sin comprobar (PBI-0257). Si mientras tanto alguien ingresó o cerró la sesión, la
+   * respuesta de este token ya no cuenta.
+   */
+  private async comprobar(token: string): Promise<boolean> {
     try {
-      this.userState.set(await this.auth.current(token));
-    } catch {
-      this.clear();
+      const usuario = await this.auth.current(token);
+      if (this.tokenState() !== token) return false;
+      this.userState.set(usuario);
+      this.sinComprobarState.set(false);
+      return true;
+    } catch (error) {
+      if (this.tokenState() !== token) return false;
+      if (error instanceof SesionVencidaError) this.clear();
+      else this.sinComprobarState.set(true);
+      return false;
     }
   }
 
   private clear(): void {
     this.userState.set(null);
     this.tokenState.set(null);
+    this.sinComprobarState.set(false);
+    this.rutaSinComprobar = null;
     sessionStorage.removeItem(SESSION_KEY);
   }
 }
