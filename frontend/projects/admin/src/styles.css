@@ -129,7 +129,8 @@ label:has(> input[type='file']:focus-visible) {
 }
 
 /*
- * Tuerca del modo demo (feature 002, AC-15): abajo a la derecha, lejos del carrito (cabecera), de
+ * Tuerca flotante del modo demo (feature 002, AC-15), solo en el acceso desde el lote 35 (PBI-0249; en el panel va en la
+ * barra superior): abajo a la derecha, lejos del carrito (cabecera), de
  * «Pagar» y del menú del Admin (izquierda o arriba). En pantallas estrechas es una pestaña de 28 px
  * pegada al borde, fuera de la columna de los botones a todo el ancho y de los controles del
  * carrusel (que terminan a 32 px o más del borde), para que ni al hacer scroll pasen por debajo.
@@ -171,6 +172,19 @@ label:has(> input[type='file']:focus-visible) {
 }
 
 .ws-selector-tema-boton[aria-expanded='true'] svg {
+  transform: rotate(60deg);
+}
+
+/* Lote 35 (PBI-0249): en la barra superior es un botón de ícono como la campana, con el mismo giro al abrir. */
+.ws-selector-tema-boton-barra svg {
+  transition: transform 220ms ease;
+}
+
+.ws-selector-tema-boton-barra[aria-expanded='true'] {
+  color: var(--ws-link);
+}
+
+.ws-selector-tema-boton-barra[aria-expanded='true'] svg {
   transform: rotate(60deg);
 }
 
