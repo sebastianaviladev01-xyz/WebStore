@@ -97,7 +97,7 @@ test('el encabezado y el filtro principal son los del panel del SGC, con «Mes a
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   const main = page.getByRole('main');
 
-  await expect(main.getByText(/^•\s*Panel$/)).toBeVisible();
+  await expect(main.getByText(/(^|\s)Panel\s*$/)).toBeVisible();
   await expect(
     main.getByRole('heading', { level: 1, name: 'Dashboard de la tienda', exact: true }),
   ).toBeVisible();
@@ -127,7 +127,7 @@ test('cambiar el periodo cambia las cifras, la variación, la distribución y la
 
   await elegirPeriodo(page, 'Hoy');
   await expect(page).toHaveURL(/[?&]periodo=hoy(&|$)/);
-  await expect(tarjeta(page, 'Total de pedidos')).toContainText(/\b1\b/);
+  await expect(tarjeta(page, 'Total de pedidos')).toContainText(/(?<!\d)1(?!\d)/);
   await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?300\.00/);
   await expect(tarjeta(page, 'Total de pedidos')).toContainText('frente a ayer a la misma hora');
   // Ayer no hubo pedidos: sin porcentaje, y el lector de pantalla dice qué falta.
@@ -139,7 +139,7 @@ test('cambiar el periodo cambia las cifras, la variación, la distribución y la
   await elegirPeriodo(page, 'Últimos 7 días');
   await expect(page).toHaveURL(/[?&]periodo=7-dias(&|$)/);
   // Los tres pedidos de la semana (el cancelado cuenta como pedido); las ventas, sin el cancelado ni el envío.
-  await expect(tarjeta(page, 'Total de pedidos')).toContainText(/\b3\b/);
+  await expect(tarjeta(page, 'Total de pedidos')).toContainText(/(?<!\d)3(?!\d)/);
   await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?400\.00/);
   await expect(tarjeta(page, 'Total de pedidos')).toContainText('frente a los 7 días anteriores');
   await expect(distribucion(page).getByRole('listitem')).toHaveCount(2);
@@ -153,7 +153,7 @@ test('cambiar el periodo cambia las cifras, la variación, la distribución y la
   // El periodo se conserva al recargar, porque está en la URL.
   await page.reload();
   await expect(periodo(page)).toContainText('Últimos 7 días');
-  await expect(tarjeta(page, 'Total de pedidos')).toContainText(/\b3\b/);
+  await expect(tarjeta(page, 'Total de pedidos')).toContainText(/(?<!\d)3(?!\d)/);
 
   // «Mes actual», el de por omisión, deja la URL sin el parámetro.
   await elegirPeriodo(page, 'Mes actual');

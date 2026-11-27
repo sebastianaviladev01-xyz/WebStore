@@ -168,7 +168,11 @@ async function comprobarTitulo(page: Page, pagina: Pagina): Promise<void> {
     icono.boundingBox(),
     titulo.evaluate((h1) => {
       const rango = document.createRange();
-      const texto = [...h1.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+      // El primer texto del título, aunque vaya en un span (lote 45: «Dashboard de la tienda», en dos tonos).
+      const recorrido = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT, {
+        acceptNode: (n) => (n.textContent?.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP),
+      });
+      const texto = recorrido.nextNode();
       if (!texto) return null;
       rango.selectNodeContents(texto);
       const { left } = rango.getBoundingClientRect();

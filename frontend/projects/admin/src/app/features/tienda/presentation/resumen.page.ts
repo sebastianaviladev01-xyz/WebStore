@@ -165,7 +165,8 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
             <span>
               <span class="text-ink">{{ tonos(titulo).primera }}</span>
               @if (tonos(titulo).resto) {
-                <span class="text-link">{{ tonos(titulo).resto }}</span>
+                <!-- El espacio va dentro de la interpolación: Angular y Prettier quitan el que va suelto. -->
+                <span class="text-link">{{ ' ' + tonos(titulo).resto }}</span>
               }
             </span>
             <svg wsAdminFlecha class="ws-plegable-indicador h-4 w-4 text-muted"></svg>
@@ -184,14 +185,17 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
             <h2 class="mt-1 text-lg font-semibold text-ink">Periodo del Dashboard</h2>
             <p class="mt-1 text-sm text-muted">Las cifras se calculan según el periodo seleccionado.</p>
           </div>
-          <mat-form-field class="w-full sm:w-64" subscriptSizing="dynamic">
-            <mat-label>Periodo</mat-label>
-            <mat-select [value]="periodo()" (selectionChange)="cambiarPeriodo($event.value)">
-              @for (opcion of periodos; track opcion.valor) {
-                <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
+          <!-- El ancho va en un contenedor: los campos de Material ocupan el 100 % de su caja (styles.css). -->
+          <div class="w-full sm:w-64">
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>Periodo</mat-label>
+              <mat-select [value]="periodo()" (selectionChange)="cambiarPeriodo($event.value)">
+                @for (opcion of periodos; track opcion.valor) {
+                  <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
         </section>
       }
 
@@ -520,8 +524,14 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
                       >
                         {{ tipoDeEvento(evento.type) }}
                       </span>
-                      <span class="min-w-0 flex-1">{{ evento.description }}</span>
-                      <time class="shrink-0 text-xs text-muted tabular-nums" [attr.datetime]="evento.at">
+                      <!-- En el celular, la insignia y la hora van arriba y el texto debajo, a todo el ancho. -->
+                      <span class="order-last min-w-0 basis-full sm:order-none sm:basis-auto sm:flex-1">
+                        {{ evento.description }}
+                      </span>
+                      <time
+                        class="ml-auto shrink-0 text-xs text-muted tabular-nums sm:ml-0"
+                        [attr.datetime]="evento.at"
+                      >
                         {{ evento.at | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
                       </time>
                     </li>

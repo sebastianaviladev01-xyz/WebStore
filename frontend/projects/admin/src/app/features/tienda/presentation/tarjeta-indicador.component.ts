@@ -55,7 +55,7 @@ const FONDOS: Readonly<Record<TonoDeTarjeta, string>> = {
             <ws-admin-ayuda [texto]="ayuda" [etiqueta]="'Qué incluye: ' + titulo()" [sobreColor]="true" />
           }
         </div>
-        <p class="min-w-0 text-3xl leading-tight font-semibold tabular-nums">{{ valor() }}</p>
+        <p class="min-w-0 text-3xl leading-tight font-semibold tabular-nums xl:text-2xl">{{ valor() }}</p>
       </div>
       @if (tendencia(); as tendencia) {
         <p class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">

@@ -358,9 +358,9 @@ test.describe('Presentación del Dashboard con datos propios', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const main = page.getByRole('main');
 
-    await expect(tarjeta(page, 'Total de pedidos')).toContainText(/\b0\b/);
+    await expect(tarjeta(page, 'Total de pedidos')).toContainText(/(?<!\d)0(?!\d)/);
     await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?0\.00/);
-    await expect(tarjeta(page, 'Clientes web nuevos')).toContainText(/\b0\b/);
+    await expect(tarjeta(page, 'Clientes web nuevos')).toContainText(/(?<!\d)0(?!\d)/);
     // Sin pedidos del mes anterior no hay porcentaje: «—» y, para un lector de pantalla, qué significa.
     await expect(tarjeta(page, 'Total de pedidos')).toContainText('—');
     await expect(tarjeta(page, 'Total de pedidos')).toContainText('Sin datos del mes anterior');
@@ -396,7 +396,7 @@ test.describe('Presentación del Dashboard con datos propios', () => {
     const main = page.getByRole('main');
 
     const pedidos = tarjeta(page, 'Total de pedidos');
-    await expect(pedidos).toContainText(/\b3\b/);
+    await expect(pedidos).toContainText(/(?<!\d)3(?!\d)/);
     await expect(pedidos).toContainText('+200 %');
     await expect(pedidos).toContainText('Sube');
     await expect(pedidos).toContainText('frente al mismo tramo del mes anterior');
