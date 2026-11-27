@@ -464,15 +464,25 @@ export class RegistroProductoPage {
     for (const fila of filas) tabla.push(filaDeCaracteristica(fila), { emitEvent: false });
     tabla.updateValueAndValidity();
   }
-  /** «Agregar fila»: una fila vacía al final, con el foco para escribir en ella. */
+  /**
+   * «Agregar fila»: una fila vacía al final, con el foco para escribir en ella. El foco se mueve en el siguiente
+   * render, que con la página cargada puede llegar tarde: solo se mueve si sigue en «Agregar fila» (o en ningún
+   * campo), para no quitárselo a otro en el que ya se está escribiendo (lote 48: el precio acababa en la fila nueva).
+   */
   protected agregarCaracteristica() {
     const tabla = this.form.controls.highlights;
     tabla.push(filaDeCaracteristica());
     tabla.markAsDirty();
     const indice = tabla.length - 1;
-    afterNextRender(() => document.getElementById(`caracteristica-${indice}`)?.focus(), {
-      injector: this.injector,
-    });
+    const origen = document.activeElement;
+    afterNextRender(
+      () => {
+        const actual = document.activeElement;
+        if (actual !== origen && actual !== document.body) return;
+        document.getElementById(`caracteristica-${indice}`)?.focus();
+      },
+      { injector: this.injector },
+    );
   }
   /** La papelera de una fila la quita; si era la única, queda una vacía para escribir. */
   protected quitarCaracteristica(indice: number) {
