@@ -95,3 +95,28 @@ Cada commit lleva `Refs:` con sus `PBI-NNNN` y este ADR. Los registros se actual
 - Responsable: Sebastián Avila. Termina cuando se fusiona el lote 48 o cuando él la retira.
 - Aprobación: Sebastián Avila, 2026-11-26. Falta informar a Daniel Avila de lo que cambia en el backoffice.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+Se ejecutaron seis lotes el 2026-11-26, auditados por la sesión principal (diff, `npm run verify`, la suite e2e completa y las capturas). Los fusiona Sebastián Avila, en este orden:
+
+| Lote | Elementos | PR |
+|---|---|---|
+| 43, listados y borrado | PBI-0265, PBI-0269 y el pie de las ventanas de registro (PBI-0268) | [PR #106](https://github.com/sebastianaviladev01-xyz/WebStore/pull/106) |
+| 44, formularios de registro y ruta de navegación | PBI-0268 y PBI-0271 | [PR #108](https://github.com/sebastianaviladev01-xyz/WebStore/pull/108) |
+| 45, Dashboard | PBI-0270 | [PR #107](https://github.com/sebastianaviladev01-xyz/WebStore/pull/107) |
+| 46, botones del banner | PBI-0266 | [PR #109](https://github.com/sebastianaviladev01-xyz/WebStore/pull/109) |
+| 47, contraste en Temas | PBI-0267 | [PR #105](https://github.com/sebastianaviladev01-xyz/WebStore/pull/105) |
+| 48, cierre | Los registros, la unión de los cinco lotes y este cierre | El PR del lote 48 |
+
+- **Lote 43:** e2e 424 de 424. La auditoría corrigió la fila de filtros, el foco tras borrar, «1 pedidos» y un defecto que destapó la suite completa: con 10 por página, el registro recién creado quedaba fuera de la vista.
+- **Lote 44:** e2e 420 de 420. La auditoría corrigió el pie en el celular y 7 e2e de contraste que chocaban con el nuevo `select` «Estado».
+- **Lote 45:** e2e 413 de 413. La auditoría hizo que el gráfico siguiera el periodo. Decisión: todas las cifras son del periodo, ya no el total histórico (nota en la feature 001).
+- **Lote 46:** e2e 424 de 424, con el lote 44 incorporado. Con los estilos por omisión, 0 diferencias en las capturas de la tienda.
+- **Lote 47:** e2e 412 de 412. La auditoría pidió una sola sugerencia por color y en cadena, para no pedir cambiar un color de marca sin necesidad.
+- **Lote 48, con los cinco lotes juntos:** `npm run verify` en verde y e2e 449 de 449 (y 449 de 449 en el CI del #105, sin intermitentes). Los conflictos entre lotes (documentación, íconos y dos e2e) se resolvieron aquí; las ramas se encadenaron para fusionarse en orden; y el ícono de información, repetido con dos nombres, quedó en uno.
+- **Fallos intermitentes del CI, con su causa en las trazas:** «Agregar fila» le quitaba el foco al precio (defecto del lote 44, corregido) y dos e2e del diálogo de temas escribían antes de que Material pusiera su foco en «Nombre» (corregidas; el resto de ventanas, en PBI-0275). Seis e2e del lote 44 esperaban `nuevo` en la URL, que el listado del lote 43 consume: ahora esperan la URL final.
+
+Los registros quedaron al día en el lote 48: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md) (filas «Reunión del 2026-11-24: …», decididas por Sebastián Avila), la [trazabilidad](../planning/TRACEABILITY.md), la [funcionalidad](../planning/FUNCIONALIDAD.md), el [glosario](../architecture/glosario.md), una nota en la [feature 001](../specs/features/001-reorganizar-resumen-del-admin/specification.md), el [índice de features](../specs/features/README.md) y el [historial](../changelog/CHANGELOG-2026-11-26.md). La excepción sale de «Excepciones vigentes».
+
+**Lo que queda abierto:** PBI-0272 (un espacio en blanco del diálogo de tema a 375 px, por comprobar en un celular), PBI-0273 (el foco tras borrar la única fila de la última página), PBI-0274 (e2e del salto a la página del registro nuevo en más listados) y PBI-0275 (esperar el foco inicial de las demás ventanas en las e2e), sin priorizar; y lo que ya estaba fuera al [cerrar ADR-0032](0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md#cierre).

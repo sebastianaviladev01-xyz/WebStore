@@ -232,3 +232,17 @@ Los hallazgos de los lotes 37 y 38 (PBI-0256 a PBI-0262) se cerraron por lotes, 
 | El umbral de las capturas, medido y documentado (lote 41, PR #100: PBI-0260) | `UMBRAL_POR_OMISION` (`tools/qa/lib/ruido.mjs`) y [Comparar capturas](../development/agent-execution.md#comparar-capturas). Pruebas: `ruido.spec.mjs` |
 | Los escenarios de capturas restauran el tema activo (lote 41, PR #100: PBI-0261) | `alTerminar` en `tools/qa/capturas.mjs` y `lote-34-hover-y-ficha-de-la-tienda.mjs` |
 | Reglas de proceso: el trace de una e2e intermitente y los ámbitos de los commits (lote 42: PBI-0258 y PBI-0262) | [Cerrar el worktree](../development/agent-execution.md#cerrar-el-worktree) y [convención de commits](../git/conventional-commits.md#formato) |
+
+## Reunión del 2026-11-24: lotes 43 a 48 (2026-11-26)
+
+Lo que salió de la reunión del 2026-11-24 y de las capturas del SGC (PBI-0265 a PBI-0271) se construyó por lotes, sin features nuevas ([ADR-0033](../adrs/0033-construir-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-24.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones están en las [decisiones pendientes](PENDING-DECISIONS.md) («Reunión del 2026-11-24: …») y el detalle, en el [backlog](backlog.md).
+
+| Requisito consolidado | Evidencia de implementación |
+|---|---|
+| Cada listado del backoffice en un solo panel, con exportación, resumen y paginación elegible; el registro nuevo, a la vista (lote 43, PR #106: PBI-0265) | `ListadoComponent` (`ws-admin-listado`), `listado.rules.ts`, `exportacion.rules.ts` y `paginacion-de-la-url.ts`. Pruebas: `listado.rules.spec.mjs`, `exportacion.rules.spec.mjs` y `admin-listados-panel.spec.ts` |
+| Los borrados se confirman con una ventana propia y el foco no se pierde (lote 43, PR #106: PBI-0269) | `ConfirmacionDialog` (`shared/ui/confirmacion.dialog.ts`) y `focoTrasEliminar()`. Pruebas: `eliminar-registro.spec.mjs` y `admin-confirmar-borrado.spec.ts` |
+| Las páginas de registro tienen la forma de los formularios del SGC (lote 44, PR #108: PBI-0268) | `ws-admin-encabezado-registro`, `ws-admin-datos-registro`, `ws-admin-seccion-registro` y `ws-admin-pie-registro`, y `registro.rules.ts`. Pruebas: `registro.rules.spec.mjs` y `admin-formularios-registro.spec.ts` |
+| La barra superior muestra la ruta de navegación (lote 44, PR #108: PBI-0271) | `layout/menu.ts`, `rutaDeNavegacion()` y `ws-admin-ruta-navegacion`. Pruebas: `ruta-de-navegacion.spec.mjs` y `admin-ruta-navegacion.spec.ts` |
+| El Dashboard tiene la forma del panel del SGC y se calcula por periodo (lote 45, PR #107: PBI-0270) | `periodo.rules.ts`, `resumen.rules.ts` (`serieDelPeriodo`), `distribucion-ventas.rules.ts` y `resumen.page.ts`. Pruebas: `periodo.rules.spec.mjs`, `resumen.rules.spec.mjs`, `distribucion-ventas.rules.spec.mjs` y `admin-dashboard-periodo.spec.ts` |
+| Cada botón del banner tiene su estilo (lote 46, PR #109: PBI-0266) | `ESTILOS_DE_BOTON_DE_BANNER` (`colecciones.rules.mjs`), `botonesDelBanner()` y `ws-btn-contrast`/`ws-btn-outline`; [contrato](../../backend/docs/BFF-CONTRACT.md). Pruebas: `banner-botones.rules.test.mjs`, `botones-banner.rules.spec.mjs`, `admin-botones-del-banner.spec.ts` y `storefront-botones-del-banner.spec.ts` |
+| El editor de temas explica el contraste y sugiere el color que cumple (lote 47, PR #105: PBI-0267) | `sugerencia-contraste.rules.ts` y `tema.dialog.ts`. Pruebas: `sugerencia-contraste.rules.spec.mjs` y `admin-temas-sugerencia.spec.ts` |
