@@ -21,7 +21,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** carga un logo, o indica su URL
 - **Entonces** la tienda muestra el logo nuevo. Los colores ya no se cambian en Contenido sino en Temas, desde la feature 002 (temas A, B y C y temas propios).
 
-> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal. El logo es la única imagen que aún acepta URL; desde la revisión de la demo del 2026-11-17 las demás se cargan como archivo (PBI-0214), y cargar el logo como archivo queda registrado en PBI-0289.
+> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal. El logo se carga como archivo («Cargar logo»), pero se guarda como Data URL y el campo «URL/Data URL del logo» todavía acepta una URL escrita; desde la revisión de la demo del 2026-11-17 las demás imágenes se cargan como archivo y se sirven por dirección (PBI-0214, ADR-0026). Igualarlo queda registrado en PBI-0289.
 
 ### Escenario 02 – Navegación, contacto y pie
 
@@ -52,7 +52,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ## Fuera de alcance y pendientes
 
 - Para la primera versión de la demo basta con lo que hay (Daniel, 2026-11-20); lo demás que tiene OpenCart se evaluará en el backlog funcional (PBI-0015, cerrada en el lote 18).
-- La paleta quedó decidida el 2026-11-11: tres temas, A, B y C, con B activo al instalar ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Confirmación de la paleta»; PBI-0014, cerrada).
+- La paleta quedó decidida el 2026-11-11: tres temas, A, B y C, con B activo al instalar ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Confirmación de la paleta»; PBI-0030. PBI-0014, la B por mayoría del 06/11, quedó cerrada).
 
 ### Escenario 06 – Aviso de la navegación superior
 

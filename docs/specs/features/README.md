@@ -19,7 +19,7 @@ Lo que la demo ya implementa se hizo antes de adoptar este flujo: su evidencia e
 
 **Por decidir por el equipo.** Un agente no lo elige: pregunta a la persona.
 
-El 2026-11-27 una auditoría de todas las reuniones registró, sin construir, lo que faltaba: PBI-0276 a PBI-0290 en el [backlog](../../planning/backlog.md) y sus motivos en las [decisiones pendientes](../../planning/PENDING-DECISIONS.md) («Auditoría de las reuniones»). Seis van al backlog funcional, como pidió Daniel el 2026-11-20; el resto son correcciones pequeñas o dependen de terceros, del cliente o de Daniel.
+El 2026-11-27 una auditoría de todas las reuniones registró, sin construir, lo que faltaba: PBI-0276 a PBI-0290 en el [backlog](../../planning/backlog.md) y sus motivos en las [decisiones pendientes](../../planning/PENDING-DECISIONS.md) («Auditoría de las reuniones»). Seis van al backlog funcional, por decisión de Sebastián Avila y por analogía con lo que Daniel dijo el 2026-11-20 de lo que OpenCart trae de más; cuatro son correcciones o mejoras pequeñas del backoffice (PBI-0276, PBI-0277, PBI-0288 y PBI-0289) y cinco dependen de terceros, del cliente o de Daniel (PBI-0284 a PBI-0287 y PBI-0290).
 
 El 2026-11-27 se construyó el acceso a WhatsApp (PBI-0241), que seguía abierto de la reunión del 2026-11-20, como enlace configurable y sin feature nueva, como excepción al flujo ([ADR-0035](../../adrs/0035-construir-por-lotes-el-acceso-a-whatsapp.md)): lote 49, único, con su cierre en el mismo PR. Lo decidió Sebastián Avila, sin esperar a Daniel. Al fusionarlo vuelve a regir [ADR-0016](../../adrs/0016-volver-a-un-pull-request-por-hito.md) sin excepción. De esa reunión sigue abierto el reparto de modelos por etapa ([PBI-0242](../../planning/backlog.md)).
 

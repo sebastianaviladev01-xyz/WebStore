@@ -29,7 +29,7 @@ WebStore es una tienda en línea estándar que Simplesoft ofrece a comercios per
 ## Acuerdos de marca
 
 - Identidad propia: la referencia de LG solo sirve como patrón de tienda grande. No se copian su composición, marca, campañas ni recursos, para evitar problemas legales.
-- Tres temas predefinidos desde el 2026-11-11: A violeta, B "Azul cobalto" con acento naranja quemado y lienzo plomo (activo al instalar) y C grafito y ámbar, el de Ecom. La reunión del 05/11 pidió paletas sin beige, verde ni morado; el violeta volvió con el tema A, que Daniel aceptó ([decisiones pendientes](PENDING-DECISIONS.md), «Confirmación de la paleta»).
+- Tres temas predefinidos desde el 2026-11-11: A violeta, B "Azul cobalto" con acento naranja quemado y lienzo plomo en el backoffice (activo al instalar; la tienda tiene su propio lienzo, casi blanco, desde el 13/11, ADR-0013) y C grafito y ámbar, el de Ecom. La reunión del 05/11 pidió paletas sin beige, verde ni morado; el violeta volvió con el tema A, que Daniel aceptó ([decisiones pendientes](PENDING-DECISIONS.md), «Confirmación de la paleta»).
 - Una sola tipografía: Source Sans 3.
 - Categorías sin íconos.
 - Tono cercano y claro en español peruano; precios en soles con IGV incluido.
