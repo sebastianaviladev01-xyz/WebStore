@@ -242,11 +242,38 @@ export const BANNER_PLACEMENTS = ['hero', 'promotion', 'secondary'];
 /** Largo máximo del texto de cada botón del banner (lote 12, PBI-0184). */
 export const MAXIMO_TEXTO_DE_BOTON = 40;
 
-/** Los dos botones opcionales del banner (lote 12, PBI-0184): el principal y el secundario, con su texto y su enlace. */
+/**
+ * Lote 46 (ADR-0033, PBI-0266): los estilos que puede elegir cada botón del banner, todos del tema: `primary`
+ * («Principal»), `accent` («Secundario»), `contrast` («Contraste») y `outline` («Con borde»). No hay color libre: no
+ * cambiaría al cambiar de tema ni garantizaría que su texto se lea (ADR-0022).
+ */
+export const ESTILOS_DE_BOTON_DE_BANNER = Object.freeze(['primary', 'accent', 'contrast', 'outline']);
+
+/**
+ * Los dos botones opcionales del banner (lote 12, PBI-0184), con su texto, su enlace y, desde el lote 46 (PBI-0266), su
+ * estilo. Se nombran por su orden, «primer botón» y «segundo botón»: el estilo ya no depende de cuál es.
+ */
 const BOTONES_DE_BANNER = [
-  { texto: 'cta', enlace: 'ctaUrl', nombre: 'botón principal' },
-  { texto: 'secondaryCta', enlace: 'secondaryCtaUrl', nombre: 'botón secundario' },
+  { texto: 'cta', enlace: 'ctaUrl', estilo: 'ctaStyle', nombre: 'primer botón' },
+  { texto: 'secondaryCta', enlace: 'secondaryCtaUrl', estilo: 'secondaryCtaStyle', nombre: 'segundo botón' },
 ];
+
+/** Por omisión (PBI-0266), el primero es el principal y el segundo el secundario, como desde el lote 12. */
+const ESTILO_POR_OMISION = Object.freeze({ ctaStyle: 'primary', secondaryCtaStyle: 'accent' });
+
+/**
+ * El estilo de cada botón del banner (lote 46, PBI-0266): el guardado si es uno de los cuatro; si falta o no existe
+ * (un banner de antes del lote, o un `data.json` editado a mano), el de por omisión. Así los banners guardados se ven
+ * igual que antes.
+ */
+export function estilosDeLosBotones(banner) {
+  return Object.fromEntries(
+    Object.entries(ESTILO_POR_OMISION).map(([campo, porOmision]) => [
+      campo,
+      ESTILOS_DE_BOTON_DE_BANNER.includes(banner?.[campo]) ? banner[campo] : porOmision,
+    ]),
+  );
+}
 
 const recortado = (value) => (isText(value) ? value.trim() : '');
 
@@ -304,6 +331,13 @@ export function requireValidBanners(banners, previous = []) {
         field,
         isText,
         'hay un texto del banner que no es válido',
+        { optional: true },
+      ]),
+      // PBI-0266 (lote 46): sin el campo, la tienda usa el estilo de siempre de ese botón.
+      ...BOTONES_DE_BANNER.map(({ estilo, nombre }) => [
+        estilo,
+        oneOf(ESTILOS_DE_BOTON_DE_BANNER),
+        `el estilo del ${nombre} no es válido`,
         { optional: true },
       ]),
     ]);

@@ -912,6 +912,41 @@ try {
   if (aMedias.details?.field !== 'secondaryCtaUrl')
     throw new Error('PBI-0184: el error de un botón sin enlace debe señalar secondaryCtaUrl');
 
+  // Lote 46 (ADR-0033, PBI-0266): cada botón elige uno de los cuatro estilos del tema; sin color libre.
+  if (conSecundario.ctaStyle !== 'primary' || conSecundario.secondaryCtaStyle !== 'accent')
+    throw new Error('PBI-0266: sin estilos, el primer botón es el principal y el segundo el secundario');
+  bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  const conEstilos = await raw('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: { ...authorization(owner.token), 'content-type': 'application/json' },
+    body: JSON.stringify({
+      revision: bannerSnapshot.revision,
+      banners: { upsert: [{ id: campaign.id, ctaStyle: 'outline', secondaryCtaStyle: 'contrast' }] },
+    }),
+  });
+  if (conEstilos.status !== 200)
+    throw new Error(`PBI-0266: los estilos de los botones no se guardaron (${conEstilos.status})`);
+  const estilizado = (await request('/bff/content/banners')).find((banner) => banner.id === campaign.id);
+  if (estilizado?.ctaStyle !== 'outline' || estilizado.secondaryCtaStyle !== 'contrast')
+    throw new Error('PBI-0266: el banner público no trae el estilo de cada botón');
+  bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
+  for (const campo of ['ctaStyle', 'secondaryCtaStyle']) {
+    const rechazo = await esperarError(
+      await raw('/bff/admin/snapshot', {
+        method: 'PUT',
+        headers: { ...authorization(owner.token), 'content-type': 'application/json' },
+        body: JSON.stringify({
+          revision: bannerSnapshot.revision,
+          banners: { upsert: [{ id: campaign.id, [campo]: '#FF0000' }] },
+        }),
+      }),
+      400,
+      'INVALID_COLLECTION',
+      `PBI-0266: un color libre en ${campo}`,
+    );
+    if (rechazo.details?.field !== campo) throw new Error(`PBI-0266: el rechazo debe señalar ${campo}`);
+  }
+
   // Roles fijos: el Admin envía solo las colecciones que cambió, así que las pruebas hacen lo mismo.
   const put = (session, update) =>
     raw('/bff/admin/snapshot', {

@@ -38,6 +38,25 @@ test('PBI-0184: un botón sin configurar llega vacío, sin texto ni enlace por d
   assert.equal(banner.secondaryCtaUrl, '');
 });
 
+// --- PBI-0266 (lote 46, ADR-0033): el estilo de cada botón ---
+
+test('PBI-0266: el banner público trae el estilo de cada botón', () => {
+  const [banner] = publicos([{ ...base, ctaStyle: 'contrast', secondaryCtaStyle: 'outline' }]);
+  assert.equal(banner.ctaStyle, 'contrast');
+  assert.equal(banner.secondaryCtaStyle, 'outline');
+});
+
+test('PBI-0266: sin estilo, o con uno que no existe, el primero es el principal y el segundo el secundario', () => {
+  const [sinEstilo, desconocido] = publicos([
+    base,
+    { ...base, id: 'bn-2', ctaStyle: 'rojo', secondaryCtaStyle: '' },
+  ]);
+  for (const banner of [sinEstilo, desconocido]) {
+    assert.equal(banner.ctaStyle, 'primary', banner.id);
+    assert.equal(banner.secondaryCtaStyle, 'accent', banner.id);
+  }
+});
+
 // --- PBI-0244 (lote 30, ADR-0027; provisional): avisos programados ---
 
 const ajustes = (announcements, ahora) =>

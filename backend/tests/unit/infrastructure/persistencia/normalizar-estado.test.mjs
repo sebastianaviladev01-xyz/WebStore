@@ -405,6 +405,36 @@ test('lote 12 (PBI-0184): un banner guardado sin botón secundario recibe el «V
   assert.deepEqual(otraVez, normalizeState(guardado, demoPasswords).banners);
 });
 
+test('lote 46 (PBI-0266): un banner sin estilos en sus botones recibe los de siempre; uno con estilos, los conserva', () => {
+  const guardado = estadoV2();
+  guardado.schemaVersion = SCHEMA_VERSION;
+  guardado.banners = [
+    { id: 'bn-a', title: 'Antes', placement: 'hero', active: true, cta: 'Ver', ctaUrl: '/catalogo' },
+    {
+      id: 'bn-e',
+      title: 'Con estilos',
+      placement: 'promotion',
+      active: true,
+      ctaStyle: 'outline',
+      secondaryCtaStyle: 'contrast',
+    },
+    // A mano en data.json: un estilo que no existe vuelve al de siempre.
+    { id: 'bn-x', title: 'Mal', placement: 'hero', active: true, ctaStyle: 'rojo', secondaryCtaStyle: 7 },
+  ];
+  const [antes, conEstilos, mal] = normalizeState(guardado, demoPasswords).banners;
+  // El primero con el principal y el segundo con el secundario, como hasta el lote: la tienda se ve igual.
+  assert.equal(antes.ctaStyle, 'primary');
+  assert.equal(antes.secondaryCtaStyle, 'accent');
+  assert.equal(conEstilos.ctaStyle, 'outline');
+  assert.equal(conEstilos.secondaryCtaStyle, 'contrast');
+  assert.equal(mal.ctaStyle, 'primary');
+  assert.equal(mal.secondaryCtaStyle, 'accent');
+  // Sin migración: no cambia la versión del esquema, y normalizar otra vez no cambia nada.
+  const estado = normalizeState(guardado, demoPasswords);
+  assert.equal(estado.schemaVersion, SCHEMA_VERSION);
+  assert.deepEqual(normalizeState(estado, demoPasswords).banners, estado.banners);
+});
+
 test('lote 12 (PBI-0184): los banners principales de la semilla llevan su botón secundario explícito', () => {
   const heroes = seed.banners.filter((banner) => banner.placement === 'hero');
   assert.ok(heroes.length > 0);
