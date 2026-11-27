@@ -129,6 +129,8 @@ img {
 .ws-btn-primary,
 .ws-btn-secondary,
 .ws-btn-accent,
+.ws-btn-contrast,
+.ws-btn-outline,
 .ws-btn-on-soft,
 .ws-btn-ghost,
 .ws-btn-light {
@@ -207,6 +209,37 @@ img {
   transform: translateY(-1px);
 }
 
+/* Lote 46 (ADR-0033, PBI-0266): los otros dos estilos que puede elegir un botón del banner, con las medidas de los demás.
+   «Contraste»: relleno del color de contraste del tema y texto en la superficie, que el tema garantiza a 4.5:1 sobre él
+   (el par `contrast/surface` bloquea el guardado). Con el puntero encima, solo la sombra y la elevación: aclarar el
+   relleno bajaría el texto de 4.5:1 en un tema propio que esté justo en el mínimo. */
+.ws-btn-contrast {
+  border: 1px solid var(--ws-ink);
+  background: var(--ws-ink);
+  color: var(--ws-surface);
+}
+
+.ws-btn-contrast:hover {
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--ws-ink) 22%, transparent);
+  transform: translateY(-1px);
+}
+
+/* «Con borde», el «por defecto»: sin relleno, con el borde y el texto en el color del principal que se lee sobre el
+   fondo. Sobre la superficie (las promociones), `--ws-link`: el principal, o el contraste si el principal no llega a
+   4.5:1. El inicio lo cambia por `--ws-on-primary-soft` sobre el tinte y el velo del carrusel (home.css). Con el
+   puntero encima, el borde se dobla con un anillo interior, sin fondo que baje el contraste del texto. */
+.ws-btn-outline {
+  --ws-btn-outline-color: var(--ws-link);
+  border: 1px solid var(--ws-btn-outline-color);
+  background: transparent;
+  color: var(--ws-btn-outline-color);
+}
+
+.ws-btn-outline:hover {
+  box-shadow: inset 0 0 0 1px var(--ws-btn-outline-color);
+  transform: translateY(-1px);
+}
+
 .ws-btn-on-soft {
   border: 1px solid var(--ws-surface);
   background: var(--ws-surface);
@@ -246,6 +279,8 @@ img {
 .ws-btn-primary:active,
 .ws-btn-secondary:active,
 .ws-btn-accent:active,
+.ws-btn-contrast:active,
+.ws-btn-outline:active,
 .ws-btn-on-soft:active,
 .ws-btn-ghost:active,
 .ws-btn-light:active {
@@ -264,6 +299,8 @@ img {
 .ws-btn-primary:focus-visible,
 .ws-btn-secondary:focus-visible,
 .ws-btn-accent:focus-visible,
+.ws-btn-contrast:focus-visible,
+.ws-btn-outline:focus-visible,
 .ws-btn-on-soft:focus-visible,
 .ws-btn-ghost:focus-visible,
 .ws-btn-light:focus-visible,

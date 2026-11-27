@@ -67,17 +67,29 @@ export interface Reclamo {
   readonly dueAt: string;
 }
 
+/**
+ * Estilo de un botón del banner (lote 46, ADR-0033, PBI-0266): uno de los cuatro del tema, el mismo nombre que guarda el
+ * BFF. No hay color libre: un color fuera del tema no cambiaría al cambiar de tema ni garantizaría que su texto se lea.
+ */
+export type EstiloDeBoton = 'primary' | 'accent' | 'contrast' | 'outline';
+
 export interface Banner {
   readonly id: string;
   readonly eyebrow: string;
   readonly title: string;
   readonly description: string;
-  /** Botón principal (paleta primaria): texto y enlace, los dos o ninguno (PBI-0184). */
+  /** Primer botón: texto y enlace, los dos o ninguno (PBI-0184). */
   readonly cta: string;
   readonly ctaUrl: string;
-  /** Botón secundario (paleta secundaria), opcional (lote 12, PBI-0184). */
+  /** Segundo botón, opcional (lote 12, PBI-0184). */
   readonly secondaryCta?: string;
   readonly secondaryCtaUrl?: string;
+  /**
+   * Estilo de cada botón, uno de los cuatro del tema (lote 46, PBI-0266): `primary`, `accent`, `contrast` u
+   * `outline`. Sin él, el primero es `primary` y el segundo `accent`.
+   */
+  readonly ctaStyle?: EstiloDeBoton;
+  readonly secondaryCtaStyle?: EstiloDeBoton;
   readonly imageUrl: string;
   readonly mobileImageUrl: string;
   readonly placement: UbicacionBanner;

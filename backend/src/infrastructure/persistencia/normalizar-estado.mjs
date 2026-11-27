@@ -1,4 +1,5 @@
 import { normalizarActividad } from '../../domain/admin/actividad.rules.mjs';
+import { estilosDeLosBotones } from '../../domain/admin/colecciones.rules.mjs';
 import { sinColoresDeContenido } from '../../domain/admin/configuracion.rules.mjs';
 import {
   CAMPOS_ANTERIORES_DE_CONTENIDO,
@@ -255,6 +256,8 @@ export function normalizeState(input, demoPasswords, avisar = () => {}, opciones
     imageTone: 'light',
     ...botonSecundarioAnterior(banner),
     ...banner,
+    // Lote 46 (PBI-0266): sin estilos en los botones, o con uno que no existe, los de siempre; sin migración.
+    ...estilosDeLosBotones(banner),
   }));
   for (const key of COLLECTIONS) {
     next[key] = Array.isArray(input[key]) ? input[key] : structuredClone(seed[key] ?? []);
