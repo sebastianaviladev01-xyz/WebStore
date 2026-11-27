@@ -1470,8 +1470,7 @@
 /*
  * Acceso a WhatsApp (lote 49, ADR-0035, PBI-0241): abajo a la derecha, en la esquina donde estuvo la tuerca de temas
  * (feature 002; la quitó PBI-0188, ADR-0021), respetando las zonas seguras del celular. Un círculo de 56 px con
- * sombra suave. El verde es #128C7E, de la marca: el ícono blanco sobre él da 4,14:1 y el círculo, 3,72:1 o más
- * contra el fondo de A, B y C y 4,15:1 contra el pie (WCAG 1.4.11 pide 3:1); #25D366 con blanco da 1,98:1. Va por
+ * sombra suave, con el verde de la marca de tokens.css (`--ws-whatsapp`; su contraste está allí, WCAG 1.4.11). Va por
  * debajo de la cabecera (40), del menú lateral (50 y 60), de los filtros del celular (65 y 70) y de los diálogos, como
  * la tuerca (30). Sube sobre una barra fija al pie de la ventana (`--ws-whatsapp-elevacion`, la mide el componente).
  * El foco es el anillo del tema, como en los demás enlaces.
@@ -1486,8 +1485,8 @@
   height: 56px;
   place-items: center;
   border-radius: 999px;
-  background: #128c7e;
-  color: #ffffff;
+  background: var(--ws-whatsapp);
+  color: var(--ws-on-whatsapp);
   box-shadow: 0 8px 22px color-mix(in srgb, var(--ws-ink) 22%, transparent);
   transition:
     transform 160ms ease,
