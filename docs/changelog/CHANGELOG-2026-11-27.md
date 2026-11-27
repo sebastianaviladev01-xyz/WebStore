@@ -68,3 +68,15 @@ Sebastián Avila cerró los tres PBI que podía mover él (PBI-0242, PBI-0225 y 
 ### Verificación
 
 - `node tools/check-agents.mjs` en verde con el catálogo 1.2.0. Con un modelo de escalado desconocido, falla con dos errores, como se esperaba.
+
+## Auditoría de las reuniones
+
+Sebastián Avila pidió verificar que todas las reuniones hasta la fecha estén completas y cerradas, sin cruzarse con las decisiones más recientes (las respuestas de Daniel y las reuniones del 2026-11-11 al 2026-11-24), y dejarlo todo registrado sin construir nada («déjalo registrado nomás completo»).
+
+- **Fuentes:** las notas 1 a 8 (reuniones del 2026-11-01, 2026-11-03 y 2026-11-04), las dos reuniones del 2026-11-05, el WhatsApp del 2026-11-06, las reuniones del 2026-11-11, el WhatsApp de Daniel del 2026-11-13, la revisión de la demo del 2026-11-17, las respuestas de Daniel, la reunión del 2026-11-20 y el daily del 2026-11-24 con las capturas del SGC. De las notas del 2026-11-14 no queda la fuente original.
+- **Registrado sin construir:** PBI-0276 a PBI-0287 en el [backlog](../planning/backlog.md). Seis van al backlog funcional, como pidió Daniel el 2026-11-20: ordenar el catálogo, recojo en tienda, crear la cuenta con los datos del pedido, afinar el cambio del pedido, ampliar la foto y reseñas. Dos son correcciones pequeñas: quitar las fichas por rol de Usuarios, que choca con lo que pidió Daniel el 2026-11-17, y no indexar el backoffice. Cuatro dependen de terceros, del cliente o de Daniel: el asistente de chat, el catálogo real de Ecom, el envío nacional y el dominio propio de la demo.
+- **Notas en PBI existentes:** medios de pago (PBI-0002), actualizar instalaciones y multinegocio (PBI-0004), correos del pedido (PBI-0008), cuentas inactivas (PBI-0011) y el modo de solo lectura con el ERP (PBI-0041).
+- **Lo que no se construye**, con su motivo, en la fila «Auditoría de las reuniones: lo que no se construye» de las [decisiones pendientes](../planning/PENDING-DECISIONS.md): filtros por marca, stock o característica; buscar fuera del nombre; «Comprar ahora»; un color por barra en el Dashboard; el logo como archivo; el carrito en el backoffice; los datos personales en el registro; y los sprints del 2026-11-05.
+- **Abierto para Sebastián y Daniel:** un PR por feature (Daniel, 2026-11-13) o un PR por hito (ADR-0016), cuya confirmación no consta. Rige ADR-0016 mientras tanto.
+- **Documentos corregidos:** US23 (Contenido ya no cambia el color), `PRODUCT.md` (los tres temas), la nota de sprints de las historias y dos filas de las decisiones pendientes («pedidos por distrito» y «Agregar» en lugar de «Nuevo»).
+- No cambia el código ni la demo.

@@ -8,7 +8,7 @@
 ## Descripción
 
 - **Como** superadministrador (desde el lote 07, Contenido es configuración de la tienda: PBI-0013, confirmado por Daniel el 2026-11-18 en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Permisos de los roles»)
-- **Quiero** configurar el logo, el color, el contacto, la navegación, el pie de página y las páginas informativas
+- **Quiero** configurar el logo, el contacto, la navegación, el pie de página y las páginas informativas (los colores, en Temas)
 - **Para** adaptar la tienda sin cambiar el código
 
 ## Criterios de aceptación
@@ -18,8 +18,10 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ### Escenario 01 – Identidad
 
 - **Dado** que el superadministrador está en Contenido
-- **Cuando** carga un logo, o indica su URL, y cambia el color principal
-- **Entonces** la tienda muestra el logo y el color nuevos.
+- **Cuando** carga un logo, o indica su URL
+- **Entonces** la tienda muestra el logo nuevo. Los colores ya no se cambian en Contenido sino en Temas, desde la feature 002 (temas A, B y C y temas propios).
+
+> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal.
 
 ### Escenario 02 – Navegación, contacto y pie
 
@@ -50,7 +52,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ## Fuera de alcance y pendientes
 
 - Para la primera versión de la demo basta con lo que hay (Daniel, 2026-11-20); lo demás que tiene OpenCart se evaluará en el backlog funcional (PBI-0015, cerrada en el lote 18).
-- La paleta por defecto está pendiente de confirmar (PBI-0014 del [backlog](../../../backlog.md)).
+- La paleta quedó decidida el 2026-11-11: tres temas, A, B y C, con B activo al instalar ([decisiones pendientes](../../../PENDING-DECISIONS.md), «Confirmación de la paleta»; PBI-0014, cerrada).
 
 ### Escenario 06 – Aviso de la navegación superior
 
