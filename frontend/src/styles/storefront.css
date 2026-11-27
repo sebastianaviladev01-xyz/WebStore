@@ -1466,3 +1466,68 @@
   padding: 16px 24px 24px;
   border-top: 1px solid var(--ws-border);
 }
+
+/*
+ * Acceso a WhatsApp (lote 49, ADR-0035, PBI-0241): abajo a la derecha, en la esquina donde estuvo la tuerca de temas
+ * (feature 002; la quitó PBI-0188, ADR-0021), respetando las zonas seguras del celular. Un círculo de 56 px con
+ * sombra suave. El verde es #128C7E, de la marca: el ícono blanco sobre él da 4,14:1 y el círculo, 3,72:1 o más
+ * contra el fondo de A, B y C y 4,15:1 contra el pie (WCAG 1.4.11 pide 3:1); #25D366 con blanco da 1,98:1. Va por
+ * debajo de la cabecera (40), del menú lateral (50 y 60), de los filtros del celular (65 y 70) y de los diálogos, como
+ * la tuerca (30). Sube sobre una barra fija al pie de la ventana (`--ws-whatsapp-elevacion`, la mide el componente).
+ * El foco es el anillo del tema, como en los demás enlaces.
+ */
+.ws-whatsapp {
+  position: fixed;
+  right: calc(16px + env(safe-area-inset-right));
+  bottom: calc(16px + env(safe-area-inset-bottom) + var(--ws-whatsapp-elevacion, 0px));
+  z-index: 30;
+  display: grid;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  border-radius: 999px;
+  background: #128c7e;
+  color: #ffffff;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--ws-ink) 22%, transparent);
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.ws-whatsapp:hover {
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--ws-ink) 28%, transparent);
+  transform: translateY(-2px);
+}
+
+.ws-whatsapp-icono {
+  width: 30px;
+  height: 30px;
+}
+
+.ws-whatsapp-globo {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+}
+
+.ws-whatsapp-auricular {
+  fill: currentColor;
+}
+
+@media (min-width: 768px) {
+  .ws-whatsapp {
+    right: calc(24px + env(safe-area-inset-right));
+    bottom: calc(24px + env(safe-area-inset-bottom) + var(--ws-whatsapp-elevacion, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-whatsapp {
+    transition: none;
+  }
+
+  .ws-whatsapp:hover {
+    transform: none;
+  }
+}

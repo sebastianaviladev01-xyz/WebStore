@@ -236,6 +236,12 @@ export interface ConfiguracionTienda {
   /** La versión vigente de los términos y cuándo se publicó (null si es anterior al registro); la calcula el BFF. */
   readonly termsVersion: number;
   readonly termsPublishedAt: string | null;
+  /**
+   * Acceso a WhatsApp (lote 49, PBI-0241): el número, que el BFF guarda solo con sus dígitos, y el mensaje inicial.
+   * Vacío el número, la tienda no muestra el botón.
+   */
+  readonly whatsappNumber: string;
+  readonly whatsappMessage: string;
 }
 
 export interface SnapshotTienda {
