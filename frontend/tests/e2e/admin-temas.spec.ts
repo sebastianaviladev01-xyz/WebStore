@@ -363,6 +363,72 @@ test.describe('Temas del Admin', () => {
       .toBeGreaterThanOrEqual(0);
   });
 
+  // PBI-0272 (hallazgo del lote 47): en las capturas del diálogo a 375 px quedaba un espacio en blanco bajo «Cancelar» y
+  // «Guardar tema». No era la captura de página completa: la vista previa tiene un texto solo para lectores de pantalla
+  // (`sr-only`, en posición absoluta) que se colocaba respecto de la ventana y no del contenido que se desplaza, y le daba
+  // a la ventana 572 px de desplazamiento propio. Al llegar al final del contenido con la rueda o el dedo, se desplazaba
+  // la ventana entera: el título salía por arriba y los botones subían, con un hueco debajo.
+  test('PBI-0272: a 375 × 812, el pie de «Cancelar» y «Guardar tema» queda al final de la ventana, sin hueco debajo', async ({
+    page,
+  }) => {
+    await abrirTemas(page);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await abrirNuevoTema(page);
+    const formulario = dialogo(page);
+    const titulo = formulario.getByRole('heading', { name: 'Nuevo tema' });
+    const guardar = formulario.getByRole('button', { name: 'Guardar tema' });
+    const cancelar = formulario.getByRole('button', { name: 'Cancelar' });
+    // El pie es el contenedor de los dos botones: su relleno inferior es el único espacio que puede quedar debajo.
+    const relleno = await guardar
+      .locator('..')
+      .evaluate((pie) => Number.parseFloat(getComputedStyle(pie).paddingBottom));
+    /** Espacio entre el final de los botones y el final de la ventana. */
+    const hueco = async () => {
+      const caja = (await formulario.boundingBox())!;
+      const finDeLosBotones = Math.max(
+        ...[(await guardar.boundingBox())!, (await cancelar.boundingBox())!].map(
+          (boton) => boton.y + boton.height,
+        ),
+      );
+      return caja.y + caja.height - finDeLosBotones;
+    };
+
+    // Al abrir: la ventana ocupa el alto que le dejan (812 − 32) y el pie queda al final.
+    const caja = (await formulario.boundingBox())!;
+    expect(caja.y + caja.height).toBeLessThanOrEqual(812);
+    expect(await hueco()).toBeLessThanOrEqual(relleno + 1);
+
+    // Con la rueda hasta el final del contenido (y más allá): se desplaza el contenido, no la ventana.
+    const nota = formulario.getByText('Solo cambia aquí.', { exact: false });
+    await formulario.getByRole('group', { name: 'Colores' }).hover();
+    await expect
+      .poll(
+        async () => {
+          await page.mouse.wheel(0, 600);
+          return nota.evaluate((nodo) => {
+            const r = nodo.getBoundingClientRect();
+            return r.bottom <= window.innerHeight && r.top >= 0;
+          });
+        },
+        { message: 'el final del contenido llega a la vista' },
+      )
+      .toBe(true);
+    for (let i = 0; i < 3; i++) await page.mouse.wheel(0, 600);
+    await expect
+      .poll(hueco, { message: 'hueco bajo los botones tras la rueda' })
+      .toBeLessThanOrEqual(relleno + 1);
+    await expect(titulo).toBeInViewport();
+
+    // Llevar un elemento del final al principio (como hace un enlace o la búsqueda del navegador) tampoco la desplaza.
+    await formulario
+      .getByRole('heading', { name: 'Revisión de contraste' })
+      .evaluate((nodo) => nodo.scrollIntoView({ block: 'start', behavior: 'instant' }));
+    await expect
+      .poll(hueco, { message: 'hueco bajo los botones tras scrollIntoView' })
+      .toBeLessThanOrEqual(relleno + 1);
+    await expect(titulo).toBeInViewport();
+  });
+
   // Lote 29 (ADR-0027, PBI-0239): junto al selector nativo, cada color tiene un campo de texto con su código hexadecimal.
   // Daniel: «yo quiero escribir hexadecimal, no me permite». Los dos se sincronizan, el código se acepta con o sin «#» y
   // en minúsculas, y uno mal escrito se marca, no se aplica ni se guarda. La revisión de contraste mira lo escrito.
