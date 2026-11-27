@@ -32,6 +32,9 @@ async function nuevoTemaCon(page: Page, colores: Record<string, string>): Promis
     .click();
   await page.getByRole('button', { name: 'Nuevo tema' }).click();
   await expect(dialogo(page).getByRole('heading', { name: 'Nuevo tema' })).toBeVisible();
+  // Material pone el foco en «Nombre» al terminar de abrir el diálogo: si ya se estuviera escribiendo un código, el
+  // texto acabaría en el nombre (lote 48, fallo intermitente con un recuento distinto de pares).
+  await expect(dialogo(page).getByRole('textbox', { name: 'Nombre' })).toBeFocused();
   for (const [color, valor] of Object.entries(colores)) await codigo(page, color).fill(valor);
 }
 
