@@ -160,10 +160,10 @@ test.describe('PBI-0214 y PBI-0221: el registro del banner', () => {
       await formulario.getByRole('textbox', { name: 'Título', exact: true }).fill(titulo);
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Con hora.');
       await expect(
-        formulario.getByRole('textbox', { name: 'Botón principal: lo que dice' }),
+        formulario.getByRole('textbox', { name: 'Primer botón: lo que dice' }),
       ).toHaveAccessibleDescription(/El texto que ve el comprador/);
-      await formulario.getByRole('textbox', { name: 'Botón principal: lo que dice' }).fill('Ver');
-      await formulario.getByRole('textbox', { name: 'Botón principal: adónde lleva' }).fill('/catalogo');
+      await formulario.getByRole('textbox', { name: 'Primer botón: lo que dice' }).fill('Ver');
+      await formulario.getByRole('textbox', { name: 'Primer botón: adónde lleva' }).fill('/catalogo');
       // El tope de tres banners principales ya lo ocupan los de ejemplo: se guarda como promoción.
       await elegir(page, formulario, 'Ubicación', 'Promoción');
       await expect(formulario.getByLabel('Inicio')).toHaveAccessibleDescription('Fecha y hora de Lima.');

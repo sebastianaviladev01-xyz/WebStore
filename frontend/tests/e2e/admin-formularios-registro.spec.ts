@@ -224,7 +224,7 @@ test.describe('PBI-0268: páginas de registro como los formularios del SGC', () 
     await page.goto(`/banners/${banner.id}`);
     const edicion = page.getByRole('form', { name: 'Editar banner' });
     await expect(cabecera(edicion).getByRole('combobox', { name: 'Estado', exact: true })).toBeVisible();
-    const texto = edicion.getByRole('textbox', { name: 'Botón principal: lo que dice', exact: true });
+    const texto = edicion.getByRole('textbox', { name: 'Primer botón: lo que dice', exact: true });
     await texto.fill('Ver ofertas');
     await expect(texto).toHaveAccessibleDescription(/11\/40/);
     await texto.fill('');

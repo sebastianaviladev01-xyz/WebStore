@@ -124,3 +124,33 @@ test('PBI-0184: el texto del botón admite los mismos 40 caracteres que el BFF',
   assert.equal(MAXIMO_TEXTO_DE_BOTON, 40);
   assert.equal(MAXIMO_TEXTO_DE_BOTON, bff.MAXIMO_TEXTO_DE_BOTON);
 });
+
+// Lote 46 (ADR-0033, PBI-0266): cada botón del banner elige su estilo entre los cuatro del tema, sin color libre. Por
+// omisión, el primero es «Principal» y el segundo «Secundario», como desde el lote 12: los banners guardados no cambian.
+const { ESTILOS_DE_BOTON, ESTILO_POR_OMISION, estiloDeBoton } = await import(
+  `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+);
+
+test('PBI-0266: los cuatro estilos del tema, en este orden y con su nombre', () => {
+  assert.deepEqual(
+    ESTILOS_DE_BOTON.map(({ valor, nombre }) => [valor, nombre]),
+    [
+      ['primary', 'Principal'],
+      ['accent', 'Secundario'],
+      ['contrast', 'Contraste'],
+      ['outline', 'Con borde'],
+    ],
+  );
+});
+
+test('PBI-0266: por omisión, el primero es el principal y el segundo el secundario', () => {
+  assert.deepEqual(ESTILO_POR_OMISION, { ctaStyle: 'primary', secondaryCtaStyle: 'accent' });
+});
+
+test('PBI-0266: el estilo guardado se conserva; uno que falta o no existe pasa al de por omisión', () => {
+  for (const { valor } of ESTILOS_DE_BOTON) assert.equal(estiloDeBoton(valor, 'accent'), valor);
+  assert.equal(estiloDeBoton(undefined, 'primary'), 'primary');
+  assert.equal(estiloDeBoton(undefined, 'accent'), 'accent');
+  for (const desconocido of ['', 'rojo', '#FF0000', null, 3])
+    assert.equal(estiloDeBoton(desconocido, 'accent'), 'accent');
+});

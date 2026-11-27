@@ -362,8 +362,8 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await page.getByRole('textbox', { name: 'Antetítulo' }).fill('Campaña');
     await page.getByRole('textbox', { name: 'Título', exact: true }).fill('Banner lote 06');
     await page.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Descripción');
-    await page.getByRole('textbox', { name: 'Botón principal: lo que dice' }).fill('Ver');
-    await page.getByRole('textbox', { name: 'Botón principal: adónde lleva' }).fill('/catalogo');
+    await page.getByRole('textbox', { name: 'Primer botón: lo que dice' }).fill('Ver');
+    await page.getByRole('textbox', { name: 'Primer botón: adónde lleva' }).fill('/catalogo');
     await page.getByRole('combobox', { name: 'Ubicación' }).click();
     await page.getByRole('option', { name: 'Promoción' }).click();
     // Lote 24 (PBI-0221): la vigencia lleva fecha y hora de Lima; el fin puede ir el mismo día, pero no antes.
@@ -389,11 +389,11 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await page.getByRole('option', { name: 'Promoción' }).click();
     await page.getByLabel('Inicio').fill('2030-12-01T00:00');
     await page.getByLabel('Fin').fill('2030-12-10T23:59');
-    const enlacePrincipal = page.getByRole('textbox', { name: 'Botón principal: adónde lleva' });
-    const textoSecundario = page.getByRole('textbox', { name: 'Botón secundario: lo que dice' });
-    await page.getByRole('textbox', { name: 'Botón principal: lo que dice' }).fill('Ver');
+    const enlacePrincipal = page.getByRole('textbox', { name: 'Primer botón: adónde lleva' });
+    const textoSecundario = page.getByRole('textbox', { name: 'Segundo botón: lo que dice' });
+    await page.getByRole('textbox', { name: 'Primer botón: lo que dice' }).fill('Ver');
     await page
-      .getByRole('textbox', { name: 'Botón secundario: adónde lleva' })
+      .getByRole('textbox', { name: 'Segundo botón: adónde lleva' })
       .fill('https://example.com/ofertas');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(enlacePrincipal).toHaveAccessibleDescription('Falta el enlace del botón.');

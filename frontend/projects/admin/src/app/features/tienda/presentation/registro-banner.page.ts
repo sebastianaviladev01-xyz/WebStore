@@ -18,6 +18,9 @@ import { TiendaFacade } from '../application/tienda.facade';
 import {
   aHoraDeLima,
   errorDeBoton,
+  ESTILO_POR_OMISION,
+  estiloDeBoton,
+  ESTILOS_DE_BOTON,
   finAntesDelInicio,
   heroesQueCoinciden,
   instanteDeLaVigencia,
@@ -34,7 +37,7 @@ import {
 import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { contadorDeCaracteres } from '../domain/registro.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
-import { Banner, ETIQUETAS_UBICACION_BANNER, UbicacionBanner } from '../domain/tienda.model';
+import { Banner, EstiloDeBoton, ETIQUETAS_UBICACION_BANNER, UbicacionBanner } from '../domain/tienda.model';
 import { TonoDeFoto } from '../domain/tono-de-foto.rules';
 import { conservarBorrador } from './borrador';
 import { imagenDelBanner } from './reducir-foto';
@@ -147,7 +150,10 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
               <mat-error>{{ mensaje(form.controls.description.errors) }}</mat-error>
             </mat-form-field>
           </ws-admin-seccion-registro>
-          <!-- PBI-0184: dos botones opcionales, cada uno con su texto y su enlace (los dos o ninguno). -->
+          <!--
+            PBI-0184: dos botones opcionales, cada uno con su texto y su enlace (los dos o ninguno). Lote 46 (PBI-0266):
+            y con su estilo, uno de los cuatro del tema, con una muestra de cada uno en la lista.
+          -->
           <ws-admin-seccion-registro titulo="Botones" icono="enlace">
             @for (boton of botones; track boton.texto) {
               <!-- En el celular, uno debajo del otro: en dos columnas, la etiqueta del campo no cabe. -->
@@ -171,6 +177,27 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
                     </ws-admin-texto-ayuda>
                   </mat-hint>
                   <mat-error>{{ mensajeDeBoton(form.controls[boton.enlace].errors) }}</mat-error>
+                </mat-form-field>
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>{{ boton.nombre }}: estilo</mat-label>
+                  <mat-select [formControlName]="boton.estilo">
+                    @for (estilo of estilos; track estilo.valor) {
+                      <mat-option [value]="estilo.valor">
+                        <span class="inline-flex items-center gap-2">
+                          <span
+                            aria-hidden="true"
+                            class="inline-block h-4 w-7 shrink-0 rounded"
+                            [style.background]="muestras[estilo.valor].fondo"
+                            [style.box-shadow]="'inset 0 0 0 1px ' + muestras[estilo.valor].borde"
+                          ></span>
+                          {{ estilo.nombre }}
+                        </span>
+                      </mat-option>
+                    }
+                  </mat-select>
+                  <mat-hint>
+                    <ws-admin-texto-ayuda>{{ boton.ayudaDelEstilo }}</ws-admin-texto-ayuda>
+                  </mat-hint>
                 </mat-form-field>
               </div>
             }
@@ -347,21 +374,40 @@ export class RegistroBannerPage {
   protected contador(texto: string): string {
     return contadorDeCaracteres(texto, MAXIMO_TEXTO_DE_BOTON);
   }
-  /** Los dos botones del banner (PBI-0184): el principal con la paleta primaria y el secundario con la secundaria. */
+  /**
+   * Los dos botones del banner (PBI-0184), cada uno con su texto, su enlace y, desde el lote 46 (PBI-0266), su estilo.
+   * Se nombran por su orden: el color ya no depende de cuál es.
+   */
   protected readonly botones = [
     {
-      nombre: 'Botón principal',
-      ayuda: 'Opcional. El texto que ve el comprador, con el color principal del tema.',
+      nombre: 'Primer botón',
+      ayuda: 'Opcional. El texto que ve el comprador.',
+      ayudaDelEstilo: 'Los colores del tema activo. Si no lo cambias, «Principal».',
       texto: 'cta',
       enlace: 'ctaUrl',
+      estilo: 'ctaStyle',
     },
     {
-      nombre: 'Botón secundario',
-      ayuda: 'Opcional. El texto que ve el comprador, con el color secundario del tema.',
+      nombre: 'Segundo botón',
+      ayuda: 'Opcional. El texto que ve el comprador.',
+      ayudaDelEstilo: 'Los colores del tema activo. Si no lo cambias, «Secundario».',
       texto: 'secondaryCta',
       enlace: 'secondaryCtaUrl',
+      estilo: 'secondaryCtaStyle',
     },
   ] as const;
+  /** Los cuatro estilos del tema que puede llevar cada botón (lote 46, PBI-0266). */
+  protected readonly estilos = ESTILOS_DE_BOTON;
+  /**
+   * La muestra de cada estilo en la lista: el relleno y el borde con que la tienda pinta el botón, con los tokens del
+   * tema activo (`ws-btn-primary`, `ws-btn-accent`, `ws-btn-contrast` y `ws-btn-outline` de la tienda).
+   */
+  protected readonly muestras: Readonly<Record<EstiloDeBoton, { fondo: string; borde: string }>> = {
+    primary: { fondo: 'var(--ws-primary)', borde: 'var(--ws-primary)' },
+    accent: { fondo: 'var(--ws-accent)', borde: 'var(--ws-accent-line)' },
+    contrast: { fondo: 'var(--ws-ink)', borde: 'var(--ws-ink)' },
+    outline: { fondo: 'transparent', borde: 'var(--ws-link)' },
+  };
   /**
    * Las dos imágenes del banner (lote 24, ADR-0026, PBI-0214; provisional), con el lado y el peso máximos que acepta el
    * BFF. Solo la de escritorio da el tono de los controles del carrusel (PBI-0221): en el celular, los controles van
@@ -411,6 +457,10 @@ export class RegistroBannerPage {
       validators: [Validators.maxLength(MAXIMO_TEXTO_DE_BOTON)],
     }),
     secondaryCtaUrl: new FormControl('', { nonNullable: true }),
+    ctaStyle: new FormControl<EstiloDeBoton>(ESTILO_POR_OMISION.ctaStyle, { nonNullable: true }),
+    secondaryCtaStyle: new FormControl<EstiloDeBoton>(ESTILO_POR_OMISION.secondaryCtaStyle, {
+      nonNullable: true,
+    }),
     imageUrl: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
     imageFit: new FormControl<'cover' | 'contain'>('contain', { nonNullable: true }),
     imageTone: new FormControl<'light' | 'dark'>('light', { nonNullable: true }),
@@ -428,7 +478,8 @@ export class RegistroBannerPage {
   protected readonly borrador = conservarBorrador({
     form: this.form,
     guardar: () => this.form.getRawValue(),
-    restaurar: (valor) => this.form.setValue(valor),
+    // Un borrador de antes del lote 46 no trae los estilos: conservan los del formulario.
+    restaurar: (valor) => this.form.setValue({ ...this.form.getRawValue(), ...valor }),
     diferido: true,
   });
   constructor() {
@@ -529,6 +580,8 @@ export class RegistroBannerPage {
       ctaUrl: banner.ctaUrl ?? '',
       secondaryCta: banner.secondaryCta ?? '',
       secondaryCtaUrl: banner.secondaryCtaUrl ?? '',
+      ctaStyle: estiloDeBoton(banner.ctaStyle, ESTILO_POR_OMISION.ctaStyle),
+      secondaryCtaStyle: estiloDeBoton(banner.secondaryCtaStyle, ESTILO_POR_OMISION.secondaryCtaStyle),
       imageUrl: banner.imageUrl,
       imageFit: banner.imageFit ?? 'contain',
       imageTone: banner.imageTone ?? 'light',
