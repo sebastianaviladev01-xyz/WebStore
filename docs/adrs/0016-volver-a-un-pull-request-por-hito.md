@@ -73,4 +73,4 @@ No se conserva el apartado «Registro de la entrega», que llegó con ADR-0015: 
 - PBI-0135, los ajustes del flujo de un solo PR, pasa a `descartada`. Las fricciones del piloto que valen con cualquier flujo quedan en PBI-0136.
 - La corrección directa no se adopta: los defectos del backlog siguen el flujo de una feature o, si no lo son, una rama y un PR, como hasta ahora.
 
-> Nota (2026-11-27): la auditoría de las reuniones encontró que la confirmación de Daniel Avila que pedía este ADR no consta. Queda registrado como decisión abierta de Sebastián Avila y Daniel en las [decisiones pendientes](../planning/PENDING-DECISIONS.md) («Un PR por feature o un PR por hito»). Mientras tanto, este ADR sigue vigente.
+> Nota (2026-11-27): la auditoría de las reuniones encontró que la confirmación de Daniel Avila que pedía este ADR no consta. Queda registrado como decisión abierta de Sebastián Avila y Daniel en las [decisiones pendientes](../planning/PENDING-DECISIONS.md) («Un PR por feature o un PR por hito»). El 2026-11-24 Daniel dijo que reescribirá el flujo al migrar el repositorio. Mientras tanto, este ADR sigue vigente.

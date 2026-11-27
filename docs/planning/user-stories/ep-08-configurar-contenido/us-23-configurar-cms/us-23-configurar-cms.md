@@ -21,7 +21,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** carga un logo, o indica su URL
 - **Entonces** la tienda muestra el logo nuevo. Los colores ya no se cambian en Contenido sino en Temas, desde la feature 002 (temas A, B y C y temas propios).
 
-> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal.
+> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal. El logo es la única imagen que aún acepta URL; desde la revisión de la demo del 2026-11-17 las demás se cargan como archivo (PBI-0214), y cargar el logo como archivo queda registrado en PBI-0289.
 
 ### Escenario 02 – Navegación, contacto y pie
 
