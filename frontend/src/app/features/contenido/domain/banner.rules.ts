@@ -1,4 +1,4 @@
-import type { Banner, UbicacionBanner } from './contenido.model';
+import type { Banner, EstiloBotonBanner, UbicacionBanner } from './contenido.model';
 
 /** Banners por zona del inicio: el mismo máximo de héroes activos que comprueba el Admin (PBI-0117). */
 export const MAXIMO_BANNERS_POR_ZONA = 3;
@@ -22,31 +22,49 @@ export function bannersDeZona(
   return banners.filter((banner) => ubicaciones.includes(banner.placement)).slice(0, MAXIMO_BANNERS_POR_ZONA);
 }
 
-/** Paleta del tema con la que se pinta un botón del banner (lote 12, PBI-0184). */
-export type PaletaBoton = 'primaria' | 'secundaria';
+/** Los cuatro estilos del tema que puede llevar un botón del banner (lote 46, ADR-0033, PBI-0266). */
+export const ESTILOS_DE_BOTON_BANNER: readonly EstiloBotonBanner[] = [
+  'primary',
+  'accent',
+  'contrast',
+  'outline',
+];
 
 export interface BotonBanner {
+  /** Cuál de los dos botones es: identifica al botón aunque los dos tengan el mismo estilo. */
+  readonly posicion: 'primero' | 'segundo';
   readonly etiqueta: string;
   readonly enlace: string;
-  readonly paleta: PaletaBoton;
+  readonly estilo: EstiloBotonBanner;
 }
 
+const estiloValido = (estilo: unknown, porOmision: EstiloBotonBanner): EstiloBotonBanner =>
+  ESTILOS_DE_BOTON_BANNER.find((candidato) => candidato === estilo) ?? porOmision;
+
 /**
- * Los botones que muestra un banner (lote 12, ADR-0021, PBI-0184): primero el principal, con la paleta primaria, y
- * después el secundario, con la secundaria. Un botón sale solo si tiene texto y enlace.
+ * Los botones que muestra un banner (lote 12, ADR-0021, PBI-0184): primero el primero y después el segundo. Un botón
+ * sale solo si tiene texto y enlace. Desde el lote 46 (PBI-0266), cada uno con el estilo elegido al registrar el
+ * banner; sin estilo, o con uno que la tienda no conoce, el primero con el principal y el segundo con el secundario.
  */
 export function botonesDelBanner(
-  banner: Pick<Banner, 'ctaLabel' | 'ctaUrl' | 'secondaryCtaLabel' | 'secondaryCtaUrl'>,
+  banner: Pick<
+    Banner,
+    'ctaLabel' | 'ctaUrl' | 'secondaryCtaLabel' | 'secondaryCtaUrl' | 'ctaStyle' | 'secondaryCtaStyle'
+  >,
 ): readonly BotonBanner[] {
-  const candidatos: readonly [string | undefined, string | undefined, PaletaBoton][] = [
-    [banner.ctaLabel, banner.ctaUrl, 'primaria'],
-    [banner.secondaryCtaLabel, banner.secondaryCtaUrl, 'secundaria'],
+  const candidatos: readonly BotonBanner[] = [
+    {
+      posicion: 'primero',
+      etiqueta: (banner.ctaLabel ?? '').trim(),
+      enlace: (banner.ctaUrl ?? '').trim(),
+      estilo: estiloValido(banner.ctaStyle, 'primary'),
+    },
+    {
+      posicion: 'segundo',
+      etiqueta: (banner.secondaryCtaLabel ?? '').trim(),
+      enlace: (banner.secondaryCtaUrl ?? '').trim(),
+      estilo: estiloValido(banner.secondaryCtaStyle, 'accent'),
+    },
   ];
-  return candidatos
-    .map(([etiqueta, enlace, paleta]) => ({
-      etiqueta: (etiqueta ?? '').trim(),
-      enlace: (enlace ?? '').trim(),
-      paleta,
-    }))
-    .filter((boton) => boton.etiqueta && boton.enlace);
+  return candidatos.filter((boton) => boton.etiqueta && boton.enlace);
 }

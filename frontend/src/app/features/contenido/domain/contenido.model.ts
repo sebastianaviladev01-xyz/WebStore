@@ -1,16 +1,25 @@
 export type UbicacionBanner = 'hero' | 'promotion' | 'secondary';
 
+/**
+ * Estilo de un botón del banner (lote 46, ADR-0033, PBI-0266), uno de los cuatro del tema: `primary` (relleno del
+ * principal), `accent` (relleno del secundario), `contrast` (relleno del color de contraste) y `outline` (con borde).
+ */
+export type EstiloBotonBanner = 'primary' | 'accent' | 'contrast' | 'outline';
+
 export interface Banner {
   readonly id: string;
   readonly eyebrow: string;
   readonly title: string;
   readonly description: string;
-  /** Botón principal (paleta primaria). Sin texto o sin enlace, no se muestra (PBI-0184). */
+  /** Primer botón. Sin texto o sin enlace, no se muestra (PBI-0184). */
   readonly ctaLabel: string;
   readonly ctaUrl: string;
-  /** Botón secundario (paleta secundaria), opcional (lote 12, PBI-0184). */
+  /** Segundo botón, opcional (lote 12, PBI-0184). */
   readonly secondaryCtaLabel?: string;
   readonly secondaryCtaUrl?: string;
+  /** Estilo de cada botón (lote 46, PBI-0266); sin él, el primero es `primary` y el segundo `accent`. */
+  readonly ctaStyle?: EstiloBotonBanner;
+  readonly secondaryCtaStyle?: EstiloBotonBanner;
   readonly imageUrl: string;
   readonly mobileImageUrl: string;
   readonly placement: UbicacionBanner;

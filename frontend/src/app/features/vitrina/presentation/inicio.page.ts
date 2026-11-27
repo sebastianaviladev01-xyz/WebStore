@@ -149,7 +149,7 @@ import { AtajosServicioComponent } from './atajos-servicio.component';
                   <h3>{{ banner.title }}</h3>
                   <span>{{ banner.description }}</span>
                   <div class="ws-campaign-actions">
-                    <!-- PBI-0184: el botón principal con la paleta primaria y el secundario con la secundaria. -->
+                    <!-- PBI-0184 y PBI-0266: los dos botones del banner, cada uno con el estilo elegido. -->
                     <ws-banner-buttons [banner]="banner" />
                     <small>{{ banner.eyebrow }}</small>
                   </div>

@@ -102,6 +102,16 @@
   font-weight: 500;
 }
 
+/*
+ * Lote 46 (PBI-0266): en el carrusel, los botones van sobre el tinte del principal (en el celular) o sobre su velo,
+ * del 96 al 88 % en la zona del texto y algo menos al final de una fila larga (en escritorio). «Con borde» escribe ahí
+ * con el texto del tinte, como la descripción: con el principal (`--ws-link`), B quedaba en 4.57:1 sobre el velo
+ * encima de una foto oscura y en 3.15:1 donde el velo baja al 70 %; con `--ws-on-primary-soft`, 4.79:1 en ese peor caso.
+ */
+.ws-hero .ws-btn-outline {
+  --ws-btn-outline-color: var(--ws-on-primary-soft);
+}
+
 .ws-hero-media {
   position: relative;
   min-width: 0;
