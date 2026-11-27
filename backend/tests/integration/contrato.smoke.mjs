@@ -803,6 +803,52 @@ try {
     body: JSON.stringify({ revision: snapshot.revision, config: { addToCartDisplay: 'dialog' } }),
   });
 
+  // Lote 49 (ADR-0035, PBI-0241): el acceso a WhatsApp. Sin número no hay botón: la semilla no trae ninguno.
+  if (conListas.whatsappNumber !== '' || conListas.whatsappMessage !== '')
+    throw new Error('Contenido debe publicar whatsappNumber y whatsappMessage, vacíos por defecto');
+  if (snapshot.config.whatsappNumber !== '' || snapshot.config.whatsappMessage !== '')
+    throw new Error('La config del Admin debe traer whatsappNumber y whatsappMessage, vacíos por defecto');
+  const numeroInvalido = await raw('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({ revision: snapshot.revision, config: { whatsappNumber: '987 654 321' } }),
+  });
+  const problemaDeNumero = await esperarError(
+    numeroInvalido,
+    400,
+    'INVALID_COLLECTION',
+    'número de WhatsApp sin código de país',
+  );
+  if (
+    problemaDeNumero.details?.field !== 'whatsappNumber' ||
+    !/código de país/.test(problemaDeNumero.message)
+  )
+    throw new Error('El rechazo del número de WhatsApp debe nombrar el campo y pedir el código de país');
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      config: { whatsappNumber: '+51 987 654 321', whatsappMessage: '  Hola, tengo una consulta  ' },
+    }),
+  });
+  const conWhatsapp = await request('/bff/content/settings');
+  if (
+    conWhatsapp.whatsappNumber !== '51987654321' ||
+    conWhatsapp.whatsappMessage !== 'Hola, tengo una consulta'
+  )
+    throw new Error('Contenido debe publicar el número de WhatsApp con sus dígitos y el mensaje recortado');
+  snapshot = await request('/bff/admin/snapshot', {
+    method: 'PUT',
+    headers: authorization(owner.token),
+    body: JSON.stringify({
+      revision: snapshot.revision,
+      config: { whatsappNumber: '', whatsappMessage: '' },
+    }),
+  });
+  if ((await request('/bff/content/settings')).whatsappNumber !== '')
+    throw new Error('Un número de WhatsApp vacío quita el botón de la tienda');
+
   // Lote 24 (ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen del banner se carga como archivo y la
   // tienda la pide por la dirección del BFF, con su versión.
   const imagenDeBanner = dataUrl('webp', webp(2560, 1024));

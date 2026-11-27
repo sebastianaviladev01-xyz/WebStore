@@ -246,3 +246,12 @@ Lo que salió de la reunión del 2026-11-24 y de las capturas del SGC (PBI-0265 
 | El Dashboard tiene la forma del panel del SGC y se calcula por periodo (lote 45, PR #107: PBI-0270) | `periodo.rules.ts`, `resumen.rules.ts` (`serieDelPeriodo`), `distribucion-ventas.rules.ts` y `resumen.page.ts`. Pruebas: `periodo.rules.spec.mjs`, `resumen.rules.spec.mjs`, `distribucion-ventas.rules.spec.mjs` y `admin-dashboard-periodo.spec.ts` |
 | Cada botón del banner tiene su estilo (lote 46, PR #109: PBI-0266) | `ESTILOS_DE_BOTON_DE_BANNER` (`colecciones.rules.mjs`), `botonesDelBanner()` y `ws-btn-contrast`/`ws-btn-outline`; [contrato](../../backend/docs/BFF-CONTRACT.md). Pruebas: `banner-botones.rules.test.mjs`, `botones-banner.rules.spec.mjs`, `admin-botones-del-banner.spec.ts` y `storefront-botones-del-banner.spec.ts` |
 | El editor de temas explica el contraste y sugiere el color que cumple (lote 47, PR #105: PBI-0267) | `sugerencia-contraste.rules.ts` y `tema.dialog.ts`. Pruebas: `sugerencia-contraste.rules.spec.mjs` y `admin-temas-sugerencia.spec.ts` |
+
+## Acceso a WhatsApp: lote 49 (2026-11-27)
+
+El acceso a WhatsApp que Daniel dejó para el backlog en la reunión del 2026-11-20 (PBI-0241) se construyó como enlace configurable, sin feature nueva ([ADR-0035](../adrs/0035-construir-por-lotes-el-acceso-a-whatsapp.md)). La decisión está en las [decisiones pendientes](PENDING-DECISIONS.md) («PBI-0241: acceso a WhatsApp») y el detalle, en el [backlog](backlog.md).
+
+| Requisito consolidado | Evidencia de implementación |
+|---|---|
+| La tienda muestra un botón de WhatsApp abajo a la derecha, en todas las páginas menos el checkout, que abre `wa.me` en otra pestaña; sin número no hay botón (lote 49: PBI-0241) | `whatsapp.rules.ts` (`enlaceDeWhatsapp` y `muestraWhatsappEn`), `BotonWhatsappComponent` (`ws-store-whatsapp`, en `layout/`) y `.ws-whatsapp` en `storefront.css`. Pruebas: `whatsapp.rules.spec.mjs` y `storefront-whatsapp.spec.ts` |
+| Contenido del backoffice tiene la sección «WhatsApp»: el número con código de país y un mensaje inicial, con «Probar»; el BFF guarda los dígitos y valida (lote 49: PBI-0241) | `whatsapp.rules.mjs` y `requireValidConfig` del BFF, `whatsapp.rules.ts` y `contenido.page.ts` del backoffice; [contrato](../../backend/docs/BFF-CONTRACT.md). Pruebas: `whatsapp.rules.test.mjs`, `snapshot.use-cases.test.mjs`, `normalizar-lote-49.test.mjs`, `contrato.smoke.mjs`, `whatsapp.rules.spec.mjs` del backoffice y `storefront-whatsapp.spec.ts` |

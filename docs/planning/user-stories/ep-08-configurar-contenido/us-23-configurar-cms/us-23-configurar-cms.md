@@ -91,3 +91,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el backoffice muestra si el aviso está «Programado», «Vigente» o «Vencido», y no guarda un «Hasta» que no sea posterior al «Desde».
 
 > Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-contenido.spec.ts`. El BFF rechaza también una fecha inválida (`400 INVALID_COLLECTION`).
+
+### Escenario 11 – WhatsApp de la tienda
+
+- **Dado** que el superadministrador está en Contenido, en la sección «WhatsApp»
+- **Cuando** escribe el número con el código de país (por ejemplo, 51 987 654 321) y, si quiere, un mensaje inicial de hasta 200 caracteres
+- **Entonces** el backoffice valida el número (de 8 a 15 dígitos; pide el 51 si falta), «Probar» abre el enlace que tendrá la tienda y, al guardar, la tienda muestra el botón de WhatsApp. Sin número, la tienda no lo muestra.
+
+> Añadido el 2026-11-27 por el lote 49 ([ADR-0035](../../../../adrs/0035-construir-por-lotes-el-acceso-a-whatsapp.md); PBI-0241; decisión de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «PBI-0241: acceso a WhatsApp»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-whatsapp.spec.ts`. El BFF guarda solo los dígitos y rechaza un número que no sirve con `400 INVALID_COLLECTION` ([contrato](../../../../../backend/docs/BFF-CONTRACT.md)).

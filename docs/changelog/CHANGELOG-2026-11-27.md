@@ -36,3 +36,23 @@ Sebastián Avila pidió corregir la regla del flujo que mandaba a Daniel las pre
 
 - Cambian [`AGENTS.md`](../../AGENTS.md), los [hitos humanos](../architecture/development-workflow.md#hitos-humanos), el skill [`sdd-specify`](../../.agents/skills/sdd-specify/SKILL.md) y la cabecera de las [decisiones pendientes](../planning/PENDING-DECISIONS.md).
 - No cambia ningún comportamiento de la aplicación.
+
+## Acceso a WhatsApp en la tienda (lote 49, ADR-0035)
+
+Sebastián Avila decidió el acceso a WhatsApp que Daniel había dejado para el backlog en la reunión del 2026-11-20 (PBI-0241) y pidió construirlo como enlace configurable («Sí, constrúyelo»). Se hizo en un lote único, como excepción al flujo ([ADR-0035](../adrs/0035-construir-por-lotes-el-acceso-a-whatsapp.md)), con su cierre en el mismo PR.
+
+- **Tienda:** un botón flotante de WhatsApp abajo a la derecha, en la esquina donde estuvo la tuerca de temas, en todas las páginas menos el checkout. Abre `https://wa.me/<número>` (con el mensaje inicial, si lo hay) en otra pestaña, se llama «Escríbenos por WhatsApp (se abre en otra pestaña)» y lleva el anillo de foco del tema. En la ficha del celular sube sobre la barra de «Agregar al carrito». Queda por debajo del menú lateral y de los diálogos.
+- **Backoffice:** Contenido tiene la sección «WhatsApp»: el número con el código de país (con un ejemplo, «51 987 654 321») y un mensaje inicial de hasta 200 caracteres, con «Probar» para abrir el enlace que tendrá la tienda.
+- **BFF:** `whatsappNumber` y `whatsappMessage` en la configuración de Contenido: el número se guarda solo con sus dígitos (de 8 a 15) y un celular peruano sin el 51 pide el código de país. Empiezan vacíos: sin número no hay botón, y la demo no trae ninguno. Un estado anterior los recibe vacíos, sin cambiar `schemaVersion` ([contrato](../../backend/docs/BFF-CONTRACT.md)).
+- **Color:** el verde de la marca `#128C7E` con el ícono blanco (4.14:1); el círculo, 3.72:1 o más contra el fondo de A, B y C. El verde claro `#25D366` con blanco daba 1.98:1, por debajo del 3:1 que pide WCAG 1.4.11.
+- **Registros:** la [decisión](../planning/PENDING-DECISIONS.md) («PBI-0241: acceso a WhatsApp»), el [backlog](../planning/backlog.md), la [trazabilidad](../planning/TRACEABILITY.md), la [funcionalidad](../planning/FUNCIONALIDAD.md), las historias US01 (escenario 08) y US23 (escenario 11), el [glosario](../architecture/glosario.md), el [sistema visual](../../frontend/docs/VISUAL-SYSTEM.md) y el [índice de features](../specs/features/README.md).
+
+### Verificación
+
+- `npm run verify` en verde: 34 pruebas de arquitectura, 556 del frontend, 777 del BFF y el smoke del contrato.
+- e2e completa: 486 de 486. La spec nueva (`storefront-whatsapp.spec.ts`, 11 pruebas), repetida cinco veces: 55 de 55.
+- Capturas en `frontend/output/visual-qa/lote-49-whatsapp/` (inicio con A, B y C, ficha y checkout con B, a 375 y 1440 px, arriba y al final; Contenido del backoffice): la tienda solo cambia en la esquina del botón, el checkout queda igual (0 px) y Contenido muestra la sección nueva.
+
+### Lo que queda abierto
+
+Un asistente de chat propio o la API de WhatsApp Business, que dependen de un tercero. De la reunión del 2026-11-20 sigue abierto el reparto de modelos por etapa (PBI-0242).

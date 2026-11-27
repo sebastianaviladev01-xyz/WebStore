@@ -10,6 +10,7 @@ import {
 import { normalizarErroresDeCompra } from '../../domain/admin/errores-de-compra.rules.mjs';
 import { normalizarVistos } from '../../domain/admin/notificaciones.rules.mjs';
 import { normalizarVersionesDeTerminos } from '../../domain/admin/terminos.rules.mjs';
+import { whatsappGuardado } from '../../domain/admin/whatsapp.rules.mjs';
 import {
   diasNoLaborablesIniciales,
   normalizarDiasNoLaborables,
@@ -299,6 +300,9 @@ export function normalizeState(input, demoPasswords, avisar = () => {}, opciones
   // pedido, que es lo que hacía la tienda; los pedidos sin direcciones por línea no cambian.
   if (!esModoDeDireccion(next.config.deliveryAddressMode))
     next.config.deliveryAddressMode = MODO_DE_DIRECCION_POR_DEFECTO;
+  // Lote 49 (PBI-0241), sin migración ni cambio de versión: sin los campos de WhatsApp, vacíos (sin botón); un número
+  // que no sirve, también.
+  Object.assign(next.config, whatsappGuardado(next.config));
   next.nonWorkingDates = normalizarDiasNoLaborables(
     input.nonWorkingDates,
     diasNoLaborablesIniciales(fechasNoLaborablesIniciales),

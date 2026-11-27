@@ -61,6 +61,11 @@
      verde claro (5.8:1), que se lee igual con cualquier tema porque lleva su propio fondo. */
   --ws-success: #146c2e;
   --ws-success-soft: #e8f5ec;
+  /* Botón de WhatsApp de la tienda (lote 49, ADR-0035, PBI-0241): verde de la marca con el ícono blanco (4,14:1). El
+     verde claro de la marca con blanco no llega a 3:1 (1,98:1). Fijo en todos los temas: el círculo da 3,72:1 o más
+     contra el fondo de A, B y C y 4,15:1 contra el pie. */
+  --ws-whatsapp: #128c7e;
+  --ws-on-whatsapp: #ffffff;
 
   --ws-focus: color-mix(in srgb, var(--ws-primary) 18%, transparent);
   --ws-radius: 10px;

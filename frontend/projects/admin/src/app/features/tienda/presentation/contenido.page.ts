@@ -35,6 +35,13 @@ import {
   motivoDeTelefono,
 } from '../domain/contenido.rules';
 import { ConfiguracionTienda, LugarDeSugeridos } from '../domain/tienda.model';
+import {
+  EJEMPLO_DE_WHATSAPP,
+  enlaceDePruebaDeWhatsapp,
+  MAXIMO_MENSAJE_DE_WHATSAPP,
+  motivoDeMensajeDeWhatsapp,
+  motivoDeNumeroDeWhatsapp,
+} from '../domain/whatsapp.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { conservarBorrador } from './borrador';
@@ -114,9 +121,9 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
   template: `
     <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Contenido y configuración</h1>
     <p class="mt-3 max-w-3xl text-sm text-muted">
-      Edita logo gráfico, información fija, contacto y redes, avisos de la barra superior, navegación lateral,
-      accesos inferiores y páginas predeterminadas. La tipografía permanece bloqueada a una sola fuente por
-      acuerdo del MVP.
+      Edita logo gráfico, información fija, contacto y redes, WhatsApp, avisos de la barra superior,
+      navegación lateral, accesos inferiores y páginas predeterminadas. La tipografía permanece bloqueada a
+      una sola fuente por acuerdo del MVP.
     </p>
 
     @if (borrador.aviso(); as aviso) {
@@ -227,6 +234,47 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
           [maximo]="maximos.socialLinks"
           [nueva]="nuevaRed"
         />
+        <!-- Lote 49 (ADR-0035, PBI-0241): el botón de WhatsApp de la tienda. Un campo propio, no el primer teléfono:
+             no todo teléfono tiene WhatsApp. Sin número, la tienda no muestra el botón. -->
+        <fieldset class="rounded-2xl border border-line p-4 sm:col-span-2">
+          <legend class="px-1 text-sm font-semibold">WhatsApp</legend>
+          <p id="ws-whatsapp-ayuda" class="text-xs leading-5 text-muted">
+            La tienda muestra un botón de WhatsApp abajo a la derecha, en todas las páginas menos el pago, y
+            lo abre en otra pestaña. Sin número, no hay botón.
+          </p>
+          <div class="mt-3 grid gap-4 sm:grid-cols-2">
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>Número de WhatsApp</mat-label>
+              <input
+                matInput
+                formControlName="whatsappNumber"
+                inputmode="tel"
+                autocomplete="off"
+                aria-describedby="ws-whatsapp-ayuda"
+              />
+              <mat-hint>Con el código de país; por ejemplo, {{ ejemploDeWhatsapp }}.</mat-hint>
+              <mat-error>{{ mensaje(form.controls.whatsappNumber.errors) }}</mat-error>
+            </mat-form-field>
+            <mat-form-field subscriptSizing="dynamic">
+              <mat-label>Mensaje inicial</mat-label>
+              <textarea matInput rows="2" formControlName="whatsappMessage"></textarea>
+              <mat-hint>{{ ayudaDelMensajeDeWhatsapp }}</mat-hint>
+              <mat-error>{{ mensaje(form.controls.whatsappMessage.errors) }}</mat-error>
+            </mat-form-field>
+          </div>
+          @if (pruebaDeWhatsapp(); as enlace) {
+            <a
+              class="mt-4 inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold"
+              [href]="enlace"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <svg wsAdminIcono="enlace"></svg>
+              Probar
+              <span class="sr-only">el enlace de WhatsApp (se abre en otra pestaña)</span>
+            </a>
+          }
+        </fieldset>
         <!-- PBI-0175: la barra superior de la tienda muestra estos avisos; con varios, pasan uno tras otro. Lote 30
              (PBI-0244): cada uno con «Desde» y «Hasta» opcionales y su estado. -->
         <ws-content-list
@@ -374,7 +422,23 @@ export class ContenidoPage {
     privacyPageEnabled: new FormControl(true, { nonNullable: true }),
     termsPageEnabled: new FormControl(true, { nonNullable: true }),
     addToCartDisplay: new FormControl<LugarDeSugeridos>('dialog', { nonNullable: true }),
+    // Lote 49 (PBI-0241): el número de WhatsApp (opcional) y el mensaje inicial, con las reglas del BFF.
+    whatsappNumber: texto(conMotivo(motivoDeNumeroDeWhatsapp)),
+    whatsappMessage: texto(conMotivo(motivoDeMensajeDeWhatsapp)),
   });
+
+  // --- WhatsApp (lote 49, ADR-0035, PBI-0241) ---
+  protected readonly ejemploDeWhatsapp = EJEMPLO_DE_WHATSAPP;
+  /** En una sola interpolación: un texto partido en varias líneas deja un espacio delante de la ayuda. */
+  protected readonly ayudaDelMensajeDeWhatsapp = `Opcional: el cliente lo ve escrito al abrir la conversación. Hasta ${MAXIMO_MENSAJE_DE_WHATSAPP} caracteres.`;
+  /**
+   * «Probar» abre el enlace que tendrá la tienda, solo con un número válido. Lee el formulario al dibujar, como la vista
+   * previa del logo: al rellenarlo con lo que llega del BFF no se emite `valueChanges`.
+   */
+  protected pruebaDeWhatsapp(): string | null {
+    const { whatsappNumber, whatsappMessage } = this.form.controls;
+    return enlaceDePruebaDeWhatsapp(whatsappNumber.value, whatsappMessage.value);
+  }
 
   /** La configuración tal como se cargó en el formulario: lo que cambió se calcula contra ella (PBI-0120). */
   private base: ConfiguracionTienda | null = null;
@@ -558,8 +622,12 @@ export class ContenidoPage {
     // Solo los campos del formulario: la configuración trae también los de «Entregas y feriados» y la versión de los
     // términos (lote 17), que esta página no edita.
     const valores = config as unknown as Record<string, unknown>;
+    // Lote 49: un campo que no llega (un borrador o un BFF de antes, sin los de WhatsApp) queda con su valor inicial.
     const delFormulario = Object.fromEntries(
-      Object.keys(this.form.controls).map((clave) => [clave, valores[clave]]),
+      Object.keys(this.form.controls).map((clave) => [
+        clave,
+        valores[clave] ?? (this.form.get(clave) as FormControl<unknown> | null)?.defaultValue,
+      ]),
     );
     this.form.setValue(delFormulario as ReturnType<ContenidoPage['form']['getRawValue']>, {
       emitEvent: false,

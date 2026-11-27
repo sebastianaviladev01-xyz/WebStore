@@ -17,6 +17,7 @@ import {
 } from '../features/contenido/domain/navegacion.rules';
 import { AvisoMantenimientoComponent } from './aviso-mantenimiento.component';
 import { BarraAvisosComponent } from './barra-avisos.component';
+import { BotonWhatsappComponent } from './boton-whatsapp.component';
 import { MenuCategoriasComponent } from './menu-categorias.component';
 import { PieTiendaComponent } from './pie-tienda.component';
 
@@ -26,6 +27,7 @@ import { PieTiendaComponent } from './pie-tienda.component';
     A11yModule,
     AvisoMantenimientoComponent,
     BarraAvisosComponent,
+    BotonWhatsappComponent,
     MenuCategoriasComponent,
     PieTiendaComponent,
     RouterLink,
@@ -367,6 +369,9 @@ import { PieTiendaComponent } from './pie-tienda.component';
         <main id="main-content" tabindex="-1" class="focus:outline-none"><router-outlet /></main>
 
         <ws-store-footer [categorias]="topCategories()" />
+
+        <!-- Lote 49 (ADR-0035, PBI-0241): el acceso a WhatsApp, si la tienda tiene número; nunca en el checkout. -->
+        <ws-store-whatsapp />
       }
     </div>
   `,

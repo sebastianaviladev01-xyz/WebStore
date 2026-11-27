@@ -102,6 +102,12 @@ export interface ConfiguracionTienda {
    */
   readonly termsVersion?: number;
   readonly termsPublishedAt?: string | null;
+  /**
+   * Acceso a WhatsApp (lote 49, PBI-0241): el número, solo dígitos, y el mensaje inicial opcional. Opcionales: un BFF
+   * anterior no los envía, y sin número la tienda no muestra el botón (`whatsapp.rules.ts`).
+   */
+  readonly whatsappNumber?: string;
+  readonly whatsappMessage?: string;
 }
 
 export type PaginasHabilitadas = Pick<
