@@ -71,8 +71,9 @@ test.describe('PBI-0214: la imagen principal del producto se carga como archivo'
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/productos\?nuevo=[^&]+$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
 
       const guardado = (await leerProductos()).find((producto) => producto.sku === SKU);
       expect(guardado?.imageUrl).toMatch(/^data:image\/(webp|jpeg);base64,/);

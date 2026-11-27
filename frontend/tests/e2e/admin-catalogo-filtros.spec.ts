@@ -243,8 +243,9 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await elegir(page, formulario, 'Marca', 'Zenith');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
 
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/productos\?nombre=ventilador&pagina=2&nuevo=[^&]+$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL; el filtro se conserva.
+      await expect(page).toHaveURL(/\/productos\?nombre=ventilador(&pagina=\d+)?$/);
       await expect(nombresEnLista(page)).toHaveText([nombre]);
 
       const tienda = await nuevoRequest.newContext({ baseURL: urls.bff });
@@ -355,8 +356,10 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await elegir(page, nuevo, 'Categoría', 'Electrohogar');
       await elegir(page, nuevo, 'Marca', 'Zenith');
       await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/productos\?nombre=soundbar&nuevo=[^&]+$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` y salta al registro. El filtro
+      // «soundbar» no incluye el producto creado, así que el listado lo quita para mostrarlo.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
+      await expect(page.getByText('Parlante del vendedor', { exact: true })).toBeVisible();
       expect((await leerProductos()).find((p) => p.sku === 'E2E-VEND-07')).toMatchObject({
         name: 'Parlante del vendedor',
         price: 99,
@@ -451,8 +454,9 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Proyectores 008');
       await elegir(page, nueva, 'Categoría padre', 'TV y audio');
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre&nuevo=[^&]+$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL; el filtro se conserva.
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre(&pagina=\d+)?$/);
       expect((await leerCategorias()).find((c) => c.name === 'Proyectores 008')).toMatchObject({
         parentId: 'cat-tv',
       });
