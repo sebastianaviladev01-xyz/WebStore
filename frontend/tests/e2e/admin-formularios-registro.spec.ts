@@ -216,10 +216,12 @@ test.describe('PBI-0268: páginas de registro como los formularios del SGC', () 
     }
   });
 
-  test('«Guardar» de un producto nuevo vuelve al listado con sus filtros y `nuevo` con el id creado', async ({
+  test('«Guardar» de un producto nuevo vuelve al listado con sus filtros y lo muestra en su página', async ({
     page,
   }) => {
-    // Lote 44 (PBI-0265 y PBI-0268): el listado del lote 43 lee `nuevo` para saltar a la página del registro creado.
+    // Lotes 43 y 44 (PBI-0265 y PBI-0268): la página de registro pasa `nuevo` con el id creado; el listado lo lee,
+    // salta a la página del registro y lo quita de la URL. La regla que arma `nuevo` tiene su prueba en
+    // `registro.rules.spec.mjs`.
     const originales = await leerProductos();
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -238,10 +240,10 @@ test.describe('PBI-0268: páginas de registro como los formularios del SGC', () 
       await elegir(page, formulario, 'Marca', 'Zenith');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
 
-      await expect(page).toHaveURL(/\/productos\?nombre=lote&nuevo=[^&]+$/);
+      await expect(page).toHaveURL(/\/productos\?nombre=lote(&pagina=\d+)?$/);
+      await expect(page.getByText('Producto nuevo del lote 44', { exact: true })).toBeVisible();
       const creado = (await leerProductos()).find((item) => item.sku === 'E2E-LOTE-44-NUEVO');
       expect(creado).toBeDefined();
-      expect(new URL(page.url()).searchParams.get('nuevo')).toBe(creado!.id);
 
       // Al editar, «Guardar» vuelve sin `nuevo`.
       await page.goto(`/productos/${creado!.id}?nombre=lote`);

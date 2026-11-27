@@ -23,7 +23,8 @@ let siguienteId = 0;
   template: `
     <button
       type="button"
-      class="grid h-5 w-5 cursor-help place-items-center rounded-full text-muted hover:text-ink"
+      class="grid h-5 w-5 cursor-help place-items-center rounded-full"
+      [class]="sobreColor() ? 'text-current' : 'text-muted hover:text-ink'"
       [attr.aria-label]="etiqueta()"
       [attr.aria-describedby]="id"
       (click)="alTocar()"
@@ -64,6 +65,11 @@ export class AyudaComponent {
   readonly etiqueta = input.required<string>();
   /** Dónde cae el texto respecto del antecesor posicionado. */
   readonly posicion = input('inset-x-3 top-12');
+  /**
+   * Sobre un fondo de color (las tarjetas de cifras del Dashboard, lote 45, PBI-0270): el «i» toma el color del texto de
+   * la tarjeta, que el tema calcula para ese fondo, en lugar del tenue, que no tiene contraste allí.
+   */
+  readonly sobreColor = input(false);
 
   protected readonly id = `ws-ayuda-${++siguienteId}`;
   protected readonly puntero = signal(false);

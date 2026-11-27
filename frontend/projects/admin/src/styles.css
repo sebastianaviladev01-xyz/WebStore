@@ -37,6 +37,14 @@ label:has(> input[type='file']:focus-visible) {
   outline-offset: -2px;
 }
 
+/*
+ * Lote 45 (PBI-0270): sobre las tarjetas de color del Dashboard, el contorno del foco va en el color del texto de la
+ * tarjeta, que el tema calcula para su fondo; el del tema (--ws-focus-ring) puede ser el mismo fondo.
+ */
+.ws-tarjeta-cifra :is(a, button):focus-visible {
+  outline-color: currentColor;
+}
+
 ::selection {
   background: color-mix(in srgb, var(--ws-primary) 24%, var(--ws-surface));
   color: var(--ws-ink);
@@ -323,5 +331,101 @@ label:has(> input[type='file']:focus-visible) {
   .ws-selector-tema-boton,
   .ws-selector-tema-boton svg {
     transition: none;
+  }
+}
+
+/*
+ * Lote 43 (ADR-0033, PBI-0265): los listados en un solo panel, como la lista de proveedores del SGC.
+ * - Filtros en una fila: los campos de texto (la búsqueda) crecen para ocupar lo que queda, el primero el doble; las
+ *   listas (un `mat-select` y la categoría con búsqueda) tienen su ancho, 14rem (la categoría, con su ayuda de una
+ *   línea, 15rem), y no se estiran, también si bajan a otra línea. Los botones van al final de la fila
+ *   (`panel-filtros.component.ts`). Por debajo de 640 px, un campo por línea.
+ * - «Elementos por página»: la lista desplegable del pie, con borde, del alto de los botones de la paginación.
+ * - «Imprimir o PDF»: mientras se imprime (`body.ws-imprimiendo`), solo se ve la vista de la tabla filtrada completa
+ *   (`.ws-impresion`, directa del `body`); en pantalla, esa vista no se ve nunca.
+ */
+.ws-filtros > * {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.ws-filtros > :where(:first-child) {
+  flex-grow: 2;
+}
+
+.ws-filtros > :has(mat-select) {
+  flex: 0 1 14rem;
+}
+
+.ws-filtros > ws-admin-selector-categoria {
+  flex: 0 1 15rem;
+}
+
+@media (width < 40rem) {
+  .ws-filtros > *,
+  .ws-filtros > :first-child,
+  .ws-filtros > :has(mat-select),
+  .ws-filtros > ws-admin-selector-categoria {
+    flex: 1 1 100%;
+  }
+}
+
+.ws-tamano-de-pagina.mat-mdc-select {
+  flex: none;
+  width: 5rem;
+  border: 1px solid var(--ws-border-strong);
+  border-radius: 8px;
+  background: var(--ws-surface);
+  padding: 0.3rem 0.5rem;
+}
+
+.ws-impresion {
+  display: none;
+}
+
+@media print {
+  body.ws-imprimiendo > :not(.ws-impresion) {
+    display: none !important;
+  }
+
+  body.ws-imprimiendo {
+    background: var(--ws-surface);
+  }
+
+  body.ws-imprimiendo > .ws-impresion {
+    display: block;
+    color: var(--ws-ink);
+    font-size: 10pt;
+  }
+
+  .ws-impresion h1 {
+    font-size: 16pt;
+    font-weight: 600;
+  }
+
+  .ws-impresion p {
+    margin: 2pt 0 10pt;
+    color: var(--ws-muted);
+  }
+
+  .ws-impresion table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .ws-impresion thead {
+    display: table-header-group;
+  }
+
+  .ws-impresion th,
+  .ws-impresion td {
+    border: 1px solid var(--ws-border-strong);
+    padding: 3pt 5pt;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .ws-impresion tr {
+    break-inside: avoid;
   }
 }

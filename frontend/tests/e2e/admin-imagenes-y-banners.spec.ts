@@ -71,8 +71,9 @@ test.describe('PBI-0214: la imagen principal del producto se carga como archivo'
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/productos\?nuevo=[^&]+$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
 
       const guardado = (await leerProductos()).find((producto) => producto.sku === SKU);
       expect(guardado?.imageUrl).toMatch(/^data:image\/(webp|jpeg);base64,/);
@@ -171,9 +172,15 @@ test.describe('PBI-0214 y PBI-0221: el registro del banner', () => {
       await formulario.getByLabel('Inicio').fill('2030-12-10T09:30');
       await formulario.getByLabel('Fin').fill('2030-12-20T18:00');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/banners\?nuevo=[^&]+$/);
-      await expect(page.getByText('10/12/2030 09:30 → 20/12/2030 18:00 · Activo')).toBeVisible();
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id, salta a su página y lo
+      // quita de la URL; la vigencia va en su columna y el estado, como insignia, en la suya.
+      await expect(page).toHaveURL(/\/banners(\?(?!.*nuevo=)[^#]*)?$/);
+      const fila = page
+        .getByRole('region', { name: 'Lista de banners' })
+        .getByRole('row')
+        .filter({ hasText: '10/12/2030 09:30 → 20/12/2030 18:00' });
+      await expect(fila).toBeVisible();
+      await expect(fila.getByText('Activo', { exact: true })).toBeVisible();
 
       const guardado = (await leerSnapshot()).banners.find((banner) => banner.cta === 'Ver') as unknown as {
         id: string;

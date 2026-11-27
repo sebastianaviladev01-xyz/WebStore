@@ -99,7 +99,10 @@ for (const [label, ok] of [
   ],
   [
     'Eliminación de producto protegida por products.delete (PBI-0013)',
-    products.includes("this.session.can('products.delete') && confirm"),
+    // Lote 43 (PBI-0269): la confirmación es la ventana propia (confirmarEliminacion), no el confirm() del navegador.
+    /remove\(id: string[^)]*\) \{[^}]*this\.session\.can\('products\.delete'\)[^}]*confirmarEliminacion\(/.test(
+      products,
+    ),
   ],
   [
     'Roles fijos superadmin/admin/vendedor',

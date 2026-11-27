@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 
 import {
   agregarCategorias,
@@ -13,6 +13,7 @@ import {
   retirarCategorias,
   retirarProductos,
 } from './apoyo/catalogo';
+import { aceptarEliminacion, responderEliminacion } from './apoyo/confirmacion';
 import { correoUnico, cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
 
 /**
@@ -22,14 +23,6 @@ import { correoUnico, cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * llegan hasta el BFF (producto, marca, categoría y usuario) y el ciclo completo de una tarifa de envío. Cada prueba
  * deja los datos como estaban en un `finally`: las suites van en serie y comparten el estado del BFF.
  */
-
-/** Acepta el `confirm()` de la página y comprueba qué pregunta hizo. */
-function aceptarConfirmacion(page: Page, pregunta: string): void {
-  page.once('dialog', (dialogo) => {
-    expect(dialogo.message()).toBe(pregunta);
-    void dialogo.accept();
-  });
-}
 
 test.describe('Borrados que llegan al BFF', () => {
   test('eliminar un producto lo quita de la lista y del BFF', async ({ page }) => {
@@ -41,8 +34,9 @@ test.describe('Borrados que llegan al BFF', () => {
       await page.goto('/productos?nombre=borrable%2008');
       const eliminar = page.getByRole('button', { name: `Eliminar producto ${nombre}` });
       await expect(eliminar).toBeVisible();
-      aceptarConfirmacion(page, '¿Eliminar producto?');
+      // Lote 43 (PBI-0269): la ventana propia de confirmación, con el nombre del producto.
       await eliminar.click();
+      await aceptarEliminacion(page, nombre);
       await expect(eliminar).toHaveCount(0);
       expect((await leerProductos()).some((producto) => producto.id === ids[0])).toBe(false);
     } finally {
@@ -58,8 +52,8 @@ test.describe('Borrados que llegan al BFF', () => {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/productos?nombre=se%20queda%2008');
       const eliminar = page.getByRole('button', { name: `Eliminar producto ${nombre}` });
-      page.once('dialog', (dialogo) => void dialogo.dismiss());
       await eliminar.click();
+      await responderEliminacion(page, nombre, false);
       await expect(eliminar).toBeVisible();
       expect((await leerProductos()).some((producto) => producto.id === ids[0])).toBe(true);
     } finally {
@@ -76,8 +70,8 @@ test.describe('Borrados que llegan al BFF', () => {
       await page.goto('/marcas');
       const eliminar = page.getByRole('button', { name: `Eliminar marca ${nombre}` });
       await expect(eliminar).toBeVisible();
-      aceptarConfirmacion(page, '¿Eliminar marca?');
       await eliminar.click();
+      await aceptarEliminacion(page, nombre);
       await expect(eliminar).toHaveCount(0);
       expect((await leerMarcas()).some((marca) => marca.id === 'b-e2e-08')).toBe(false);
     } finally {
@@ -93,8 +87,8 @@ test.describe('Borrados que llegan al BFF', () => {
       await page.goto('/categorias');
       const eliminar = page.getByRole('button', { name: `Eliminar categoría ${nombre}` });
       await expect(eliminar).toBeVisible();
-      aceptarConfirmacion(page, '¿Eliminar categoría?');
       await eliminar.click();
+      await aceptarEliminacion(page, nombre);
       await expect(eliminar).toHaveCount(0);
       expect((await leerCategorias()).some((categoria) => categoria.id === 'e2e-08-categoria')).toBe(false);
     } finally {
@@ -127,8 +121,8 @@ test.describe('Borrados que llegan al BFF', () => {
       });
 
       const eliminar = lista.getByRole('button', { name: 'Eliminar usuario Vendedor renombrado 08' });
-      aceptarConfirmacion(page, '¿Eliminar usuario?');
       await eliminar.click();
+      await aceptarEliminacion(page, 'Vendedor renombrado 08');
       await expect(eliminar).toHaveCount(0);
       expect((await leerSnapshot()).users.some((usuario) => usuario.email === correo)).toBe(false);
     } finally {
@@ -181,8 +175,8 @@ test.describe('Tarifas de envío: alta, edición y borrado', () => {
       const eliminar = lista.getByRole('button', {
         name: `Eliminar tarifa de Origen E2E Ocho a ${distrito}`,
       });
-      aceptarConfirmacion(page, '¿Eliminar tarifa?');
       await eliminar.click();
+      await aceptarEliminacion(page, `Origen E2E Ocho → ${distrito}`);
       await expect(eliminar).toHaveCount(0);
       expect(await tarifa()).toBeUndefined();
     } finally {

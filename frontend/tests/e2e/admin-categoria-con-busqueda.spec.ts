@@ -207,8 +207,9 @@ test.describe('Categoría con búsqueda en Productos (PBI-0238)', () => {
       await formulario.getByRole('combobox', { name: 'Marca' }).click();
       await page.getByRole('option', { name: 'Zenith', exact: true }).click();
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
-      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
-      await expect(page).toHaveURL(/\/productos\?nuevo=[^&]+$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
       expect((await leerProductos()).find((p) => p.sku === 'E2E29-REGISTRO')).toMatchObject({
         categoryId: `${ID}-side`,
       });

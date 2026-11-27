@@ -57,6 +57,10 @@
   /* Fijos en todos los temas: no dependen de la paleta y no van en el mapa del tema. */
   --ws-on-media: #ffffff;
   --ws-scrim: rgb(0 0 0 / 0.45);
+  /* Insignia «Activo» de los listados del backoffice (lote 43, ADR-0033, PBI-0265): un par fijo, verde oscuro sobre
+     verde claro (5.8:1), que se lee igual con cualquier tema porque lleva su propio fondo. */
+  --ws-success: #146c2e;
+  --ws-success-soft: #e8f5ec;
 
   --ws-focus: color-mix(in srgb, var(--ws-primary) 18%, transparent);
   --ws-radius: 10px;
@@ -138,6 +142,8 @@
   --color-danger-line: var(--ws-danger-line);
   --color-warning: var(--ws-warning);
   --color-warning-soft: var(--ws-warning-soft);
+  --color-success: var(--ws-success);
+  --color-success-soft: var(--ws-success-soft);
   --font-sans:
     var(--ws-font), 'Source Sans 3', 'Segoe UI Variable', 'Segoe UI', ui-sans-serif, system-ui, sans-serif;
 }
