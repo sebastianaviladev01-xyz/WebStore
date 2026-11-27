@@ -20,6 +20,7 @@ import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
 import { TiendaFacade } from '../application/tienda.facade';
 import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
+import { parametrosAlVolverDelRegistro } from '../domain/registro.rules';
 import { usuarioConElMismoCorreo } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
 import { DatosRegistroComponent } from './datos-registro.component';
@@ -299,8 +300,10 @@ export class RegistroUsuarioPage {
     const saved = await this.admin.guardarUsuario(base, base ? usuario : { ...usuario, temporaryPassword });
     this.continuando.set(false);
     if (saved) {
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear con «Guardar», `nuevo` lleva al listado a la página del registro.
       await this.router.navigate(continuar ? ['/usuarios', usuario.id] : ['/usuarios'], {
-        queryParamsHandling: 'preserve',
+        queryParams: parametrosAlVolverDelRegistro({ creado: !this.editing(), continuar, id: usuario.id }),
+        queryParamsHandling: 'merge',
       });
       return;
     }

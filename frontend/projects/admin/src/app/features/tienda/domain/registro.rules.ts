@@ -28,3 +28,17 @@ export function filasDeCaracteristicas(caracteristicas: readonly string[] | unde
 export function caracteristicasDeLasFilas(filas: readonly string[]): string[] {
   return filas.map((fila) => fila.trim()).filter(Boolean);
 }
+
+/**
+ * Parámetros que se añaden a los del listado al volver de un registro (lote 44, ADR-0033, PBI-0265 y PBI-0268). Tras
+ * crear un registro con «Guardar», `nuevo` lleva su id para que el listado salte a la página donde quedó (el listado lo
+ * lee y lo quita de la URL). Al editar, o con «Guardar y continuar» (que abre el registro, no el listado), ninguno: los
+ * filtros del listado se conservan con `queryParamsHandling: 'merge'`.
+ */
+export function parametrosAlVolverDelRegistro(guardado: {
+  readonly creado: boolean;
+  readonly continuar: boolean;
+  readonly id: string;
+}): Record<string, string> {
+  return guardado.creado && !guardado.continuar ? { nuevo: guardado.id } : {};
+}

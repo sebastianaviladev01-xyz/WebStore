@@ -31,7 +31,11 @@ import { motivoDeProductoRepetido, slugDe } from '../domain/registro-unico.rules
 import { mensajeDeError } from '../domain/formulario.rules';
 import { hayLugarEnLaGaleria, mensajeDeGaleriaLlena, motivoParaNoUsarFoto } from '../domain/foto.rules';
 import { productoDeLaFicha } from '../domain/inventario.rules';
-import { caracteristicasDeLasFilas, filasDeCaracteristicas } from '../domain/registro.rules';
+import {
+  caracteristicasDeLasFilas,
+  filasDeCaracteristicas,
+  parametrosAlVolverDelRegistro,
+} from '../domain/registro.rules';
 import { conservarBorrador } from './borrador';
 import { Producto } from '../domain/tienda.model';
 import { MENSAJE_FOTO_DE_GALERIA_NO_CABE, reducirFoto, versionesDelProducto } from './reducir-foto';
@@ -635,8 +639,10 @@ export class RegistroProductoPage {
     const saved = await this.admin.guardarProducto(this.base, editado);
     this.continuando.set(false);
     if (saved) {
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear con «Guardar», `nuevo` lleva al listado a la página del registro.
       await this.router.navigate(continuar ? ['/productos', editado.id] : ['/productos'], {
-        queryParamsHandling: 'preserve',
+        queryParams: parametrosAlVolverDelRegistro({ creado: !this.editingId(), continuar, id: editado.id }),
+        queryParamsHandling: 'merge',
       });
       return;
     }

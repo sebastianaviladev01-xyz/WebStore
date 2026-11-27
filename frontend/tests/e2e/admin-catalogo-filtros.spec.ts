@@ -242,7 +242,8 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await elegir(page, formulario, 'Marca', 'Zenith');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
 
-      await expect(page).toHaveURL(consulta);
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
+      await expect(page).toHaveURL(/\/productos\?nombre=ventilador&pagina=2&nuevo=[^&]+$/);
       await expect(nombresEnLista(page)).toHaveText([nombre]);
 
       const tienda = await nuevoRequest.newContext({ baseURL: urls.bff });
@@ -353,7 +354,8 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await elegir(page, nuevo, 'Categoría', 'Electrohogar');
       await elegir(page, nuevo, 'Marca', 'Zenith');
       await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
-      await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
+      await expect(page).toHaveURL(/\/productos\?nombre=soundbar&nuevo=[^&]+$/);
       expect((await leerProductos()).find((p) => p.sku === 'E2E-VEND-07')).toMatchObject({
         name: 'Parlante del vendedor',
         price: 99,
@@ -448,7 +450,8 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Proyectores 008');
       await elegir(page, nueva, 'Categoría padre', 'TV y audio');
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
-      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id del registro.
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre&nuevo=[^&]+$/);
       expect((await leerCategorias()).find((c) => c.name === 'Proyectores 008')).toMatchObject({
         parentId: 'cat-tv',
       });

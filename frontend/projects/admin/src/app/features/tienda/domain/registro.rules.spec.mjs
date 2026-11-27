@@ -63,3 +63,22 @@ test('PBI-0268: se guardan las filas escritas, sin espacios de sobra ni filas va
   // Una fila con un salto de línea pegado se conserva como una sola característica.
   assert.deepEqual(caracteristicasDeLasFilas(['Uno\n']), ['Uno']);
 });
+
+// Lote 44 (ADR-0033, PBI-0265 y PBI-0268): al volver al listado tras crear un registro con «Guardar», la URL lleva
+// `nuevo=<id>`, para que el listado (lote 43, paginado de 10 en 10) salte a la página donde quedó. Al editar, o con
+// «Guardar y continuar», no se añade nada: los demás parámetros del listado se conservan aparte.
+const { parametrosAlVolverDelRegistro } = await import(
+  `data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`
+);
+
+test('PBI-0268: «Guardar» de un registro nuevo vuelve al listado con `nuevo` y su id', () => {
+  assert.deepEqual(parametrosAlVolverDelRegistro({ creado: true, continuar: false, id: 'p-123' }), {
+    nuevo: 'p-123',
+  });
+});
+
+test('PBI-0268: al editar o con «Guardar y continuar» no se añade ningún parámetro', () => {
+  assert.deepEqual(parametrosAlVolverDelRegistro({ creado: false, continuar: false, id: 'p-123' }), {});
+  assert.deepEqual(parametrosAlVolverDelRegistro({ creado: true, continuar: true, id: 'p-123' }), {});
+  assert.deepEqual(parametrosAlVolverDelRegistro({ creado: false, continuar: true, id: 'p-123' }), {});
+});

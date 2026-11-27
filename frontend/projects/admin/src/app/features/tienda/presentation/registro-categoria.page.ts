@@ -18,6 +18,7 @@ import { Router } from '@angular/router';
 import { TiendaFacade } from '../application/tienda.facade';
 import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
+import { parametrosAlVolverDelRegistro } from '../domain/registro.rules';
 import { motivoDeCategoriaRepetida, slugDe } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
 import { imagenDeCategoria } from './reducir-foto';
@@ -359,8 +360,10 @@ export class RegistroCategoriaPage {
     });
     this.continuando.set(false);
     if (saved) {
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear con «Guardar», `nuevo` lleva al listado a la página del registro.
       await this.router.navigate(continuar ? ['/categorias', id] : ['/categorias'], {
-        queryParamsHandling: 'preserve',
+        queryParams: parametrosAlVolverDelRegistro({ creado: !this.editing(), continuar, id: id }),
+        queryParamsHandling: 'merge',
       });
       return;
     }

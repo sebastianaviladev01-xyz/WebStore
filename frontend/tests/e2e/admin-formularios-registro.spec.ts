@@ -83,6 +83,38 @@ test.describe('PBI-0268: páginas de registro como los formularios del SGC', () 
     await expect(page).toHaveURL(/\/productos\?nombre=tv&pagina=1$/);
   });
 
+  test('en el celular, el pie va a todo el ancho con «Guardar» arriba y el tabulador en el orden de escritorio', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto('/productos/nuevo');
+    const formulario = page.getByRole('form', { name: 'Nuevo producto' });
+    const cancelar = formulario.getByRole('link', { name: 'Cancelar', exact: true });
+    const continuar = formulario.getByRole('button', { name: 'Guardar y continuar', exact: true });
+    const guardar = formulario.getByRole('button', { name: 'Guardar', exact: true });
+    await expect(guardar).toBeVisible();
+    const [cajaCancelar, cajaContinuar, cajaGuardar] = await Promise.all(
+      [cancelar, continuar, guardar].map(async (boton) => (await boton.boundingBox())!),
+    );
+    // Los tres con el mismo ancho y el mismo borde izquierdo, uno debajo del otro: «Guardar» arriba.
+    for (const caja of [cajaContinuar, cajaCancelar]) {
+      expect(Math.abs(caja.width - cajaGuardar.width)).toBeLessThan(1);
+      expect(Math.abs(caja.x - cajaGuardar.x)).toBeLessThan(1);
+    }
+    expect(cajaGuardar.y + cajaGuardar.height).toBeLessThanOrEqual(cajaContinuar.y);
+    expect(cajaContinuar.y + cajaContinuar.height).toBeLessThanOrEqual(cajaCancelar.y);
+    // A todo el ancho de la tarjeta (sin el padding): más de la mitad de la ventana.
+    expect(cajaGuardar.width).toBeGreaterThan(375 / 2);
+
+    // El tabulador sigue el orden de escritorio: «Cancelar», «Guardar y continuar» y «Guardar».
+    await cancelar.focus();
+    await page.keyboard.press('Tab');
+    await expect(continuar).toBeFocused();
+    await page.keyboard.press('Tab');
+    await expect(guardar).toBeFocused();
+  });
+
   test('las características son una tabla con «Agregar fila» y una papelera por fila', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const producto = (await leerProductos()).find((item) => item.id === 'p-004');
@@ -179,6 +211,46 @@ test.describe('PBI-0268: páginas de registro como los formularios del SGC', () 
       await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos\?nombre=lote$/);
       expect((await leerProductos()).find((item) => item.id === creado!.id)?.name).toBe(`${nombre} editado`);
+    } finally {
+      await cambiarProductos(() => originales);
+    }
+  });
+
+  test('«Guardar» de un producto nuevo vuelve al listado con sus filtros y `nuevo` con el id creado', async ({
+    page,
+  }) => {
+    // Lote 44 (PBI-0265 y PBI-0268): el listado del lote 43 lee `nuevo` para saltar a la página del registro creado.
+    const originales = await leerProductos();
+    try {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto('/productos?nombre=lote');
+      await page.getByRole('link', { name: 'Agregar producto', exact: true }).click();
+      const formulario = page.getByRole('form', { name: 'Nuevo producto' });
+      await formulario
+        .getByRole('textbox', { name: 'Nombre', exact: true })
+        .fill('Producto nuevo del lote 44');
+      await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-LOTE-44-NUEVO');
+      await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Para el lote 44.');
+      await cargarImagenPrincipal(formulario);
+      await formulario.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Ligero');
+      await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('80');
+      await elegir(page, formulario, 'Categoría', 'Electrohogar');
+      await elegir(page, formulario, 'Marca', 'Zenith');
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
+
+      await expect(page).toHaveURL(/\/productos\?nombre=lote&nuevo=[^&]+$/);
+      const creado = (await leerProductos()).find((item) => item.sku === 'E2E-LOTE-44-NUEVO');
+      expect(creado).toBeDefined();
+      expect(new URL(page.url()).searchParams.get('nuevo')).toBe(creado!.id);
+
+      // Al editar, «Guardar» vuelve sin `nuevo`.
+      await page.goto(`/productos/${creado!.id}?nombre=lote`);
+      const edicion = page.getByRole('form', { name: 'Editar producto' });
+      await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue(
+        'Producto nuevo del lote 44',
+      );
+      await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(page).toHaveURL(/\/productos\?nombre=lote$/);
     } finally {
       await cambiarProductos(() => originales);
     }

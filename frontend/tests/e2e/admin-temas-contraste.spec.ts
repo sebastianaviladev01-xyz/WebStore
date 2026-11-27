@@ -36,10 +36,12 @@ const PRINCIPAL_CLARO = { primary: '#FFFFBB', secondary: '#F97316', ...BASE_OSCU
 async function abrirUbicacion(page: Page) {
   await page.goto('/banners/nuevo');
   await page.getByRole('combobox', { name: 'Ubicación' }).click();
-  const seleccionada = page.getByRole('option', { selected: true });
+  // Lote 44: acotadas a la lista abierta; el registro tiene también el <select> nativo «Estado».
+  const lista = page.getByRole('listbox', { name: 'Ubicación' });
+  const seleccionada = lista.getByRole('option', { selected: true });
   await expect(seleccionada).toBeVisible();
   await page.keyboard.press('ArrowDown');
-  return { seleccionada, otra: page.getByRole('option', { selected: false }).last() };
+  return { seleccionada, otra: lista.getByRole('option', { selected: false }).last() };
 }
 
 test.describe('Temas y contraste en el Admin', () => {
