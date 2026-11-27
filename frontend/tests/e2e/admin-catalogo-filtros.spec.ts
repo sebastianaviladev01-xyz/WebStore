@@ -56,8 +56,9 @@ import { cargarImagenPrincipal } from './apoyo/fotos';
  * - TEST-18 (AC-12): a 360, 375 y 390 px con A, B y C, las tres listas y sus registros (nuevo y edición) sin
  *   desplazamiento horizontal y con sus controles dentro de la pantalla. B queda activo al terminar. Desde el lote 41
  *   (PBI-0259), un test por tema y ancho; si una vista no carga, adjunta el texto que había en pantalla.
- * - TEST-19 (AC-15): con 30 productos, 25 en la página 1 y «Página 1 de 2»; «Siguiente» lleva a la 2; una búsqueda
- *   nueva vuelve a la 1; con 25 resultados o menos no hay paginación.
+ * - TEST-19 (AC-15): con 30 productos, 10 en la página 1 y «1 - 10 de 30» (lote 43, PBI-0265: 10 por omisión; antes, 25
+ *   y «Página 1 de 2»); «Página siguiente» lleva a la 2 y «Última página» a la 3; una búsqueda nueva vuelve a la 1; con
+ *   25 por página, los 24 resultados de una búsqueda caben en una sola página.
  * - TEST-20 (REQ-02, caso límite): si la consulta del snapshot falla al «Buscar», el aviso sale junto al panel y se
  *   conservan los filtros escritos y los resultados; el reintento funciona.
  * - TEST-21 (REQ-04, caso límite): si el BFF rechaza el guardado con un `400`, el registro de producto, de categoría
@@ -496,8 +497,14 @@ test.describe('Filtros y registro de categorías del Admin', () => {
 
 const listaMarcas = (page: Page) => page.getByRole('region', { name: 'Lista de marcas' });
 const panelMarcas = (page: Page) => page.getByRole('search', { name: 'Filtros de marcas' });
-/** Filas de la lista de marcas: cada una con su nombre, «Activa» o «Inactiva», «Editar» y «Eliminar». */
-const filasMarcas = (page: Page) => listaMarcas(page).locator(':scope > div');
+/**
+ * Filas de la lista de marcas: cada una con su nombre, su estado, «Editar» y «Eliminar». Desde el lote 43 (PBI-0265) la
+ * lista es una tabla y el estado, una insignia «Activo» o «Inactivo»: las filas son las que tienen celdas.
+ */
+const filasMarcas = (page: Page) =>
+  listaMarcas(page)
+    .getByRole('row')
+    .filter({ has: page.getByRole('cell') });
 const filaMarca = (page: Page, nombre: string) =>
   filasMarcas(page).filter({ has: page.locator('strong', { hasText: nombre }) });
 
@@ -530,7 +537,7 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await buscarMarcas(page);
       await expect(page).toHaveURL(/\/marcas\?estado=inactivos$/);
       await expect(filasMarcas(page).locator('strong')).toHaveText(['Zenith']);
-      await expect(filasMarcas(page)).toContainText('Inactiva');
+      await expect(filasMarcas(page)).toContainText('Inactivo');
 
       await elegir(page, panelMarcas(page), 'Estado', 'Activos');
       await buscarMarcas(page);
@@ -582,7 +589,8 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(edicion).toBeHidden();
       await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
-      await expect(filaMarca(page, 'Zenith 008')).toContainText('Activa');
+      // Lote 43 (PBI-0265): el estado, como insignia «Activo».
+      await expect(filaMarca(page, 'Zenith 008').getByText('Activo', { exact: true })).toBeVisible();
 
       // Otra sesión elimina una marca con la lista abierta: al editarla, se dice que ya no existe, sin ventana.
       await cambiarMarcas((actuales) => actuales.filter((m) => m.name !== 'Zentro 008'));
@@ -743,17 +751,15 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
       expect(cajaPanel.bottom, que('el panel acaba antes de la lista')).toBeLessThanOrEqual(cajaLista.top);
       expect(cajaNuevo.top, que('«Agregar» dentro del panel')).toBeGreaterThanOrEqual(cajaPanel.top);
       expect(cajaNuevo.bottom, que('«Agregar» dentro del panel')).toBeLessThanOrEqual(cajaPanel.bottom);
-      // «Agregar» a la derecha de «Limpiar», en su fila; la lista con el ancho del panel (todo el contenido).
+      // «Agregar» a la derecha de «Limpiar», en su fila. Lote 43 (PBI-0265): el panel y la lista van en la misma
+      // tarjeta; la lista ocupa su ancho y el panel, el mismo con el margen interior de la tarjeta a cada lado.
       const cajaLimpiar = await caja(filtros.getByRole('button', { name: 'Limpiar filtros' }));
       expect(cajaNuevo.left, que('«Agregar» a la derecha de «Limpiar»')).toBeGreaterThan(cajaLimpiar.right);
       expect(
-        Math.abs(cajaLista.left - cajaPanel.left),
-        que('lista y panel, mismo borde izquierdo'),
+        Math.abs(cajaPanel.left - cajaLista.left - (cajaLista.right - cajaPanel.right)),
+        que('el panel, centrado sobre la lista, con el mismo margen a cada lado'),
       ).toBeLessThan(TOLERANCIA + 0.5);
-      expect(
-        Math.abs(cajaLista.right - cajaPanel.right),
-        que('lista y panel, mismo borde derecho'),
-      ).toBeLessThan(TOLERANCIA + 0.5);
+      expect(cajaPanel.left, que('el panel, dentro del ancho de la lista')).toBeGreaterThan(cajaLista.left);
       medidas.push({ titulo: pagina.titulo, panel: cajaPanel, lista: cajaLista, nuevo: cajaNuevo });
     }
 
@@ -819,7 +825,7 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
     }
   });
 
-  test('TEST-19 · con 30 productos, 25 por página y una búsqueda nueva vuelve a la 1', async ({ page }) => {
+  test('TEST-19 · con 30 productos, 10 por página y una búsqueda nueva vuelve a la 1', async ({ page }) => {
     const originales = await leerProductos();
     const faltan = 30 - originales.length;
     const nuevos = Array.from({ length: faltan }, (_, i) => {
@@ -836,33 +842,40 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await abrirProductos(page);
 
-      // 30 resultados: los 25 primeros y «Página 1 de 2»; «Anterior» deshabilitado.
-      await expect(editar(lista(page))).toHaveCount(25);
-      await expect(paginacion).toContainText('Página 1 de 2');
-      await expect(paginacion.getByRole('button', { name: 'Anterior' })).toBeDisabled();
-      // La barra está dentro de la lista, después de las filas.
+      // 30 resultados: los 10 primeros y «1 - 10 de 30»; «Página anterior» deshabilitado.
+      await expect(editar(lista(page))).toHaveCount(10);
+      await expect(paginacion).toContainText('1 - 10 de 30');
+      await expect(paginacion.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
+      // Lote 43: la barra va en el pie del panel, debajo de las filas.
       const cajaLista = await caja(lista(page));
       const cajaBarra = await caja(paginacion);
-      expect(cajaBarra.bottom).toBeLessThanOrEqual(cajaLista.bottom + TOLERANCIA);
+      expect(cajaBarra.top).toBeGreaterThanOrEqual(cajaLista.bottom - TOLERANCIA);
 
-      await paginacion.getByRole('button', { name: 'Siguiente' }).click();
+      await paginacion.getByRole('button', { name: 'Página siguiente' }).click();
       await expect(page).toHaveURL(/\/productos\?pagina=2$/);
-      await expect(paginacion).toContainText('Página 2 de 2');
-      await expect(editar(lista(page))).toHaveCount(5);
-      await expect(paginacion.getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+      await expect(paginacion).toContainText('11 - 20 de 30');
+      await expect(editar(lista(page))).toHaveCount(10);
+      await paginacion.getByRole('button', { name: 'Última página' }).click();
+      await expect(page).toHaveURL(/\/productos\?pagina=3$/);
+      await expect(paginacion).toContainText('21 - 30 de 30');
+      await expect(paginacion.getByRole('button', { name: 'Página siguiente' })).toBeDisabled();
 
-      // Una búsqueda nueva, desde la página 2, vuelve a la 1.
+      // Una búsqueda nueva, desde la página 3, vuelve a la 1.
       await buscar(page);
       await expect(page).toHaveURL(/\/productos$/);
-      await expect(paginacion).toContainText('Página 1 de 2');
-      await expect(editar(lista(page))).toHaveCount(25);
+      await expect(paginacion).toContainText('1 - 10 de 30');
+      await expect(editar(lista(page))).toHaveCount(10);
 
-      // 25 resultados o menos: sin paginación.
+      // Con 25 por página, los resultados de una búsqueda (24) caben en una sola página.
       await panel(page).getByRole('textbox', { name: 'Nombre' }).fill('Producto paginado 008');
       await buscar(page);
       await expect(page).toHaveURL(/\/productos\?nombre=Producto(%20|\+)paginado(%20|\+)008$/);
+      await expect(editar(lista(page))).toHaveCount(Math.min(faltan, 10));
+      await paginacion.getByRole('combobox', { name: 'Elementos por página' }).click();
+      await page.getByRole('option', { name: '25' }).click();
       await expect(editar(lista(page))).toHaveCount(faltan);
-      await expect(paginacion).toHaveCount(0);
+      await expect(paginacion).toContainText(`1 - ${faltan} de ${faltan}`);
+      await expect(paginacion.getByRole('button', { name: 'Página siguiente' })).toBeDisabled();
     } finally {
       await restaurar(originales);
     }

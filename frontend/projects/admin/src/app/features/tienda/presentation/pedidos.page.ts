@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, formatDate } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, input, linkedSignal } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
@@ -8,6 +8,8 @@ import { MatSelect, MatSelectChange, MatSelectModule } from '@angular/material/s
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
 import { clasesDeEstadoPedido } from './estado-pedido';
+import { TablaExportable } from '../domain/exportacion.rules';
+import { contarPorClave, numeroDeFila, textoDeCantidad, textoDelTotal } from '../domain/listado.rules';
 import {
   direccionVisible,
   fechaDeEntrega,
@@ -22,9 +24,19 @@ import {
   parametrosDeFiltrosPedidos,
 } from '../domain/filtro-listado.rules';
 import { filtrosDeListado } from './filtros-de-listado';
+import { FichaDeResumen, Tono } from './insignia';
+import { ListadoComponent } from './listado.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { confirmarCancelacionDePedido } from '../../../shared/ui/confirmacion.dialog';
-import { TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+
+/** Ficha del pie de cada estado (lote 43, PBI-0265): el tono del punto sigue al color de su insignia (PBI-0080). */
+const FICHA_DEL_ESTADO: Readonly<Record<EstadoPedido, { tono: Tono; singular: string; plural: string }>> = {
+  confirmed: { tono: 'principal', singular: 'confirmado', plural: 'confirmados' },
+  processing: { tono: 'principal', singular: 'en preparación', plural: 'en preparación' },
+  shipped: { tono: 'principal', singular: 'enviado', plural: 'enviados' },
+  delivered: { tono: 'neutro', singular: 'entregado', plural: 'entregados' },
+  cancelled: { tono: 'peligro', singular: 'cancelado', plural: 'cancelados' },
+};
 
 const PAYMENT_LABELS: Record<string, string> = {
   card: 'Tarjeta',
@@ -35,94 +47,110 @@ const PAYMENT_LABELS: Record<string, string> = {
 @Component({
   selector: 'ws-admin-orders-page',
   imports: [
-    TituloPaginaDirective,
     CurrencyPipe,
     DatePipe,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatSelectModule,
+    ListadoComponent,
     PanelFiltrosComponent,
   ],
   template: `
-    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Pedidos</h1>
-    <p class="mt-2 text-sm text-muted">{{ filtered().length }} de {{ admin.orders().length }} pedidos</p>
+    <!--
+      Lote 43 (ADR-0033, PBI-0265): la lista, en un solo panel como la lista de proveedores del SGC, con la misma
+      paginación que los demás listados (antes, todos en una sola página); el detalle sigue a su lado desde 1280 px. El
+      rango y las fichas del pie reemplazan a «N de M pedidos».
+    -->
+    <div class="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <ws-admin-listado
+        titulo="Pedidos"
+        descripcion="Revisa los pedidos de la tienda y su detalle; quien gestiona los pedidos cambia su estado."
+        que="pedidos"
+        [exportacion]="exportacion"
+        [pagina]="pagina()"
+        [tamano]="filtros.tamano()"
+        [fichas]="fichas()"
+        (cambiarPagina)="filtros.irAPagina($event)"
+        (cambiarTamano)="filtros.cambiarTamano($event)"
+      >
+        <!-- PBI-0155: el filtro de estado va en el panel estándar de la feature 008, con el estado en la URL. -->
+        <ws-filter-panel
+          etiqueta="Filtros de pedidos"
+          [formGroup]="filtros.borrador"
+          [buscando]="filtros.buscando()"
+          [error]="filtros.error()"
+          (buscar)="filtros.buscar()"
+          (limpiar)="filtros.limpiar()"
+        >
+          <mat-form-field>
+            <mat-label>Filtrar por estado</mat-label>
+            <mat-select formControlName="estado">
+              <mat-option value="">Todos</mat-option>
+              @for (status of statuses; track status) {
+                <mat-option [value]="status">{{ label(status) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </ws-filter-panel>
 
-    <!-- PBI-0155: el filtro de estado va en el panel estándar de la feature 008, con el estado en la URL. -->
-    <ws-filter-panel
-      class="mt-7"
-      etiqueta="Filtros de pedidos"
-      [formGroup]="filtros.borrador"
-      [buscando]="filtros.buscando()"
-      [error]="filtros.error()"
-      (buscar)="filtros.buscar()"
-      (limpiar)="filtros.limpiar()"
-    >
-      <mat-form-field>
-        <mat-label>Filtrar por estado</mat-label>
-        <mat-select formControlName="estado">
-          <mat-option value="">Todos</mat-option>
-          @for (status of statuses; track status) {
-            <mat-option [value]="status">{{ label(status) }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </ws-filter-panel>
-
-    <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <section class="admin-card overflow-x-auto" aria-label="Lista de pedidos">
-        <table class="w-full min-w-[640px] text-left text-sm">
-          <thead class="bg-subtle text-xs text-muted">
-            <tr>
-              <th class="px-4 py-3 font-medium">Pedido</th>
-              <th class="px-4 py-3 font-medium">Cliente</th>
-              <th class="px-4 py-3 font-medium">Distrito</th>
-              <th class="px-4 py-3 text-right font-medium">Total</th>
-              <th class="px-4 py-3 font-medium">Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (order of filtered(); track order.id) {
-              <tr
-                class="cursor-pointer border-t border-line hover:bg-subtle"
-                [class.bg-primary-soft]="order.id === selected()?.id"
-                (click)="selectedId.set(order.id)"
-              >
-                <td class="px-4 py-3">
-                  <button
-                    data-sin-icono="identificador"
-                    type="button"
-                    class="font-semibold text-link"
-                    (click)="selectedId.set(order.id)"
-                  >
-                    {{ order.id }}
-                  </button>
-                  <p class="text-xs text-muted">
-                    {{ order.createdAt | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
-                  </p>
-                </td>
-                <td class="px-4 py-3">{{ order.customer }}</td>
-                <td class="px-4 py-3">{{ order.district || '—' }}</td>
-                <td class="px-4 py-3 text-right font-semibold tabular-nums">
-                  {{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' }}
-                </td>
-                <td class="px-4 py-3">
-                  <span class="rounded-full px-2.5 py-1 text-xs font-medium" [class]="badge(order.status)">
-                    {{ label(order.status) }}
-                  </span>
-                </td>
-              </tr>
-            } @empty {
+        <!-- relative: contiene los textos sr-only de la tabla, que si no ensanchan la página a 375 px (como admin-card). -->
+        <section class="relative overflow-x-auto border-t border-line" aria-label="Lista de pedidos">
+          <table class="w-full min-w-[640px] text-left text-sm">
+            <thead class="bg-subtle text-xs text-muted">
               <tr>
-                <td colspan="5" class="px-4 py-10 text-center text-muted">
-                  {{
-                    admin.orders().length ? 'Ningún pedido cumple los filtros.' : 'Todavía no hay pedidos.'
-                  }}
-                </td>
+                <th class="w-14 px-4 py-3 font-medium">N°</th>
+                <th class="px-4 py-3 font-medium">Pedido</th>
+                <th class="px-4 py-3 font-medium">Cliente</th>
+                <th class="px-4 py-3 font-medium">Distrito</th>
+                <th class="px-4 py-3 text-right font-medium">Total</th>
+                <th class="px-4 py-3 font-medium">Estado</th>
               </tr>
-            }
-          </tbody>
-        </table>
-      </section>
+            </thead>
+            <tbody>
+              @for (order of pagina().items; track order.id; let i = $index) {
+                <tr
+                  class="cursor-pointer border-t border-line hover:bg-subtle"
+                  [class.bg-primary-soft]="order.id === selected()?.id"
+                  (click)="selectedId.set(order.id)"
+                >
+                  <td class="px-4 py-3 tabular-nums text-muted">{{ numero(i) }}</td>
+                  <td class="px-4 py-3">
+                    <button
+                      data-sin-icono="identificador"
+                      type="button"
+                      class="font-semibold text-link"
+                      (click)="selectedId.set(order.id)"
+                    >
+                      {{ order.id }}
+                    </button>
+                    <p class="text-xs text-muted">
+                      {{ order.createdAt | date: 'dd/MM/yyyy HH:mm' : zonaLima }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-3">{{ order.customer }}</td>
+                  <td class="px-4 py-3">{{ order.district || '—' }}</td>
+                  <td class="px-4 py-3 text-right font-semibold tabular-nums">
+                    {{ order.total | currency: 'PEN' : 'symbol' : '1.2-2' }}
+                  </td>
+                  <td class="px-4 py-3">
+                    <span class="rounded-full px-2.5 py-1 text-xs font-medium" [class]="badge(order.status)">
+                      {{ label(order.status) }}
+                    </span>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="px-4 py-10 text-center text-muted">
+                    {{
+                      admin.orders().length ? 'Ningún pedido cumple los filtros.' : 'Todavía no hay pedidos.'
+                    }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </section>
+      </ws-admin-listado>
 
       <aside class="admin-card h-fit p-6" aria-live="polite">
         @if (selected(); as order) {
@@ -243,10 +271,46 @@ export class PedidosPage {
   readonly pedido = input<string>();
   protected readonly selectedId = linkedSignal<string | null>(() => this.pedido() ?? null);
   protected readonly filtered = computed(() => filtrarPedidos(this.admin.orders(), this.filtros.aplicados()));
-  /** El detalle sigue al filtro (PBI-0066): un pedido que no está en la lista filtrada no se muestra. */
+  /** Lote 43 (PBI-0265): Pedidos toma la misma paginación que los demás listados (antes, todos en una página). */
+  protected readonly pagina = computed(() => this.filtros.paginar(this.filtered()));
+  /**
+   * El detalle sigue al filtro (PBI-0066): un pedido que no está en la lista filtrada no se muestra. Sin uno elegido (o
+   * si ya no está), el primero de la página que se ve.
+   */
   protected readonly selected = computed<Pedido | null>(
-    () => this.filtered().find((order) => order.id === this.selectedId()) ?? this.filtered()[0] ?? null,
+    () => this.filtered().find((order) => order.id === this.selectedId()) ?? this.pagina().items[0] ?? null,
   );
+  /** El total y cuántos hay en cada estado (lote 43, PBI-0265). */
+  protected readonly fichas = computed((): FichaDeResumen[] => {
+    const pedidos = this.filtered();
+    return [
+      { texto: textoDelTotal(pedidos.length), tono: 'principal', icono: 'lista' },
+      ...contarPorClave(pedidos, (order) => order.status, this.statuses).map(({ clave, cantidad }) => {
+        const ficha = FICHA_DEL_ESTADO[clave];
+        return {
+          texto: textoDeCantidad(cantidad, ficha.singular, ficha.plural),
+          tono: ficha.tono,
+          icono: 'pedidos' as const,
+        };
+      }),
+    ];
+  });
+  protected readonly exportacion = (): TablaExportable => ({
+    titulo: 'Pedidos',
+    columnas: ['N°', 'Pedido', 'Fecha', 'Cliente', 'Distrito', 'Total (S/)', 'Estado'],
+    filas: this.filtered().map((order, i) => [
+      i + 1,
+      order.id,
+      formatDate(order.createdAt, 'dd/MM/yyyy HH:mm', 'es-PE', ZONA_HORARIA_LIMA),
+      order.customer,
+      order.district || '',
+      order.total.toFixed(2),
+      this.label(order.status),
+    ]),
+  });
+  protected numero(indice: number): number {
+    return numeroDeFila(this.pagina(), indice);
+  }
 
   protected label(status: EstadoPedido): string {
     return ETIQUETAS_ESTADO_PEDIDO[status];

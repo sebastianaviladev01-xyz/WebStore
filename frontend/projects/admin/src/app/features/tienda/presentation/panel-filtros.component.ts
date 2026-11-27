@@ -20,17 +20,23 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `
-    <form class="admin-card p-5" role="search" [attr.aria-label]="etiqueta()" (submit)="enviar($event)">
-      <!--
-        Lote 25 (PBI-0212): con el contorno, la etiqueta flotante sobresale unos 7 px del borde; la separación entre filas
-        evita que tape la ayuda o el error del campo de arriba.
-      -->
-      <div class="grid gap-x-4 gap-y-2 sm:grid-cols-2 xl:grid-cols-3">
+    <!--
+      Lote 43 (ADR-0033, PBI-0265): sin tarjeta propia, dentro de la del listado (ws-admin-listado), y en una fila: la
+      búsqueda de texto ancha a la izquierda, las listas después y los botones a la derecha. En pantallas estrechas se
+      apila. «Buscar» y «Limpiar» van con borde; «Agregar», relleno del principal.
+    -->
+    <form
+      class="flex flex-wrap items-start gap-x-4 gap-y-1"
+      role="search"
+      [attr.aria-label]="etiqueta()"
+      (submit)="enviar($event)"
+    >
+      <div class="ws-filtros flex min-w-0 flex-[1_1_30rem] flex-wrap gap-x-4 gap-y-3">
         <ng-content />
       </div>
-      <div class="mt-2 flex flex-wrap justify-end gap-3">
+      <div class="ml-auto flex flex-wrap justify-end gap-3 pt-1.5 pb-5">
         <button
-          class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-40"
+          class="inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-body hover:bg-subtle disabled:opacity-40"
           type="submit"
           [disabled]="buscando()"
         >
@@ -38,7 +44,7 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
           {{ buscando() ? 'Buscando…' : 'Buscar' }}
         </button>
         <button
-          class="inline-flex items-center gap-2 rounded-lg border border-line px-5 py-2.5 text-sm font-medium"
+          class="inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-body hover:bg-subtle"
           type="button"
           (click)="limpiar.emit()"
         >
@@ -73,7 +79,7 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
     </form>
     @if (error(); as mensaje) {
       <p
-        class="mt-3 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
+        class="mb-5 rounded-xl border border-danger-line bg-danger-soft p-3 text-sm text-danger"
         role="alert"
       >
         {{ mensaje }}

@@ -5,8 +5,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
-import { leerPagina, ParametrosUrl } from '../domain/filtro-catalogo.rules';
-import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
+import { ParametrosUrl } from '../domain/filtro-catalogo.rules';
+import { paginacionDeLaUrl } from './paginacion-de-la-url';
 
 type Filtros<F> = { readonly [K in keyof F]: string };
 
@@ -37,6 +37,7 @@ export function filtrosDeListado<F extends Filtros<F>>(opciones: OpcionesFiltros
     { requireSync: true },
   );
   const aplicados = computed(() => opciones.leer(parametros()));
+  const paginacion = paginacionDeLaUrl(parametros);
   const controles = Object.fromEntries(
     Object.entries(opciones.vacios).map(([clave, valor]) => [
       clave,
@@ -56,8 +57,10 @@ export function filtrosDeListado<F extends Filtros<F>>(opciones: OpcionesFiltros
     borrador,
     buscando: buscando.asReadonly(),
     error: error.asReadonly(),
-    /** Corta la lista ya filtrada en la página de la URL (`pagina`), de 25 en 25. */
-    paginar: <T>(items: readonly T[]) => paginar(items, leerPagina(parametros()), ELEMENTOS_POR_PAGINA),
+    /** Corta la lista ya filtrada en la página de la URL (`pagina`), con el tamaño de la URL (`porPagina`, lote 43). */
+    paginar: paginacion.paginar,
+    tamano: paginacion.tamano,
+    cambiarTamano: paginacion.cambiarTamano,
     async buscar(): Promise<void> {
       buscando.set(true);
       error.set(null);
@@ -71,18 +74,15 @@ export function filtrosDeListado<F extends Filtros<F>>(opciones: OpcionesFiltros
       }
       await router.navigate([], {
         relativeTo: route,
-        queryParams: opciones.escribir(borrador.getRawValue() as unknown as F),
+        queryParams: {
+          ...opciones.escribir(borrador.getRawValue() as unknown as F),
+          ...paginacion.conservar(),
+        },
       });
     },
     limpiar(): void {
       borrador.setValue({ ...opciones.vacios } as never);
     },
-    irAPagina(numero: number): void {
-      void router.navigate([], {
-        relativeTo: route,
-        queryParams: { pagina: numero > 1 ? numero : null },
-        queryParamsHandling: 'merge',
-      });
-    },
+    irAPagina: paginacion.irAPagina,
   };
 }
