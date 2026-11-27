@@ -320,3 +320,5 @@ Las diez preguntas se presentaron de una en una el 2026-11-07, con sus alternati
 - [Trazabilidad](../../../planning/TRACEABILITY.md)
 - [Decisiones pendientes](../../../planning/PENDING-DECISIONS.md)
 - [Backlog](../../../planning/backlog.md)
+
+> Nota (2026-11-26): el lote 45 ([ADR-0033](../../../adrs/0033-construir-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-24.md), PBI-0270) cambia REQ-02 y D5: todas las cifras del Dashboard son del periodo elegido (por omisión, el mes en curso desde el día 1), ya no el total histórico, y la variación compara con el tramo equivalente anterior. Decidido por Sebastián Avila el 2026-11-26.

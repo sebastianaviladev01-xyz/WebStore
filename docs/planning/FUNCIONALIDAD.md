@@ -51,7 +51,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 
 ## Backoffice (proyecto `admin`)
 
-- Dashboard con cifras plegables (ventas sin el envío), el gráfico de pedidos y «Clientes web nuevos» a todo el ancho (sin «Pedidos por distrito»), últimos pedidos, alertas y actividad reciente.
+- Dashboard con filtro de periodo (de hoy al año en curso; todas las cifras y el gráfico siguen el periodo), cifras plegables en tarjetas de color (ventas sin el envío), el gráfico de pedidos y «Clientes web nuevos» a todo el ancho (sin «Pedidos por distrito»), la distribución de ventas por categoría, últimos pedidos, alertas y actividad reciente.
 - Campana de avisos: pedidos nuevos, reclamos nuevos y errores de compra.
 - Mantenimientos estándar: un registro de más de tres campos tiene su propia interfaz y uno de hasta tres, una ventana emergente; ningún formulario va al costado de una lista. Los campos usan el contorno del storefront.
 - Productos, con la casilla «Es destacado», la imagen y la galería cargadas como archivo, el precio con dos decimales, el SKU en su columna y la categoría elegida con búsqueda, en el registro y en el filtro. El stock no está en el registro: se gestiona en Inventario.
@@ -68,8 +68,10 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Tipografía única bloqueada en el MVP.
 - Tabla configurable origen → destino, con el distrito elegido de una lista y sin ajuste porcentual.
 - «Entregas y feriados» (superadministrador): días no laborables, primera fecha de entrega y una dirección por pedido o por producto.
-- Listados con panel de filtros estándar: «Buscar», «Limpiar» y «Agregar», a la derecha.
-- Temas con el código hexadecimal de cada color escrito o elegido con el selector.
+- Listados en un solo panel, como la lista del SGC: título, «Exportar» (CSV o imprimir), filtros en una fila con «Buscar», «Limpiar» y «Agregar» a la derecha, «N°», estado como insignia, acciones de solo ícono, resumen por estado y paginación de 10, 25 o 50. Al crear un registro, el listado salta a su página.
+- Páginas de registro como los formularios del SGC: «Regresar», estado, usuario y fecha, secciones con ícono, ayudas, contador, listas repetibles en tabla y «Guardar y continuar»; ruta de navegación en la barra superior.
+- Borrados (y la cancelación de un pedido) confirmados con una ventana propia, con el nombre del registro.
+- Temas con el código hexadecimal de cada color escrito o elegido con el selector, y una revisión de contraste que explica la relación y sugiere el color que cumple.
 - Botones con su ícono a la izquierda, y el ícono del módulo junto al título de cada página.
 - Tuerca de temas solo en el modo demo, con los tres temas predefinidos: en la barra superior, junto a la campana, y flotante solo en el acceso.
 - Si falla la consulta al abrir un registro que el panel no tenía, aviso con «Reintentar» en lugar de «ya no existe»; si no se puede comprobar la sesión por un fallo pasajero, el acceso lo avisa con «Reintentar» y la sesión no se pierde.

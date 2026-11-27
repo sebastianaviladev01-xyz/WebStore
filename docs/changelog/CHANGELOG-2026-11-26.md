@@ -36,3 +36,13 @@ Sebastián Avila pidió el 2026-11-25 cerrar todos los pendientes que se pueden 
 
 - **Reglas de proceso confirmadas:** Sebastián Avila confirmó las dos reglas del lote 42: conservar el trace de una e2e intermitente al cerrar el worktree (PBI-0258) y los ámbitos `storefront`, `admin`, `bff` y `qa` de los commits (PBI-0262).
 - **E2e del diálogo de temas (PBI-0264):** la prueba «PBI-0237: a 375 px, el error del nombre no se monta sobre «Colores»» espera a que el diálogo y el error terminen de entrar antes de comparar sus cajas. Medido: al verse el error, el espacio con «Colores» es de 0,8 a 1,9 px y las posiciones aún se mueven; asentado, 4 px. La prueba pasó 10 de 10 con --repeat-each=10.
+
+## Reunión del 2026-11-24 y lotes 43 a 48 (ADR-0033)
+
+- **Registro de la reunión** (PR #104): la daily de Daniel y Sebastián del 2026-11-24 y las capturas del SGC, con PBI-0265 a PBI-0271. Sebastián Avila decidió no dejar nada a la espera de Daniel: las decisiones son suyas y se cambian si Daniel pide otra cosa.
+- **Listados y borrado (lote 43, PR #106):** cada listado en un solo panel, con exportación, resumen y paginación de 10, 25 o 50; una ventana propia para confirmar los borrados y cancelar pedidos.
+- **Formularios y ruta (lote 44, PR #108):** las páginas de registro como los formularios del SGC y la ruta de navegación en la barra superior.
+- **Dashboard (lote 45, PR #107):** filtro de periodo, tarjetas de color, distribución de ventas por categoría y actividad con insignias; todas las cifras son del periodo.
+- **Botones del banner (lote 46, PR #109):** cada botón elige «Principal», «Secundario», «Contraste» o «Con borde».
+- **Contraste en Temas (lote 47, PR #105):** la revisión explica la relación y sugiere, en cadena, el color que cumple.
+- **Cierre (lote 48):** los cinco lotes juntos, con `npm run verify` en verde y e2e 449 de 449 (y 449 de 449 en el CI del #105, sin intermitentes); los registros, al día; ADR-0033 cerrado y sin excepciones vigentes. Quedan sin priorizar PBI-0272 a PBI-0275.
