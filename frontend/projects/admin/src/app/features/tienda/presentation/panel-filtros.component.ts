@@ -22,19 +22,20 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
   template: `
     <!--
       Lote 43 (ADR-0033, PBI-0265): sin tarjeta propia, dentro de la del listado (ws-admin-listado), y en una fila: la
-      búsqueda de texto ancha a la izquierda, las listas después y los botones a la derecha. En pantallas estrechas se
-      apila. «Buscar» y «Limpiar» van con borde; «Agregar», relleno del principal.
+      búsqueda de texto, que crece, a la izquierda; las listas después, con su ancho; y los botones al final de la fila, a
+      la derecha. Si falta sitio, bajan primero los campos a la línea siguiente; por debajo de 768 px, los botones van
+      debajo de los campos. «Buscar» y «Limpiar» van con borde; «Agregar», relleno del principal.
     -->
     <form
-      class="flex flex-wrap items-start gap-x-4 gap-y-1"
+      class="flex flex-wrap items-start gap-x-4 gap-y-1 md:flex-nowrap"
       role="search"
       [attr.aria-label]="etiqueta()"
       (submit)="enviar($event)"
     >
-      <div class="ws-filtros flex min-w-0 flex-[1_1_30rem] flex-wrap gap-x-4 gap-y-3">
+      <div class="ws-filtros flex min-w-0 flex-1 flex-wrap gap-x-4 gap-y-3 max-md:basis-full">
         <ng-content />
       </div>
-      <div class="ml-auto flex flex-wrap justify-end gap-3 pt-1.5 pb-5">
+      <div class="ml-auto flex flex-wrap justify-end gap-3 pt-1.5 pb-5 md:shrink-0">
         <button
           class="inline-flex items-center gap-2 rounded-lg border border-line-strong bg-surface px-5 py-2.5 text-sm font-semibold text-body hover:bg-subtle disabled:opacity-40"
           type="submit"

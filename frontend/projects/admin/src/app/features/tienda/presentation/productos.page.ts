@@ -35,6 +35,7 @@ import { paginacionDeLaUrl } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { SelectorCategoriaComponent } from './selector-categoria.component';
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /**
@@ -192,7 +193,8 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
                     [class]="accionEliminar"
                     [attr.aria-label]="'Eliminar producto ' + p.name"
                     matTooltip="Eliminar"
-                    (click)="remove(p.id)"
+                    data-eliminar
+                    (click)="remove(p.id, $event)"
                   >
                     <svg wsAdminIcono="eliminar"></svg>
                   </button>
@@ -219,6 +221,8 @@ export class ProductosPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly insignia = clasesDeInsignia;
   protected readonly accion = CLASES_ACCION;
   protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
@@ -318,9 +322,11 @@ export class ProductosPage {
     this.borrador.setValue({ ...FILTROS_PRODUCTOS_VACIOS });
   }
   /** Lote 43 (ADR-0033, PBI-0269): se confirma en la ventana propia, con el nombre del producto. */
-  protected async remove(id: string) {
+  protected async remove(id: string, evento: Event) {
     const producto = this.admin.products().find((p) => p.id === id);
     if (!producto || !this.session.can('products.delete')) return;
-    if (await confirmarEliminacion(this.dialog, producto.name)) await this.admin.eliminarProducto(id);
+    const lugar = this.foco.recordar(evento);
+    if (!(await confirmarEliminacion(this.dialog, producto.name))) return;
+    if (await this.admin.eliminarProducto(id)) this.foco.restaurar(lugar);
   }
 }

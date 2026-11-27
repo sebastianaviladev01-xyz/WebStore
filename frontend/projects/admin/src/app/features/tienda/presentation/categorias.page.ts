@@ -44,6 +44,7 @@ import { ListadoComponent } from './listado.component';
 import { paginacionDeLaUrl } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /**
@@ -206,7 +207,8 @@ export class EstadoArbolCategorias {
                     [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
                     [attr.aria-label]="'Eliminar categoría ' + fila.category.name"
                     matTooltip="Eliminar"
-                    (click)="remove(fila.category.id)"
+                    data-eliminar
+                    (click)="remove(fila.category.id, $event)"
                   >
                     <svg wsAdminIcono="eliminar"></svg>
                   </button>
@@ -233,6 +235,8 @@ export class CategoriasPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly focoTrasBorrar = focoTrasEliminar();
   private readonly estado = inject(EstadoArbolCategorias);
   private readonly injector = inject(Injector);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
@@ -406,7 +410,7 @@ export class CategoriasPage {
     if (fila.tieneHijas) this.alternar(fila.category.id, !fila.abierta);
   }
   /** PBI-0131: una categoría con subcategorías o productos no se elimina; se dice por qué, sin pedir confirmación. */
-  protected async remove(id: string) {
+  protected async remove(id: string, evento: Event) {
     this.avisoEliminar.set(null);
     const categoria = this.admin.categories().find((item) => item.id === id);
     if (!categoria) return;
@@ -416,6 +420,8 @@ export class CategoriasPage {
       return;
     }
     // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre de la categoría.
-    if (await confirmarEliminacion(this.dialog, categoria.name)) await this.admin.eliminarCategoria(id);
+    const lugar = this.focoTrasBorrar.recordar(evento);
+    if (!(await confirmarEliminacion(this.dialog, categoria.name))) return;
+    if (await this.admin.eliminarCategoria(id)) this.focoTrasBorrar.restaurar(lugar);
   }
 }

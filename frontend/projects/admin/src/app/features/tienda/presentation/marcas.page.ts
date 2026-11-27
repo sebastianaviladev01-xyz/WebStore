@@ -47,6 +47,7 @@ import { ListadoComponent } from './listado.component';
 import { paginacionDeLaUrl } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 const MARCA_VACIA = { name: '', active: true };
@@ -164,7 +165,8 @@ interface BorradorMarca {
                   [class]="accionEliminar"
                   [attr.aria-label]="'Eliminar marca ' + b.name"
                   matTooltip="Eliminar"
-                  (click)="remove(b.id)"
+                  data-eliminar
+                  (click)="remove(b.id, $event)"
                 >
                   <svg wsAdminIcono="eliminar"></svg>
                 </button>
@@ -232,6 +234,8 @@ export class MarcasPage {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly insignia = clasesDeInsignia;
   protected readonly accion = CLASES_ACCION;
   protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
@@ -415,7 +419,7 @@ export class MarcasPage {
     this.form.reset(MARCA_VACIA);
   }
   /** PBI-0131: una marca que usan productos no se elimina; se dice cuántos la usan, sin pedir confirmación. */
-  protected async remove(id: string) {
+  protected async remove(id: string, evento: Event) {
     this.avisoEliminar.set(null);
     const marca = this.admin.brands().find((item) => item.id === id);
     if (!marca) return;
@@ -425,6 +429,8 @@ export class MarcasPage {
       return;
     }
     // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre de la marca.
-    if (await confirmarEliminacion(this.dialog, marca.name)) await this.admin.eliminarMarca(id);
+    const lugar = this.foco.recordar(evento);
+    if (!(await confirmarEliminacion(this.dialog, marca.name))) return;
+    if (await this.admin.eliminarMarca(id)) this.foco.restaurar(lugar);
   }
 }

@@ -111,6 +111,37 @@ test.describe('PBI-0265: listados en un solo panel', () => {
     await expect(agregar).toHaveCSS('background-color', await colorDelToken(page, '--ws-primary'));
   });
 
+  test('la fila de filtros: las listas con su ancho y los botones al final de la misma fila', async ({
+    page,
+  }) => {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    // Pedidos, con el detalle a la derecha (desde 1280 px): una sola lista y los botones en su fila.
+    for (const ancho of [1280, 1440]) {
+      await page.setViewportSize({ width: ancho, height: 900 });
+      await page.goto('/pedidos');
+      const filtros = page.getByRole('search', { name: 'Filtros de pedidos' });
+      const estado = filtros.getByRole('combobox', { name: 'Filtrar por estado' });
+      const buscar = filtros.getByRole('button', { name: 'Buscar', exact: true });
+      await expect(estado).toBeVisible();
+      expect(await enLaMismaFila(estado, buscar), `${ancho} px`).toBe(true);
+      expect((await estado.boundingBox())!.width, `${ancho} px · la lista no se estira`).toBeLessThanOrEqual(
+        260,
+      );
+    }
+    // Productos (5 filtros): los botones quedan en la primera línea, a la derecha; los campos que no caben bajan.
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/productos');
+    const filtros = page.getByRole('search', { name: 'Filtros de productos' });
+    const nombre = filtros.getByRole('textbox', { name: 'Nombre' });
+    const agregar = filtros.getByRole('link', { name: 'Agregar producto' });
+    const estado = filtros.getByRole('combobox', { name: 'Estado' });
+    expect(await enLaMismaFila(nombre, agregar)).toBe(true);
+    expect((await agregar.boundingBox())!.x).toBeGreaterThan((await estado.boundingBox())!.x);
+    expect((await estado.boundingBox())!.width).toBeLessThanOrEqual(260);
+    // La búsqueda de texto crece: es más ancha que una lista.
+    expect((await nombre.boundingBox())!.width).toBeGreaterThan((await estado.boundingBox())!.width);
+  });
+
   test('«N°» sigue entre páginas; «Elementos por página» va en la URL con 10 por omisión', async ({
     page,
   }) => {

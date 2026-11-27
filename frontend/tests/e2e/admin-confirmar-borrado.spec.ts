@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { leerSnapshot } from './apoyo/catalogo';
-import { aceptarEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
+import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
+import { aceptarEliminacion, responderEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { relacionDeContraste, medirTexto, MINIMO } from './apoyo/contraste';
 import {
   correoUnico,
@@ -23,6 +23,9 @@ import { conservarElStock } from './apoyo/pedidos';
  * - la cancelación de un pedido usa la misma ventana con «Cancelar pedido», sin la papelera, con el aviso del stock y
  *   los botones «No, volver» y «Sí, cancelar pedido».
  * Ninguna confirmación abre la ventana nativa del navegador.
+ * - Tras eliminar, el foco va al botón de eliminar de la fila que ocupa su lugar; si era la última, al de la anterior;
+ *   si la lista queda vacía, al `h1`. Al cancelar, vuelve al botón que abrió la ventana.
+ * - Clientes dice «1 pedido» y «2 pedidos».
  */
 
 conservarElStock();
@@ -132,6 +135,58 @@ test('«Sí, eliminar» borra el registro hasta el BFF, sin ventana nativa', asy
     .poll(async () => (await leerSnapshot()).customers.some((cliente) => cliente.email === correo))
     .toBe(false);
   expect(nativas()).toBe(0);
+});
+
+test('el foco tras eliminar va a la fila que ocupa su lugar, a la anterior o al título; al cancelar, al botón', async ({
+  page,
+}) => {
+  const clientes = ['A', 'B', 'C'].map((letra, i) => ({
+    id: `c-e2e-43-foco-${letra.toLowerCase()}`,
+    name: `Foco 43 ${letra}`,
+    email: `foco43${letra.toLowerCase()}@example.com`,
+    document: `7000043${i}`,
+    orders: i === 0 ? 1 : 2,
+  }));
+  const ids = clientes.map((cliente) => cliente.id);
+  try {
+    await enviarCambios({ customers: { upsert: clientes } });
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await page.goto(`/clientes?texto=${encodeURIComponent('Foco 43')}`);
+    const lista = page.getByRole('region', { name: 'Lista de clientes' });
+    const eliminar = (letra: string) =>
+      lista.getByRole('button', { name: `Eliminar cliente Foco 43 ${letra}` });
+    await expect(eliminar('C')).toBeVisible();
+
+    // Concordancia del número de pedidos (antes, «1 pedidos»).
+    await expect(lista.getByText('1 pedido', { exact: true })).toHaveCount(1);
+    await expect(lista.getByText('2 pedidos', { exact: true })).toHaveCount(2);
+
+    // Cancelar: el foco vuelve al botón que abrió la ventana.
+    await eliminar('A').click();
+    await responderEliminacion(page, 'Foco 43 A', false);
+    await expect(eliminar('A')).toBeFocused();
+
+    // La primera: el foco pasa a la que ocupa su lugar (B).
+    await eliminar('A').click();
+    await aceptarEliminacion(page, 'Foco 43 A');
+    await expect(eliminar('A')).toHaveCount(0);
+    await expect(eliminar('B')).toBeFocused();
+
+    // La última: el foco pasa a la anterior (B).
+    await eliminar('C').click();
+    await aceptarEliminacion(page, 'Foco 43 C');
+    await expect(eliminar('C')).toHaveCount(0);
+    await expect(eliminar('B')).toBeFocused();
+
+    // La única: la lista queda vacía y el foco va al título del listado.
+    await eliminar('B').click();
+    await aceptarEliminacion(page, 'Foco 43 B');
+    await expect(lista).toContainText('Ningún cliente cumple los filtros.');
+    await expect(page.getByRole('heading', { level: 1, name: 'Clientes' })).toBeFocused();
+  } finally {
+    const quedan = (await leerSnapshot()).customers.filter((cliente) => ids.includes(cliente.id));
+    if (quedan.length) await enviarCambios({ customers: { remove: quedan.map((cliente) => cliente.id) } });
+  }
 });
 
 test('a 375 px la ventana cabe en la pantalla y sus botones no se desbordan', async ({ page }) => {

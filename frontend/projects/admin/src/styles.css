@@ -328,29 +328,36 @@ label:has(> input[type='file']:focus-visible) {
 
 /*
  * Lote 43 (ADR-0033, PBI-0265): los listados en un solo panel, como la lista de proveedores del SGC.
- * - Filtros en una fila: el primer campo (la búsqueda de texto) ocupa lo que queda; las listas miden 12rem (la
- *   categoría, con su ayuda de una línea, 15rem) y, si bajan a otra línea, no se estiran. Por debajo de 640 px, uno
- *   por fila.
+ * - Filtros en una fila: los campos de texto (la búsqueda) crecen para ocupar lo que queda, el primero el doble; las
+ *   listas (un `mat-select` y la categoría con búsqueda) tienen su ancho, 14rem (la categoría, con su ayuda de una
+ *   línea, 15rem), y no se estiran, también si bajan a otra línea. Los botones van al final de la fila
+ *   (`panel-filtros.component.ts`). Por debajo de 640 px, un campo por línea.
  * - «Elementos por página»: la lista desplegable del pie, con borde, del alto de los botones de la paginación.
  * - «Imprimir o PDF»: mientras se imprime (`body.ws-imprimiendo`), solo se ve la vista de la tabla filtrada completa
  *   (`.ws-impresion`, directa del `body`); en pantalla, esa vista no se ve nunca.
  */
 .ws-filtros > * {
-  flex: 0 1 12rem;
+  flex: 1 1 12rem;
   min-width: 0;
 }
 
-.ws-filtros > ws-admin-selector-categoria {
-  flex-basis: 15rem;
+.ws-filtros > :where(:first-child) {
+  flex-grow: 2;
 }
 
-.ws-filtros > :first-child {
-  flex: 1 1 15rem;
+.ws-filtros > :has(mat-select) {
+  flex: 0 1 14rem;
+}
+
+.ws-filtros > ws-admin-selector-categoria {
+  flex: 0 1 15rem;
 }
 
 @media (width < 40rem) {
   .ws-filtros > *,
-  .ws-filtros > :first-child {
+  .ws-filtros > :first-child,
+  .ws-filtros > :has(mat-select),
+  .ws-filtros > ws-admin-selector-categoria {
     flex: 1 1 100%;
   }
 }

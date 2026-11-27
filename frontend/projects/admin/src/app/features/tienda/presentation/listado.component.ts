@@ -29,7 +29,9 @@ import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.
     <div class="admin-card">
       <div class="flex flex-wrap items-start justify-between gap-4 p-5 sm:p-6">
         <div class="min-w-0">
-          <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">{{ titulo() }}</h1>
+          <h1 wsAdminTitulo tabindex="-1" class="text-3xl font-semibold tracking-tight text-ink">
+            {{ titulo() }}
+          </h1>
           @if (descripcion(); as texto) {
             <p class="mt-2 max-w-3xl text-sm leading-6 text-muted">{{ texto }}</p>
           }

@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
@@ -155,7 +156,8 @@ function pluralDelRol(nombre: string): string {
                     [class]="accionEliminar"
                     [attr.aria-label]="'Eliminar usuario ' + user.name"
                     matTooltip="Eliminar"
-                    (click)="remove(user.id)"
+                    data-eliminar
+                    (click)="remove(user.id, $event)"
                   >
                     <svg wsAdminIcono="eliminar"></svg>
                   </button>
@@ -187,6 +189,8 @@ export class UsuariosPage {
   protected readonly admin = inject(TiendaFacade);
   protected readonly session = inject(SesionFacade);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly insignia = clasesDeInsignia;
   protected readonly accion = CLASES_ACCION;
   protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
@@ -263,9 +267,10 @@ export class UsuariosPage {
     return this.admin.roles().find((definition) => definition.id === role)?.label ?? role;
   }
 
-  protected async remove(id: string): Promise<void> {
+  protected async remove(id: string, evento: Event): Promise<void> {
+    const lugar = this.foco.recordar(evento);
     if (!this.session.can('users.delete')) return;
-    await eliminarRegistro({
+    const eliminado = await eliminarRegistro({
       nombre: this.admin.users().find((u) => u.id === id)?.name ?? '',
       id,
       confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
@@ -274,5 +279,6 @@ export class UsuariosPage {
       eliminar: (idEliminado) => this.admin.eliminarUsuario(idEliminado),
       salirDeLaEdicion: () => undefined,
     });
+    if (eliminado) this.foco.restaurar(lugar);
   }
 }

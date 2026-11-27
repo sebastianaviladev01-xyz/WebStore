@@ -18,6 +18,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { distritoDeLasOpciones, opcionesDeDistrito } from '../domain/distrito.rules';
@@ -140,7 +141,8 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
                       [class]="accionEliminar"
                       [attr.aria-label]="'Eliminar tarifa de ' + rate.origin + ' a ' + rate.destination"
                       matTooltip="Eliminar"
-                      (click)="remove(rate.id)"
+                      data-eliminar
+                      (click)="remove(rate.id, $event)"
                     >
                       <svg wsAdminIcono="eliminar"></svg>
                     </button>
@@ -250,6 +252,8 @@ const EMPTY_RATE = { origin: '', destinations: [] as string[], destination: '', 
 export class TarifasEnvioPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   /** La plantilla del formulario, que se abre en la ventana emergente (PBI-0211). */
   private readonly registro = viewChild.required<TemplateRef<unknown>>('registro');
   protected readonly editing = signal<string | null>(null);
@@ -385,8 +389,9 @@ export class TarifasEnvioPage {
     else this.errorGuardado.set(this.admin.tomarError());
   }
 
-  protected async remove(id: string): Promise<void> {
-    await eliminarRegistro({
+  protected async remove(id: string, evento: Event): Promise<void> {
+    const lugar = this.foco.recordar(evento);
+    const eliminado = await eliminarRegistro({
       nombre: this.nombreDeTarifa(id),
       id,
       confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
@@ -394,6 +399,7 @@ export class TarifasEnvioPage {
       eliminar: (idEliminado) => this.admin.eliminarTarifa(idEliminado),
       salirDeLaEdicion: () => this.reset(),
     });
+    if (eliminado) this.foco.restaurar(lugar);
   }
 
   /** Nombre de la tarifa en la ventana de confirmación (PBI-0269): «Miraflores → Surco». */

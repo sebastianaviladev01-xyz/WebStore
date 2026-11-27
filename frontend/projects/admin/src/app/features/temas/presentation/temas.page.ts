@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { MatDialog } from '@angular/material/dialog';
 
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 
 import { TemasFacade } from '../application/temas.facade';
 import { MENSAJE_TEMA_ACTIVO_EN_USO } from '../domain/tema.rules';
@@ -157,7 +158,8 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
               class="inline-flex items-center gap-2 min-h-10 text-danger"
               [attr.aria-label]="'Borrar ' + tema.name"
               [disabled]="temas.guardando()"
-              (click)="borrar(tema, activo)"
+              data-eliminar
+              (click)="borrar(tema, activo, $event)"
             >
               <svg wsAdminIcono="eliminar"></svg>
               Borrar
@@ -173,6 +175,8 @@ const COLORES_DE_LA_MUESTRA: readonly { readonly campo: keyof ColoresTema; reado
 export class TemasPage {
   protected readonly temas = inject(TemasFacade);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
 
   protected readonly muestra = COLORES_DE_LA_MUESTRA;
   protected readonly predefinidos = computed(
@@ -209,16 +213,19 @@ export class TemasPage {
     else this.mostrarFallo();
   }
 
-  protected async borrar(tema: Tema, activo: string): Promise<void> {
+  protected async borrar(tema: Tema, activo: string, evento: Event): Promise<void> {
     this.limpiarMensajes();
     if (tema.id === activo) {
       this.errorDeAccion.set(MENSAJE_TEMA_ACTIVO_EN_USO);
       return;
     }
     // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre del tema.
+    const lugar = this.foco.recordar(evento);
     if (!(await confirmarEliminacion(this.dialog, tema.name))) return;
-    if (await this.temas.borrar(tema.id)) this.mensaje.set(`Tema «${tema.name}» borrado.`);
-    else this.mostrarFallo();
+    if (await this.temas.borrar(tema.id)) {
+      this.mensaje.set(`Tema «${tema.name}» borrado.`);
+      this.foco.restaurar(lugar);
+    } else this.mostrarFallo();
   }
 
   private abrir(datos: DatosTemaDialog): void {

@@ -8,6 +8,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
 
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { vigenciaVisible } from '../domain/banner.rules';
@@ -147,7 +148,8 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
                   [class]="accionEliminar"
                   [attr.aria-label]="'Eliminar banner ' + banner.title"
                   matTooltip="Eliminar"
-                  (click)="remove(banner.id)"
+                  data-eliminar
+                  (click)="remove(banner.id, $event)"
                 >
                   <svg wsAdminIcono="eliminar"></svg>
                 </button>
@@ -172,6 +174,8 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
 export class BannersPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly placementLabels = ETIQUETAS_UBICACION_BANNER;
   protected readonly vigencia = vigenciaVisible;
   protected readonly insignia = clasesDeInsignia;
@@ -223,8 +227,9 @@ export class BannersPage {
     return numeroDeFila(this.pagina(), indice);
   }
 
-  protected async remove(id: string): Promise<void> {
-    await eliminarRegistro({
+  protected async remove(id: string, evento: Event): Promise<void> {
+    const lugar = this.foco.recordar(evento);
+    const eliminado = await eliminarRegistro({
       nombre: this.admin.banners().find((b) => b.id === id)?.title ?? '',
       id,
       confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
@@ -233,5 +238,6 @@ export class BannersPage {
       eliminar: (idEliminado) => this.admin.eliminarBanner(idEliminado),
       salirDeLaEdicion: () => undefined,
     });
+    if (eliminado) this.foco.restaurar(lugar);
   }
 }

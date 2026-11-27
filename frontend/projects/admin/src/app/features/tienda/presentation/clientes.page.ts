@@ -14,6 +14,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
@@ -24,7 +25,7 @@ import {
 } from '../domain/filtro-listado.rules';
 import { TablaExportable } from '../domain/exportacion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
-import { numeroDeFila, textoDelTotal } from '../domain/listado.rules';
+import { numeroDeFila, textoDeCantidad, textoDelTotal } from '../domain/listado.rules';
 import { Cliente } from '../domain/tienda.model';
 import { conservarBorrador } from './borrador';
 import { dialogoDeRegistro } from './dialogo-de-registro';
@@ -113,7 +114,7 @@ interface BorradorCliente {
                 <strong class="break-words">{{ c.name }}</strong>
                 <p class="break-words text-xs text-muted">{{ c.email }} · {{ c.document }}</p>
               </div>
-              <span role="cell" class="text-sm max-md:col-start-2">{{ c.orders }} pedidos</span>
+              <span role="cell" class="text-sm max-md:col-start-2">{{ pedidos(c.orders) }}</span>
               <div role="cell" class="flex justify-end gap-2">
                 <button
                   type="button"
@@ -129,7 +130,8 @@ interface BorradorCliente {
                   [class]="accionEliminar"
                   [attr.aria-label]="'Eliminar cliente ' + c.name"
                   matTooltip="Eliminar"
-                  (click)="remove(c.id)"
+                  data-eliminar
+                  (click)="remove(c.id, $event)"
                 >
                   <svg wsAdminIcono="eliminar"></svg>
                 </button>
@@ -201,6 +203,8 @@ interface BorradorCliente {
 export class ClientesPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly filtros = filtrosDeListado({
     leer: leerFiltrosClientes,
     escribir: parametrosDeFiltrosClientes,
@@ -223,6 +227,10 @@ export class ClientesPage {
   protected readonly accion = CLASES_ACCION;
   protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
   protected readonly botonCancelar = CLASES_CANCELAR_SUAVE;
+  /** «1 pedido», «2 pedidos» (lote 43; antes, «1 pedidos»). */
+  protected pedidos(cantidad: number): string {
+    return textoDeCantidad(cantidad, 'pedido', 'pedidos');
+  }
   protected numero(indice: number): number {
     return numeroDeFila(this.pagina(), indice);
   }
@@ -306,8 +314,9 @@ export class ClientesPage {
     this.form.reset(CLIENTE_VACIO);
   }
   /** Si se elimina el cliente en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
-  protected async remove(id: string) {
-    await eliminarRegistro({
+  protected async remove(id: string, evento: Event) {
+    const lugar = this.foco.recordar(evento);
+    const eliminado = await eliminarRegistro({
       nombre: this.admin.customers().find((c) => c.id === id)?.name ?? '',
       id,
       confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
@@ -315,5 +324,6 @@ export class ClientesPage {
       eliminar: (idEliminado) => this.admin.eliminarCliente(idEliminado),
       salirDeLaEdicion: () => this.reset(),
     });
+    if (eliminado) this.foco.restaurar(lugar);
   }
 }
