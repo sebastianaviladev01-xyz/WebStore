@@ -104,6 +104,16 @@ const fila = (seccion: Locator, nombre: string) =>
 const nuevoTema = (page: Page) => page.getByRole('button', { name: 'Nuevo tema' });
 const dialogo = (page: Page) => page.getByRole('dialog');
 
+/**
+ * Abre «Nuevo tema» y espera a que el diálogo termine de abrirse: Material pone el foco en «Nombre» al acabar la
+ * animación, y si la prueba ya está escribiendo en otro campo, el texto acaba en «Nombre» (lote 48, fallo intermitente
+ * del CI: el código «0f766e» quedó en el nombre).
+ */
+async function abrirNuevoTema(page: Page): Promise<void> {
+  await nuevoTema(page).click();
+  await expect(dialogo(page).getByRole('textbox', { name: 'Nombre' })).toBeFocused();
+}
+
 async function abrirTemas(page: Page): Promise<void> {
   await ingresarAlAdmin(page, cuentasAdmin.superadmin);
   await desplegarGrupo(page, 'Tienda');
@@ -139,7 +149,7 @@ test.describe('Temas del Admin', () => {
   test('crear un tema: nombre repetido, bloqueo por contraste, aviso y guardado', async ({ page }) => {
     const nombre = nombreUnico('creado');
     await abrirTemas(page);
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const formulario = dialogo(page);
     await expect(formulario.getByRole('heading', { name: 'Nuevo tema' })).toBeVisible();
     // Lote 25 (PBI-0224): a 1440 px, la ventana mide 1200 px (antes 960) y la vista previa es más ancha que los colores.
@@ -184,7 +194,7 @@ test.describe('Temas del Admin', () => {
 
   test('la vista previa cambia con el color y el resto del Admin no', async ({ page }) => {
     await abrirTemas(page);
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const vista = dialogo(page).locator('ws-admin-vista-previa-tema');
     const raiz = page.locator('html');
 
@@ -249,7 +259,7 @@ test.describe('Temas del Admin', () => {
     await expect(muestraDeB.nth(2)).toHaveCSS('background-color', FONDO_PRINCIPAL.b);
 
     // La vista previa se pinta con el lienzo de la tienda del tema que se edita (`--ws-store-bg`), no con `--ws-bg`.
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const vista = dialogo(page).locator('ws-admin-vista-previa-tema');
     const figura = vista.locator('figure');
     await expect(figura).toBeVisible();
@@ -270,7 +280,7 @@ test.describe('Temas del Admin', () => {
   }) => {
     const nombre = nombreUnico('secundario');
     await abrirTemas(page);
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const formulario = dialogo(page);
     await formulario.getByLabel('Nombre').fill(nombre);
     await formulario.getByLabel('Contraste', { exact: true }).fill('#5f6b7a');
@@ -311,7 +321,7 @@ test.describe('Temas del Admin', () => {
     // Lote 27: antes, el contenido se quedaba en el 65 % del alto y la ventana, muy por debajo de la pantalla.
     await page.setViewportSize({ width: 1440, height: 640 });
     await abrirTemas(page);
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const formulario = dialogo(page);
     await expect(formulario.getByRole('heading', { name: 'Nuevo tema' })).toBeVisible();
     const caja = (await formulario.boundingBox())!;
@@ -330,7 +340,7 @@ test.describe('Temas del Admin', () => {
     // Se entra con el menú lateral del escritorio y se pasa a 375 px ya en Temas.
     await abrirTemas(page);
     await page.setViewportSize({ width: 375, height: 812 });
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const formulario = dialogo(page);
     const nombre = formulario.getByRole('textbox', { name: 'Nombre' });
     await nombre.fill('');
@@ -361,7 +371,7 @@ test.describe('Temas del Admin', () => {
   }) => {
     const nombre = nombreUnico('hexadecimal');
     await abrirTemas(page);
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const formulario = dialogo(page);
     const vista = formulario.locator('ws-admin-vista-previa-tema');
     const codigo = (color: string) =>
@@ -439,7 +449,7 @@ test.describe('Temas del Admin', () => {
   }) => {
     await abrirTemas(page);
     await page.setViewportSize({ width: 375, height: 812 });
-    await nuevoTema(page).click();
+    await abrirNuevoTema(page);
     const formulario = dialogo(page);
     const cajaDialogo = (await formulario.boundingBox())!;
     for (const color of ['Principal', 'Secundario', 'Fondo principal', 'Fondo secundario', 'Contraste']) {
