@@ -181,10 +181,16 @@ export async function tuercaEnLaBarra(page: Page, nombre: string): Promise<void>
     campana.x + 0.5,
   );
   const centro = (c: { y: number; height: number }) => c.y + c.height / 2;
-  const texto = await caja(page.getByRole('banner').getByText('Backoffice de la tienda'));
+  // Lote 44 (PBI-0271): a la izquierda de la barra va la ruta de navegación, en lugar de «Backoffice de la tienda».
+  const texto = await caja(
+    page
+      .getByRole('banner')
+      .getByRole('navigation', { name: 'Ruta de navegación' })
+      .locator('[aria-current="page"]'),
+  );
   expect(
     Math.abs(centro(texto) - centro(t)),
-    `${nombre}: el texto de la barra y la tuerca en la misma línea`,
+    `${nombre}: la ruta de navegación y la tuerca en la misma línea`,
   ).toBeLessThan(2);
   expect(Math.abs(centro(t) - centro(campana)), `${nombre}: tuerca y campana en la misma línea`).toBeLessThan(
     2,

@@ -120,7 +120,7 @@ test.describe('Guardado del Admin', () => {
       // Otra sesión vende o ajusta el stock mientras la ficha está abierta: la revisión cambia.
       await actualizarProducto('p-002', { stock: original.stock + 3 });
       await precio.fill(String(original.price + 10));
-      await page.getByRole('button', { name: 'Guardar producto' }).click();
+      await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
       const guardado = (await leerProductos()).find((producto) => producto.id === 'p-002')!;
       expect(guardado.price).toBe(original.price + 10);
@@ -139,7 +139,7 @@ test.describe('Guardado del Admin', () => {
       await expect(precio).toHaveValue(String(original.price));
       await actualizarProducto('p-002', { price: original.price + 5 });
       await precio.fill(String(original.price + 20));
-      await page.getByRole('button', { name: 'Guardar producto' }).click();
+      await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       const formulario = page.getByRole('form', { name: 'Editar producto' });
       await expect(formulario.getByRole('alert')).toContainText('otra persona cambió el precio');
       await expect(page).toHaveURL(/\/productos\/p-002$/);
@@ -166,7 +166,7 @@ test.describe('Guardado del Admin', () => {
       await expect(nombre).toHaveValue(producto.name);
       await retirarProductos([producto.id]);
       await nombre.fill('Producto borrado 06 editado');
-      await page.getByRole('button', { name: 'Guardar producto' }).click();
+      await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page.getByRole('form', { name: 'Editar producto' }).getByRole('alert')).toContainText(
         'ya no existe',
       );
@@ -205,7 +205,7 @@ test.describe('Guardado del Admin', () => {
       });
       expect(bytes).toBeGreaterThan(400 * 1024);
       await expect(page.getByRole('img', { name: 'Foto 2 del producto' })).toBeVisible();
-      await page.getByRole('button', { name: 'Guardar producto' }).click();
+      await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
       const guardado = (await leerProductos()).find((item) => item.id === producto.id)!;
       expect(guardado.gallery).toHaveLength(1);
@@ -328,7 +328,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     const correo = page.getByRole('textbox', { name: 'Correo' });
     await correo.fill('ADMIN@webstore.demo');
     await page.getByLabel('Contraseña temporal').fill('Temporal1234');
-    await page.getByRole('button', { name: 'Guardar usuario' }).click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(correo).toHaveAccessibleDescription(
       'Ya hay un usuario con ese correo: Administración Demo. Usa otro.',
     );
@@ -347,13 +347,13 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
     await sku.fill('tv-oled-55-vsn');
     await page.getByRole('textbox', { name: 'Descripción' }).fill('Descripción');
     await cargarImagenPrincipal(page);
-    await page.getByRole('textbox', { name: /Características/ }).fill('Una');
+    await page.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Una');
     await page.getByRole('combobox', { name: 'Categoría' }).click();
     // Lote 29 (PBI-0238): las opciones muestran la ruta; «TV y audio › OLED» también lleva «TV y audio».
     await page.getByRole('option', { name: 'TV y audio', exact: true }).click();
     await page.getByRole('combobox', { name: 'Marca' }).click();
     await page.getByRole('option', { name: 'Nova' }).click();
-    const guardar = page.getByRole('button', { name: 'Guardar producto' });
+    const guardar = page.getByRole('button', { name: 'Guardar', exact: true });
     await guardar.click();
     await expect(sku).toHaveAccessibleDescription(
       'Ya hay un producto con el SKU tv-oled-55-vsn: «OLED Vision 55” 4K». Usa otro SKU.',

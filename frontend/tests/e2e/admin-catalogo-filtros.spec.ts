@@ -196,11 +196,11 @@ test.describe('Filtros y registro de productos del Admin', () => {
         ['textbox', 'Nombre'],
         ['textbox', 'SKU'],
         ['textbox', 'Descripción'],
-        ['textbox', 'Características (una por línea)'],
+        ['textbox', 'Característica 1'],
         ['spinbutton', 'Precio'],
         ['combobox', 'Categoría'],
         ['combobox', 'Marca'],
-        ['checkbox', 'Activo'],
+        ['combobox', 'Estado'],
       ] as const) {
         await expect(formulario.getByRole(rol, { name: campo, exact: true })).toBeVisible();
       }
@@ -221,8 +221,8 @@ test.describe('Filtros y registro de productos del Admin', () => {
         '/inventario',
       );
 
-      // «Volver a productos» sin guardar conserva filtros y página.
-      await page.getByRole('link', { name: 'Volver a productos' }).click();
+      // «Regresar» (lote 44, PBI-0268) sin guardar conserva filtros y página.
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(consulta);
       await expect(panel(page).getByRole('textbox', { name: 'Nombre' })).toHaveValue('ventilador');
 
@@ -232,15 +232,20 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VENT-008');
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Tres velocidades.');
       await cargarImagenPrincipal(formulario);
+      // Lote 44 (PBI-0268): una característica por fila de la tabla, con «Agregar fila».
       await formulario
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Tres velocidades\nTemporizador');
+        .getByRole('textbox', { name: 'Característica 1', exact: true })
+        .fill('Tres velocidades');
+      await formulario.getByRole('button', { name: 'Agregar fila', exact: true }).click();
+      await formulario.getByRole('textbox', { name: 'Característica 2', exact: true }).fill('Temporizador');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('249');
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
 
-      await expect(page).toHaveURL(consulta);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL; el filtro se conserva.
+      await expect(page).toHaveURL(/\/productos\?nombre=ventilador(&pagina=\d+)?$/);
       await expect(nombresEnLista(page)).toHaveText([nombre]);
 
       const tienda = await nuevoRequest.newContext({ baseURL: urls.bff });
@@ -279,7 +284,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(campoNombre).toHaveValue('Soundbar Cinema 500 Pro');
 
       await campoNombre.fill('Soundbar Cinema 500 editada');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
       await expect(filaDe(page, 'Soundbar Cinema 500 editada')).toHaveCount(1);
       await expect(filaDe(page, temporal.name)).toHaveCount(1);
@@ -290,7 +295,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(page).toHaveURL(/\/productos\/e2e-008-temporal$/);
       await expect(page.getByText('Este producto ya no existe')).toBeVisible();
       await expect(page.getByRole('form', { name: 'Editar producto' })).toHaveCount(0);
-      await page.getByRole('link', { name: 'Volver a productos' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
     } finally {
       await restaurar(originales);
@@ -320,7 +325,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(formulario.getByRole('spinbutton', { name: 'Precio', exact: true })).toBeEditable();
       await expect(formulario.getByRole('combobox', { name: 'Categoría' })).toBeEnabled();
       await expect(formulario.getByRole('combobox', { name: 'Marca' })).toBeEnabled();
-      await expect(formulario.getByRole('checkbox', { name: 'Activo' })).toBeEnabled();
+      await expect(formulario.getByRole('combobox', { name: 'Estado', exact: true })).toBeEnabled();
       // PBI-0226 (lote 23): el stock no está en la ficha; se gestiona en Inventario, que el vendedor tiene.
       await expect(formulario.getByRole('spinbutton', { name: 'Stock' })).toHaveCount(0);
       await expect(formulario).toContainText('El stock se gestiona en Inventario');
@@ -329,7 +334,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
         .getByRole('textbox', { name: 'Nombre', exact: true })
         .fill('Soundbar Cinema 500 vendedor');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('321');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
       await expect(nombresEnLista(page)).toHaveText(['Soundbar Cinema 500 vendedor']);
       expect((await leerProductos()).find((p) => p.id === 'p-004')).toMatchObject({
@@ -346,14 +351,15 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await nuevo.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VEND-07');
       await nuevo.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Portátil.');
       await cargarImagenPrincipal(nuevo);
-      await nuevo
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Batería');
+      await nuevo.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Batería');
       await nuevo.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('99');
       await elegir(page, nuevo, 'Categoría', 'Electrohogar');
       await elegir(page, nuevo, 'Marca', 'Zenith');
-      await nuevo.getByRole('button', { name: 'Guardar producto' }).click();
-      await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
+      await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` y salta al registro. El filtro
+      // «soundbar» no incluye el producto creado, así que el listado lo quita para mostrarlo.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
+      await expect(page.getByText('Parlante del vendedor', { exact: true })).toBeVisible();
       expect((await leerProductos()).find((p) => p.sku === 'E2E-VEND-07')).toMatchObject({
         name: 'Parlante del vendedor',
         price: 99,
@@ -431,7 +437,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
         'Cocina',
       ]);
 
-      // «Agregar» abre el registro sin la lista; «Volver a categorías» conserva los filtros.
+      // «Agregar» abre el registro sin la lista; «Regresar» conserva los filtros.
       await page.getByRole('link', { name: 'Agregar categoría', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\/nueva\?padre=sin-padre$/);
       const nueva = page.getByRole('form', { name: 'Nueva categoría' });
@@ -440,7 +446,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toBeVisible();
       await expect(nueva.getByRole('combobox', { name: 'Categoría padre' })).toBeVisible();
       await expect(nueva.getByRole('spinbutton', { name: 'Orden (opcional)' })).toBeVisible();
-      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
 
       // Guardar vuelve al listado con los mismos filtros; la categoría nueva cuelga de «TV y audio».
@@ -448,7 +454,9 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Proyectores 008');
       await elegir(page, nueva, 'Categoría padre', 'TV y audio');
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
-      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL; el filtro se conserva.
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre(&pagina=\d+)?$/);
       expect((await leerCategorias()).find((c) => c.name === 'Proyectores 008')).toMatchObject({
         parentId: 'cat-tv',
       });
@@ -487,7 +495,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await expect(page).toHaveURL(/\/categorias\/e2e-008-barras\?padre=cat-tv$/);
       await expect(page.getByText('Esta categoría ya no existe')).toBeVisible();
       await expect(page.getByRole('form', { name: 'Editar categoría' })).toHaveCount(0);
-      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
     } finally {
       await cambiarCategorias(() => originales);
@@ -673,8 +681,8 @@ const VISTAS_DEL_CATALOGO: readonly {
     ],
   })),
   ...[
-    ['/productos/nuevo', 'Nuevo producto', 'Guardar producto'],
-    ['/productos/p-001', 'Editar producto', 'Guardar producto'],
+    ['/productos/nuevo', 'Nuevo producto', 'Guardar'],
+    ['/productos/p-001', 'Editar producto', 'Guardar'],
     ['/categorias/nueva', 'Nueva categoría', 'Guardar'],
     ['/categorias/cat-tv-oled', 'Editar categoría', 'Guardar'],
   ].map(([ruta, formulario, guardar]) => ({
@@ -944,7 +952,7 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
 
     // Lote 21 (PBI-0211): la marca se edita en la ventana de registro, que se abre con «Editar».
     for (const [ruta, formulario, guardar, abrir] of [
-      ['/productos/p-004', 'Editar producto', 'Guardar producto', null],
+      ['/productos/p-004', 'Editar producto', 'Guardar', null],
       ['/categorias/cat-tv-oled', 'Editar categoría', 'Guardar', null],
       ['/marcas', 'Editar marca', 'Guardar', 'Editar marca Nova'],
     ] as const) {
