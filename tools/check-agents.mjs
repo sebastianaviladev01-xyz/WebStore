@@ -4,7 +4,8 @@
 // - El catálogo .agents/execution-catalog.json es un JSON válido. Cada herramienta resuelve todos los
 //   niveles y roles con modelos conocidos y tiene todos los esfuerzos; un respaldo no repite el modelo;
 //   un modelo limitado a un rol (onlyFor) no aparece fuera de ese rol; los esfuerzos de cada nivel están
-//   disponibles; si la herramienta usa alias, cada modelo tiene el suyo; y su adaptador existe. Un
+//   disponibles; si la herramienta usa alias, cada modelo tiene el suyo; el escalado, si lo hay, usa un
+//   modelo conocido con un esfuerzo disponible (ADR-0036); y su adaptador existe. Un
 //   modelo validado tiene modelId y ningún modelo excluido está en models.
 // - Los niveles que nombran los skills, los adaptadores y la guía de ejecución existen en el catálogo:
 //   las listas «nivel (`ligero`, …)» y los pares «`nivel · esfuerzo`».
@@ -160,6 +161,17 @@ if (catalog) {
       } else if (harnessEfforts[route.effort] === null) {
         fail(`${name}/${role}: el esfuerzo ${route.effort} no está disponible`);
       }
+    }
+
+    // Escalado (ADR-0036): un modelo conocido, un esfuerzo disponible y, si la herramienta usa alias, el suyo.
+    if (harness.escalation) {
+      const { model, effort } = harness.escalation;
+      if (!(model in models)) fail(`${name}/escalation: modelo desconocido ${model}`);
+      if (!efforts.includes(effort)) fail(`${name}/escalation: esfuerzo desconocido ${effort}`);
+      else if (harnessEfforts[effort] === null)
+        fail(`${name}/escalation: el esfuerzo ${effort} no está disponible`);
+      if (harness.agentAliases && !(model in harness.agentAliases))
+        fail(`${name}: falta el alias de ${model}`);
     }
 
     if (harness.agentAliases) {

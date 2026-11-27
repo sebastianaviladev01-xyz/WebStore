@@ -151,8 +151,8 @@ Los ejemplos de las tablas son tipos de trabajo de WebStore, no tareas registrad
 
 - Si una ejecución delegada falla dos veces, o necesita una decisión que no está en el brief, sube al nivel superior. No se repite con el mismo nivel.
 - **El esfuerzo más alto es `alto`.** El catálogo no tiene esfuerzos por encima y ninguna sesión ni subagente los usa, aunque la herramienta los ofrezca: consumen los tokens demasiado deprisa (decisión de Daniel Avila del 2026-11-13).
-- **El modelo más alto es el del nivel avanzado.** Ninguna sesión ni subagente usa un modelo por encima del que el catálogo da a ese nivel. Solo una persona puede pedirlo para una sesión concreta, y la evidencia de esa sesión lo dice.
-- Si una tarea del nivel avanzado con esfuerzo alto falla dos veces, no hay nivel al que subir: el agente se detiene, explica qué intentó y pregunta a la persona.
+- **El modelo más alto es el del nivel avanzado, salvo el escalado del catálogo.** Ninguna sesión ni subagente usa un modelo por encima del que el catálogo da a ese nivel, salvo el de `escalation` de su herramienta (en Claude Code, Fable 5.2, [ADR-0036](../adrs/0036-usar-opus-5-5-en-todo-y-fable-5-2-cuando-haga-falta.md)). Ese solo se usa cuando el nivel avanzado con esfuerzo alto no basta: falló dos veces en la tarea, o no llega a un resultado sólido en diseño o diagnóstico. El motivo queda en el informe y en el PR. Una persona también puede pedirlo para una sesión concreta, y la evidencia de esa sesión lo dice.
+- Si una tarea falla dos veces con el modelo de `escalation` (o con el nivel avanzado con esfuerzo alto, en una herramienta sin `escalation`), no hay nivel al que subir: el agente se detiene, explica qué intentó y pregunta a la persona.
 - Las tareas ⚠, los hitos y las decisiones de diseño no se delegan.
 - Si el modelo o el esfuerzo de una tarea no están disponibles en la herramienta, la tarea queda en `Falta` o se usa el respaldo (`fallbacks`) del catálogo, y se registra. No se cambia de modelo en silencio.
 - Un modelo con `onlyFor` en el catálogo solo se usa para ese rol, nunca para un nivel ni como respaldo de uno.
