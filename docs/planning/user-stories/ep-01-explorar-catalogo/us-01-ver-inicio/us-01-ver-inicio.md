@@ -67,6 +67,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-contenido.spec.ts`, con el reloj simulado. Un aviso sin fechas se ve siempre, como en el escenario 04.
 
+### Escenario 08 – Acceso a WhatsApp
+
+- **Dado** que la tienda escribió su número de WhatsApp en Contenido
+- **Cuando** el comprador abre cualquier página de la tienda menos el checkout
+- **Entonces** ve abajo a la derecha el botón «Escríbenos por WhatsApp», que abre la conversación con la tienda en otra pestaña, con el mensaje inicial si lo hay, sin tapar ningún control. Sin número, no hay botón.
+
+> Añadido el 2026-11-27 por el lote 49 ([ADR-0035](../../../../adrs/0035-construir-por-lotes-el-acceso-a-whatsapp.md); PBI-0241; decisión de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «PBI-0241: acceso a WhatsApp»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-whatsapp.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - Queda el inicio actual (Daniel, 2026-11-20, PBI-0019); `/inicio-anterior` se quitó en el lote 16 (PBI-0193).

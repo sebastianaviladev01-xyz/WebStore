@@ -47,6 +47,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Contacto (varios correos, teléfonos y redes), información de envíos, privacidad y términos (con su versión vigente) administrables, pie armado con los accesos inferiores, además de libro de reclamaciones persistente con código de recepción.
 - Estados vacíos, sin resultados, sin stock y 404, y un aviso de mantenimiento si el contenido nunca llega del BFF.
 - Sin tuerca de temas: el tema solo se configura en el backoffice.
+- Botón de WhatsApp abajo a la derecha, donde estaba la tuerca, si la tienda escribió su número en Contenido: abre la conversación en otra pestaña, con el mensaje inicial si lo hay. No aparece en el checkout ni tapa ningún control; en la ficha del celular sube sobre la barra de «Agregar al carrito».
 - El color secundario del tema se ve en los botones secundarios, en el fondo con el puntero encima o con el foco, en la insignia «Oferta» y en el contador del carrito. El tema C lleva el negro de principal y el amarillo de secundario.
 
 ## Backoffice (proyecto `admin`)
@@ -63,7 +64,7 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Reclamos con estado y respuesta del proveedor; la lista marca el abierto.
 - Pedidos y estados.
 - Banners en su propia interfaz, con las imágenes cargadas como archivo, fecha y hora de inicio y fin (que deben existir en el calendario), el tono de los controles calculado al cargar la foto y hasta dos botones.
-- CMS: logo gráfico cargable/configurable, contacto múltiple, avisos para los clientes (con «Desde» y «Hasta» opcionales), navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
+- CMS: logo gráfico cargable/configurable, contacto múltiple, WhatsApp de la tienda (número con código de país y mensaje inicial, con «Probar»), avisos para los clientes (con «Desde» y «Hasta» opcionales), navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
 - Contacto, Envíos, Privacidad y Términos con activación/desactivación efectiva mediante guards; al desactivarlas, tampoco son accesibles por URL directa.
 - Tipografía única bloqueada en el MVP.
 - Tabla configurable origen → destino, con el distrito elegido de una lista y sin ajuste porcentual.

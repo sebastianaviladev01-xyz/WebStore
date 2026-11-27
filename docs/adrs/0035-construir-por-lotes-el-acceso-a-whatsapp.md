@@ -80,3 +80,17 @@ Cada commit lleva `Refs:` con `PBI-0241` y este ADR.
 - Responsable: Sebastián Avila. Termina cuando se fusiona el PR del lote 49 o cuando él la retira.
 - Aprobación: Sebastián Avila, 2026-11-27. Falta informar a Daniel Avila de lo construido.
 - Al cerrar, se quita de «Excepciones vigentes» y el flujo de ADR-0016 vuelve a regir sin excepción.
+
+## Cierre
+
+El lote 49 se ejecutó el 2026-11-27 en `feature/lote-49-acceso-a-whatsapp`. Lo audita la sesión principal y lo fusiona Sebastián Avila; la excepción termina al fusionar su PR.
+
+- **BFF:** `whatsappNumber` y `whatsappMessage` en Contenido, con sus reglas (`whatsapp.rules.mjs`), vacíos en la semilla y en un estado anterior, sin cambiar `schemaVersion`; [contrato](../../backend/docs/BFF-CONTRACT.md) al día. Prueba primero: 9 de 63 en rojo y el smoke en rojo antes del cambio.
+- **Backoffice:** la sección «WhatsApp» de Contenido, con la ayuda y el ejemplo, la validación y «Probar».
+- **Tienda:** `ws-store-whatsapp`, abajo a la derecha, sin el checkout, por debajo del menú lateral y de los diálogos, y sobre la barra de compra de la ficha a 375 px. Verde `--ws-whatsapp` (`#128C7E`): 4,14:1 el ícono y 3,72:1 o más el círculo contra el fondo de A, B y C.
+- **Controles:** `npm run verify` en verde (34 de arquitectura, 556 del frontend, 777 del BFF y el smoke del contrato); e2e completa, 486 de 486; la spec nueva, 11 pruebas, repetida cinco veces: 55 de 55. Capturas antes y después en `frontend/output/visual-qa/lote-49-whatsapp/`: la tienda solo cambia en el botón y el checkout queda igual.
+- **Lo que decidió el lote** está en la fila «PBI-0241: acceso a WhatsApp» de las [decisiones pendientes](../planning/PENDING-DECISIONS.md): el verde, el círculo también en el celular, el código de país que falta, la subida sobre la barra de la ficha y que no hizo falta espacio al final de las páginas.
+
+Los registros quedaron al día en el mismo PR: el [backlog](../planning/backlog.md), las [decisiones pendientes](../planning/PENDING-DECISIONS.md), la [trazabilidad](../planning/TRACEABILITY.md), la [funcionalidad](../planning/FUNCIONALIDAD.md), las historias US01 y US23, el [glosario](../architecture/glosario.md), el [sistema visual](../../frontend/docs/VISUAL-SYSTEM.md), el [índice de features](../specs/features/README.md) y el [historial](../changelog/CHANGELOG-2026-11-27.md). La excepción pasa a «Excepciones cerradas».
+
+**Lo que queda abierto:** un asistente propio o la API de WhatsApp Business, que dependen de un tercero.
