@@ -27,8 +27,8 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  *
  * Los localizadores usan roles y textos visibles (`frontend/architecture.md` §6). La fila de un producto es un
  * `div` sin otro rol: se localiza como el `div` de la lista que tiene el enlace «Editar» y el nombre, y sus hijos
- * directos son, en orden, el bloque del producto (el nombre en `strong`), el SKU (lote 25, PBI-0219), el precio, el
- * stock y las acciones. Se leen con `evaluate` para medir sus cajas. Las aserciones son `expect.soft`, con el
+ * directos son, en orden, el «N°» (lote 43, PBI-0265), el bloque del producto (el nombre en `strong`), el SKU (lote 25,
+ * PBI-0219), el precio, el stock, el estado (lote 43) y las acciones. Se leen con `evaluate` para medir sus cajas. Las aserciones son `expect.soft`, con el
  * tema, el ancho y lo que se comprueba, para que el informe muestre todas las causas de un rojo.
  */
 const TOLERANCIA = 0.5;
@@ -109,7 +109,7 @@ const filaDe = (page: Page, nombre: string) =>
     .filter({ has: page.getByRole('link', { name: /^Editar / }) })
     .filter({ hasText: nombre });
 
-/** Hijos directos de la fila (bloque, SKU, precio, stock, acciones): cajas, y texto visible de cada uno. */
+/** Hijos directos de la fila (N°, bloque, SKU, precio, stock, estado, acciones): cajas, y texto visible de cada uno. */
 interface HijoDeFila {
   caja: Caja;
   texto: string;
@@ -130,7 +130,8 @@ async function hijosDeFila(fila: Locator): Promise<HijoDeFila[]> {
 /** Rectángulos del SKU en su celda: cuántas líneas ocupa (valores de `top` distintos con ancho mayor que 0). */
 async function lineasDelSku(fila: Locator, sku: string): Promise<number> {
   return fila.evaluate((nodo, buscado) => {
-    const celda = nodo.children[1];
+    // Lote 43 (PBI-0265): la primera celda es «N°»; el SKU, la tercera.
+    const celda = nodo.children[2];
     if (!celda) throw new Error('La fila no tiene la celda del SKU');
     const recorrido = document.createTreeWalker(celda, NodeFilter.SHOW_TEXT);
     for (let actual = recorrido.nextNode(); actual; actual = recorrido.nextNode()) {
@@ -250,13 +251,15 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
     expect.soft(lineas, que('líneas del SKU')).toBe(1);
 
     const hijos = await hijosDeFila(fila);
-    expect(hijos, que('hijos directos de la fila')).toHaveLength(5);
-    const [bloque, sku, precio, stock, acciones] = hijos;
+    expect(hijos, que('hijos directos de la fila')).toHaveLength(7);
+    const [numero, bloque, sku, precio, stock, estado, acciones] = hijos;
     const partes: [string, HijoDeFila][] = [
+      ['N°', numero],
       ['bloque del producto', bloque],
       ['SKU', sku],
       ['precio', precio],
       ['stock', stock],
+      ['estado', estado],
       ['acciones', acciones],
     ];
     for (const [parte, hijo] of partes) {
@@ -496,16 +499,18 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
         await expect(fila).toHaveCount(1);
         const que = (parte: string) => etiqueta(lugar, `${producto.nombre} · ${parte}`);
         const hijos = await hijosDeFila(fila);
-        expect(hijos, que('hijos directos de la fila')).toHaveLength(5);
-        const [bloque, sku, precio, stock, acciones] = hijos;
+        expect(hijos, que('hijos directos de la fila')).toHaveLength(7);
+        const [numero, bloque, sku, precio, stock, estado, acciones] = hijos;
         // Desde el lote 25 (PBI-0219) el bloque del producto es solo el nombre y el SKU tiene su celda; el resto de
         // la fila se centra sobre él (`items-center`): el SKU, el precio, el stock y las acciones se comparan con el
         // centro del bloque (menos de 2 px) y, además, deben caer en la franja vertical del nombre, en su misma línea.
         const cajaDelNombre = await caja(fila.getByText(producto.nombre, { exact: true }));
         const alineados: [string, Caja][] = [
+          ['N°', numero.caja],
           ['SKU', sku.caja],
           ['precio', precio.caja],
           ['stock', stock.caja],
+          ['estado', estado.caja],
           ['acciones', acciones.caja],
         ];
         for (const [parte, cajaDeLaParte] of alineados) {
@@ -545,9 +550,9 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
     expect.soft(await encabezado.isVisible(), etiqueta(lugar, 'cabecera oculta')).toBe(false);
     for (const producto of PRODUCTOS) {
       const hijos = await hijosDeFila(filaDe(page, producto.nombre));
-      expect(hijos).toHaveLength(5);
+      expect(hijos).toHaveLength(7);
       expect
-        .soft(hijos[3].texto, etiqueta(lugar, `${producto.nombre} · celda del stock`))
+        .soft(hijos[4].texto, etiqueta(lugar, `${producto.nombre} · celda del stock`))
         .toMatch(STOCK_CON_ETIQUETA);
     }
   });

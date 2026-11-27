@@ -47,7 +47,10 @@ test('el administrador ve y gestiona solo a los vendedores, sin eliminarlos', as
     // Lote 44 (PBI-0268): el estado es un selector en la fila de cabecera.
     await page.getByRole('combobox', { name: 'Estado', exact: true }).selectOption('Inactivo');
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(listaDeUsuarios(page)).toContainText('Vendedor · inactivo');
+    // Lote 43 (PBI-0265): el rol y el estado van en sus columnas; el estado, como insignia «Inactivo».
+    const fila = listaDeUsuarios(page).getByRole('row').filter({ hasText: 'Vendedora del lote 07' });
+    await expect(fila).toContainText('Vendedor');
+    await expect(fila.getByText('Inactivo', { exact: true })).toBeVisible();
     const creada = (await leerSnapshot()).users.find((user) => user.email === correo);
     expect(creada).toMatchObject({ role: 'vendedor', active: false });
   } finally {
