@@ -28,79 +28,13 @@ import { NotificacionesFacade } from '../features/notificaciones/application/not
 import { SesionFacade } from '../features/sesion/application/sesion.facade';
 import { TemasFacade } from '../features/temas/application/temas.facade';
 import { TiendaFacade } from '../features/tienda/application/tienda.facade';
-import { Permiso } from '../features/sesion/domain/rol.rules';
 import { ICONOS, iconoDelModulo } from '../shared/ui/iconos';
 import { alternarPlegable, FlechaPlegableDirective } from '../shared/ui/plegable.directive';
 import { CampanaNotificacionesComponent } from './campana-notificaciones.component';
+import { MENU, type IdDeGrupo } from './menu';
 import { MenuUsuarioComponent } from './menu-usuario.component';
+import { RutaNavegacionComponent } from './ruta-navegacion.component';
 import { SelectorTemaComponent } from './selector-tema.component';
-
-interface NavigationItem {
-  readonly path: string;
-  readonly label: string;
-  readonly permission: Permiso;
-}
-
-type NavigationGroupId = 'general' | 'catalogo' | 'ventas' | 'tienda' | 'accesos';
-
-interface NavigationGroup {
-  /** Fijo: forma el id de la región que pliega el grupo (`menu-grupo-<id>`). */
-  readonly id: NavigationGroupId;
-  readonly label: string;
-  readonly items: readonly NavigationItem[];
-}
-
-const NAVIGATION: readonly NavigationGroup[] = [
-  {
-    id: 'general',
-    label: 'General',
-    items: [{ path: '/', label: 'Dashboard', permission: 'dashboard.view' }],
-  },
-  {
-    id: 'catalogo',
-    label: 'Catálogo',
-    items: [
-      { path: '/productos', label: 'Productos', permission: 'products.edit' },
-      { path: '/inventario', label: 'Inventario', permission: 'inventory.manage' },
-      { path: '/categorias', label: 'Categorías', permission: 'categories.manage' },
-      { path: '/marcas', label: 'Marcas', permission: 'brands.manage' },
-    ],
-  },
-  {
-    id: 'ventas',
-    label: 'Ventas',
-    items: [
-      { path: '/pedidos', label: 'Pedidos', permission: 'orders.view' },
-      { path: '/clientes', label: 'Clientes', permission: 'customers.manage' },
-      {
-        path: '/reclamaciones',
-        label: 'Reclamaciones',
-        permission: 'complaints.manage',
-      },
-    ],
-  },
-  {
-    id: 'tienda',
-    label: 'Tienda',
-    items: [
-      { path: '/banners', label: 'Banners', permission: 'banners.manage' },
-      { path: '/contenido', label: 'Contenido', permission: 'content.manage' },
-      // Lote 17 (ADR-0021, PBI-0178 y PBI-0183): configuración de la tienda, del superadministrador como Contenido.
-      {
-        path: '/entregas',
-        label: 'Entregas y feriados',
-        permission: 'content.manage',
-      },
-      { path: '/temas', label: 'Temas', permission: 'themes.manage' },
-      { path: '/envios', label: 'Tarifas de envío', permission: 'shipping.manage' },
-    ],
-  },
-  {
-    id: 'accesos',
-    label: 'Accesos',
-    items: [{ path: '/usuarios', label: 'Usuarios y roles', permission: 'users.manage' }],
-  },
-];
 
 /** Escritorio: el menú lateral fijo (con grupos plegables y la opción de reducirlo a íconos). */
 const ESCRITORIO = '(min-width: 1024px)';
@@ -126,6 +60,7 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
     RouterLink,
     RouterLinkActive,
     RouterOutlet,
+    RutaNavegacionComponent,
     SelectorTemaComponent,
   ],
   template: `
@@ -324,7 +259,8 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
             class="admin-container flex items-center justify-between gap-3"
             [class.flex-wrap]="!temas.modoDemo()"
           >
-            <div class="flex items-center gap-3" [class.min-w-0]="temas.modoDemo()">
+            <!-- Lote 44 (PBI-0271): la ruta cede (se acorta) antes que partir la barra. -->
+            <div class="flex min-w-0 items-center gap-3">
               @if (escritorio()) {
                 <!--
                   PBI-0044: reduce el menú lateral a íconos, como en OpenCart. Solo en la memoria de la página (STD-08),
@@ -341,13 +277,11 @@ function opcionesDePaginaActual(path: string): IsActiveMatchOptions {
                   <ng-container *ngTemplateOutlet="hamburguesa" />
                 </button>
               }
-              <p
-                class="text-sm text-muted"
-                [class.min-w-0]="temas.modoDemo()"
-                [class.truncate]="temas.modoDemo()"
-              >
-                Backoffice de la tienda
-              </p>
+              <!--
+                Lote 44 (ADR-0033, PBI-0271): la ruta de navegación, como el SGC, en lugar del texto fijo «Backoffice de la
+                tienda».
+              -->
+              <ws-admin-ruta-navegacion class="min-w-0" />
             </div>
             <!--
               ml-auto: si la cabecera se parte en dos líneas, el menú de usuario sigue a la derecha. Sin «Actualizar»
@@ -422,14 +356,14 @@ export class AppLayout {
 
   /** Solo se listan los módulos que el rol puede abrir; los grupos vacíos desaparecen. */
   protected readonly navigation = computed(() =>
-    NAVIGATION.map((group) => ({
+    MENU.map((group) => ({
       ...group,
       items: group.items.filter((item) => this.session.can(item.permission)),
     })).filter((group) => group.items.length > 0),
   );
 
   /** Cada enlace del menú con su grupo y si es la página actual, según el router. */
-  private readonly enlaces = NAVIGATION.flatMap((group) =>
+  private readonly enlaces = MENU.flatMap((group) =>
     group.items.map((item) => ({
       path: item.path,
       grupo: group.id,
@@ -447,7 +381,7 @@ export class AppLayout {
    * conserva los que había y despliega el de la nueva. Vive con el layout: al recargar o al volver a
    * iniciar sesión vuelve a empezar, y no se guarda en el navegador (D4, STD-08).
    */
-  protected readonly gruposAbiertos = linkedSignal<string | null, ReadonlySet<NavigationGroupId>>({
+  protected readonly gruposAbiertos = linkedSignal<string | null, ReadonlySet<IdDeGrupo>>({
     source: this.paginaActual,
     computation: (pagina, anterior) => {
       const abiertos = new Set(anterior?.value);
@@ -491,11 +425,11 @@ export class AppLayout {
     return ICONOS[iconoDelModulo(path) ?? 'dashboard'];
   }
 
-  protected grupoAbierto(id: NavigationGroupId): boolean {
+  protected grupoAbierto(id: IdDeGrupo): boolean {
     return this.gruposAbiertos().has(id);
   }
 
-  protected alternarGrupo(id: NavigationGroupId): void {
+  protected alternarGrupo(id: IdDeGrupo): void {
     this.gruposAbiertos.update((abiertos) => alternarPlegable(abiertos, id));
   }
 
