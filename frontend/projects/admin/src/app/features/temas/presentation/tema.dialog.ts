@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, ElementRef, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  DestroyRef,
+  effect,
+  ElementRef,
+  inject,
+  signal,
+} from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -6,6 +15,7 @@ import {
   ReactiveFormsModule,
   ValidationErrors,
 } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
 import { CdkScrollable } from '@angular/cdk/scrolling';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +29,12 @@ import {
   tokensDelTema,
   validarNombreTema,
 } from '../domain/tema.rules';
+import {
+  CAMPO_DEL_PAR,
+  DONDE_SE_VE_EL_PAR,
+  SugerenciaDeColor,
+  sugerirColores,
+} from '../domain/sugerencia-contraste.rules';
 import { ColoresTema, ParContraste, Tema } from '../domain/tema.model';
 import { VistaPreviaTemaComponent } from './vista-previa-tema.component';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
@@ -92,6 +108,9 @@ const NOMBRE_DEL_PAR: Readonly<Record<ParContraste['par'], string>> = {
 const describirPar = ({ par, relacion, minimo }: ParContraste): string =>
   `${NOMBRE_DEL_PAR[par]}: ${relacion.toFixed(1)}:1, mínimo ${minimo}:1`;
 
+/** Cuánto se espera tras el último cambio de color para recalcular las sugerencias (lote 47, PBI-0267). */
+const ESPERA_DE_LAS_SUGERENCIAS = 150;
+
 const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
 
 /**
@@ -108,6 +127,7 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    NgTemplateOutlet,
     ReactiveFormsModule,
     VistaPreviaTemaComponent,
   ],
@@ -211,16 +231,73 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
             </fieldset>
             <section class="mt-5" aria-labelledby="tema-contraste-titulo">
               <h3 id="tema-contraste-titulo" class="text-sm font-semibold text-ink">Revisión de contraste</h3>
+              <!--
+                Lote 47 (ADR-0033, PBI-0267): qué es la relación y qué mínimos se piden, siempre a la vista y fuera de la
+                región que se anuncia, para no repetirse en cada cambio. Daniel: «que sea explicativo, informativo».
+              -->
+              <p id="tema-contraste-explicacion" class="mt-1 text-xs text-muted">
+                La relación de contraste dice cuánto se distinguen dos colores: va de 1:1 (iguales) a 21:1
+                (negro sobre blanco). Se pide al menos 4.5:1 para el texto y 3:1 para los bordes y los
+                controles; por debajo, a algunas personas les cuesta leer o ver ese elemento.
+              </p>
               <div class="mt-2 grid gap-2" aria-live="polite">
+                <!--
+                  Lote 47 (PBI-0267): una sugerencia por color editable, no por par, en cadena: primero el color que más
+                  pares arregla y, con él aplicado, el siguiente, sobre los pares que le quedan. Un color cuyos pares
+                  arregla uno anterior no aparece. Cada línea, con un botón que la aplica; si no hay color, lo dice.
+                -->
+                @if (sugerencias().length) {
+                  <div
+                    class="rounded-lg border border-line p-3 text-sm text-ink"
+                    data-contraste="sugerencias"
+                  >
+                    <p class="font-semibold">Cómo corregirlo</p>
+                    @if (sugerencias().length > 1) {
+                      <p class="mt-1">Aplícalas en este orden:</p>
+                    }
+                    <ol class="mt-1 grid gap-2">
+                      @for (sugerencia of sugerencias(); track sugerencia.campo; let i = $index) {
+                        <li class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                          <span [id]="'tema-sugerencia-' + sugerencia.campo">
+                            @if (sugerencias().length > 1) {
+                              <span class="tabular-nums">{{ i + 1 }}.</span>
+                            }
+                            {{ explicarSugerencia(sugerencia) }}
+                          </span>
+                          @if (sugerencia.tipo === 'color') {
+                            <button
+                              type="button"
+                              class="inline-flex min-h-9 items-center gap-2 rounded-lg border border-line bg-surface px-3 text-xs font-semibold tabular-nums text-ink hover:bg-subtle"
+                              [attr.aria-describedby]="'tema-sugerencia-' + sugerencia.campo"
+                              (click)="usarSugerencia(sugerencia.campo, sugerencia.color)"
+                            >
+                              <span
+                                class="h-4 w-4 shrink-0 rounded border border-current"
+                                aria-hidden="true"
+                                [style.background-color]="sugerencia.color"
+                              ></span>
+                              Usar {{ sugerencia.color }}
+                            </button>
+                          }
+                        </li>
+                      }
+                    </ol>
+                  </div>
+                }
                 @if (bloqueos().length) {
                   <div
                     class="rounded-lg border border-danger-line bg-danger-soft p-3 text-sm text-danger"
                     data-contraste="bloqueo"
                   >
                     <p class="font-semibold">No se puede guardar: el color de contraste no se lee bien.</p>
-                    <ul class="mt-1 grid gap-0.5">
+                    <ul class="mt-1 grid gap-2">
                       @for (par of bloqueos(); track par.par) {
-                        <li>{{ describir(par) }}</li>
+                        <li>
+                          <ng-container
+                            [ngTemplateOutlet]="detalleDelPar"
+                            [ngTemplateOutletContext]="{ $implicit: par }"
+                          />
+                        </li>
                       }
                     </ul>
                   </div>
@@ -228,13 +305,24 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
                 @if (avisos().length) {
                   <div class="rounded-lg bg-warning-soft p-3 text-sm text-warning" data-contraste="aviso">
                     <p class="font-semibold">Puedes guardar, pero estos pares no alcanzan su mínimo:</p>
-                    <ul class="mt-1 grid gap-0.5">
+                    <ul class="mt-1 grid gap-2">
                       @for (par of avisos(); track par.par) {
-                        <li>{{ describir(par) }}</li>
+                        <li>
+                          <ng-container
+                            [ngTemplateOutlet]="detalleDelPar"
+                            [ngTemplateOutletContext]="{ $implicit: par }"
+                          />
+                        </li>
                       }
                     </ul>
                   </div>
                 }
+                <!-- Lote 47 (PBI-0267): cada par que no llega dice dónde se ve y con qué color se corrige. -->
+                <ng-template #detalleDelPar let-par>
+                  <span class="block">{{ describir(par) }}</span>
+                  <span class="block">Se ve en {{ dondeSeVe(par) }}.</span>
+                  <span class="block">{{ comoSeCorrige(par) }}</span>
+                </ng-template>
                 @if (!bloqueos().length && !avisos().length) {
                   <p class="text-sm text-muted" data-contraste="correcto">
                     Todos los pares de texto y fondo alcanzan su mínimo de contraste.
@@ -334,6 +422,26 @@ export class TemaDialog {
   protected readonly avisos = computed(() =>
     this.pares().filter(({ bloquea, relacion, minimo }) => !bloquea && relacion < minimo),
   );
+  /**
+   * Los colores con que se calculan las sugerencias (lote 47, PBI-0267): los del formulario, 150 ms después del último
+   * cambio. Buscar el color de cada campo mide el tema decenas de veces (unos 50 ms), y el selector nativo emite un cambio
+   * por cada paso al arrastrar.
+   */
+  private readonly coloresDeLasSugerencias = signal<ColoresTema>(this.colores());
+  /** Una sugerencia por color editable con pares que no llegan, en el orden del formulario. */
+  protected readonly sugerencias = computed(() =>
+    sugerirColores(this.coloresDeLasSugerencias(), this.predefinidos()),
+  );
+
+  constructor() {
+    let espera: ReturnType<typeof setTimeout> | undefined;
+    effect(() => {
+      const colores = this.colores();
+      clearTimeout(espera);
+      espera = setTimeout(() => this.coloresDeLasSugerencias.set(colores), ESPERA_DE_LAS_SUGERENCIAS);
+    });
+    inject(DestroyRef).onDestroy(() => clearTimeout(espera));
+  }
 
   protected readonly nombre = new FormControl(this.datos.tema?.name ?? '', {
     nonNullable: true,
@@ -347,6 +455,67 @@ export class TemaDialog {
     this.codigos.update((actuales) => ({ ...actuales, [campo]: valor.toUpperCase() }));
     this.quitarErrorDeCodigo(campo);
     if (this.errorDeColor()?.campo === campo) this.errorDeColor.set(null);
+  }
+
+  /** Dónde se ve un par, en palabras (lote 47, PBI-0267). */
+  protected dondeSeVe({ par }: ParContraste): string {
+    return DONDE_SE_VE_EL_PAR[par];
+  }
+
+  /**
+   * «Se corrige con el color «Contraste».» (lote 47, PBI-0267): el color de la primera sugerencia de la cadena que lo
+   * arregla, aunque el par sea de otro color. Si ninguna lo arregla, que su color solo no basta.
+   */
+  protected comoSeCorrige({ par }: ParContraste): string {
+    const paso = this.sugerencias().find((s) => s.tipo === 'color' && s.arregla.includes(par));
+    return paso
+      ? `Se corrige con el color «${this.etiquetaDe(paso.campo)}».`
+      : `Depende del color «${this.etiquetaDe(CAMPO_DEL_PAR[par])}», pero cambiarlo solo no basta.`;
+  }
+
+  /**
+   * La línea de «Cómo corregirlo» de un color: qué hacer y cuántos de los pares que le quedan hace llegar (y cuántos de
+   * otros colores), o por qué no hay sugerencia.
+   */
+  protected explicarSugerencia(sugerencia: SugerenciaDeColor): string {
+    const etiqueta = this.etiquetaDe(sugerencia.campo);
+    const total = sugerencia.pares.length;
+    const uno = total === 1;
+    if (sugerencia.tipo === 'color') {
+      const accion = sugerencia.sentido === 'aclarar' ? 'Aclara' : 'Oscurece';
+      const corrige = sugerencia.corrige.length;
+      const alcance =
+        corrige === total
+          ? uno
+            ? 'hace llegar el par que depende de él'
+            : `hace llegar los ${total} pares que dependen de él`
+          : `hace llegar ${corrige} de los ${total} pares que dependen de él`;
+      const otros = sugerencia.arregla.length - corrige;
+      const deOtros = otros > 0 ? ` y ${otros} de otros colores` : '';
+      return `${accion} «${etiqueta}»: ${alcance}${deOtros}.`;
+    }
+    const pares = uno ? 'el par que depende' : `ninguno de los ${total} pares que dependen`;
+    const alguno = uno ? 'el par que depende' : `alguno de los ${total} pares que dependen`;
+    if (sugerencia.tipo === 'imposible')
+      return `Aclarar u oscurecer «${etiqueta}» no hace llegar ${pares} de él: prueba con otra combinación de colores.`;
+    if (sugerencia.tipo === 'bloquearia')
+      return `Aclarar u oscurecer «${etiqueta}» haría llegar ${alguno} de él, pero entonces no podrías guardar el tema: prueba con otra combinación de colores.`;
+    return `Aclarar u oscurecer «${etiqueta}» haría llegar ${alguno} de él, pero otros pares dejarían de llegar: prueba con otra combinación de colores.`;
+  }
+
+  /** Nombre del color como lo ve la persona («Fondo secundario»). */
+  protected etiquetaDe(campo: CampoDeColor): string {
+    return CAMPOS_DE_COLOR.find((c) => c.campo === campo)?.etiqueta ?? campo;
+  }
+
+  /**
+   * «Usar #XXXXXX» (lote 47, PBI-0267): aplica el color sugerido a su campo, como si se hubiera elegido, y lleva el foco a
+   * su código, porque el botón desaparece cuando sus pares ya llegan. Las sugerencias se recalculan al momento, sin esperar.
+   */
+  protected usarSugerencia(campo: CampoDeColor, color: string): void {
+    this.cambiarColor(campo, color);
+    this.coloresDeLasSugerencias.set(this.colores());
+    this.host.nativeElement.querySelector<HTMLInputElement>(`#tema-codigo-${campo}`)?.focus();
   }
 
   /** Lo escrito en el campo del código: si es un código válido, se aplica al selector, a la vista previa y al contraste. */
