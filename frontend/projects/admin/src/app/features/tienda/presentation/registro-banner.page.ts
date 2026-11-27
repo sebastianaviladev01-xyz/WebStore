@@ -32,7 +32,7 @@ import {
   motivoParaNoUsarFoto,
 } from '../domain/foto.rules';
 import { estadoDeLaEdicion } from '../domain/edicion.rules';
-import { contadorDeCaracteres } from '../domain/registro.rules';
+import { contadorDeCaracteres, parametrosAlVolverDelRegistro } from '../domain/registro.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { Banner, ETIQUETAS_UBICACION_BANNER, UbicacionBanner } from '../domain/tienda.model';
 import { TonoDeFoto } from '../domain/tono-de-foto.rules';
@@ -600,8 +600,10 @@ export class RegistroBannerPage {
     });
     this.continuando.set(false);
     if (saved) {
+      // Lote 44 (PBI-0265 y PBI-0268): tras crear con «Guardar», `nuevo` lleva al listado a la página del registro.
       await this.router.navigate(continuar ? ['/banners', id] : ['/banners'], {
-        queryParamsHandling: 'preserve',
+        queryParams: parametrosAlVolverDelRegistro({ creado: !this.editing(), continuar, id: id }),
+        queryParamsHandling: 'merge',
       });
       return;
     }

@@ -216,6 +216,46 @@ test.describe('PBI-0268: páginas de registro como los formularios del SGC', () 
     }
   });
 
+  test('«Guardar» de un producto nuevo vuelve al listado con sus filtros y `nuevo` con el id creado', async ({
+    page,
+  }) => {
+    // Lote 44 (PBI-0265 y PBI-0268): el listado del lote 43 lee `nuevo` para saltar a la página del registro creado.
+    const originales = await leerProductos();
+    try {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto('/productos?nombre=lote');
+      await page.getByRole('link', { name: 'Agregar producto', exact: true }).click();
+      const formulario = page.getByRole('form', { name: 'Nuevo producto' });
+      await formulario
+        .getByRole('textbox', { name: 'Nombre', exact: true })
+        .fill('Producto nuevo del lote 44');
+      await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-LOTE-44-NUEVO');
+      await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Para el lote 44.');
+      await cargarImagenPrincipal(formulario);
+      await formulario.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Ligero');
+      await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('80');
+      await elegir(page, formulario, 'Categoría', 'Electrohogar');
+      await elegir(page, formulario, 'Marca', 'Zenith');
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
+
+      await expect(page).toHaveURL(/\/productos\?nombre=lote&nuevo=[^&]+$/);
+      const creado = (await leerProductos()).find((item) => item.sku === 'E2E-LOTE-44-NUEVO');
+      expect(creado).toBeDefined();
+      expect(new URL(page.url()).searchParams.get('nuevo')).toBe(creado!.id);
+
+      // Al editar, «Guardar» vuelve sin `nuevo`.
+      await page.goto(`/productos/${creado!.id}?nombre=lote`);
+      const edicion = page.getByRole('form', { name: 'Editar producto' });
+      await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue(
+        'Producto nuevo del lote 44',
+      );
+      await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(page).toHaveURL(/\/productos\?nombre=lote$/);
+    } finally {
+      await cambiarProductos(() => originales);
+    }
+  });
+
   test('«Guardar y continuar» de una categoría abre su «Editar»; la categoría no tiene estado', async ({
     page,
   }) => {
