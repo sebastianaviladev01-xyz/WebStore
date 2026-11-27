@@ -66,7 +66,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** agrega hasta 5 correos, 5 teléfonos, 8 redes, 5 avisos con su enlace opcional o hasta 24 accesos inferiores
 - **Entonces** el backoffice valida cada dato y la tienda los muestra en su pie, en Contacto y sobre la cabecera. Los avisos sustituyen a la antigua navegación superior y al mensaje superior.
 
-> Añadido el 2026-11-23 por el lote 15 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0169, PBI-0175 y PBI-0185; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-contenido.spec.ts` y `storefront-contenido.spec.ts`.
+> Añadido el 2026-11-23 por el lote 15 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0169, PBI-0175 y PBI-0185; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-contenido.spec.ts` y `storefront-contenido.spec.ts`.
 
 ### Escenario 08 – Entregas y feriados
 
@@ -74,7 +74,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** agrega o quita días no laborables, elige la primera fecha de entrega o elige una dirección por pedido o por producto
 - **Entonces** el BFF lo guarda y la tienda lo aplica en su siguiente carga: en el plazo de los reclamos, en la fecha mínima del checkout y en las direcciones del checkout.
 
-> Añadido el 2026-11-23 por el lote 17 y el 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0183, PBI-0178 y PBI-0006; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-entregas-y-feriados.spec.ts` y `admin-direcciones-por-producto.spec.ts`.
+> Añadido el 2026-11-23 por el lote 17 y el 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0183, PBI-0178 y PBI-0006; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-entregas-y-feriados.spec.ts` y `admin-direcciones-por-producto.spec.ts`.
 
 ### Escenario 09 – Sugeridos y tema
 
@@ -82,7 +82,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** elige cómo se muestran los sugeridos al agregar al carrito o cambia el tema
 - **Entonces** los sugeridos salen en el diálogo (por defecto) o en un panel lateral; el tema solo se cambia en el backoffice: el storefront no tiene tuerca.
 
-> Añadido el 2026-11-23 por el lote 16 y el 14 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0179 y PBI-0188; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-contenido.spec.ts` y `storefront-modo-demo.spec.ts`.
+> Añadido el 2026-11-23 por el lote 16 y el 14 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0179 y PBI-0188; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-contenido.spec.ts` y `storefront-modo-demo.spec.ts`.
 
 ### Escenario 10 – Avisos programados
 
@@ -90,4 +90,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** da a un aviso un «Desde», un «Hasta» o los dos, en hora de Lima
 - **Entonces** el backoffice muestra si el aviso está «Programado», «Vigente» o «Vencido», y no guarda un «Hasta» que no sea posterior al «Desde».
 
-> Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-contenido.spec.ts`. El BFF rechaza también una fecha inválida (`400 INVALID_COLLECTION`).
+> Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-contenido.spec.ts`. El BFF rechaza también una fecha inválida (`400 INVALID_COLLECTION`).

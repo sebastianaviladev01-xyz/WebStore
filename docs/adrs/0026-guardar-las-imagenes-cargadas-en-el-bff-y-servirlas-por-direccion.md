@@ -1,9 +1,9 @@
 # 0026. Guardar las imágenes cargadas en el BFF y servirlas por dirección
 
-- Estado: Propuesta
+- Estado: Aceptada
 - Fecha: 2026-11-24
 
-Provisional, por confirmar con Daniel Avila. Tomada en el lote 24 ([ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md), PBI-0214), que manda registrar en un ADR cómo se guardan las imágenes del producto y del banner.
+Confirmada por Sebastián Avila el 2026-11-27, sin esperar a Daniel Avila; hasta entonces, provisional. Tomada en el lote 24 ([ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md), PBI-0214), que manda registrar en un ADR cómo se guardan las imágenes del producto y del banner.
 
 ## Contexto
 
@@ -33,7 +33,7 @@ En el lote 24, la galería y la imagen de la categoría siguieron como estaban (
 
 ### Ampliación del lote 25
 
-Tomada en el lote 25 ([ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md)); provisional, por confirmar con Daniel Avila. Lo que el lote 24 dejó como estaba se cierra con la misma decisión:
+Tomada en el lote 25 ([ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md)); confirmada por Sebastián Avila el 2026-11-27, sin esperar a Daniel Avila. Lo que el lote 24 dejó como estaba se cierra con la misma decisión:
 
 - **Las fotos de la galería se cargan como archivo**, como la imagen principal: el backoffice ya no ofrece «URL de foto» (Daniel: «no adjuntas como URL»). El BFF valida una foto nueva con el lado y el peso de la imagen principal (1600 px y 250 KB de Data URL) y rechaza una URL o una ruta nuevas (`field: 'gallery'`). Las fotos que el producto ya tenía (URL, rutas de `assets/` o Data URL de antes) siguen valiendo mientras sigan en su galería.
 - **La tienda recibe una dirección por foto**: `/bff/images/products/{id}/gallery/{n}?v={versión}`, donde `n` es la posición de la foto en la galería guardada. La posición puede cambiar al quitar o reordenar fotos; la versión, que es el resumen de la imagen, hace que el navegador no confunda una foto con otra.
@@ -52,4 +52,6 @@ Tomada en el lote 25 ([ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revisi
 - Un pedido guarda la dirección de la miniatura: si el producto se elimina, su foto deja de verse en el detalle del pedido (`404 IMAGE_NOT_FOUND`). Desde el lote 25, la tienda pinta en su lugar un recuadro neutro.
 - Por confirmar con Daniel: si se guarda la original además de las versiones, los tamaños y pesos máximos, y el límite de 15 MB del archivo (para la categoría pidió menos de 1 MB).
 
-**Vigencia:** provisional hasta que Daniel la confirme. Responsable: Sebastián Avila.
+**Vigencia:** confirmada por Sebastián Avila el 2026-11-27, sin esperar a Daniel. Responsable: Sebastián Avila.
+
+> Nota (2026-11-27): Sebastián Avila confirmó esta decisión y su ampliación del lote 25 sin esperar a Daniel, y el estado pasó de «Propuesta» a «Aceptada». Lo que quedaba por confirmar con Daniel (no guardar la original, las medidas y los pesos de cada versión y el límite de 15 MB del archivo) se queda como se construyó.

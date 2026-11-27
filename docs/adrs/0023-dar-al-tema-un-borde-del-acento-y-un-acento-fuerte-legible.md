@@ -3,7 +3,7 @@
 - Estado: Aceptada
 - Fecha: 2026-11-23
 
-Decidida en el lote 14 de [ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md) (PBI-0189). Amplía [ADR-0011](0011-guardar-los-temas-como-recurso-propio-del-bff.md), como antes [ADR-0013](0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md), [ADR-0014](0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md) y [ADR-0019](0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md). Qué elementos llevan el secundario queda «Provisional, por confirmar con Daniel».
+Decidida en el lote 14 de [ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md) (PBI-0189). Amplía [ADR-0011](0011-guardar-los-temas-como-recurso-propio-del-bff.md), como antes [ADR-0013](0013-dar-a-la-tienda-un-token-propio-para-su-lienzo.md), [ADR-0014](0014-dar-al-tema-un-token-para-el-texto-sobre-el-enlace.md) y [ADR-0019](0019-calcular-con-el-tema-el-error-la-alerta-y-el-texto-sobre-el-principal.md). Qué elementos llevan el secundario quedó «Provisional, por confirmar con Daniel» hasta el 2026-11-27, cuando Sebastián Avila lo confirmó sin esperar a Daniel.
 
 ## Contexto
 
@@ -56,3 +56,5 @@ Un hallazgo de los lotes de ADR-0021: con C, el botón secundario con el puntero
 El mismo lote revisó el tinte suave: `--ws-accent-soft` sigue sin uso en las plantillas (su única regla, `.ws-promo-secondary`, tampoco se usaba y se quitó). Queda en el mapa como **reservado** para un fondo suave del secundario: quitarlo cambiaría el contrato de 38 claves, el cálculo del BFF y su réplica, `casos-tema.json`, el smoke test y estos ADR, sin ningún efecto visible.
 
 > Nota (2026-11-24, lote 28, PBI-0240): el tinte suave deja de estar reservado. [ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md) lo usa como fondo con el puntero encima o con el foco en la tienda, al 20 % del secundario, y rellena con el acento los botones secundarios. También invierte el tema C: su borde del acento pasa a `color-mix(in srgb, #F2B705 60%, #1F2328)` y su acento fuerte a `color-mix(in srgb, #F2B705 78%, #1F2328)`.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel qué elementos llevan el secundario, como quedaron desde el lote 28 ([ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md)).

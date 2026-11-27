@@ -90,7 +90,7 @@ Los guards del frontend mejoran la UX; el BFF de prueba repite autenticación y 
 
 ## Decisiones no cerradas
 
-Lo que las fuentes no respondían se construyó con la opción más apegada a lo que dijo Daniel o con la más conservadora, y está marcado «Provisional, por confirmar con Daniel». Siguen abiertas las decisiones de terceros, de Daniel o de una persona. Ver [PENDING-DECISIONS.md](PENDING-DECISIONS.md).
+Lo que las fuentes no respondían se construyó con la opción más apegada a lo que dijo Daniel o con la más conservadora, y quedó marcado «Provisional, por confirmar con Daniel» hasta el 2026-11-27, cuando Sebastián Avila lo confirmó sin esperar a Daniel. Siguen abiertas las decisiones de terceros, de Daniel o de una persona. Ver [PENDING-DECISIONS.md](PENDING-DECISIONS.md).
 
 
 ## Evidencia

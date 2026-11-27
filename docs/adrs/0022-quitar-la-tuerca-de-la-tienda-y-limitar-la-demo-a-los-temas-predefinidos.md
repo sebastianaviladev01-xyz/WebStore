@@ -3,7 +3,7 @@
 - Estado: Aceptada
 - Fecha: 2026-11-23
 
-Decidida en el lote 14 de [ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md) (PBI-0188), con la decisión provisional de partida de ese ADR. Queda «Provisional, por confirmar con Daniel». Modifica [ADR-0012](0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md) en quién escribe la cookie de la vista previa y qué temas acepta; el resto de ADR-0012 sigue vigente.
+Decidida en el lote 14 de [ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md) (PBI-0188), con la decisión provisional de partida de ese ADR. Quedó «Provisional, por confirmar con Daniel» hasta el 2026-11-27, cuando Sebastián Avila la confirmó sin esperar a Daniel. Modifica [ADR-0012](0012-activar-el-modo-demo-y-recordar-la-vista-previa-en-una-cookie.md) en quién escribe la cookie de la vista previa y qué temas acepta; el resto de ADR-0012 sigue vigente.
 
 ## Contexto
 
@@ -41,3 +41,5 @@ _Motivo:_ es la opción más apegada a lo que escribió Daniel (sin tuerca en la
 - Un tema propio solo se ve en la tienda si se activa en «Temas», lo que cambia la tienda para todos.
 
 **Fuera de alcance:** la demo publicada en Render sigue sin modo demo ([ADR-0020](0020-publicar-la-demo-en-render.md)); compartir la vista previa entre subdominios exigiría escribir la cookie con `Domain` (PBI-0072).
+
+> Nota (2026-11-27): Sebastián Avila confirmó esta decisión sin esperar a Daniel: la tienda no tiene tuerca y la tuerca del backoffice se queda en el modo demo, con A, B y C (desde el lote 35, en la barra superior; PBI-0249). Si Daniel pide otra cosa, se cambia con un ADR nuevo.

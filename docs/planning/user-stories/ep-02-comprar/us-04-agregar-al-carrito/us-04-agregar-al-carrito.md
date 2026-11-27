@@ -45,4 +45,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador agrega un producto
 - **Entonces** la confirmación y los sugeridos se muestran en un panel lateral en lugar del diálogo; por defecto sigue el diálogo.
 
-> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0179; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-checkout-panel.spec.ts` y `admin-contenido.spec.ts`.
+> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0179; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-checkout-panel.spec.ts` y `admin-contenido.spec.ts`.

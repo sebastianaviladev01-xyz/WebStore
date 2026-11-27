@@ -120,3 +120,5 @@ Los registros quedaron al día en el lote 32: el [backlog](../planning/backlog.m
 - **Lo que ya estaba fuera:** terceros, personas (PBI-0165 y PBI-0225) y el backend de producción, como al [cerrar ADR-0025](0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md#cierre).
 
 Falta informar a Daniel Avila, como decía la aprobación. Los PR de los lotes 29 y 31 seguían abiertos al cerrar este ADR. Están apilados: el lote 31 parte del 29 y el 32 parte del 31, así que conviene fusionar el #91, después el #92 y al final el del lote 32. No queda ninguna excepción vigente: esta termina al fusionar el PR del lote 32, el último, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel las decisiones provisionales de los lotes 28 a 31, también el reparto del color secundario (PBI-0240, [ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md)) y el alcance de los íconos (PBI-0243): se queda lo construido ([decisiones pendientes](../planning/PENDING-DECISIONS.md), filas «Reunión del 2026-11-20»).

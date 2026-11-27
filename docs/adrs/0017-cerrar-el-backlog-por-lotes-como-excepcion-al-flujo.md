@@ -108,3 +108,5 @@ Los hallazgos de cada lote se anotaron con su PBI y se asignaron a un lote poste
 - **Prueba con lector de pantalla (PBI-0165):** la ejecuta una persona con la lista del entorno local.
 
 La excepción termina al fusionar el PR de este cierre: desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
+
+> Nota (2026-11-27): Daniel respondió entre el 2026-11-18 y el 2026-11-20 las filas que este cierre dejó «Provisional, por confirmar con Daniel», y Sebastián Avila confirmó el 2026-11-27, sin esperar a Daniel, los detalles que seguían provisionales: se queda lo construido ([decisiones pendientes](../planning/PENDING-DECISIONS.md)).

@@ -111,3 +111,5 @@ Los registros quedaron al día en el lote 36: el [backlog](../planning/backlog.m
 **Lo que queda abierto:** confirmar con Daniel las decisiones provisionales de los lotes 34 y 35 y si la tuerca del backoffice se queda en el modo demo (PBI-0188); los hallazgos PBI-0252 a PBI-0254, sin priorizar; y lo que ya estaba fuera, como al [cerrar ADR-0027](0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md#cierre).
 
 Falta informar a Daniel Avila, como decía la aprobación. Los PR de los lotes 33 a 35 parten de `dev` y no comparten archivos; el del lote 36 los incluye, así que se fusiona al final, después del #95 (que trae este ADR), el #94 y el #96. Esta excepción termina al fusionarlo, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel las decisiones provisionales de los lotes 34 y 35 ([ADR-0030](0030-alejar-el-principal-fuerte-que-no-se-distingue-del-principal.md)) y que la tuerca del backoffice se queda en el modo demo, en la barra superior (PBI-0188 y PBI-0249) ([decisiones pendientes](../planning/PENDING-DECISIONS.md)).

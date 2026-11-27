@@ -3,7 +3,7 @@
 - Estado: Aceptada
 - Fecha: 2026-11-24
 
-Decidida en el lote 28 de [ADR-0027](0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md) (PBI-0240), con sus decisiones provisionales de partida. Queda «Provisional, por confirmar con Daniel». Amplía [ADR-0023](0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md): cambia dónde se usa el acento y da uso al secundario suave, que estaba reservado.
+Decidida en el lote 28 de [ADR-0027](0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md) (PBI-0240), con sus decisiones provisionales de partida. Quedó «Provisional, por confirmar con Daniel» hasta el 2026-11-27, cuando Sebastián Avila la confirmó sin esperar a Daniel. Amplía [ADR-0023](0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md): cambia dónde se usa el acento y da uso al secundario suave, que estaba reservado.
 
 ## Contexto
 
@@ -47,3 +47,5 @@ En la reunión del 2026-11-20, sobre el storefront del modo demo, Daniel dijo qu
 - El Admin no cambia su forma de usar el acento: solo recibe los colores nuevos de C y la vista previa de Temas muestra el fondo con el puntero encima.
 
 > Nota (2026-11-25, lote 34, PBI-0247): el principal fuerte de los temas propios que no se distingue del principal lo resuelve [ADR-0030](0030-alejar-el-principal-fuerte-que-no-se-distingue-del-principal.md), con la misma regla que el acento fuerte. Con los colores de C da el literal que C fija.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel las decisiones provisionales de este ADR: la lectura «Ecom», el secundario suave al 20 %, todos los botones secundarios en color, los tintes del principal en gris con C y el nombre «Grafito y ámbar».

@@ -133,7 +133,7 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Columna de cada celda de Productos e Inventario en el celular (lote 07b: PBI-0156) | Texto `sr-only md:hidden` en cada celda; la fila de encabezados sigue oculta. Prueba: `admin-listados.spec.ts` |
 | Lo escrito en Tarifas de envío se conserva si la sesión vence (lote 07b: PBI-0157, confirmado por Daniel el 2026-11-18 junto con PBI-0151) | `borradorDeTarifasVigente` (`tarifa-envio.rules.ts`) con `conservarBorrador`. Pruebas: `tarifa-envio.rules.spec.mjs` y `admin-funciones-nuevas.spec.ts` |
 | Sin la rama de «solo la ficha» de los productos (lote 07b: PBI-0158) | Cambiar productos pide `products.manage` (BFF, `403 INSUFFICIENT_ROLE`) y `productos/:id` también (Admin). Prueba: `tools/validate-structure.mjs` y las de permisos del BFF |
-| La campana del Admin se pone al día sola (lote 08: PBI-0160, provisional) | `NotificacionesFacade.iniciarActualizacion`: al volver a la pestaña y cada minuto mientras está visible, sin consultar con la pestaña oculta ni con el menú abierto. Pruebas: `notificaciones.facade.spec.mjs` y `admin-funciones-nuevas.spec.ts` |
+| La campana del Admin se pone al día sola (lote 08: PBI-0160, provisional al cerrarla, ya resuelta) | `NotificacionesFacade.iniciarActualizacion`: al volver a la pestaña y cada minuto mientras está visible, sin consultar con la pestaña oculta ni con el menú abierto. Pruebas: `notificaciones.facade.spec.mjs` y `admin-funciones-nuevas.spec.ts` |
 | El aviso de feriados se repite al cambiar el año (lote 08: PBI-0163) | `crearVigiaDeFeriados` (`config.mjs`, `main.mjs`). Prueba: `feriados.test.mjs` |
 | «Recuperar contraseña» no promete un correo (lote 08: PBI-0154; el 2026-11-20 Daniel pidió que diga «te enviamos un código», PBI-0180) | `recuperar.page.ts`, con el criterio de `/cuenta/verificar`. Prueba: `storefront-cuenta-formularios.spec.ts` |
 | El catálogo no saca `NG02955` (lote 08: PBI-0159) | Las dos primeras filas con `priority` (`catalogo.page.ts`). Prueba: `storefront-catalogo-accesibilidad.spec.ts` |
@@ -145,7 +145,7 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 
 ## Respuestas de Daniel: lotes 11 a 20 (2026-11-23)
 
-Lo que pidió Daniel entre el 2026-11-18 y el 2026-11-20, y lo que Sebastián Avila añadió al ampliar el alcance, se entregó por lotes sin features nuevas ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones provisionales de cada fila están en las [decisiones pendientes](PENDING-DECISIONS.md) y el detalle, en el [backlog](backlog.md).
+Lo que pidió Daniel entre el 2026-11-18 y el 2026-11-20, y lo que Sebastián Avila añadió al ampliar el alcance, se entregó por lotes sin features nuevas ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones que quedaron provisionales en cada fila, confirmadas por Sebastián Avila el 2026-11-27, están en las [decisiones pendientes](PENDING-DECISIONS.md) y el detalle, en el [backlog](backlog.md).
 
 | Requisito consolidado | Evidencia de implementación |
 |---|---|
@@ -168,7 +168,7 @@ Lo que pidió Daniel entre el 2026-11-18 y el 2026-11-20, y lo que Sebastián Av
 
 ## Revisión de la demo: lotes 21 a 26 (2026-11-24)
 
-Lo que pidieron Daniel y Walther en la revisión de la demo del 2026-11-17 se entregó por lotes, sin features nuevas ([ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones provisionales de cada fila están en las [decisiones pendientes](PENDING-DECISIONS.md) («Revisión de la demo: …») y el detalle, en el [backlog](backlog.md).
+Lo que pidieron Daniel y Walther en la revisión de la demo del 2026-11-17 se entregó por lotes, sin features nuevas ([ADR-0025](../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones que quedaron provisionales en cada fila, confirmadas por Sebastián Avila el 2026-11-27, están en las [decisiones pendientes](PENDING-DECISIONS.md) («Revisión de la demo: …») y el detalle, en el [backlog](backlog.md).
 
 | Requisito consolidado | Evidencia de implementación |
 |---|---|
@@ -189,7 +189,7 @@ Lo que pidieron Daniel y Walther en la revisión de la demo del 2026-11-17 se en
 
 ## Reunión del 2026-11-20: lotes 28 a 32 (2026-11-24)
 
-Lo que pidió Daniel en la reunión del 2026-11-20 y no depende de terceros se entregó por lotes, sin features nuevas ([ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones provisionales de cada fila están en las [decisiones pendientes](PENDING-DECISIONS.md) («Reunión del 2026-11-20: …») y el detalle, en el [backlog](backlog.md).
+Lo que pidió Daniel en la reunión del 2026-11-20 y no depende de terceros se entregó por lotes, sin features nuevas ([ADR-0027](../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones que quedaron provisionales en cada fila, confirmadas por Sebastián Avila el 2026-11-27, están en las [decisiones pendientes](PENDING-DECISIONS.md) («Reunión del 2026-11-20: …») y el detalle, en el [backlog](backlog.md).
 
 | Requisito consolidado | Evidencia de implementación |
 |---|---|
@@ -202,7 +202,7 @@ Lo que pidió Daniel en la reunión del 2026-11-20 y no depende de terceros se e
 
 ## Hallazgos de los lotes 28 a 31: lotes 33 a 36 (2026-11-25)
 
-Los hallazgos de los lotes 28 a 31 (PBI-0246 a PBI-0249) se cerraron por lotes, sin features nuevas ([ADR-0029](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones provisionales están en las [decisiones pendientes](PENDING-DECISIONS.md) («Hallazgos de los lotes 28 a 31: …») y el detalle, en el [backlog](backlog.md).
+Los hallazgos de los lotes 28 a 31 (PBI-0246 a PBI-0249) se cerraron por lotes, sin features nuevas ([ADR-0029](../adrs/0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones que quedaron provisionales, confirmadas por Sebastián Avila el 2026-11-27, están en las [decisiones pendientes](PENDING-DECISIONS.md) («Hallazgos de los lotes 28 a 31: …») y el detalle, en el [backlog](backlog.md).
 
 | Requisito consolidado | Evidencia de implementación |
 |---|---|
@@ -222,7 +222,7 @@ Los hallazgos de los lotes 33 a 35 (PBI-0252 a PBI-0254) se cerraron por lotes, 
 
 ## Hallazgos de los lotes 37 y 38: lotes 40 a 42 (2026-11-26)
 
-Los hallazgos de los lotes 37 y 38 (PBI-0256 a PBI-0262) se cerraron por lotes, sin features nuevas ([ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones provisionales están en las [decisiones pendientes](PENDING-DECISIONS.md) («Hallazgos de los lotes 37 y 38: …») y el detalle, en el [backlog](backlog.md).
+Los hallazgos de los lotes 37 y 38 (PBI-0256 a PBI-0262) se cerraron por lotes, sin features nuevas ([ADR-0032](../adrs/0032-cerrar-por-lotes-los-hallazgos-de-los-lotes-37-y-38.md)). Cuando una fila de esta sección cambia lo que dice una fila anterior, vale esta. Las decisiones que quedaron provisionales, confirmadas por Sebastián Avila el 2026-11-27, están en las [decisiones pendientes](PENDING-DECISIONS.md) («Hallazgos de los lotes 37 y 38: …») y el detalle, en el [backlog](backlog.md).
 
 | Requisito consolidado | Evidencia de implementación |
 |---|---|
