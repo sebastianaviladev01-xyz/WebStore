@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
+import { abrirVentana, campoTiendaDeOrigen } from './apoyo/ventanas';
 
 /**
  * Lote 21 (ADR-0025): mantenimientos del backoffice, provisional hasta que Daniel confirme la regla.
@@ -89,9 +90,8 @@ test.describe('PBI-0211: ventana de registro en Marcas, Clientes y Tarifas de en
       test(`${ruta}: la ventana cabe en la pantalla, sin desplazamiento horizontal`, async ({ page }) => {
         await ingresarAlAdmin(page, cuentasAdmin.superadmin);
         await page.goto(ruta);
-        await page.getByRole('button', { name: agregar }).click();
-        const ventana = page.getByRole('dialog', { name: titulo });
-        await expect(ventana).toBeVisible();
+        // PBI-0275: se mide con la ventana ya abierta (Material la escala al abrir) y su foco inicial puesto.
+        const ventana = await abrirVentana(page.getByRole('button', { name: agregar }), titulo);
         const caja = (await ventana.boundingBox())!;
         expect(caja.x).toBeGreaterThanOrEqual(0);
         expect(caja.x + caja.width).toBeLessThanOrEqual(375);
@@ -171,8 +171,11 @@ test.describe('PBI-0216 y PBI-0217: Tarifas de envío', () => {
     await expect(page.getByRole('heading', { name: 'Ajuste porcentual' })).toHaveCount(0);
     await expect(page.getByRole('spinbutton', { name: 'Porcentaje' })).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Agregar tarifa' }).click();
-    const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
+    const ventana = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar tarifa' }),
+      'Precio para uno o varios distritos',
+      campoTiendaDeOrigen,
+    );
     await expect(ventana.getByRole('textbox', { name: 'Distritos' })).toHaveCount(0);
     const distritos = ventana.getByRole('combobox', { name: 'Distritos' });
     await distritos.click();
@@ -188,8 +191,11 @@ test.describe('PBI-0216 y PBI-0217: Tarifas de envío', () => {
     await expect(ventana.getByRole('button', { name: 'Guardar 2 tarifas' })).toBeVisible();
     await ventana.getByRole('button', { name: 'Cancelar' }).click();
 
-    await page.getByRole('button', { name: 'Editar tarifa de Lima Centro a Breña' }).click();
-    const edicion = page.getByRole('dialog', { name: 'Editar tarifa' });
+    const edicion = await abrirVentana(
+      page.getByRole('button', { name: 'Editar tarifa de Lima Centro a Breña' }),
+      'Editar tarifa',
+      campoTiendaDeOrigen,
+    );
     const distrito = edicion.getByRole('combobox', { name: 'Distrito', exact: true });
     await expect(distrito).toHaveText('Breña');
     await distrito.click();
@@ -206,8 +212,11 @@ test.describe('PBI-0216 y PBI-0217: Tarifas de envío', () => {
       if (peticion.method() === 'PUT' && peticion.url().includes('/bff/admin/snapshot')) guardados++;
     });
     await page.goto('/envios');
-    await page.getByRole('button', { name: 'Agregar tarifa' }).click();
-    const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
+    const ventana = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar tarifa' }),
+      'Precio para uno o varios distritos',
+      campoTiendaDeOrigen,
+    );
     await ventana.getByRole('combobox', { name: 'Tienda de origen' }).fill('Lima Centro');
     await ventana.getByRole('button', { name: 'Guardar 0 tarifas' }).click();
     await expect(ventana.getByText('Elige al menos un distrito.')).toBeVisible();

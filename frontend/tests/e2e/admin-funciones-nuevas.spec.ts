@@ -12,6 +12,7 @@ import {
   urls,
 } from './apoyo/entorno';
 import { conservarElStock } from './apoyo/pedidos';
+import { abrirVentana, campoTiendaDeOrigen } from './apoyo/ventanas';
 
 // Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
 conservarElStock();
@@ -106,8 +107,11 @@ test.describe('PBI-0157: lo escrito en Tarifas de envío cuando la sesión vence
     const antes = ((await leerSnapshot()) as unknown as { rates: unknown }).rates;
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/envios');
-    await page.getByRole('button', { name: 'Agregar tarifa' }).click();
-    const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
+    const ventana = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar tarifa' }),
+      'Precio para uno o varios distritos',
+      campoTiendaDeOrigen,
+    );
     await ventana.getByRole('combobox', { name: 'Tienda de origen' }).fill('Lima Norte');
     await ventana.getByRole('combobox', { name: 'Distritos' }).click();
     await page.getByRole('option', { name: 'Comas', exact: true }).click();
@@ -133,8 +137,11 @@ test.describe('PBI-0157: lo escrito en Tarifas de envío cuando la sesión vence
   test('vuelve a la edición de una tarifa, con lo que se había cambiado', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/envios');
-    await page.getByRole('button', { name: 'Editar tarifa de Lima Centro a Lince' }).click();
-    const ventana = page.getByRole('dialog', { name: 'Editar tarifa' });
+    const ventana = await abrirVentana(
+      page.getByRole('button', { name: 'Editar tarifa de Lima Centro a Lince' }),
+      'Editar tarifa',
+      campoTiendaDeOrigen,
+    );
     await ventana.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('13');
     await vencerSesion(page);
     await ventana.getByRole('button', { name: 'Guardar tarifa' }).click();

@@ -23,6 +23,7 @@ import {
 import { aceptarEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { cargarImagenPrincipal } from './apoyo/fotos';
 import { conservarElStock } from './apoyo/pedidos';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 // Los pedidos que crea esta spec se cancelan al terminar: el stock queda como estaba (PBI-0207).
 conservarElStock();
@@ -96,8 +97,11 @@ test.describe('Guardado del Admin', () => {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       // Lote 21 (PBI-0211): la marca se registra en la ventana de registro.
       await page.goto('/marcas');
-      await page.getByRole('button', { name: 'Agregar marca' }).click();
-      const ventana = page.getByRole('dialog', { name: 'Nueva marca' });
+      const ventana = await abrirVentana(
+        page.getByRole('button', { name: 'Agregar marca' }),
+        'Nueva marca',
+        campoNombre,
+      );
       await ventana.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
       await ventana.getByRole('button', { name: 'Guardar', exact: true }).dblclick();
       await expect(ventana).toBeHidden();
@@ -228,8 +232,8 @@ test.describe('Guardado del Admin', () => {
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/clientes');
-      await page.getByRole('button', { name: 'Agregar cliente' }).click();
-      const nuevo = page.getByRole('dialog', { name: 'Nuevo cliente' });
+      const agregar = page.getByRole('button', { name: 'Agregar cliente' });
+      const nuevo = await abrirVentana(agregar, 'Nuevo cliente', campoNombre);
       await nuevo.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
       await nuevo.getByRole('textbox', { name: 'Correo' }).fill(correo);
       await nuevo.getByRole('textbox', { name: 'Documento' }).fill('11112222');
@@ -239,12 +243,15 @@ test.describe('Guardado del Admin', () => {
       await expect(eliminar).toBeVisible();
 
       // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
-      await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
-      const edicion = page.getByRole('dialog', { name: 'Editar cliente' });
+      const edicion = await abrirVentana(
+        page.getByRole('button', { name: `Editar cliente ${nombre}` }),
+        'Editar cliente',
+        campoNombre,
+      );
       await expect(edicion.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
       await edicion.getByRole('button', { name: 'Cancelar' }).click();
       await expect(edicion).toBeHidden();
-      await page.getByRole('button', { name: 'Agregar cliente' }).click();
+      await abrirVentana(agregar, 'Nuevo cliente', campoNombre);
       await expect(nuevo.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
       await page.keyboard.press('Escape');
       await expect(nuevo).toBeHidden();
@@ -513,11 +520,12 @@ test.describe('Acceso, sesión y Contenido', () => {
     const nombre = 'Marca sesión vencida 06';
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/marcas');
-    await page.getByRole('button', { name: 'Agregar marca' }).click();
-    await page
-      .getByRole('dialog', { name: 'Nueva marca' })
-      .getByRole('textbox', { name: 'Nombre' })
-      .fill(nombre);
+    const ventana = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar marca' }),
+      'Nueva marca',
+      campoNombre,
+    );
+    await campoNombre(ventana).fill(nombre);
     // La sesión se cierra en el BFF (como si venciera) sin que el navegador se entere.
     const token = await page.evaluate(() => sessionStorage.getItem('webstore-admin-session-v1'));
     const api = await nuevoRequest.newContext({ baseURL: urls.bff });

@@ -2,6 +2,7 @@ import { expect, request as nuevoRequest, test, type Locator, type Page } from '
 
 import { actualizarProducto, leerProductos, leerSnapshot } from './apoyo/catalogo';
 import { cuentasAdmin, ingresarAlAdmin, menuAdmin, desplegarGrupo, urls } from './apoyo/entorno';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Lote 07, Admin: permisos, listados y accesibilidad (ADR-0017). Recorridos contra el BFF de prueba real:
@@ -399,7 +400,7 @@ test.describe('PBI-0132: accesibilidad de formularios y listas', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     const guardados = contarGuardados(page);
     await page.goto('/clientes');
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
+    await abrirVentana(page.getByRole('button', { name: 'Agregar cliente' }), 'Nuevo cliente', campoNombre);
     await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     for (const campo of ['Nombre', 'Correo', 'Documento']) {
       const control = page.getByRole('textbox', { name: campo, exact: true });
@@ -503,11 +504,12 @@ test.describe('PBI-0151: lo escrito cuando la sesión vence', () => {
   test('otra persona que ingresa en la misma pestaña no lo recupera', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/marcas');
-    await page.getByRole('button', { name: 'Agregar marca' }).click();
-    await page
-      .getByRole('dialog', { name: 'Nueva marca' })
-      .getByRole('textbox', { name: 'Nombre' })
-      .fill('Marca borrador lote 07');
+    const ventana = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar marca' }),
+      'Nueva marca',
+      campoNombre,
+    );
+    await campoNombre(ventana).fill('Marca borrador lote 07');
     await vencerSesion(page);
     await page.getByRole('dialog').getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(page).toHaveURL(/\/login$/);
@@ -518,10 +520,8 @@ test.describe('PBI-0151: lo escrito cuando la sesión vence', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible();
     await page.goto('/marcas');
     await expect(page.getByRole('dialog')).toHaveCount(0);
-    await page.getByRole('button', { name: 'Agregar marca' }).click();
-    await expect(
-      page.getByRole('dialog', { name: 'Nueva marca' }).getByRole('textbox', { name: 'Nombre' }),
-    ).toHaveValue('');
+    await abrirVentana(page.getByRole('button', { name: 'Agregar marca' }), 'Nueva marca', campoNombre);
+    await expect(campoNombre(ventana)).toHaveValue('');
     await expect(page.getByText('Recuperamos lo que escribiste')).toHaveCount(0);
   });
 });

@@ -18,6 +18,7 @@ import {
 import { TEMAS, activarTema, restablecerTemas } from './apoyo/contraste';
 import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 import { cargarImagenPrincipal } from './apoyo/fotos';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Filtros y registro del catálogo del Admin (feature 008). Productos (⚠ TASK-08):
@@ -565,9 +566,8 @@ test.describe('Filtros y registro de marcas del Admin', () => {
 
       // Lote 21 (ADR-0025, PBI-0211): «Agregar» abre la ventana de registro sobre la lista, sin cambiar de ruta;
       // «Cancelar» la cierra y conserva los filtros.
-      await page.getByRole('button', { name: 'Agregar marca', exact: true }).click();
-      const nueva = page.getByRole('dialog', { name: 'Nueva marca' });
-      await expect(nueva).toBeVisible();
+      const agregar = page.getByRole('button', { name: 'Agregar marca', exact: true });
+      const nueva = await abrirVentana(agregar, 'Nueva marca', campoNombre);
       await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
       await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('');
       await expect(nueva.getByRole('checkbox', { name: 'Activa' })).toBeChecked();
@@ -576,7 +576,7 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
 
       // Guardar cierra la ventana y la lista conserva los filtros; la marca nueva los cumple.
-      await page.getByRole('button', { name: 'Agregar marca', exact: true }).click();
+      await abrirVentana(agregar, 'Nueva marca', campoNombre);
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Zentro 008');
       await nueva.getByRole('checkbox', { name: 'Activa' }).uncheck();
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
@@ -587,10 +587,11 @@ test.describe('Filtros y registro de marcas del Admin', () => {
 
       // «Editar» abre los datos actuales: otra sesión volvió a activar «Zenith».
       await cambiarMarcas((actuales) => actuales.map((m) => (m.id === 'b-zen' ? { ...m, active: true } : m)));
-      await filaMarca(page, 'Zenith')
-        .getByRole('button', { name: /^Editar / })
-        .click();
-      const edicion = page.getByRole('dialog', { name: 'Editar marca' });
+      const edicion = await abrirVentana(
+        filaMarca(page, 'Zenith').getByRole('button', { name: /^Editar / }),
+        'Editar marca',
+        campoNombre,
+      );
       await expect(edicion.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('Zenith');
       await expect(edicion.getByRole('checkbox', { name: 'Activa' })).toBeChecked();
       await edicion.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Zenith 008');
@@ -957,7 +958,7 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
       ['/marcas', 'Editar marca', 'Guardar', 'Editar marca Nova'],
     ] as const) {
       await page.goto(ruta);
-      if (abrir) await page.getByRole('button', { name: abrir }).click();
+      if (abrir) await abrirVentana(page.getByRole('button', { name: abrir }), formulario, campoNombre);
       const registro = page.getByRole('form', { name: formulario });
       const nombre = registro.getByRole('textbox', { name: 'Nombre', exact: true });
       await expect(nombre).not.toHaveValue('');

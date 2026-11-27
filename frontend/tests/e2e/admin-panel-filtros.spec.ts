@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Lote 11 (ADR-0021), PBI-0171: en el panel de filtros de los diez listados del backoffice, los botones van alineados a
@@ -77,32 +78,32 @@ test.describe('PBI-0171: botones del panel de filtros', () => {
 
     await page.goto('/clientes');
     const lista = page.getByRole('region', { name: 'Lista de clientes' });
-    await lista
-      .getByRole('button', { name: /^Editar cliente / })
-      .first()
-      .click();
-    const ventana = page.getByRole('dialog', { name: 'Editar cliente' });
-    await expect(ventana).toBeVisible();
+    const ventana = await abrirVentana(
+      lista.getByRole('button', { name: /^Editar cliente / }).first(),
+      'Editar cliente',
+      campoNombre,
+    );
     await ventana.getByRole('button', { name: 'Cancelar' }).click();
     await expect(ventana).toBeHidden();
-    await panelDe(page, 'Filtros de clientes').getByRole('button', { name: 'Agregar cliente' }).click();
-    const nueva = page.getByRole('dialog', { name: 'Nuevo cliente' });
-    await expect(nueva).toBeVisible();
-    await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toBeFocused();
-    await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('');
+    // Al abrirse, el foco va a «Nombre» (abrirVentana lo espera).
+    const nueva = await abrirVentana(
+      panelDe(page, 'Filtros de clientes').getByRole('button', { name: 'Agregar cliente' }),
+      'Nuevo cliente',
+      campoNombre,
+    );
+    await expect(campoNombre(nueva)).toHaveValue('');
   });
 
   test('cerrar la ventana con Escape la descarta y devuelve el foco a «Agregar»', async ({ page }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/clientes');
     const agregar = page.getByRole('button', { name: 'Agregar cliente' });
-    await agregar.click();
-    const ventana = page.getByRole('dialog', { name: 'Nuevo cliente' });
-    await ventana.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Cliente a medio escribir');
+    const ventana = await abrirVentana(agregar, 'Nuevo cliente', campoNombre);
+    await campoNombre(ventana).fill('Cliente a medio escribir');
     await page.keyboard.press('Escape');
     await expect(ventana).toBeHidden();
     await expect(agregar).toBeFocused();
-    await agregar.click();
-    await expect(ventana.getByRole('textbox', { name: 'Nombre', exact: true })).toHaveValue('');
+    await abrirVentana(agregar, 'Nuevo cliente', campoNombre);
+    await expect(campoNombre(ventana)).toHaveValue('');
   });
 });

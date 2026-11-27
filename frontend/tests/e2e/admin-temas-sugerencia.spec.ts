@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { cuentasAdmin, desplegarGrupo, ingresarAlAdmin } from './apoyo/entorno';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Lote 47 (ADR-0033, PBI-0267): «Revisión de contraste» explica la relación y sugiere un color que cumple. Daniel no
@@ -30,11 +31,10 @@ async function nuevoTemaCon(page: Page, colores: Record<string, string>): Promis
     .getByRole('navigation', { name: 'Administración' })
     .getByRole('link', { name: 'Temas', exact: true })
     .click();
-  await page.getByRole('button', { name: 'Nuevo tema' }).click();
-  await expect(dialogo(page).getByRole('heading', { name: 'Nuevo tema' })).toBeVisible();
   // Material pone el foco en «Nombre» al terminar de abrir el diálogo: si ya se estuviera escribiendo un código, el
-  // texto acabaría en el nombre (lote 48, fallo intermitente con un recuento distinto de pares).
-  await expect(dialogo(page).getByRole('textbox', { name: 'Nombre' })).toBeFocused();
+  // texto acabaría en el nombre (lote 48, fallo intermitente con un recuento distinto de pares). PBI-0275: con la ayuda
+  // compartida `abrirVentana`.
+  await abrirVentana(page.getByRole('button', { name: 'Nuevo tema' }), 'Nuevo tema', campoNombre);
   for (const [color, valor] of Object.entries(colores)) await codigo(page, color).fill(valor);
 }
 

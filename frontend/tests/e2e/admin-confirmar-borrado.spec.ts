@@ -12,6 +12,7 @@ import {
   urls,
 } from './apoyo/entorno';
 import { conservarElStock } from './apoyo/pedidos';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Lote 43 (ADR-0033, PBI-0269): los borrados del backoffice se confirman en una ventana propia, como la del SGC, y ya no
@@ -123,8 +124,11 @@ test('«Sí, eliminar» borra el registro hasta el BFF, sin ventana nativa', asy
   try {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/clientes');
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
-    const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
+    const registro = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar cliente' }),
+      'Nuevo cliente',
+      campoNombre,
+    );
     await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
     await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);
     await registro.getByRole('textbox', { name: 'Documento' }).fill('70000043');
@@ -153,8 +157,11 @@ test('al crear desde la ventana, el listado va a la página del registro nuevo; 
     const lista = page.getByRole('region', { name: 'Lista de clientes' });
     const paginacion = page.getByRole('navigation', { name: 'Páginas de clientes' });
     const crear = async (nombre: string) => {
-      await page.getByRole('button', { name: 'Agregar cliente' }).click();
-      const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
+      const registro = await abrirVentana(
+        page.getByRole('button', { name: 'Agregar cliente' }),
+        'Nuevo cliente',
+        campoNombre,
+      );
       const correo = correoUnico('l43-pagina');
       await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
       await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);

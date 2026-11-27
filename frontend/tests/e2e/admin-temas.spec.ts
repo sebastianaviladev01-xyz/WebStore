@@ -3,6 +3,7 @@ import { expect, request as nuevoRequest, test, type Locator, type Page } from '
 import { aceptarEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { activarTema, colorDelToken } from './apoyo/contraste';
 import { cuentasAdmin, desplegarGrupo, desplegarTodos, ingresarAlAdmin, urls } from './apoyo/entorno';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Página «Temas» del Admin (feature 002). TEST-19: el `superadmin` lista, crea, edita, borra y activa temas
@@ -107,11 +108,10 @@ const dialogo = (page: Page) => page.getByRole('dialog');
 /**
  * Abre «Nuevo tema» y espera a que el diálogo termine de abrirse: Material pone el foco en «Nombre» al acabar la
  * animación, y si la prueba ya está escribiendo en otro campo, el texto acaba en «Nombre» (lote 48, fallo intermitente
- * del CI: el código «0f766e» quedó en el nombre).
+ * del CI: el código «0f766e» quedó en el nombre). Desde PBI-0275, con la ayuda compartida `abrirVentana`.
  */
 async function abrirNuevoTema(page: Page): Promise<void> {
-  await nuevoTema(page).click();
-  await expect(dialogo(page).getByRole('textbox', { name: 'Nombre' })).toBeFocused();
+  await abrirVentana(nuevoTema(page), 'Nuevo tema', campoNombre);
 }
 
 async function abrirTemas(page: Page): Promise<void> {
@@ -303,8 +303,11 @@ test.describe('Temas del Admin', () => {
     await conApi((api) => api.crear(original));
     await abrirTemas(page);
 
-    await page.getByRole('button', { name: `Editar ${original}` }).click();
-    const formulario = dialogo(page);
+    const formulario = await abrirVentana(
+      page.getByRole('button', { name: `Editar ${original}` }),
+      'Editar tema',
+      campoNombre,
+    );
     await expect(formulario.getByRole('heading', { name: 'Editar tema' })).toBeVisible();
     await expect(formulario.getByLabel('Nombre')).toHaveValue(original);
 

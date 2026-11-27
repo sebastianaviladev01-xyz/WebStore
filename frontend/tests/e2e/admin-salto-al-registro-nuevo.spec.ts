@@ -15,6 +15,7 @@ import {
 } from './apoyo/catalogo';
 import { correoUnico, cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
 import { cargarImagenPrincipal, pngDeColor } from './apoyo/fotos';
+import { abrirVentana, campoNombre, campoTiendaDeOrigen } from './apoyo/ventanas';
 
 /**
  * PBI-0274 (hallazgo de los lotes 43 y 44, ADR-0033): con más de 10 registros, el que se acaba de crear queda fuera de
@@ -53,11 +54,12 @@ test.describe('PBI-0274: al crear, el listado va a la página del registro nuevo
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/marcas');
-      await page.getByRole('button', { name: 'Agregar marca', exact: true }).click();
-      const ventana = page.getByRole('dialog', { name: 'Nueva marca' });
-      const campo = ventana.getByRole('textbox', { name: 'Nombre', exact: true });
-      await expect(campo).toBeFocused();
-      await campo.fill(nombre);
+      const ventana = await abrirVentana(
+        page.getByRole('button', { name: 'Agregar marca', exact: true }),
+        'Nueva marca',
+        campoNombre,
+      );
+      await campoNombre(ventana).fill(nombre);
       await ventana.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(ventana).toBeHidden();
       await enSuPagina(
@@ -79,11 +81,12 @@ test.describe('PBI-0274: al crear, el listado va a la página del registro nuevo
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/envios');
-      await page.getByRole('button', { name: 'Agregar tarifa' }).click();
-      const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
-      const tienda = ventana.getByRole('combobox', { name: 'Tienda de origen' });
-      await expect(tienda).toBeFocused();
-      await tienda.fill(origen);
+      const ventana = await abrirVentana(
+        page.getByRole('button', { name: 'Agregar tarifa' }),
+        'Precio para uno o varios distritos',
+        campoTiendaDeOrigen,
+      );
+      await campoTiendaDeOrigen(ventana).fill(origen);
       await ventana.getByRole('combobox', { name: 'Distritos' }).click();
       await page.getByRole('option', { name: distrito, exact: true }).click();
       await page.keyboard.press('Escape');
