@@ -19,6 +19,7 @@ import {
 import { DomainError } from '../comun/domain-error.mjs';
 import { esInstanteConZona } from '../comun/reloj.mjs';
 import { LISTAS_DE_CONTENIDO, esModoDeSugeridos, validarListaDeContenido } from './contenido.rules.mjs';
+import { CAMPOS_DE_WHATSAPP } from './whatsapp.rules.mjs';
 import { esModoDeDireccion } from '../pedidos/direcciones-por-producto.rules.mjs';
 import { ORDER_STATUSES } from '../pedidos/pedido.rules.mjs';
 import { esHoraDeCorte, esReglaDePrimeraEntrega } from '../pedidos/primera-fecha-de-entrega.rules.mjs';
@@ -439,6 +440,13 @@ export function requireValidConfig(config, current) {
       const lista = validarListaDeContenido(key, value);
       if (lista.error) throw invalid('config', key, lista.error);
       result[key] = lista.valor;
+      continue;
+    }
+    // Lote 49 (ADR-0035, PBI-0241): el número de WhatsApp se guarda con sus dígitos y el mensaje, recortado.
+    if (key in CAMPOS_DE_WHATSAPP) {
+      const campo = CAMPOS_DE_WHATSAPP[key](value);
+      if (campo.error) throw invalid('config', key, campo.error);
+      result[key] = campo.valor;
       continue;
     }
     // Lote 16 (ADR-0021, PBI-0179): los sugeridos van en el diálogo o en un panel lateral.

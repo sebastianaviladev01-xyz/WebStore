@@ -279,5 +279,8 @@ export const seed = {
     deliveryCutoffTime: '',
     // Una dirección por pedido o una por producto (lote 19, PBI-0006): por defecto, una por pedido.
     deliveryAddressMode: 'per-order',
+    // Acceso a WhatsApp (lote 49, PBI-0241): sin número, la tienda no muestra el botón. Nunca un número real en la demo.
+    whatsappNumber: '',
+    whatsappMessage: '',
   },
 };
