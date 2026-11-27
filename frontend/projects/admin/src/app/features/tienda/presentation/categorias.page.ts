@@ -236,7 +236,8 @@ export class CategoriasPage {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
-  private readonly focoTrasBorrar = focoTrasEliminar();
+  // PBI-0273: con la página, el foco sabe cuándo la lista volvió a la anterior.
+  private readonly focoTrasBorrar = focoTrasEliminar({ pagina: () => this.pagina().page });
   private readonly estado = inject(EstadoArbolCategorias);
   private readonly injector = inject(Injector);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
