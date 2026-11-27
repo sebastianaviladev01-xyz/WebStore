@@ -505,3 +505,166 @@ test('PBI-0270: cada tipo de evento de la actividad tiene su insignia', async ()
     'un tipo que el panel aún no conoce no queda sin insignia',
   );
 });
+
+// Auditoría del lote 45 (PBI-0270): el gráfico de pedidos y clientes web nuevos también sigue el periodo, con la
+// agrupación que tiene sentido: por hora (Hoy), por día (7 y 30 días y el mes, como antes), por semana desde el lunes
+// (el trimestre) y por mes (el año), en hora de Lima y con el reloj del Dashboard.
+test('PBI-0270: el gráfico del periodo agrupa por hora, día, semana o mes', async (t) => {
+  const { serieDelPeriodo } = await import(
+    `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
+  );
+  const resumen = (serie) =>
+    serie.puntos
+      .filter((p) => p.pedidos || p.clientesNuevos)
+      .map((p) => [p.etiqueta, p.pedidos, p.clientesNuevos]);
+
+  await t.test('«Mes actual» es la serie del mes de siempre: un punto por día, todo el mes', () => {
+    const pedidos = [
+      venta('2026-11-01T05:00:00Z', 10, 'dora@correo.pe'),
+      venta('2026-11-01T03:00:00Z', 10, 'carla@correo.pe'),
+      venta('2026-11-08T16:00:00Z', 10, 'bea@correo.pe'),
+      venta('2026-10-20T15:00:00Z', 10, 'bea@correo.pe'),
+    ];
+    const serie = serieDelPeriodo(pedidos, ahora, 'mes');
+    assert.equal(serie.agrupacion, 'dia');
+    assert.equal(serie.descripcion, 'noviembre de 2026');
+    assert.deepEqual(
+      serie.puntos.map((p) => [p.etiqueta, p.nombre]),
+      serieDelMes(pedidos, ahora).map((d) => [String(d.dia), `Día ${d.dia}`]),
+    );
+    assert.deepEqual(
+      serie.puntos.map((p) => [p.pedidos, p.clientesNuevos]),
+      serieDelMes(pedidos, ahora).map((d) => [d.pedidos, d.clientesNuevos]),
+    );
+    assert.deepEqual(serieDelPeriodo(pedidos, ahora).puntos, serie.puntos, 'sin periodo, «Mes actual»');
+  });
+
+  await t.test('«Hoy» va por hora de Lima, de 0 a 23, con los límites de la medianoche', () => {
+    const hoy = new Date('2026-11-26T15:30:00Z'); // 10:30 en Lima
+    const serie = serieDelPeriodo(
+      [
+        venta('2026-11-26T05:00:00Z', 10, 'ana@correo.pe'), // 00:00
+        venta('2026-11-26T04:59:59Z', 10, 'bea@correo.pe'), // 23:59:59 de ayer: fuera
+        venta('2026-11-26T15:10:00Z', 10, 'bea@correo.pe'), // 10:10: bea ya era cliente
+        venta('2026-11-26T15:20:00Z', 10, 'cira@correo.pe'), // 10:20
+        venta('2026-11-27T04:59:59Z', 10, 'dina@correo.pe'), // 23:59:59 de hoy
+        venta('2026-11-27T05:00:00Z', 10, 'eva@correo.pe'), // mañana: fuera
+      ],
+      hoy,
+      'hoy',
+    );
+    assert.equal(serie.agrupacion, 'hora');
+    assert.equal(serie.descripcion, '26 de noviembre de 2026');
+    assert.equal(serie.puntos.length, 24);
+    assert.deepEqual(
+      serie.puntos.slice(0, 3).map((p) => [p.etiqueta, p.nombre]),
+      [
+        ['0', '0:00'],
+        ['1', '1:00'],
+        ['2', '2:00'],
+      ],
+    );
+    assert.deepEqual(resumen(serie), [
+      ['0', 1, 1],
+      ['10', 2, 1],
+      ['23', 1, 1],
+    ]);
+  });
+
+  await t.test('«Últimos 7 días» y «Últimos 30 días» van por día, también al cambiar de mes y de año', () => {
+    const enero = new Date('2027-01-03T17:00:00Z');
+    const semana = serieDelPeriodo(
+      [
+        venta('2026-12-28T05:00:00Z', 10, 'ana@correo.pe'), // 00:00 del 28/12
+        venta('2026-12-28T04:59:59Z', 10, 'bea@correo.pe'), // 27/12: fuera
+        venta('2027-01-01T04:30:00Z', 10, 'cira@correo.pe'), // 23:30 del 31/12
+        venta('2027-01-03T16:00:00Z', 10, 'ana@correo.pe'),
+      ],
+      enero,
+      '7-dias',
+    );
+    assert.equal(semana.agrupacion, 'dia');
+    assert.equal(semana.descripcion, 'Del 28 de diciembre de 2026 al 3 de enero de 2027');
+    assert.deepEqual(
+      semana.puntos.map((p) => p.etiqueta),
+      ['28', '29', '30', '31', '1', '2', '3'],
+    );
+    assert.equal(semana.puntos[0].nombre, 'Día 28/12');
+    assert.deepEqual(resumen(semana), [
+      ['28', 1, 1],
+      ['31', 1, 1],
+      ['3', 1, 0],
+    ]);
+
+    const mes = serieDelPeriodo([], new Date('2026-11-26T15:30:00Z'), '30-dias');
+    assert.equal(mes.puntos.length, 30);
+    assert.deepEqual([mes.puntos[0].nombre, mes.puntos.at(-1).nombre], ['Día 28/10', 'Día 26/11']);
+    assert.equal(mes.descripcion, 'Del 28 de octubre al 26 de noviembre de 2026');
+    assert.equal(
+      serieDelPeriodo([], new Date('2026-11-26T15:30:00Z'), '7-dias').descripcion,
+      'Del 20 al 26 de noviembre de 2026',
+    );
+  });
+
+  await t.test(
+    '«Trimestre actual» va por semana desde el lunes; la primera y la última pueden ser parciales',
+    () => {
+      const serie = serieDelPeriodo(
+        [
+          venta('2026-10-01T04:00:00Z', 10, 'ana@correo.pe'), // 23:00 del 30/09: otro trimestre
+          venta('2026-10-05T04:59:59Z', 10, 'bea@correo.pe'), // domingo 04/10, 23:59:59
+          venta('2026-10-05T05:00:00Z', 10, 'cira@correo.pe'), // lunes 05/10, 00:00
+          venta('2026-11-26T14:00:00Z', 10, 'ana@correo.pe'), // hoy: ana ya era cliente
+        ],
+        new Date('2026-11-26T15:30:00Z'),
+        'trimestre',
+      );
+      assert.equal(serie.agrupacion, 'semana');
+      assert.equal(serie.descripcion, 'Del 1 de octubre al 26 de noviembre de 2026');
+      assert.deepEqual(
+        serie.puntos.map((p) => p.etiqueta),
+        ['01/10', '05/10', '12/10', '19/10', '26/10', '02/11', '09/11', '16/11', '23/11'],
+      );
+      assert.equal(serie.puntos[0].nombre, 'Semana del 01/10');
+      assert.deepEqual(resumen(serie), [
+        ['01/10', 1, 1],
+        ['05/10', 1, 1],
+        ['23/11', 1, 0],
+      ]);
+      // El primer trimestre de 2027 empieza un viernes; el de 2029, un lunes.
+      assert.deepEqual(
+        serieDelPeriodo([], new Date('2027-01-03T17:00:00Z'), 'trimestre').puntos.map((p) => p.etiqueta),
+        ['01/01'],
+      );
+      assert.deepEqual(
+        serieDelPeriodo([], new Date('2029-01-08T17:00:00Z'), 'trimestre').puntos.map((p) => p.etiqueta),
+        ['01/01', '08/01'],
+      );
+    },
+  );
+
+  await t.test('«Año actual» va por mes, de enero a diciembre', () => {
+    const serie = serieDelPeriodo(
+      [
+        venta('2026-01-01T05:00:00Z', 10, 'ana@correo.pe'), // 00:00 del 01/01
+        venta('2026-01-01T04:59:59Z', 10, 'bea@correo.pe'), // 31/12/2025: fuera
+        venta('2026-09-30T15:00:00Z', 10, 'cira@correo.pe'),
+        venta('2026-11-26T14:00:00Z', 10, 'cira@correo.pe'),
+      ],
+      new Date('2026-11-26T15:30:00Z'),
+      'anio',
+    );
+    assert.equal(serie.agrupacion, 'mes');
+    assert.equal(serie.descripcion, 'Del 1 de enero al 26 de noviembre de 2026');
+    assert.deepEqual(
+      serie.puntos.map((p) => p.etiqueta),
+      ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'set', 'oct', 'nov', 'dic'],
+    );
+    assert.deepEqual([serie.puntos[8].nombre, serie.puntos[11].nombre], ['setiembre', 'diciembre']);
+    assert.deepEqual(resumen(serie), [
+      ['ene', 1, 1],
+      ['set', 1, 1],
+      ['nov', 1, 0],
+    ]);
+  });
+});

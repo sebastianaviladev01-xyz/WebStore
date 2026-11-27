@@ -114,7 +114,7 @@ const DESFASE_DE_LIMA = 5 * 60 * 60 * 1000;
  * Medianoche de Lima de un día. `dia` y `mes` pueden salirse del mes o del año (el día 0 es el último del mes
  * anterior; el mes 0, diciembre del año anterior), así se cuentan días hacia atrás sin calcular los cambios de mes.
  */
-function medianoche(anio: number, mes: number, dia: number): number {
+export function medianocheEnLima(anio: number, mes: number, dia: number): number {
   return Date.UTC(anio, mes - 1, dia) + DESFASE_DE_LIMA;
 }
 
@@ -134,7 +134,10 @@ function delPrimeroAlDia(
   dia: number,
 ): TramoDeTiempo {
   const ultimo = Math.min(dia, diasDelMes(fin.anio, fin.mes));
-  return { desde: medianoche(inicio.anio, inicio.mes, 1), hasta: medianoche(fin.anio, fin.mes, ultimo + 1) };
+  return {
+    desde: medianocheEnLima(inicio.anio, inicio.mes, 1),
+    hasta: medianocheEnLima(fin.anio, fin.mes, ultimo + 1),
+  };
 }
 
 /**
@@ -151,8 +154,8 @@ export function tramosDelPeriodo(
   ahora: Date,
 ): { actual: TramoDeTiempo; anterior: TramoDeTiempo } {
   const { anio, mes, dia } = fechaEnLima(ahora);
-  const finDeHoy = medianoche(anio, mes, dia + 1);
-  const desdeHace = (dias: number) => medianoche(anio, mes, dia - dias + 1);
+  const finDeHoy = medianocheEnLima(anio, mes, dia + 1);
+  const desdeHace = (dias: number) => medianocheEnLima(anio, mes, dia - dias + 1);
   const hoy = { anio, mes };
   switch (periodo) {
     case 'hoy':
@@ -172,7 +175,7 @@ export function tramosDelPeriodo(
       const mesDelTrimestre = (mes - 1) % 3;
       const inicio = mesDesplazado(anio, mes, mesDelTrimestre);
       return {
-        actual: { desde: medianoche(inicio.anio, inicio.mes, 1), hasta: finDeHoy },
+        actual: { desde: medianocheEnLima(inicio.anio, inicio.mes, 1), hasta: finDeHoy },
         anterior: delPrimeroAlDia(
           mesDesplazado(inicio.anio, inicio.mes, 3),
           mesDesplazado(anio, mes, 3),
@@ -182,14 +185,14 @@ export function tramosDelPeriodo(
     }
     case 'anio':
       return {
-        actual: { desde: medianoche(anio, 1, 1), hasta: finDeHoy },
+        actual: { desde: medianocheEnLima(anio, 1, 1), hasta: finDeHoy },
         anterior: delPrimeroAlDia({ anio: anio - 1, mes: 1 }, { anio: anio - 1, mes }, dia),
       };
     case 'mes':
     default: {
       const anterior = mesDesplazado(anio, mes, 1);
       return {
-        actual: { desde: medianoche(hoy.anio, hoy.mes, 1), hasta: finDeHoy },
+        actual: { desde: medianocheEnLima(hoy.anio, hoy.mes, 1), hasta: finDeHoy },
         anterior: delPrimeroAlDia(anterior, anterior, dia),
       };
     }

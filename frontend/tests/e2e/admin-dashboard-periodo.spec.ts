@@ -83,6 +83,25 @@ const tarjeta = (page: Page, titulo: string) =>
 const periodo = (page: Page) => page.getByRole('main').getByRole('combobox', { name: 'Periodo' });
 const distribucion = (page: Page) =>
   page.getByRole('main').getByRole('list', { name: 'Ventas por categoría' });
+/** La tabla del gráfico de pedidos (para lectores de pantalla), por su título: «… por hora», «… por mes»… */
+const tablaDelGrafico = (page: Page, unidad: string) =>
+  page
+    .getByRole('main')
+    .getByRole('table', { name: new RegExp(`^Pedidos y clientes web nuevos por ${unidad}`) });
+const MESES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'setiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
 
 async function elegirPeriodo(page: Page, nombre: string): Promise<void> {
   await periodo(page).click();
@@ -127,6 +146,11 @@ test('cambiar el periodo cambia las cifras, la variación, la distribución y la
 
   await elegirPeriodo(page, 'Hoy');
   await expect(page).toHaveURL(/[?&]periodo=hoy(&|$)/);
+  // El gráfico también sigue el periodo: con «Hoy», por hora (las 24 del día de Lima).
+  await expect(
+    page.getByRole('main').getByRole('heading', { level: 2, name: 'Pedidos y clientes web nuevos por hora' }),
+  ).toBeVisible();
+  await expect(tablaDelGrafico(page, 'hora').getByRole('rowheader')).toHaveCount(24);
   await expect(tarjeta(page, 'Total de pedidos')).toContainText(/(?<!\d)1(?!\d)/);
   await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?300\.00/);
   await expect(tarjeta(page, 'Total de pedidos')).toContainText('frente a ayer a la misma hora');
@@ -138,6 +162,8 @@ test('cambiar el periodo cambia las cifras, la variación, la distribución y la
 
   await elegirPeriodo(page, 'Últimos 7 días');
   await expect(page).toHaveURL(/[?&]periodo=7-dias(&|$)/);
+  await expect(tablaDelGrafico(page, 'día').getByRole('rowheader')).toHaveCount(7);
+  await expect(page.getByRole('main').getByText(/^Del \d{1,2} .* de \d{4}$/)).toBeVisible();
   // Los tres pedidos de la semana (el cancelado cuenta como pedido); las ventas, sin el cancelado ni el envío.
   await expect(tarjeta(page, 'Total de pedidos')).toContainText(/(?<!\d)3(?!\d)/);
   await expect(tarjeta(page, 'Total de ventas')).toContainText(/S\/\s?400\.00/);
@@ -191,6 +217,24 @@ test.describe('a 375 px', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await elegirPeriodo(page, 'Año actual');
     await expect(page).toHaveURL(/[?&]periodo=anio(&|$)/);
+    // Con «Año actual», el gráfico va por mes: 12 barras, de enero a diciembre, con el pedido de hoy en su mes.
+    await expect(
+      page
+        .getByRole('main')
+        .getByRole('heading', { level: 2, name: 'Pedidos y clientes web nuevos por mes' }),
+    ).toBeVisible();
+    const tabla = tablaDelGrafico(page, 'mes');
+    await expect(tabla.getByRole('rowheader')).toHaveText(MESES);
+    const mesDeHoy =
+      MESES[
+        Number(
+          new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Lima', month: 'numeric' }).format(new Date()),
+        ) - 1
+      ];
+    const filaDeHoy = tabla
+      .getByRole('row')
+      .filter({ has: page.getByRole('rowheader', { name: mesDeHoy, exact: true }) });
+    await expect(filaDeHoy.getByRole('cell').first()).not.toHaveText('0');
     await expect(tarjeta(page, 'Total de pedidos')).toContainText('frente al mismo tramo del año anterior');
     const desborde = await page.evaluate(
       () => document.documentElement.scrollWidth > document.documentElement.clientWidth,

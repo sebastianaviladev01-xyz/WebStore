@@ -21,7 +21,6 @@ import {
   Periodo,
   PERIODO_POR_OMISION,
   PERIODOS,
-  ZONA_IANA_LIMA,
 } from '../domain/periodo.rules';
 import {
   actividadReciente,
@@ -29,23 +28,26 @@ import {
   GrupoDeEstado,
   gruposDeEstado,
   pedidosDelPeriodo,
-  serieDelMes,
+  serieDelPeriodo,
   tipoDeEvento,
   ultimosPedidos,
 } from '../domain/resumen.rules';
 import { NOTA_STOCK_BAJO } from '../domain/inventario.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
+import { AgrupacionDeSerie } from '../domain/resumen.model';
 import { ETIQUETAS_ESTADO_PEDIDO, EventoActividad } from '../domain/tienda.model';
 import { clasesDeEstadoPedido } from './estado-pedido';
 import { GraficoPedidosComponent } from './grafico-pedidos.component';
 import { TarjetaIndicadorComponent } from './tarjeta-indicador.component';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
-const MES_EN_LIMA = new Intl.DateTimeFormat('es-PE', {
-  month: 'long',
-  year: 'numeric',
-  timeZone: ZONA_IANA_LIMA,
-});
+/** Cómo se nombra cada agrupación del gráfico en su título: «Pedidos por hora», «… por día»… */
+const UNIDAD_DEL_GRAFICO: Readonly<Record<AgrupacionDeSerie, string>> = {
+  hora: 'hora',
+  dia: 'día',
+  semana: 'semana',
+  mes: 'mes',
+};
 
 /**
  * Bloques del Dashboard que se pliegan: los que tienen título y, desde el lote 13 (PBI-0187), también la fila de
@@ -177,7 +179,7 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
       @if (verPedidos()) {
         <!--
           Lote 45 (PBI-0270): el filtro principal del SGC. El periodo va en la URL (?periodo=, STD-08); sin él, «Mes
-          actual». Lo siguen las tarjetas de cifras, «Pedidos por estado» y la distribución de ventas.
+          actual». Lo siguen las tarjetas de cifras, el gráfico, «Pedidos por estado» y la distribución de ventas.
         -->
         <section class="admin-card mt-6 flex flex-wrap items-center justify-between gap-x-6 gap-y-4 p-5">
           <div class="min-w-0">
@@ -263,7 +265,8 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
           Lote 23 (ADR-0025, PBI-0222; provisional): sin «Pedidos por distrito», que Daniel y Walther llamaron relleno, el
           gráfico ocupa todo el ancho, como «Pedidos por estado». «Clientes nuevos» pasa a «Clientes web nuevos», como
           pidió Walther: son quienes hicieron su primer pedido en la tienda en línea, no los que compran en persona.
-          Es por día del mes en curso: no sigue el periodo (lote 45).
+          Desde la auditoría del lote 45 (PBI-0270) sigue el periodo: por hora, día, semana o mes (serieDelPeriodo); el
+          subtítulo dice el tramo. Conserva el id del bloque, pedidos-por-dia.
         -->
         <section class="admin-card mt-5 min-w-0 p-6">
           <h2 class="text-lg font-semibold">
@@ -272,20 +275,15 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
                 botonDeBloque;
                 context: {
                   $implicit: 'pedidos-por-dia',
-                  titulo: verClientes() ? 'Pedidos y clientes web nuevos por día' : 'Pedidos por día',
+                  titulo: tituloDelGrafico(),
                 }
               "
             />
           </h2>
           <div wsAdminBloquePlegable="pedidos-por-dia" [abierto]="bloqueAbierto('pedidos-por-dia')">
             <div class="ws-plegable-contenido">
-              <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ mes() }}</p>
-              <ws-admin-grafico-pedidos
-                class="mt-4"
-                [serie]="serie()"
-                [mes]="mes()"
-                [conClientes]="verClientes()"
-              />
+              <p class="mt-1 text-sm text-muted first-letter:uppercase">{{ serie().descripcion }}</p>
+              <ws-admin-grafico-pedidos class="mt-4" [serie]="serie()" [conClientes]="verClientes()" />
             </div>
           </div>
         </section>
@@ -564,7 +562,6 @@ export class ResumenPage {
    * pulsar «Actualizar», como las cifras del snapshot.
    */
   private readonly ahora = signal(new Date());
-  protected readonly mes = computed(() => MES_EN_LIMA.format(this.ahora()));
   protected readonly hoy = computed(() => fechaDelEncabezado(this.ahora()));
   protected readonly actualizando = signal(false);
   protected readonly errorActualizar = signal<string | null>(null);
@@ -593,7 +590,13 @@ export class ResumenPage {
   private readonly delPeriodo = computed(() =>
     pedidosDelPeriodo(this.admin.orders(), this.ahora(), this.periodo()),
   );
-  protected readonly serie = computed(() => serieDelMes(this.admin.orders(), this.ahora()));
+  protected readonly serie = computed(() =>
+    serieDelPeriodo(this.admin.orders(), this.ahora(), this.periodo()),
+  );
+  protected readonly tituloDelGrafico = computed(() => {
+    const unidad = UNIDAD_DEL_GRAFICO[this.serie().agrupacion];
+    return this.verClientes() ? `Pedidos y clientes web nuevos por ${unidad}` : `Pedidos por ${unidad}`;
+  });
   protected readonly ultimos = computed(() => ultimosPedidos(this.admin.orders()));
   protected readonly actividad = computed(() => actividadReciente(this.admin.snapshot()?.activity ?? []));
   protected readonly estados = computed(() => gruposDeEstado(this.delPeriodo()));

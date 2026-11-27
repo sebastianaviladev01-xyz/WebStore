@@ -1,9 +1,18 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
-import { DiaDelMes } from '../domain/resumen.model';
+import { AgrupacionDeSerie, PuntoDeSerie, SerieDelPeriodo } from '../domain/resumen.model';
+
+/** Cómo se nombra cada agrupación en los textos del gráfico y en la cabecera de su tabla. */
+const UNIDADES: Readonly<Record<AgrupacionDeSerie, { unidad: string; columna: string }>> = {
+  hora: { unidad: 'hora', columna: 'Hora' },
+  dia: { unidad: 'día', columna: 'Día' },
+  semana: { unidad: 'semana', columna: 'Semana' },
+  mes: { unidad: 'mes', columna: 'Mes' },
+};
 
 /**
- * Barras por día del mes con los pedidos y, si el rol los ve, los clientes web nuevos: quienes hicieron su primer pedido
+ * Barras por hora, día, semana o mes del periodo del filtro principal (auditoría del lote 45, PBI-0270; hasta entonces,
+ * por día del mes) con los pedidos y, si el rol los ve, los clientes web nuevos: quienes hicieron su primer pedido
  * en la tienda en línea («Clientes nuevos» hasta el lote 23, ADR-0025, PBI-0222). Solo CSS y tokens: `primary` para
  * «Pedidos» y `accent` para «Clientes web nuevos», con el borde del acento (`accent-line`, PBI-0189) para que un
  * secundario claro se distinga del fondo. Para lectores de pantalla tiene un texto alternativo y una tabla
@@ -40,24 +49,24 @@ import { DiaDelMes } from '../domain/resumen.model';
           <div class="relative flex h-40 items-end gap-0.5 border-b border-line">
             <span class="absolute inset-x-0 top-0 border-t border-dashed border-line"></span>
             <span class="absolute inset-x-0 top-1/2 border-t border-dashed border-line"></span>
-            @for (dia of serie(); track dia.dia) {
+            @for (punto of puntos(); track $index) {
               <div
                 class="relative flex h-full flex-1 items-end justify-center gap-px"
-                [attr.title]="detalleDia(dia)"
+                [attr.title]="detallePunto(punto)"
               >
-                <span class="w-2 rounded-t-sm bg-primary" [style.height.%]="altura(dia.pedidos)"></span>
+                <span class="w-2 rounded-t-sm bg-primary" [style.height.%]="altura(punto.pedidos)"></span>
                 @if (conClientes()) {
                   <span
                     class="w-2 rounded-t-sm bg-accent ring-1 ring-accent-line ring-inset"
-                    [style.height.%]="altura(dia.clientesNuevos)"
+                    [style.height.%]="altura(punto.clientesNuevos)"
                   ></span>
                 }
               </div>
             }
           </div>
           <div class="mt-1.5 flex gap-0.5 text-[11px] tabular-nums text-muted">
-            @for (dia of serie(); track dia.dia) {
-              <span class="flex-1 text-center">{{ dia.dia }}</span>
+            @for (punto of puntos(); track $index) {
+              <span class="flex-1 text-center">{{ punto.etiqueta }}</span>
             }
           </div>
         </div>
@@ -72,7 +81,7 @@ import { DiaDelMes } from '../domain/resumen.model';
         </caption>
         <thead>
           <tr>
-            <th scope="col">Día</th>
+            <th scope="col">{{ unidades[serie().agrupacion].columna }}</th>
             <th scope="col">Pedidos</th>
             @if (conClientes()) {
               <th scope="col">Clientes web nuevos</th>
@@ -80,12 +89,12 @@ import { DiaDelMes } from '../domain/resumen.model';
           </tr>
         </thead>
         <tbody>
-          @for (dia of serie(); track dia.dia) {
+          @for (punto of puntos(); track $index) {
             <tr>
-              <th scope="row">{{ dia.dia }}</th>
-              <td>{{ dia.pedidos }}</td>
+              <th scope="row">{{ punto.nombre }}</th>
+              <td>{{ punto.pedidos }}</td>
               @if (conClientes()) {
-                <td>{{ dia.clientesNuevos }}</td>
+                <td>{{ punto.clientesNuevos }}</td>
               }
             </tr>
           }
@@ -96,40 +105,47 @@ import { DiaDelMes } from '../domain/resumen.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GraficoPedidosComponent {
-  readonly serie = input.required<readonly DiaDelMes[]>();
-  /** Mes en curso en texto, por ejemplo «noviembre de 2026». */
-  readonly mes = input.required<string>();
+  /** Los puntos del periodo, su agrupación y el tramo en palabras («noviembre de 2026» con «Mes actual»). */
+  readonly serie = input.required<SerieDelPeriodo>();
   /** El vendedor no recibe clientes: el gráfico muestra solo la serie «Pedidos». */
   readonly conClientes = input(true);
 
   /** Valor del tope del eje: par para que la línea del medio sea un entero; mínimo 2 para que el mes vacío tenga eje. */
+  protected readonly unidades = UNIDADES;
+  protected readonly puntos = computed(() => this.serie().puntos);
+
   protected readonly escala = computed(() => {
     const maximo = Math.max(
       0,
-      ...this.serie().map((dia) => Math.max(dia.pedidos, this.conClientes() ? dia.clientesNuevos : 0)),
+      ...this.puntos().map((punto) => Math.max(punto.pedidos, this.conClientes() ? punto.clientesNuevos : 0)),
     );
     return Math.max(2, Math.ceil(maximo / 2) * 2);
   });
 
   protected readonly textoAlternativo = computed(() => {
-    const pedidos = this.serie().reduce((suma, dia) => suma + dia.pedidos, 0);
-    const clientes = this.serie().reduce((suma, dia) => suma + dia.clientesNuevos, 0);
+    const pedidos = this.puntos().reduce((suma, punto) => suma + punto.pedidos, 0);
+    const clientes = this.puntos().reduce((suma, punto) => suma + punto.clientesNuevos, 0);
     const series = this.conClientes() ? 'Pedidos y clientes web nuevos' : 'Pedidos';
     const totales = this.conClientes()
       ? `${contar(pedidos, 'pedido', 'pedidos')} y ${contar(clientes, 'cliente web nuevo', 'clientes web nuevos')}`
       : contar(pedidos, 'pedido', 'pedidos');
-    return `${series} por día de ${this.mes()}: ${totales} en el mes.`;
+    const { agrupacion, descripcion } = this.serie();
+    const unidad = UNIDADES[agrupacion].unidad;
+    // Con «Mes actual», el texto de siempre: «… por día de noviembre de 2026: … en el mes.»
+    return descripcion.startsWith('Del ') || agrupacion !== 'dia'
+      ? `${series} por ${unidad}, ${descripcion.charAt(0).toLowerCase()}${descripcion.slice(1)}: ${totales} en el periodo.`
+      : `${series} por día de ${descripcion}: ${totales} en el mes.`;
   });
 
   protected altura(valor: number): number {
     return (valor / this.escala()) * 100;
   }
 
-  protected detalleDia(dia: DiaDelMes): string {
-    const pedidos = contar(dia.pedidos, 'pedido', 'pedidos');
+  protected detallePunto(punto: PuntoDeSerie): string {
+    const pedidos = contar(punto.pedidos, 'pedido', 'pedidos');
     return this.conClientes()
-      ? `Día ${dia.dia}: ${pedidos}, ${contar(dia.clientesNuevos, 'cliente web nuevo', 'clientes web nuevos')}`
-      : `Día ${dia.dia}: ${pedidos}`;
+      ? `${punto.nombre}: ${pedidos}, ${contar(punto.clientesNuevos, 'cliente web nuevo', 'clientes web nuevos')}`
+      : `${punto.nombre}: ${pedidos}`;
   }
 }
 

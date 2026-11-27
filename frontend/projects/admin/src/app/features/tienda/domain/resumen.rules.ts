@@ -1,11 +1,11 @@
 // Cada import cabe en una línea: resumen.rules.spec.mjs borra las líneas que empiezan por «import» antes de transpilar.
 // prettier-ignore
-import type { DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, TramoDeTiempo } from './resumen.model';
+import type { AgrupacionDeSerie, DiaDelMes, DistribucionEstados, FechaLima, IndicadoresResumen, PuntoDeSerie, SerieDelPeriodo, TramoDeTiempo } from './resumen.model';
 import type { EstadoPedido, EventoActividad, Pedido } from './tienda.model';
 import { ETIQUETAS_ESTADO_PEDIDO } from './tienda.model';
 import { normalizarCorreo } from './correo.rules';
 // prettier-ignore
-import { diasDelMes, estaEnTramo, fechaEnLima, opcionDelPeriodo, PERIODO_POR_OMISION, type Periodo, tramosDelPeriodo } from './periodo.rules';
+import { diasDelMes, estaEnTramo, fechaEnLima, medianocheEnLima, opcionDelPeriodo, PERIODO_POR_OMISION, type Periodo, tramosDelPeriodo } from './periodo.rules';
 
 /** Instante del primer pedido (el de menor `createdAt`) de cada cliente, por correo normalizado como en el BFF. */
 function primerPedidoDeCadaCliente(pedidos: readonly Pedido[]): Map<string, number> {
@@ -116,6 +116,142 @@ export function serieDelMes(pedidos: readonly Pedido[], ahora: Date): DiaDelMes[
     if (delMes(fecha)) clientesPorDia[fecha.dia - 1]++;
   }
   return pedidosPorDia.map((total, i) => ({ dia: i + 1, pedidos: total, clientesNuevos: clientesPorDia[i] }));
+}
+
+/** Los meses en español de Perú, como los escribe `Intl` con `es-PE` («setiembre»). */
+const MESES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'setiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+] as const;
+
+const UNA_HORA = 60 * 60 * 1000;
+const dosCifras = (numero: number) => String(numero).padStart(2, '0');
+const nombreDelMes = (mes: number) => MESES[mes - 1] ?? '';
+
+/** Un cubo del gráfico: el tramo que reúne (`desde` incluido y `hasta` excluido), su etiqueta y su nombre. */
+interface Cubo extends TramoDeTiempo {
+  readonly etiqueta: string;
+  readonly nombre: string;
+}
+
+/** Los cubos del gráfico de un periodo, en hora de Lima. */
+function cubosDelPeriodo(periodo: Periodo, ahora: Date): { agrupacion: AgrupacionDeSerie; cubos: Cubo[] } {
+  const { actual } = tramosDelPeriodo(periodo, ahora);
+  const inicio = fechaEnLima(new Date(actual.desde));
+  const delDia = (desplazamiento: number): Cubo => {
+    const desde = medianocheEnLima(inicio.anio, inicio.mes, inicio.dia + desplazamiento);
+    const fecha = fechaEnLima(new Date(desde));
+    return {
+      desde,
+      hasta: medianocheEnLima(fecha.anio, fecha.mes, fecha.dia + 1),
+      etiqueta: String(fecha.dia),
+      nombre: periodo === 'mes' ? `Día ${fecha.dia}` : `Día ${dosCifras(fecha.dia)}/${dosCifras(fecha.mes)}`,
+    };
+  };
+  switch (periodo) {
+    case 'hoy':
+      // Las 24 horas del día de Lima, aunque las últimas aún no lleguen.
+      return {
+        agrupacion: 'hora',
+        cubos: Array.from({ length: 24 }, (_, hora) => ({
+          desde: actual.desde + hora * UNA_HORA,
+          hasta: actual.desde + (hora + 1) * UNA_HORA,
+          etiqueta: String(hora),
+          nombre: `${hora}:00`,
+        })),
+      };
+    case '7-dias':
+    case '30-dias':
+      return {
+        agrupacion: 'dia',
+        cubos: Array.from({ length: periodo === '7-dias' ? 7 : 30 }, (_, dia) => delDia(dia)),
+      };
+    case 'trimestre': {
+      // De lunes a domingo; la primera semana empieza el primer día del trimestre y la última termina hoy.
+      const cubos: Cubo[] = [];
+      for (let desde = actual.desde; desde < actual.hasta;) {
+        const fecha = fechaEnLima(new Date(desde));
+        const diaDeLaSemana = new Date(Date.UTC(fecha.anio, fecha.mes - 1, fecha.dia)).getUTCDay();
+        const hastaElLunes = (8 - diaDeLaSemana) % 7 || 7;
+        const hasta = Math.min(
+          medianocheEnLima(fecha.anio, fecha.mes, fecha.dia + hastaElLunes),
+          actual.hasta,
+        );
+        const etiqueta = `${dosCifras(fecha.dia)}/${dosCifras(fecha.mes)}`;
+        cubos.push({ desde, hasta, etiqueta, nombre: `Semana del ${etiqueta}` });
+        desde = hasta;
+      }
+      return { agrupacion: 'semana', cubos };
+    }
+    case 'anio':
+      return {
+        agrupacion: 'mes',
+        cubos: MESES.map((nombre, indice) => ({
+          desde: medianocheEnLima(inicio.anio, indice + 1, 1),
+          hasta: medianocheEnLima(inicio.anio, indice + 2, 1),
+          etiqueta: nombre.slice(0, 3),
+          nombre,
+        })),
+      };
+    case 'mes':
+    default:
+      // Todo el mes en curso, como antes del filtro: también los días que aún no llegan.
+      return {
+        agrupacion: 'dia',
+        cubos: Array.from({ length: diasDelMes(inicio.anio, inicio.mes) }, (_, dia) => delDia(dia)),
+      };
+  }
+}
+
+/** El tramo actual del periodo en palabras: «26 de noviembre de 2026», «Del 20 al 26 de noviembre de 2026»… */
+function descripcionDelTramo(periodo: Periodo, ahora: Date): string {
+  const { actual } = tramosDelPeriodo(periodo, ahora);
+  const desde = fechaEnLima(new Date(actual.desde));
+  const hasta = fechaEnLima(ahora);
+  if (periodo === 'mes') return `${nombreDelMes(hasta.mes)} de ${hasta.anio}`;
+  const completa = (fecha: FechaLima) => `${fecha.dia} de ${nombreDelMes(fecha.mes)} de ${fecha.anio}`;
+  if (periodo === 'hoy') return completa(hasta);
+  if (desde.anio !== hasta.anio) return `Del ${completa(desde)} al ${completa(hasta)}`;
+  if (desde.mes !== hasta.mes) return `Del ${desde.dia} de ${nombreDelMes(desde.mes)} al ${completa(hasta)}`;
+  return `Del ${desde.dia} al ${completa(hasta)}`;
+}
+
+/**
+ * Gráfico de pedidos y clientes web nuevos del periodo del filtro principal (auditoría del lote 45, PBI-0270): por hora
+ * con «Hoy»; por día con «Últimos 7 días», «Últimos 30 días» y «Mes actual» (todo el mes, igual que `serieDelMes`); por
+ * semana de lunes a domingo con «Trimestre actual», desde su primer día hasta hoy; y por mes con «Año actual», de enero
+ * a diciembre. Un cliente es nuevo en el punto de su primer pedido (`primerPedidoDeCadaCliente`); lo que cae fuera de
+ * los puntos no cuenta.
+ */
+export function serieDelPeriodo(
+  pedidos: readonly Pedido[],
+  ahora: Date,
+  periodo: Periodo = PERIODO_POR_OMISION,
+): SerieDelPeriodo {
+  const { agrupacion, cubos } = cubosDelPeriodo(periodo, ahora);
+  const contar = (instantes: readonly number[]) =>
+    cubos.map(
+      (cubo) => instantes.filter((instante) => instante >= cubo.desde && instante < cubo.hasta).length,
+    );
+  const pedidosPorCubo = contar(pedidos.map((pedido) => new Date(pedido.createdAt).getTime()));
+  const clientesPorCubo = contar([...primerPedidoDeCadaCliente(pedidos).values()]);
+  const puntos: PuntoDeSerie[] = cubos.map(({ etiqueta, nombre }, indice) => ({
+    etiqueta,
+    nombre,
+    pedidos: pedidosPorCubo[indice] ?? 0,
+    clientesNuevos: clientesPorCubo[indice] ?? 0,
+  }));
+  return { agrupacion, descripcion: descripcionDelTramo(periodo, ahora), puntos };
 }
 
 /** Los pedidos más recientes por `createdAt`, del más nuevo al más antiguo, sin depender del orden recibido. */

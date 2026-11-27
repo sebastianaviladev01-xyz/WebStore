@@ -10,9 +10,14 @@ import { sinGuardar } from '../lib/qa.mjs';
 
 const pagina = (ruta, rol, tema) => ({ ruta, rol, tema, antes: sinGuardar });
 
-export const escenarios = Object.fromEntries(
-  ['a', 'b', 'c'].flatMap((tema) => [
-    [`dashboard-superadmin-${tema}`, pagina('/', 'superadmin', tema)],
-    [`dashboard-vendedor-${tema}`, pagina('/', 'vendedor', tema)],
-  ]),
-);
+export const escenarios = {
+  ...Object.fromEntries(
+    ['a', 'b', 'c'].flatMap((tema) => [
+      [`dashboard-superadmin-${tema}`, pagina('/', 'superadmin', tema)],
+      [`dashboard-vendedor-${tema}`, pagina('/', 'vendedor', tema)],
+    ]),
+  ),
+  // Auditoría del lote 45: el gráfico sigue el periodo, por mes con «Año actual» y por hora con «Hoy». Solo «después».
+  'dashboard-anio-superadmin-b': pagina('/?periodo=anio', 'superadmin', 'b'),
+  'dashboard-hoy-superadmin-b': pagina('/?periodo=hoy', 'superadmin', 'b'),
+};
