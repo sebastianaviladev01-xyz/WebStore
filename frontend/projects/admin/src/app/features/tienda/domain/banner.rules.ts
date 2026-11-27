@@ -16,8 +16,8 @@ export function aHoraDeLima(instante: string): string {
   return Number.isFinite(ms) ? new Date(ms + DESFASE_DE_LIMA_MS).toISOString().slice(0, 16) : '';
 }
 
-/** `DD/MM/AAAA HH:mm` en hora de Lima. */
-const fechaYHoraVisible = (instante: string): string => {
+/** `DD/MM/AAAA HH:mm` en hora de Lima. También la usa la fecha de la cabecera de los registros (lote 44, PBI-0268). */
+export const fechaYHoraVisible = (instante: string): string => {
   const local = aHoraDeLima(instante);
   return local ? `${local.slice(8, 10)}/${local.slice(5, 7)}/${local.slice(0, 4)} ${local.slice(11)}` : '—';
 };

@@ -389,10 +389,10 @@ test.describe('PBI-0132: accesibilidad de formularios y listas', () => {
     );
 
     await page.goto('/usuarios/nuevo');
-    await page.getByRole('button', { name: 'Guardar usuario' }).click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(page.getByLabel('Contraseña temporal')).toHaveAccessibleDescription('Completa este campo.');
     await page.goto('/productos/nuevo');
-    await page.getByRole('button', { name: 'Guardar producto' }).click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(page.getByRole('combobox', { name: 'Categoría' })).toHaveAccessibleDescription(
       'Completa este campo.',
     );
@@ -423,7 +423,7 @@ test('PBI-0148: una categoría con la dirección de otra no se envía y se dice 
   await page.goto('/categorias/nueva');
   const nombre = page.getByRole('textbox', { name: 'Nombre' });
   await nombre.fill('tv Y Áudio');
-  await page.getByRole('button', { name: 'Guardar' }).click();
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(nombre).toHaveAccessibleDescription(
     'Ya hay una categoría con la dirección tv-y-audio: «TV y audio». Cambia el nombre.',
   );

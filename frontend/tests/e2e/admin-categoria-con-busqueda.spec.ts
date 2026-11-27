@@ -180,16 +180,14 @@ test.describe('Categoría con búsqueda en Productos (PBI-0238)', () => {
       const formulario = page.getByRole('form', { name: 'Nuevo producto' });
       const campo = categoria(formulario);
       await expect(campo).toHaveAttribute('aria-required', 'true');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(campo).toHaveAccessibleDescription('Completa este campo.');
 
       await formulario.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Nevera E2E29 registro');
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E29-REGISTRO');
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Dos puertas.');
       await cargarImagenPrincipal(formulario);
-      await formulario
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Dos puertas');
+      await formulario.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Dos puertas');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('2999');
 
       // Elegida con Enter; quitada, vuelve a ser obligatoria; elegida otra vez con el clic.
@@ -208,7 +206,7 @@ test.describe('Categoría con búsqueda en Productos (PBI-0238)', () => {
 
       await formulario.getByRole('combobox', { name: 'Marca' }).click();
       await page.getByRole('option', { name: 'Zenith', exact: true }).click();
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
       expect((await leerProductos()).find((p) => p.sku === 'E2E29-REGISTRO')).toMatchObject({
         categoryId: `${ID}-side`,

@@ -10,7 +10,7 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * - TEST-01 (AC-01, AC-04): con A, B y C, a 360, 375 y 390 px, la página no desplaza en horizontal ni al entrar
  *   ni editando, y ningún elemento de `main` acaba a la derecha de `clientWidth`.
  * - TEST-02 (AC-02, AC-04): el formulario «Nuevo producto» tiene todos sus campos, la galería, «Cargar foto» y
- *   «Guardar producto» dentro de su caja (lote 25: sin «URL de foto» ni «Agregar», la foto solo se carga como archivo); el grupo «Imagen principal», con «Cargar imagen» (lote 24,
+ *   «Guardar» dentro de su caja (lote 25: sin «URL de foto» ni «Agregar», la foto solo se carga como archivo); el grupo «Imagen principal», con «Cargar imagen» (lote 24,
  *   PBI-0214: ya no hay URL ni miniatura que escribir), dentro de su caja y por encima de la galería; al editar «OLED Vision 55” 4K» y añadir una foto, las miniaturas, sus botones y el aviso de foto
  *   repetida quedan dentro de la galería.
  * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea, en su propia celda
@@ -314,12 +314,13 @@ const CAMPOS: readonly (readonly [RolDeCampo, string])[] = [
   ['textbox', 'Nombre'],
   ['textbox', 'SKU'],
   ['textbox', 'Descripción'],
-  ['textbox', 'Características (una por línea)'],
+  ['textbox', 'Característica 1'],
   ['spinbutton', 'Precio'],
   // Sin «Stock» desde el lote 23 (ADR-0025, PBI-0226): se gestiona solo en Inventario.
   ['combobox', 'Categoría'],
   ['combobox', 'Marca'],
-  ['checkbox', 'Activo'],
+  // Lote 44 (PBI-0268): el estado, un selector en píldora de la fila de cabecera; las características, una tabla.
+  ['combobox', 'Estado'],
 ];
 
 /** TEST-02: el formulario «Nuevo producto» y sus piezas dentro de su caja. */
@@ -332,8 +333,14 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
   for (const [rol, nombre] of CAMPOS) {
     const control = formulario.getByRole(rol, { name: nombre, exact: true });
     const cajaDelCampo = await control.evaluate((nodo) => {
-      const campo = nodo.closest('mat-form-field') ?? nodo.closest('mat-checkbox');
-      if (!campo) throw new Error('El control no está en un mat-form-field ni en un mat-checkbox');
+      // Lote 44 (PBI-0268): el estado y las filas de las características son controles nativos; se mide el propio
+      // control.
+      const campo =
+        nodo.closest('mat-form-field') ??
+        nodo.closest('mat-checkbox') ??
+        (nodo.matches('select, table input') ? nodo : null);
+      if (!campo)
+        throw new Error('El control no está en un mat-form-field, un mat-checkbox, un select ni una tabla');
       const { left, top, right, bottom, width, height } = campo.getBoundingClientRect();
       return { left, top, right, bottom, width, height };
     });
@@ -351,7 +358,7 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
     ['texto «Cargar imagen»', formulario.getByText('Cargar imagen', { exact: true })],
     ['grupo «Galería de fotos»', galeria],
     ['texto «Cargar foto»', formulario.getByText('Cargar foto', { exact: true })],
-    ['botón «Guardar producto»', formulario.getByRole('button', { name: 'Guardar producto' })],
+    ['botón «Guardar»', formulario.getByRole('button', { name: 'Guardar', exact: true })],
   ];
   for (const [parte, pieza] of piezas) {
     const cajaDeLaPieza = await caja(pieza);

@@ -9,11 +9,10 @@ import {
   untracked,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
@@ -23,8 +22,12 @@ import { estadoDeLaEdicion } from '../domain/edicion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
 import { usuarioConElMismoCorreo } from '../domain/registro-unico.rules';
 import { conservarBorrador } from './borrador';
-import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { DatosRegistroComponent } from './datos-registro.component';
+import { EncabezadoRegistroComponent } from './encabezado-registro.component';
+import { PieRegistroComponent } from './pie-registro.component';
+import { SeccionRegistroComponent } from './seccion-registro.component';
 import { SinDatosComponent } from '../../../shared/ui/sin-datos.component';
+import { TextoAyudaComponent } from '../../../shared/ui/texto-ayuda.component';
 
 const EMPTY_USER = {
   name: '',
@@ -39,127 +42,128 @@ const EMPTY_USER = {
  * Tiene más de tres campos (nombre, correo, rol y contraseña temporal), así que tiene su propia página, como «Nuevo
  * producto». Es el formulario que antes estaba al costado de la lista, con los mismos campos, validaciones y permisos:
  * el rol de la sesión solo asigna los roles que gestiona (PBI-0013) y la contraseña temporal solo se pide al crear. Al
- * editar trae los datos actuales con `refresh()`; al guardar, al cancelar y con «Volver a usuarios» vuelve al listado
- * con sus filtros y su página (`queryParamsHandling: 'preserve'`).
+ * editar trae los datos actuales con `refresh()`; con «Guardar», «Cancelar» y «Regresar» vuelve al listado con sus
+ * filtros y su página (`queryParamsHandling: 'preserve'`). Desde el lote 44 (ADR-0033, PBI-0268) tiene la forma de los
+ * formularios del SGC: secciones «Datos de la persona» y «Acceso», el estado en la fila de cabecera y, al crear,
+ * «Guardar y continuar».
  */
 @Component({
   selector: 'ws-user-form-page',
   imports: [
-    IconoDirective,
+    DatosRegistroComponent,
+    EncabezadoRegistroComponent,
+    PieRegistroComponent,
+    SeccionRegistroComponent,
     SinDatosComponent,
-    TituloPaginaDirective,
+    TextoAyudaComponent,
     ReactiveFormsModule,
-    RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
-    MatCheckboxModule,
   ],
   template: `
-    <a
-      class="inline-flex items-center gap-2 text-sm font-semibold text-link"
-      routerLink="/usuarios"
-      queryParamsHandling="preserve"
-    >
-      <svg wsAdminIcono="volver"></svg>
-      Volver a usuarios
-    </a>
-    <h1
-      wsAdminTitulo
-      id="titulo-formulario-usuario"
-      class="mt-3 text-3xl font-semibold tracking-tight text-ink"
-    >
-      {{ editing() ? 'Editar' : 'Nuevo' }} usuario
-    </h1>
-    @if (loadingUser()) {
-      <p class="admin-card mt-7 max-w-2xl p-6 text-sm text-muted" role="status">Cargando…</p>
-    } @else if (missing()) {
-      <div class="admin-card mt-7 max-w-2xl p-6" role="alert">
-        <p class="font-semibold">Este usuario ya no existe</p>
-        <p class="mt-2 text-sm text-muted">
-          Otra persona lo eliminó. Vuelve al listado para ver los usuarios actuales.
-        </p>
-      </div>
-    } @else if (sinDatos()) {
-      <!-- PBI-0256: la consulta falló y el panel no tenía el usuario; no se sabe si existe. -->
-      <ws-admin-sin-datos registro="del usuario" (reintentar)="reintentar()" />
-    } @else {
-      @if (borrador.aviso(); as aviso) {
-        <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
-          {{ aviso }}
-        </p>
-      }
-      @if (staleNotice()) {
-        <p class="mt-7 max-w-2xl rounded-xl bg-warning-soft p-4 text-sm text-warning" role="alert">
-          {{ staleNotice() }}
-        </p>
-      }
-      <form
-        [formGroup]="form"
-        (ngSubmit)="save()"
-        class="admin-card mt-7 max-w-2xl p-6"
-        aria-labelledby="titulo-formulario-usuario"
-      >
-        <div class="grid gap-3">
-          <mat-form-field>
-            <mat-label>Nombre</mat-label>
-            <input matInput formControlName="name" />
-            <mat-error>{{ error(form.controls.name.errors) }}</mat-error>
-          </mat-form-field>
-          <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
-          <mat-form-field [subscriptSizing]="form.controls.email.hasError('repetido') ? 'dynamic' : 'fixed'">
-            <mat-label>Correo</mat-label>
-            <input matInput type="email" formControlName="email" />
-            <mat-error>{{ error(form.controls.email.errors) }}</mat-error>
-          </mat-form-field>
-          <mat-form-field>
-            <mat-label>Rol</mat-label>
-            <mat-select formControlName="role">
-              @for (role of rolesVisibles(); track role.id) {
-                <mat-option [value]="role.id">{{ role.label }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          @if (!editing()) {
-            <mat-form-field>
-              <mat-label>Contraseña temporal</mat-label>
-              <input
-                matInput
-                type="password"
-                autocomplete="new-password"
-                formControlName="temporaryPassword"
-              />
-              <mat-hint>Mínimo 10 caracteres, con letras y números.</mat-hint>
-              <mat-error>{{ errorClave(form.controls.temporaryPassword.errors) }}</mat-error>
-            </mat-form-field>
-          }
-          <mat-checkbox formControlName="active">Activo</mat-checkbox>
+    <!-- Lote 44 (ADR-0033, PBI-0268): la forma de los formularios del SGC, con el estado en la fila de cabecera. -->
+    <div class="admin-card grid max-w-4xl gap-6 p-5 sm:p-6">
+      <ws-admin-encabezado-registro
+        tituloId="titulo-formulario-usuario"
+        [titulo]="(editing() ? 'Editar' : 'Nuevo') + ' usuario'"
+        [descripcion]="
+          editing()
+            ? 'Cambia los datos de la persona, su rol o su estado.'
+            : 'Completa los datos de la persona, su rol y su contraseña temporal para entrar al backoffice.'
+        "
+        listado="/usuarios"
+      />
+      @if (loadingUser()) {
+        <p class="border-t border-line pt-5 text-sm text-muted" role="status">Cargando…</p>
+      } @else if (missing()) {
+        <div class="border-t border-line pt-5" role="alert">
+          <p class="font-semibold">Este usuario ya no existe</p>
+          <p class="mt-2 text-sm text-muted">
+            Otra persona lo eliminó. Vuelve al listado para ver los usuarios actuales.
+          </p>
         </div>
-        @if (saveError()) {
-          <p class="mt-3 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
-            {{ saveError() }}
+      } @else if (sinDatos()) {
+        <!-- PBI-0256: la consulta falló y el panel no tenía el usuario; no se sabe si existe. -->
+        <ws-admin-sin-datos registro="del usuario" (reintentar)="reintentar()" />
+      } @else {
+        @if (borrador.aviso(); as aviso) {
+          <p class="rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">
+            {{ aviso }}
           </p>
         }
-        <div class="mt-5 flex flex-wrap gap-3">
-          <button
-            class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
-            type="submit"
-            [disabled]="admin.saving()"
+        @if (staleNotice()) {
+          <p class="rounded-xl bg-warning-soft p-4 text-sm text-warning" role="alert">
+            {{ staleNotice() }}
+          </p>
+        }
+        <form
+          [formGroup]="form"
+          (ngSubmit)="save()"
+          class="grid gap-6"
+          aria-labelledby="titulo-formulario-usuario"
+        >
+          <ws-admin-datos-registro [estado]="form.controls.active" />
+          <ws-admin-seccion-registro titulo="Datos de la persona" icono="perfil">
+            <div class="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+              <mat-form-field>
+                <mat-label>Nombre</mat-label>
+                <input matInput formControlName="name" />
+                <mat-error>{{ error(form.controls.name.errors) }}</mat-error>
+              </mat-form-field>
+              <!-- Con el error, el espacio de abajo crece para que un mensaje largo no tape el campo siguiente. -->
+              <mat-form-field
+                [subscriptSizing]="form.controls.email.hasError('repetido') ? 'dynamic' : 'fixed'"
+              >
+                <mat-label>Correo</mat-label>
+                <input matInput type="email" formControlName="email" />
+                <mat-error>{{ error(form.controls.email.errors) }}</mat-error>
+              </mat-form-field>
+            </div>
+          </ws-admin-seccion-registro>
+          <ws-admin-seccion-registro titulo="Acceso" icono="contrasena">
+            <div class="grid gap-x-4 gap-y-3 sm:grid-cols-2">
+              <mat-form-field>
+                <mat-label>Rol</mat-label>
+                <mat-select formControlName="role">
+                  @for (role of rolesVisibles(); track role.id) {
+                    <mat-option [value]="role.id">{{ role.label }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              @if (!editing()) {
+                <mat-form-field subscriptSizing="dynamic">
+                  <mat-label>Contraseña temporal</mat-label>
+                  <input
+                    matInput
+                    type="password"
+                    autocomplete="new-password"
+                    formControlName="temporaryPassword"
+                  />
+                  <mat-hint>
+                    <ws-admin-texto-ayuda>Mínimo 10 caracteres, con letras y números.</ws-admin-texto-ayuda>
+                  </mat-hint>
+                  <mat-error>{{ errorClave(form.controls.temporaryPassword.errors) }}</mat-error>
+                </mat-form-field>
+              }
+            </div>
+          </ws-admin-seccion-registro>
+          <ws-admin-pie-registro
+            listado="/usuarios"
+            [creando]="!editing()"
+            [guardando]="admin.saving()"
+            [continuando]="continuando()"
+            (continuar)="save(true)"
           >
-            <svg wsAdminIcono="guardar"></svg>
-            {{ admin.saving() ? 'Guardando…' : 'Guardar usuario' }}
-          </button>
-          <a
-            class="inline-flex items-center gap-2 rounded-lg border border-line px-5 py-2.5 text-sm font-medium"
-            routerLink="/usuarios"
-            queryParamsHandling="preserve"
-          >
-            <svg wsAdminIcono="cancelar"></svg>
-            Cancelar
-          </a>
-        </div>
-      </form>
-    }
+            @if (saveError()) {
+              <p class="mb-4 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
+                {{ saveError() }}
+              </p>
+            }
+          </ws-admin-pie-registro>
+        </form>
+      }
+    </div>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -262,7 +266,13 @@ export class RegistroUsuarioPage {
     const id = this.editing();
     if (id) void this.edit(id);
   }
-  protected async save(): Promise<void> {
+  /** El guardado en curso lo pidió «Guardar y continuar» (lote 44, PBI-0268). */
+  protected readonly continuando = signal(false);
+  /**
+   * Guarda el usuario. «Guardar» vuelve al listado; «Guardar y continuar» (`continuar`, solo al crear) abre el registro
+   * creado en «Editar» para seguir completándolo, con los filtros del listado (lote 44, PBI-0268).
+   */
+  protected async save(continuar = false): Promise<void> {
     if (this.admin.saving()) return;
     // PBI-0132: la contraseña temporal es obligatoria al crear, y el campo lo dice.
     if (!this.editing() && !this.form.controls.temporaryPassword.value)
@@ -284,10 +294,14 @@ export class RegistroUsuarioPage {
       return;
     }
     this.saveError.set(null);
+    this.continuando.set(continuar);
     // La contraseña temporal solo viaja al crear el usuario.
     const saved = await this.admin.guardarUsuario(base, base ? usuario : { ...usuario, temporaryPassword });
+    this.continuando.set(false);
     if (saved) {
-      await this.router.navigate(['/usuarios'], { queryParamsHandling: 'preserve' });
+      await this.router.navigate(continuar ? ['/usuarios', usuario.id] : ['/usuarios'], {
+        queryParamsHandling: 'preserve',
+      });
       return;
     }
     this.saveError.set(this.admin.tomarError() ?? 'No pudimos guardar el usuario. Inténtalo de nuevo.');

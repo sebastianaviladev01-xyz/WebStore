@@ -113,13 +113,13 @@ test.describe('Borrados que llegan al BFF', () => {
       await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Vendedor del lote 08');
       await page.getByRole('textbox', { name: 'Correo', exact: true }).fill(correo);
       await page.getByLabel('Contraseña temporal').fill('Temporal1234');
-      await page.getByRole('button', { name: 'Guardar usuario' }).click();
+      await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(lista).toContainText('Vendedor del lote 08');
 
       await lista.getByRole('link', { name: 'Editar usuario Vendedor del lote 08' }).click();
       await expect(page).toHaveURL(/\/usuarios\/[^/]+$/);
       await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Vendedor renombrado 08');
-      await page.getByRole('button', { name: 'Guardar usuario' }).click();
+      await page.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(lista).toContainText('Vendedor renombrado 08');
       await expect(lista).not.toContainText('Vendedor del lote 08');
       expect((await leerSnapshot()).users.find((usuario) => usuario.email === correo)).toMatchObject({

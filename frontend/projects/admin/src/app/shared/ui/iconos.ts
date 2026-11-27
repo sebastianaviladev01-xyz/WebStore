@@ -48,6 +48,15 @@ export const ICONOS = {
   contrasena: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4M12 15v2',
   salir: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   deshacer: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  // Lote 44 (ADR-0033, PBI-0268): las ayudas, la fila de cabecera y las secciones de los registros.
+  info: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 11v5M12 8h.01',
+  calendario: 'M4 6h16v14H4zM8 3v5M16 3v5M4 10h16',
+  datos: 'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5',
+  precio:
+    'M12 3v18M16 7.5C16 5.6 14.2 4.5 12 4.5S8 5.6 8 7.5s1.8 2.6 4 3 4 1.4 4 3.4-1.8 3.1-4 3.1-4-1.2-4-3.1',
+  lista: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  enlace:
+    'M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

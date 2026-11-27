@@ -31,20 +31,22 @@ test('el administrador ve y gestiona solo a los vendedores, sin eliminarlos', as
     await page.getByRole('link', { name: 'Agregar usuario' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Nuevo usuario' })).toBeVisible();
     await page.getByRole('combobox', { name: 'Rol', exact: true }).click();
-    await expect(page.getByRole('option')).toHaveText(['Vendedor']);
+    // Lote 44 (PBI-0268): las opciones del rol, no las del estado de la fila de cabecera.
+    await expect(page.getByRole('listbox').getByRole('option')).toHaveText(['Vendedor']);
     await page.keyboard.press('Escape');
 
     await page.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Vendedora del lote 07');
     await page.getByRole('textbox', { name: 'Correo', exact: true }).fill(correo);
     await page.getByLabel('Contraseña temporal').fill('Temporal1234');
-    await page.getByRole('button', { name: 'Guardar usuario' }).click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(listaDeUsuarios(page)).toContainText('Vendedora del lote 07');
 
     // Desactivarla queda guardado en el BFF.
     await listaDeUsuarios(page).getByRole('link', { name: 'Editar usuario Vendedora del lote 07' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Editar usuario' })).toBeVisible();
-    await page.getByRole('checkbox', { name: 'Activo' }).uncheck();
-    await page.getByRole('button', { name: 'Guardar usuario' }).click();
+    // Lote 44 (PBI-0268): el estado es un selector en la fila de cabecera.
+    await page.getByRole('combobox', { name: 'Estado', exact: true }).selectOption('Inactivo');
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(listaDeUsuarios(page)).toContainText('Vendedor · inactivo');
     const creada = (await leerSnapshot()).users.find((user) => user.email === correo);
     expect(creada).toMatchObject({ role: 'vendedor', active: false });
@@ -67,7 +69,12 @@ test('el superadministrador ve los tres roles y puede eliminar usuarios', async 
   ).toBeVisible();
   await page.goto('/usuarios/nuevo');
   await page.getByRole('combobox', { name: 'Rol', exact: true }).click();
-  await expect(page.getByRole('option')).toHaveText(['Superadministrador', 'Administrador', 'Vendedor']);
+  // Lote 44 (PBI-0268): las opciones del rol, no las del estado de la fila de cabecera.
+  await expect(page.getByRole('listbox').getByRole('option')).toHaveText([
+    'Superadministrador',
+    'Administrador',
+    'Vendedor',
+  ]);
 });
 
 test('el BFF rechaza lo que el Admin oculta a cada rol', async () => {

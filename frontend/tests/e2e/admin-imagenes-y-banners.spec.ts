@@ -49,7 +49,7 @@ test.describe('PBI-0214: la imagen principal del producto se carga como archivo'
       await expect(grupo).toHaveAccessibleDescription(/una versión para la ficha y una miniatura/);
 
       // Sin imagen no se guarda, y se dice qué falta.
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(grupo.getByRole('alert')).toHaveText('Carga la imagen principal.');
 
       // Un archivo que no es una foto se rechaza sin tocar la imagen.
@@ -66,13 +66,11 @@ test.describe('PBI-0214: la imagen principal del producto se carga como archivo'
       await formulario.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Lavadora lote 24');
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill(SKU);
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Con foto cargada.');
-      await formulario
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Carga frontal');
+      await formulario.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Carga frontal');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('999');
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
 
       const guardado = (await leerProductos()).find((producto) => producto.sku === SKU);
