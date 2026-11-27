@@ -56,3 +56,15 @@ Sebastián Avila decidió el acceso a WhatsApp que Daniel había dejado para el 
 ### Lo que queda abierto
 
 Un asistente de chat propio o la API de WhatsApp Business, que dependen de un tercero. De la reunión del 2026-11-20 sigue abierto el reparto de modelos por etapa (PBI-0242).
+
+## Modelos, cronograma y lector de pantalla
+
+Sebastián Avila cerró los tres PBI que podía mover él (PBI-0242, PBI-0225 y PBI-0165):
+
+- **Modelos (PBI-0242, [ADR-0036](../adrs/0036-usar-opus-5-5-en-todo-y-fable-5-2-cuando-haga-falta.md)):** «pa todo es opus 5.5, a menos de que necesites usar fable». El catálogo 1.2.0 da Opus 5.5 a los tres niveles de Claude Code. Fable 5.2 queda como escalado, con esfuerzo alto como máximo, solo cuando Opus 5.5 con esfuerzo alto no basta y con el motivo registrado. `check-agents` valida el escalado.
+- **Cronograma (PBI-0225):** «cronograma para fin de mes». La fecha objetivo de lo que está en `dev` es el 2026-11-30. Lo que depende de terceros, del cliente o de Daniel queda fuera.
+- **Lector de pantalla (PBI-0165):** Sebastián Avila hizo la prueba y no reportó hallazgos. La lista de comprobación sigue en el entorno local para la próxima entrega.
+
+### Verificación
+
+- `node tools/check-agents.mjs` en verde con el catálogo 1.2.0. Con un modelo de escalado desconocido, falla con dos errores, como se esperaba.
