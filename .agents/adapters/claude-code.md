@@ -35,7 +35,8 @@ Resuelve el nivel y el esfuerzo de la tarea en el [catálogo](../execution-catal
 - Delega con la herramienta `Agent`: `model` con el alias de `agentAliases` y `effort` con el valor del catálogo.
 - [Revisión ciega](../../docs/development/agent-execution.md#revisión-ciega): un `Agent` nuevo, no una bifurcación de la sesión, con el modelo y el esfuerzo de `roles`. Recibe solo los artefactos que revisa y la pregunta o la lista de comprobación.
 - No uses los modelos de `excludedModels`.
-- El tope es el modelo del nivel avanzado con esfuerzo `alto` (hoy, Opus 5.5 con `high`). No fijes `xhigh` ni `max` ni uses un modelo por encima, ni en la sesión ni al delegar, aunque Claude Code los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)). Si la sesión está en un modelo o un esfuerzo superior sin que una persona lo haya pedido para ella, pide el cambio.
+- Todos los niveles usan Opus 5.5 ([ADR-0036](../../docs/adrs/0036-usar-opus-5-5-en-todo-y-fable-5-2-cuando-haga-falta.md)). El esfuerzo máximo es `high`: no fijes `xhigh` ni `max`, ni en la sesión ni al delegar, aunque Claude Code los ofrezca ([reglas de escalado](../../docs/development/agent-execution.md#reglas-de-escalado)).
+- **Fable 5.2** (`escalation` del catálogo, alias `fable`, con `high` como máximo) se usa solo cuando Opus 5.5 con `high` no basta: falló dos veces en la tarea, o no llega a un resultado sólido en diseño o diagnóstico. Di el motivo en el informe y en el PR. Ningún otro modelo por encima de Opus 5.5. Si la sesión está en otro modelo o en un esfuerzo superior sin ese motivo y sin que una persona lo haya pedido, pide el cambio.
 
 ## Commits y pull requests
 

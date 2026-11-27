@@ -1,7 +1,7 @@
 {
-  "$comment": "Catálogo de niveles de ejecución de WebStore (ADR-0008). Es la única fuente de los modelos concretos: las tareas indican nivel y esfuerzo, y cada herramienta los resuelve aquí. Uso de cada nivel: docs/development/agent-execution.md, apartado «Delegar por nivel y esfuerzo». Parte del catálogo 1.0.0 de IdShield, sin cambios de modelos. Desde la versión 1.1.0 el tope es el nivel avanzado con esfuerzo «alto» (en Claude Code, Opus 5.5 con high): se quitaron «muy alto» y «máximo», y no se usa un modelo por encima del nivel avanzado, para contener el consumo de tokens (Daniel Avila, 2026-11-13; reglas de escalado de la guía).",
-  "catalogVersion": "1.1.0",
-  "updated": "2026-11-14",
+  "$comment": "Catálogo de niveles de ejecución de WebStore (ADR-0008). Es la única fuente de los modelos concretos: las tareas indican nivel y esfuerzo, y cada herramienta los resuelve aquí. Uso de cada nivel: docs/development/agent-execution.md, apartado «Delegar por nivel y esfuerzo». Parte del catálogo 1.0.0 de IdShield, sin cambios de modelos. Desde la versión 1.1.0 el tope es el nivel avanzado con esfuerzo «alto» (en Claude Code, Opus 5.5 con high): se quitaron «muy alto» y «máximo», y no se usa un modelo por encima del nivel avanzado, para contener el consumo de tokens (Daniel Avila, 2026-11-13; reglas de escalado de la guía). Desde la versión 1.2.0 (ADR-0036, Sebastián Avila, 2026-11-27) Claude Code usa Opus 5.5 en todos los niveles y sube a Fable 5.2 (`escalation`), con esfuerzo alto como máximo, solo cuando Opus 5.5 con esfuerzo alto no basta, y se registra el motivo.",
+  "catalogVersion": "1.2.0",
+  "updated": "2026-11-27",
   "decision": "docs/adrs/0008-trabajar-con-claude-code-o-codex-mediante-adaptadores.md",
   "efforts": ["bajo", "medio", "alto"],
   "levels": {
@@ -40,6 +40,12 @@
       "name": "Opus 5.5",
       "provider": "anthropic",
       "modelId": "claude-opus-5-5",
+      "status": "validated"
+    },
+    "claude-fable-5-2": {
+      "name": "Fable 5.2",
+      "provider": "anthropic",
+      "modelId": "claude-fable-5-2",
       "status": "validated"
     },
     "gpt-6-luna": {
@@ -88,17 +94,23 @@
         "alto": "high"
       },
       "levels": {
-        "ligero": { "model": "claude-haiku-5-5", "fallbacks": [] },
-        "estándar": { "model": "claude-sonnet-5-5", "fallbacks": [] },
+        "ligero": { "model": "claude-opus-5-5", "fallbacks": [] },
+        "estándar": { "model": "claude-opus-5-5", "fallbacks": [] },
         "avanzado": { "model": "claude-opus-5-5", "fallbacks": [] }
       },
       "roles": {
         "revisión ciega": { "model": "claude-opus-5-5", "effort": "medio", "fallbacks": [] }
       },
+      "escalation": {
+        "model": "claude-fable-5-2",
+        "effort": "alto",
+        "when": "Opus 5.5 con esfuerzo alto no basta: falló dos veces en la tarea, o no llega a un resultado sólido en diseño o diagnóstico. El motivo se registra en el informe y en el PR"
+      },
       "agentAliases": {
         "claude-haiku-5-5": "haiku",
         "claude-sonnet-5-5": "sonnet",
-        "claude-opus-5-5": "opus"
+        "claude-opus-5-5": "opus",
+        "claude-fable-5-2": "fable"
       }
     },
     "codex": {
