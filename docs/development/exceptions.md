@@ -14,7 +14,9 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-Ninguna.
+| Excepción | Ámbito | Vigencia |
+|---|---|---|
+| [ADR-0033](../adrs/0033-construir-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-24.md): construir por lotes lo que salió de la reunión del 2026-11-24, sin las etapas SDD por elemento | PBI-0265 a PBI-0271 y los hallazgos de sus lotes, en el backoffice, el BFF y el storefront | Hasta fusionar el PR del lote 48 o hasta que Sebastián Avila la retire. Responsable: Sebastián Avila |
 
 ## Excepciones cerradas
 

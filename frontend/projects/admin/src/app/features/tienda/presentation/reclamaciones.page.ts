@@ -1,4 +1,4 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe, formatDate } from '@angular/common';
 import {
   afterNextRender,
   ChangeDetectionStrategy,
@@ -24,103 +24,124 @@ import {
   leerFiltrosReclamos,
   parametrosDeFiltrosReclamos,
 } from '../domain/filtro-listado.rules';
+import { TablaExportable } from '../domain/exportacion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
+import { contarPorClave, numeroDeFila, textoDeCantidad, textoDelTotal } from '../domain/listado.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { conservarBorrador } from './borrador';
 import { filtrosDeListado } from './filtros-de-listado';
-import { PaginacionComponent } from './paginacion.component';
+import { clasesDeInsignia, FichaDeResumen, Tono } from './insignia';
+import { ListadoComponent } from './listado.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
-import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
+import { NombreIcono } from '../../../shared/ui/iconos';
+
+/**
+ * Cada estado de una reclamación: el tono de su insignia y su ficha del pie (lote 43, PBI-0265). Recibido, del
+ * principal; en revisión, naranja; resuelto, verde.
+ */
+const ESTADOS_RECLAMO: Readonly<
+  Record<Reclamo['status'], { tono: Tono; icono: NombreIcono; singular: string; plural: string }>
+> = {
+  received: { tono: 'principal', icono: 'reclamaciones', singular: 'recibida', plural: 'recibidas' },
+  'in-review': { tono: 'alerta', icono: 'ver', singular: 'en revisión', plural: 'en revisión' },
+  resolved: { tono: 'exito', icono: 'activar', singular: 'resuelta', plural: 'resueltas' },
+};
 
 @Component({
   selector: 'ws-complaints-admin-page',
   imports: [
     IconoDirective,
-    TituloPaginaDirective,
     CurrencyPipe,
     DatePipe,
     ReactiveFormsModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    ListadoComponent,
     PanelFiltrosComponent,
-    PaginacionComponent,
   ],
   template: `
-    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Reclamaciones</h1>
-    <p class="mt-3 max-w-3xl text-sm leading-6 text-muted">
-      Consulta la información registrada por el consumidor, actualiza el estado y documenta la respuesta del
-      proveedor.
-    </p>
-    <ws-filter-panel
-      class="mt-7"
-      etiqueta="Filtros de reclamaciones"
-      [formGroup]="filtros.borrador"
-      [buscando]="filtros.buscando()"
-      [error]="filtros.error()"
-      (buscar)="filtros.buscar()"
-      (limpiar)="filtros.limpiar()"
-    >
-      <mat-form-field>
-        <mat-label>Buscar reclamación</mat-label>
-        <input matInput formControlName="texto" />
-        <mat-hint>Código, asunto, nombre o correo</mat-hint>
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Filtrar por estado</mat-label>
-        <mat-select formControlName="estado">
-          <mat-option value="">Todos</mat-option>
-          @for (status of statuses; track status) {
-            <mat-option [value]="status">{{ statusLabels[status] }}</mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </ws-filter-panel>
     @if (borrador.aviso(); as aviso) {
-      <p class="mt-6 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">{{ aviso }}</p>
+      <p class="mb-6 rounded-xl bg-warning-soft p-4 text-sm text-warning" role="status">{{ aviso }}</p>
     }
-    <div class="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-      <section class="admin-card overflow-hidden" aria-label="Lista de reclamaciones">
-        <!--
+    <!--
+      Lote 43 (ADR-0033, PBI-0265): la lista, en un solo panel como la lista de proveedores del SGC; el detalle sigue a
+      su lado desde 1280 px y debajo por debajo de ese ancho.
+    -->
+    <div class="grid grid-cols-[minmax(0,1fr)] items-start gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
+      <ws-admin-listado
+        titulo="Reclamaciones"
+        descripcion="Consulta la información registrada por el consumidor, actualiza el estado y documenta la respuesta del proveedor."
+        que="reclamaciones"
+        [exportacion]="exportacion"
+        [pagina]="pagina()"
+        [tamano]="filtros.tamano()"
+        [fichas]="fichas()"
+        (cambiarPagina)="filtros.irAPagina($event)"
+        (cambiarTamano)="filtros.cambiarTamano($event)"
+      >
+        <ws-filter-panel
+          etiqueta="Filtros de reclamaciones"
+          [formGroup]="filtros.borrador"
+          [buscando]="filtros.buscando()"
+          [error]="filtros.error()"
+          (buscar)="filtros.buscar()"
+          (limpiar)="filtros.limpiar()"
+        >
+          <mat-form-field>
+            <mat-label>Buscar reclamación</mat-label>
+            <input matInput formControlName="texto" />
+            <mat-hint>Código, asunto, nombre o correo</mat-hint>
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Filtrar por estado</mat-label>
+            <mat-select formControlName="estado">
+              <mat-option value="">Todos</mat-option>
+              @for (status of statuses; track status) {
+                <mat-option [value]="status">{{ statusLabels[status] }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </ws-filter-panel>
+        <section class="border-t border-line" aria-label="Lista de reclamaciones">
+          <!--
           Lote 25 (ADR-0025): la reclamación abierta en el detalle se marca en la lista, con aria-current para un lector
           de pantalla y, a la vista, con el fondo de la fila y una barra del color de los enlaces a la izquierda.
         -->
-        @for (item of pagina().items; track item.id) {
-          <button
-            data-sin-icono="fila"
-            type="button"
-            class="grid w-full gap-2 border-b border-line p-5 text-left hover:bg-subtle sm:grid-cols-[150px_1fr_auto]"
-            [class.ws-fila-actual]="selected()?.id === item.id"
-            [attr.aria-current]="selected()?.id === item.id ? 'true' : null"
-            (click)="select(item)"
-          >
-            <span>
-              <strong class="block">{{ item.id }}</strong>
-              <small class="text-muted">{{ item.createdAt | date: 'short' : zonaLima }}</small>
-            </span>
-            <span>
-              <strong class="block">{{ item.subject }}</strong>
-              <small class="text-muted">{{ item.name }} · {{ item.email }}</small>
-            </span>
-            <span class="rounded-full bg-soft px-3 py-1 text-xs font-semibold">
-              {{ statusLabels[item.status] }}
-            </span>
-          </button>
-        } @empty {
-          <div class="p-8 text-center text-muted">
-            {{
-              admin.complaints().length
-                ? 'Ninguna reclamación cumple los filtros.'
-                : 'Todavía no se registraron solicitudes.'
-            }}
-          </div>
-        }
-        <ws-pagination
-          [pagina]="pagina()"
-          etiqueta="Páginas de reclamaciones"
-          (cambiar)="filtros.irAPagina($event)"
-        />
-      </section>
+          @for (item of pagina().items; track item.id; let i = $index) {
+            <button
+              data-sin-icono="fila"
+              type="button"
+              class="grid w-full grid-cols-[2rem_minmax(0,1fr)] gap-x-4 gap-y-2 border-b border-line px-5 py-4 text-left last:border-b-0 hover:bg-subtle sm:grid-cols-[2.5rem_150px_minmax(0,1fr)_auto] sm:items-center"
+              [class.ws-fila-actual]="selected()?.id === item.id"
+              [attr.aria-current]="selected()?.id === item.id ? 'true' : null"
+              (click)="select(item)"
+            >
+              <span class="text-sm tabular-nums text-muted max-sm:row-span-3 max-sm:self-start">
+                {{ numero(i) }}
+              </span>
+              <span>
+                <strong class="block">{{ item.id }}</strong>
+                <small class="text-muted">{{ item.createdAt | date: 'short' : zonaLima }}</small>
+              </span>
+              <span>
+                <strong class="block">{{ item.subject }}</strong>
+                <small class="text-muted">{{ item.name }} · {{ item.email }}</small>
+              </span>
+              <span [class]="insignia(estados[item.status].tono)">{{ statusLabels[item.status] }}</span>
+            </button>
+          } @empty {
+            <div class="p-8 text-center text-muted">
+              {{
+                admin.complaints().length
+                  ? 'Ninguna reclamación cumple los filtros.'
+                  : 'Todavía no se registraron solicitudes.'
+              }}
+            </div>
+          }
+        </section>
+      </ws-admin-listado>
       @if (selected(); as item) {
         <aside class="admin-card h-fit scroll-mt-6 p-6" aria-labelledby="titulo-detalle-reclamacion">
           <!-- Lote 25: por debajo de 1280 px, el detalle va debajo de la lista; al abrirlo, la vista y el foco van aquí. -->
@@ -207,9 +228,43 @@ export class ReclamacionesPage {
     vacios: FILTROS_RECLAMOS_VACIOS,
     que: 'las reclamaciones',
   });
-  protected readonly pagina = computed(() =>
-    this.filtros.paginar(filtrarReclamos(this.admin.complaints(), this.filtros.aplicados())),
+  protected readonly resultados = computed(() =>
+    filtrarReclamos(this.admin.complaints(), this.filtros.aplicados()),
   );
+  protected readonly pagina = computed(() => this.filtros.paginar(this.resultados()));
+  protected readonly insignia = clasesDeInsignia;
+  protected readonly estados = ESTADOS_RECLAMO;
+  /** El total y cuántas hay en cada estado (lote 43, PBI-0265). */
+  protected readonly fichas = computed((): FichaDeResumen[] => {
+    const resultados = this.resultados();
+    return [
+      { texto: textoDelTotal(resultados.length), tono: 'principal', icono: 'lista' },
+      ...contarPorClave(resultados, (item) => item.status, this.statuses).map(({ clave, cantidad }) => {
+        const estado = ESTADOS_RECLAMO[clave];
+        return {
+          texto: textoDeCantidad(cantidad, estado.singular, estado.plural),
+          tono: estado.tono,
+          icono: estado.icono,
+        };
+      }),
+    ];
+  });
+  protected readonly exportacion = (): TablaExportable => ({
+    titulo: 'Reclamaciones',
+    columnas: ['N°', 'Código', 'Fecha', 'Asunto', 'Consumidor', 'Correo', 'Estado'],
+    filas: this.resultados().map((item, i) => [
+      i + 1,
+      item.id,
+      formatDate(item.createdAt, 'dd/MM/yyyy HH:mm', 'es-PE', ZONA_HORARIA_LIMA),
+      item.subject,
+      item.name,
+      item.email,
+      this.statusLabels[item.status],
+    ]),
+  });
+  protected numero(indice: number): number {
+    return numeroDeFila(this.pagina(), indice);
+  }
   /** PBI-0151: la respuesta escrita vuelve si la sesión venció a mitad de la edición y se ingresa otra vez. */
   protected readonly borrador = conservarBorrador({
     form: this.form,

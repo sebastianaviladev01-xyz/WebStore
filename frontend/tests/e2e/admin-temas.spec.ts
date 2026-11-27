@@ -1,5 +1,6 @@
 import { expect, request as nuevoRequest, test, type Locator, type Page } from '@playwright/test';
 
+import { aceptarEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { activarTema, colorDelToken } from './apoyo/contraste';
 import { cuentasAdmin, desplegarGrupo, desplegarTodos, ingresarAlAdmin, urls } from './apoyo/entorno';
 
@@ -472,8 +473,9 @@ test.describe('Temas del Admin', () => {
     await abrirTemas(page);
     await expect(fila(propios(page), nombre)).toHaveCount(1);
 
-    page.once('dialog', (aviso) => void aviso.accept());
+    // Lote 43 (PBI-0269): la ventana propia de confirmación, con el nombre del tema.
     await page.getByRole('button', { name: `Borrar ${nombre}` }).click();
+    await aceptarEliminacion(page, nombre);
     await expect(page.getByRole('status').filter({ hasText: `Tema «${nombre}» borrado.` })).toBeVisible();
     await expect(fila(propios(page), nombre)).toHaveCount(0);
   });
@@ -498,6 +500,7 @@ test.describe('Temas del Admin', () => {
     ).toBeVisible();
     await expect(fila(propios(page), nombre)).toHaveCount(1);
     expect(confirmaciones).toBe(0);
+    await expect(ventanaDeConfirmacion(page)).toHaveCount(0);
   });
 
   test('activar «Grafito y ámbar» aplica el tema al Admin sin recargar', async ({ page }) => {

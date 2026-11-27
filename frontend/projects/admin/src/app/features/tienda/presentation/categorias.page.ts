@@ -13,9 +13,11 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 
@@ -25,20 +27,25 @@ import {
   FilaDeCategoria,
   filasVisibles,
   moverEnArbol,
+  NodoCategoria,
 } from '../domain/arbol-categorias.rules';
-import { aplanarArbolCategorias } from '../domain/categoria.rules';
+import { aplanarArbolCategorias, opcionesDeCategoria } from '../domain/categoria.rules';
 import { motivoParaNoEliminarCategoria } from '../domain/eliminacion.rules';
+import { TablaExportable } from '../domain/exportacion.rules';
 import { FILTROS_CATEGORIAS_VACIOS, SIN_PADRE } from '../domain/filtro-catalogo.model';
 import {
   leerFiltrosCategorias,
-  leerPagina,
   ParametrosUrl,
   parametrosDeFiltrosCategorias,
 } from '../domain/filtro-catalogo.rules';
-import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
-import { PaginacionComponent } from './paginacion.component';
+import { textoDeCantidad, textoDelTotal } from '../domain/listado.rules';
+import { CLASES_ACCION, CLASES_ACCION_ELIMINAR, FichaDeResumen } from './insignia';
+import { ListadoComponent } from './listado.component';
+import { paginacionDeLaUrl } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
-import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 /**
  * Categorías abiertas del árbol (lote 22, PBI-0220) mientras dura la sesión del panel: al volver de editar una
@@ -61,148 +68,165 @@ export class EstadoArbolCategorias {
  * de primer nivel, cada una con sus ramas. Teclado: ↑ ↓ Inicio y Fin recorren las filas, → abre o baja a la primera
  * hija, ← cierra o sube a la que la contiene, `*` abre las hermanas, Intro o Espacio abre o cierra, y Tab lleva a
  * «Editar» y «Eliminar» de la fila con el foco.
+ *
+ * Lote 43 (ADR-0033, PBI-0265): en un solo panel, como la lista de proveedores del SGC, con las acciones de solo ícono,
+ * «Exportar» (todas las categorías que cumplen los filtros, con su ruta) y el pie con el total, las de primer nivel y la
+ * paginación de 10, 25 o 50. La lista sigue siendo un árbol (PBI-0220): la numeración «N°» va en las de primer nivel,
+ * que son las que cuenta la paginación.
  */
 @Component({
   selector: 'ws-categories-page',
   imports: [
     IconoDirective,
-    TituloPaginaDirective,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
+    ListadoComponent,
     PanelFiltrosComponent,
-    PaginacionComponent,
   ],
   template: `
-    <div class="flex flex-wrap items-end justify-between gap-4">
-      <div>
-        <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Categorías</h1>
-        <p class="mt-3 text-sm text-muted">
-          Estructura por nombres y subcategorías; el orden puede ser explícito o alfabético.
-        </p>
-      </div>
-    </div>
-    <ws-filter-panel
-      class="mt-7"
-      etiqueta="Filtros de categorías"
-      agregarQue="categoría"
-      rutaAgregar="/categorias/nueva"
-      [formGroup]="borrador"
-      [buscando]="buscando()"
-      [error]="errorBusqueda()"
-      (buscar)="buscar()"
-      (limpiar)="limpiar()"
+    <ws-admin-listado
+      titulo="Categorías"
+      descripcion="Estructura por nombres y subcategorías; el orden puede ser explícito o alfabético."
+      que="categorías"
+      [exportacion]="exportacion"
+      [pagina]="pagina()"
+      [tamano]="paginacion.tamano()"
+      [fichas]="fichas()"
+      (cambiarPagina)="paginacion.irAPagina($event)"
+      (cambiarTamano)="paginacion.cambiarTamano($event)"
     >
-      <mat-form-field>
-        <mat-label>Nombre</mat-label>
-        <input matInput formControlName="nombre" />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Categoría padre</mat-label>
-        <mat-select formControlName="padreId">
-          <mat-option value="">Todas</mat-option>
-          <mat-option [value]="sinPadre">Sin padre</mat-option>
-          @for (entry of tree(); track entry.category.id) {
-            <mat-option [value]="entry.category.id">
-              {{ indent(entry.depth) }}{{ entry.category.name }}
-            </mat-option>
-          }
-        </mat-select>
-      </mat-form-field>
-    </ws-filter-panel>
-    @if (avisoEliminar()) {
-      <p class="mt-6 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
-        {{ avisoEliminar() }}
-      </p>
-    }
-    <section class="admin-card mt-6 p-4" aria-label="Lista de categorías">
-      @if (filas().length) {
-        <ul role="tree" aria-label="Árbol de categorías">
-          @for (fila of filas(); track fila.category.id) {
-            <li
-              role="treeitem"
-              class="flex cursor-pointer items-center justify-between border-b border-line p-3"
-              [id]="'nodo-' + fila.category.id"
-              [style.padding-left.px]="12 + (fila.nivel - 1) * 24"
-              [attr.aria-level]="fila.nivel"
-              [attr.aria-setsize]="fila.total"
-              [attr.aria-posinset]="fila.posicion"
-              [attr.aria-expanded]="fila.tieneHijas ? fila.abierta : null"
-              [attr.aria-labelledby]="'nombre-' + fila.category.id"
-              [attr.aria-describedby]="'detalle-' + fila.category.id"
-              [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
-              [attr.aria-selected]="enfocable() === fila.category.id"
-              (focus)="foco.set(fila.category.id)"
-              (keydown)="tecla($event, fila)"
-              (click)="pulsar($event, fila)"
-            >
-              <div class="flex min-w-0 items-center gap-3">
-                <!-- Con el puntero, toda la fila abre o cierra; sin hijas, la flecha solo ocupa su lugar. -->
-                <span class="grid h-6 w-6 shrink-0 place-items-center text-muted" aria-hidden="true">
-                  @if (fila.tieneHijas) {
-                    <svg
-                      viewBox="0 0 24 24"
-                      class="h-4 w-4 fill-none stroke-current transition-transform motion-reduce:transition-none"
-                      [class.rotate-90]="fila.abierta"
-                      stroke-width="2.25"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    >
-                      <path d="m9 6 6 6-6 6" />
-                    </svg>
-                  }
-                </span>
-                <!-- Lote 11 (PBI-0162): la miniatura de la imagen de la categoría, si tiene; sin ella, la fila como antes. -->
-                @if (fila.category.imageUrl) {
-                  <img
-                    class="h-10 w-10 shrink-0 rounded-lg border border-line bg-subtle object-contain"
-                    [src]="fila.category.imageUrl"
-                    alt=""
-                  />
-                }
-                <div class="min-w-0">
-                  <strong [id]="'nombre-' + fila.category.id">{{ fila.category.name }}</strong>
-                  <p class="text-xs text-muted" [id]="'detalle-' + fila.category.id">
-                    Orden: {{ fila.category.order ?? 'alfabético' }}{{ subcategorias(fila) }}
-                  </p>
-                </div>
-              </div>
-              <div class="flex gap-3 text-sm font-semibold">
-                <!-- inline-flex items-center: como enlace, centra el texto en la altura de «Eliminar» igual que el botón de antes. -->
-                <a
-                  class="inline-flex items-center gap-2 text-link"
-                  [routerLink]="['/categorias', fila.category.id]"
-                  queryParamsHandling="preserve"
-                  [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
-                  [attr.aria-label]="'Editar categoría ' + fila.category.name"
-                >
-                  <svg wsAdminIcono="editar"></svg>
-                  Editar
-                </a>
-                <button
-                  class="inline-flex items-center gap-2 text-danger"
-                  [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
-                  [attr.aria-label]="'Eliminar categoría ' + fila.category.name"
-                  (click)="remove(fila.category.id)"
-                >
-                  <svg wsAdminIcono="eliminar"></svg>
-                  Eliminar
-                </button>
-              </div>
-            </li>
-          }
-        </ul>
-      } @else {
-        <p class="p-10 text-center text-sm text-muted">
-          {{
-            admin.categories().length ? 'Ninguna categoría cumple los filtros.' : 'Todavía no hay categorías.'
-          }}
+      <ws-filter-panel
+        etiqueta="Filtros de categorías"
+        agregarQue="categoría"
+        rutaAgregar="/categorias/nueva"
+        [formGroup]="borrador"
+        [buscando]="buscando()"
+        [error]="errorBusqueda()"
+        (buscar)="buscar()"
+        (limpiar)="limpiar()"
+      >
+        <mat-form-field>
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" placeholder="Buscar por nombre…" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Categoría padre</mat-label>
+          <mat-select formControlName="padreId">
+            <mat-option value="">Todas</mat-option>
+            <mat-option [value]="sinPadre">Sin padre</mat-option>
+            @for (entry of tree(); track entry.category.id) {
+              <mat-option [value]="entry.category.id">
+                {{ indent(entry.depth) }}{{ entry.category.name }}
+              </mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </ws-filter-panel>
+      @if (avisoEliminar()) {
+        <p
+          class="mx-5 mb-5 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger sm:mx-6"
+          role="alert"
+        >
+          {{ avisoEliminar() }}
         </p>
       }
-      <ws-pagination [pagina]="pagina()" etiqueta="Páginas de categorías" (cambiar)="irAPagina($event)" />
-    </section>
+      <section class="border-t border-line px-2 py-2 sm:px-3" aria-label="Lista de categorías">
+        @if (filas().length) {
+          <ul role="tree" aria-label="Árbol de categorías">
+            @for (fila of filas(); track fila.category.id) {
+              <li
+                role="treeitem"
+                class="flex cursor-pointer items-center justify-between border-b border-line p-3"
+                [id]="'nodo-' + fila.category.id"
+                [style.padding-left.px]="12 + (fila.nivel - 1) * 24"
+                [attr.aria-level]="fila.nivel"
+                [attr.aria-setsize]="fila.total"
+                [attr.aria-posinset]="fila.posicion"
+                [attr.aria-expanded]="fila.tieneHijas ? fila.abierta : null"
+                [attr.aria-labelledby]="'nombre-' + fila.category.id"
+                [attr.aria-describedby]="'detalle-' + fila.category.id"
+                [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
+                [attr.aria-selected]="enfocable() === fila.category.id"
+                (focus)="foco.set(fila.category.id)"
+                (keydown)="tecla($event, fila)"
+                (click)="pulsar($event, fila)"
+              >
+                <div class="flex min-w-0 items-center gap-3">
+                  <!-- Lote 43 (PBI-0265): «N°» de las de primer nivel, que son las que cuenta la paginación. -->
+                  <span class="w-6 shrink-0 text-right text-sm tabular-nums text-muted" aria-hidden="true">
+                    {{ fila.nivel === 1 ? numeroDeRaiz(fila.category.id) : '' }}
+                  </span>
+                  <!-- Con el puntero, toda la fila abre o cierra; sin hijas, la flecha solo ocupa su lugar. -->
+                  <span class="grid h-6 w-6 shrink-0 place-items-center text-muted" aria-hidden="true">
+                    @if (fila.tieneHijas) {
+                      <svg
+                        viewBox="0 0 24 24"
+                        class="h-4 w-4 fill-none stroke-current transition-transform motion-reduce:transition-none"
+                        [class.rotate-90]="fila.abierta"
+                        stroke-width="2.25"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path d="m9 6 6 6-6 6" />
+                      </svg>
+                    }
+                  </span>
+                  <!-- Lote 11 (PBI-0162): la miniatura de la imagen de la categoría, si tiene; sin ella, la fila como antes. -->
+                  @if (fila.category.imageUrl) {
+                    <img
+                      class="h-10 w-10 shrink-0 rounded-lg border border-line bg-subtle object-contain"
+                      [src]="fila.category.imageUrl"
+                      alt=""
+                    />
+                  }
+                  <div class="min-w-0">
+                    <strong [id]="'nombre-' + fila.category.id">{{ fila.category.name }}</strong>
+                    <p class="text-xs text-muted" [id]="'detalle-' + fila.category.id">
+                      Orden: {{ fila.category.order ?? 'alfabético' }}{{ subcategorias(fila) }}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  <a
+                    [class]="accion"
+                    [routerLink]="['/categorias', fila.category.id]"
+                    queryParamsHandling="preserve"
+                    [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
+                    [attr.aria-label]="'Editar categoría ' + fila.category.name"
+                    matTooltip="Editar"
+                  >
+                    <svg wsAdminIcono="editar"></svg>
+                  </a>
+                  <button
+                    type="button"
+                    [class]="accionEliminar"
+                    [attr.tabindex]="enfocable() === fila.category.id ? 0 : -1"
+                    [attr.aria-label]="'Eliminar categoría ' + fila.category.name"
+                    matTooltip="Eliminar"
+                    data-eliminar
+                    (click)="remove(fila.category.id, $event)"
+                  >
+                    <svg wsAdminIcono="eliminar"></svg>
+                  </button>
+                </div>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="p-10 text-center text-sm text-muted">
+            {{
+              admin.categories().length
+                ? 'Ninguna categoría cumple los filtros.'
+                : 'Todavía no hay categorías.'
+            }}
+          </p>
+        }
+      </section>
+    </ws-admin-listado>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -210,6 +234,9 @@ export class CategoriasPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly focoTrasBorrar = focoTrasEliminar();
   private readonly estado = inject(EstadoArbolCategorias);
   private readonly injector = inject(Injector);
   private readonly host: HTMLElement = inject(ElementRef).nativeElement;
@@ -228,9 +255,62 @@ export class CategoriasPage {
   /** El árbol con los filtros aplicados: sus raíces y las que empiezan abiertas por el filtro de nombre. */
   protected readonly arbol = computed(() => arbolDeCategorias(this.admin.categories(), this.aplicados()));
   /** La página cuenta las categorías de primer nivel del árbol, cada una con sus ramas. */
-  protected readonly pagina = computed(() =>
-    paginar(this.arbol().raices, leerPagina(this.parametros()), ELEMENTOS_POR_PAGINA),
-  );
+  /** La página y su tamaño, en la URL (lote 43). */
+  protected readonly paginacion = paginacionDeLaUrl(this.parametros);
+  protected readonly pagina = computed(() => this.paginacion.paginar(this.arbol().raices));
+  /**
+   * Lote 43 (PBI-0265): si la página de registro vuelve con `?nuevo=<id>` tras crear, el listado va a la página de ese
+   * registro (o, si los filtros lo dejan fuera, los quita y va a su página). La paginación cuenta las de primer nivel:
+   * se va a la página de la que la contiene.
+   */
+  private readonly registroNuevo = this.paginacion.seguirRegistroNuevo<NodoCategoria>({
+    filtrados: () => this.arbol().raices,
+    todos: () => arbolDeCategorias(this.admin.categories(), FILTROS_CATEGORIAS_VACIOS).raices,
+    es: function contiene(nodo, id): boolean {
+      return nodo.category.id === id || nodo.children.some((hija) => contiene(hija, id));
+    },
+  });
+  /** Todas las categorías del árbol filtrado, en su orden: las que cuenta el total y las que se exportan. */
+  private readonly enElArbol = computed(() => {
+    const todas: NodoCategoria[] = [];
+    const recorrer = (nodos: readonly NodoCategoria[]) => {
+      for (const nodo of nodos) {
+        todas.push(nodo);
+        recorrer(nodo.children);
+      }
+    };
+    recorrer(this.arbol().raices);
+    return todas;
+  });
+  /** El total de las que cumplen los filtros (con las que las contienen) y cuántas son de primer nivel (lote 43). */
+  protected readonly fichas = computed((): FichaDeResumen[] => [
+    { texto: textoDelTotal(this.enElArbol().length), tono: 'principal', icono: 'lista' },
+    {
+      texto: textoDeCantidad(this.arbol().raices.length, 'de primer nivel', 'de primer nivel'),
+      tono: 'neutro',
+      icono: 'categorias',
+    },
+  ]);
+  protected readonly exportacion = (): TablaExportable => {
+    const rutas = new Map(opcionesDeCategoria(this.admin.categories()).map((o) => [o.category.id, o.ruta]));
+    return {
+      titulo: 'Categorías',
+      columnas: ['N°', 'Categoría', 'Ruta', 'Orden'],
+      filas: this.enElArbol().map(({ category }, i) => [
+        i + 1,
+        category.name,
+        rutas.get(category.id) ?? category.name,
+        category.order ?? 'Alfabético',
+      ]),
+    };
+  };
+  protected readonly accion = CLASES_ACCION;
+  protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
+  /** «N°» de una categoría de primer nivel de la página, continuo entre páginas. */
+  protected numeroDeRaiz(id: string): number {
+    const pagina = this.pagina();
+    return pagina.from + pagina.items.findIndex((nodo) => nodo.category.id === id);
+  }
   /** Las filas que se ven en la página: sus raíces y las hijas de las abiertas. */
   protected readonly filas = computed(() => filasVisibles(this.pagina().items, this.estado.abiertas()));
   /** La fila que tuvo el foco por última vez. */
@@ -283,19 +363,15 @@ export class CategoriasPage {
     }
     await this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: parametrosDeFiltrosCategorias(this.borrador.getRawValue()),
+      queryParams: {
+        ...parametrosDeFiltrosCategorias(this.borrador.getRawValue()),
+        ...this.paginacion.conservar(),
+      },
     });
   }
   /** Vacía todos los filtros del panel de una vez, sin buscar (AC-14). */
   protected limpiar() {
     this.borrador.setValue({ ...FILTROS_CATEGORIAS_VACIOS });
-  }
-  protected irAPagina(numero: number) {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { pagina: numero > 1 ? numero : null },
-      queryParamsHandling: 'merge',
-    });
   }
   protected indent(depth: number) {
     return '  '.repeat(depth) + (depth ? '↳ ' : '');
@@ -346,7 +422,7 @@ export class CategoriasPage {
     if (fila.tieneHijas) this.alternar(fila.category.id, !fila.abierta);
   }
   /** PBI-0131: una categoría con subcategorías o productos no se elimina; se dice por qué, sin pedir confirmación. */
-  protected async remove(id: string) {
+  protected async remove(id: string, evento: Event) {
     this.avisoEliminar.set(null);
     const categoria = this.admin.categories().find((item) => item.id === id);
     if (!categoria) return;
@@ -355,6 +431,9 @@ export class CategoriasPage {
       this.avisoEliminar.set(motivo);
       return;
     }
-    if (confirm('¿Eliminar categoría?')) await this.admin.eliminarCategoria(id);
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre de la categoría.
+    const lugar = this.focoTrasBorrar.recordar(evento);
+    if (!(await confirmarEliminacion(this.dialog, categoria.name))) return;
+    if (await this.admin.eliminarCategoria(id)) this.focoTrasBorrar.restaurar(lugar);
   }
 }

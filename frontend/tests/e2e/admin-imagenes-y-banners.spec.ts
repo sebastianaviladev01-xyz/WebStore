@@ -173,7 +173,13 @@ test.describe('PBI-0214 y PBI-0221: el registro del banner', () => {
       await formulario.getByLabel('Fin').fill('2030-12-20T18:00');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/banners$/);
-      await expect(page.getByText('10/12/2030 09:30 → 20/12/2030 18:00 · Activo')).toBeVisible();
+      // Lote 43 (PBI-0265): la vigencia en su columna y el estado como insignia en la suya.
+      const fila = page
+        .getByRole('region', { name: 'Lista de banners' })
+        .getByRole('row')
+        .filter({ hasText: '10/12/2030 09:30 → 20/12/2030 18:00' });
+      await expect(fila).toBeVisible();
+      await expect(fila.getByText('Activo', { exact: true })).toBeVisible();
 
       const guardado = (await leerSnapshot()).banners.find((banner) => banner.cta === 'Ver') as unknown as {
         id: string;

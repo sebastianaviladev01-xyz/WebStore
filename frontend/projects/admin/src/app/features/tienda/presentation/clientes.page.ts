@@ -9,9 +9,12 @@ import {
   viewChild,
 } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import {
@@ -20,14 +23,18 @@ import {
   leerFiltrosClientes,
   parametrosDeFiltrosClientes,
 } from '../domain/filtro-listado.rules';
+import { TablaExportable } from '../domain/exportacion.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
+import { numeroDeFila, textoDeCantidad, textoDelTotal } from '../domain/listado.rules';
 import { Cliente } from '../domain/tienda.model';
 import { conservarBorrador } from './borrador';
 import { dialogoDeRegistro } from './dialogo-de-registro';
 import { filtrosDeListado } from './filtros-de-listado';
-import { PaginacionComponent } from './paginacion.component';
+import { CLASES_ACCION, CLASES_ACCION_ELIMINAR, CLASES_CANCELAR_SUAVE, FichaDeResumen } from './insignia';
+import { ListadoComponent } from './listado.component';
+import { BusquedaDelRegistro } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
-import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 const CLIENTE_VACIO = { name: '', email: '', document: '' };
 
@@ -47,86 +54,99 @@ interface BorradorCliente {
   selector: 'ws-customers-page',
   imports: [
     IconoDirective,
-    TituloPaginaDirective,
     ReactiveFormsModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
+    MatTooltipModule,
+    ListadoComponent,
     PanelFiltrosComponent,
-    PaginacionComponent,
   ],
   template: `
-    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Clientes</h1>
-    <p class="mt-3 text-sm text-muted">
-      Cliente y usuario son registros distintos: una compra como invitado genera cliente sin obligar a crear
-      cuenta.
-    </p>
-    <ws-filter-panel
-      class="mt-7"
-      etiqueta="Filtros de clientes"
-      agregarQue="cliente"
-      (agregar)="nuevo()"
-      [formGroup]="filtros.borrador"
-      [buscando]="filtros.buscando()"
-      [error]="filtros.error()"
-      (buscar)="filtros.buscar()"
-      (limpiar)="filtros.limpiar()"
+    <!-- Lote 43 (ADR-0033, PBI-0265): en un solo panel, como la lista de proveedores del SGC. -->
+    <ws-admin-listado
+      titulo="Clientes"
+      descripcion="Cliente y usuario son registros distintos: una compra como invitado genera cliente sin obligar a crear cuenta."
+      que="clientes"
+      [exportacion]="exportacion"
+      [pagina]="pagina()"
+      [tamano]="filtros.tamano()"
+      [fichas]="fichas()"
+      (cambiarPagina)="filtros.irAPagina($event)"
+      (cambiarTamano)="filtros.cambiarTamano($event)"
     >
-      <mat-form-field>
-        <mat-label>Buscar cliente</mat-label>
-        <input matInput formControlName="texto" />
-        <mat-hint>Nombre, correo o documento</mat-hint>
-      </mat-form-field>
-    </ws-filter-panel>
-    <section class="admin-card mt-6 p-4" aria-label="Lista de clientes">
-      <div role="table" aria-label="Clientes">
-        <div role="row" class="sr-only">
-          <span role="columnheader">Cliente</span>
-          <span role="columnheader">Pedidos</span>
-          <span role="columnheader">Acciones</span>
-        </div>
-        @for (c of pagina().items; track c.id) {
+      <ws-filter-panel
+        etiqueta="Filtros de clientes"
+        agregarQue="cliente"
+        (agregar)="nuevo()"
+        [formGroup]="filtros.borrador"
+        [buscando]="filtros.buscando()"
+        [error]="filtros.error()"
+        (buscar)="filtros.buscar()"
+        (limpiar)="filtros.limpiar()"
+      >
+        <mat-form-field>
+          <mat-label>Buscar cliente</mat-label>
+          <input matInput formControlName="texto" />
+          <mat-hint>Nombre, correo o documento</mat-hint>
+        </mat-form-field>
+      </ws-filter-panel>
+      <section class="border-t border-line" aria-label="Lista de clientes">
+        <div role="table" aria-label="Clientes">
+          <!-- Lote 43: la fila de encabezados se ve en escritorio; en el celular sigue solo para lectores de pantalla. -->
           <div
             role="row"
-            class="grid grid-cols-[1fr_140px_auto] items-center border-b border-line p-3 max-md:grid-cols-[minmax(0,1fr)_auto] max-md:gap-x-4 max-md:gap-y-2"
+            class="grid grid-cols-[2.5rem_minmax(0,1fr)_140px_88px] gap-x-4 bg-subtle px-5 py-3 text-xs font-semibold uppercase text-muted max-md:sr-only"
           >
-            <div role="cell" class="min-w-0 max-md:col-span-full">
-              <strong class="break-words">{{ c.name }}</strong>
-              <p class="break-words text-xs text-muted">{{ c.email }} · {{ c.document }}</p>
-            </div>
-            <span role="cell" class="text-sm">{{ c.orders }} pedidos</span>
-            <div role="cell" class="flex gap-2 text-sm font-semibold">
-              <button
-                class="inline-flex items-center gap-2 text-link"
-                [attr.aria-label]="'Editar cliente ' + c.name"
-                (click)="edit(c.id)"
-              >
-                <svg wsAdminIcono="editar"></svg>
-                Editar
-              </button>
-              <button
-                class="inline-flex items-center gap-2 text-danger"
-                [attr.aria-label]="'Eliminar cliente ' + c.name"
-                (click)="remove(c.id)"
-              >
-                <svg wsAdminIcono="eliminar"></svg>
-                Eliminar
-              </button>
-            </div>
+            <span role="columnheader">N°</span>
+            <span role="columnheader">Cliente</span>
+            <span role="columnheader">Pedidos</span>
+            <span role="columnheader"><span class="sr-only">Acciones</span></span>
           </div>
+          @for (c of pagina().items; track c.id; let i = $index) {
+            <div
+              role="row"
+              class="grid grid-cols-[2.5rem_minmax(0,1fr)_140px_88px] items-center gap-x-4 border-t border-line px-5 py-3 max-md:grid-cols-[2rem_minmax(0,1fr)_auto] max-md:gap-y-2"
+            >
+              <span role="cell" class="text-sm tabular-nums text-muted max-md:self-start">
+                {{ numero(i) }}
+              </span>
+              <div role="cell" class="min-w-0 max-md:col-span-2">
+                <strong class="break-words">{{ c.name }}</strong>
+                <p class="break-words text-xs text-muted">{{ c.email }} · {{ c.document }}</p>
+              </div>
+              <span role="cell" class="text-sm max-md:col-start-2">{{ pedidos(c.orders) }}</span>
+              <div role="cell" class="flex justify-end gap-2">
+                <button
+                  type="button"
+                  [class]="accion"
+                  [attr.aria-label]="'Editar cliente ' + c.name"
+                  matTooltip="Editar"
+                  (click)="edit(c.id)"
+                >
+                  <svg wsAdminIcono="editar"></svg>
+                </button>
+                <button
+                  type="button"
+                  [class]="accionEliminar"
+                  [attr.aria-label]="'Eliminar cliente ' + c.name"
+                  matTooltip="Eliminar"
+                  data-eliminar
+                  (click)="remove(c.id, $event)"
+                >
+                  <svg wsAdminIcono="eliminar"></svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+        @if (!pagina().items.length) {
+          <p class="border-t border-line p-8 text-center text-sm text-muted">
+            {{ admin.customers().length ? 'Ningún cliente cumple los filtros.' : 'Todavía no hay clientes.' }}
+          </p>
         }
-      </div>
-      @if (!pagina().items.length) {
-        <p class="p-8 text-center text-sm text-muted">
-          {{ admin.customers().length ? 'Ningún cliente cumple los filtros.' : 'Todavía no hay clientes.' }}
-        </p>
-      }
-      <ws-pagination
-        [pagina]="pagina()"
-        etiqueta="Páginas de clientes"
-        (cambiar)="filtros.irAPagina($event)"
-      />
-    </section>
+      </section>
+    </ws-admin-listado>
 
     <!-- PBI-0211: el registro, en la ventana emergente. -->
     <ng-template #registro>
@@ -161,17 +181,14 @@ interface BorradorCliente {
             </p>
           }
         </mat-dialog-content>
-        <mat-dialog-actions align="end">
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
-            mat-dialog-close
-          >
+        <!-- Lote 43 (PBI-0268): el pie a la derecha, «Cancelar» de relleno suave y «Guardar» relleno del principal. -->
+        <mat-dialog-actions align="end" class="gap-2">
+          <button type="button" [class]="botonCancelar" mat-dialog-close>
             <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </button>
           <button
-            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
@@ -186,15 +203,44 @@ interface BorradorCliente {
 })
 export class ClientesPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly filtros = filtrosDeListado({
     leer: leerFiltrosClientes,
     escribir: parametrosDeFiltrosClientes,
     vacios: FILTROS_CLIENTES_VACIOS,
     que: 'los clientes',
   });
-  protected readonly pagina = computed(() =>
-    this.filtros.paginar(filtrarClientes(this.admin.customers(), this.filtros.aplicados())),
+  protected readonly resultados = computed(() =>
+    filtrarClientes(this.admin.customers(), this.filtros.aplicados()),
   );
+  protected readonly pagina = computed(() => this.filtros.paginar(this.resultados()));
+  /** Dónde buscar un cliente para ir a su página: con los filtros y sin ellos, en el orden del listado. */
+  private readonly busqueda: BusquedaDelRegistro<Cliente> = {
+    filtrados: () => this.resultados(),
+    todos: () => filtrarClientes(this.admin.customers(), FILTROS_CLIENTES_VACIOS),
+    es: (cliente, id) => cliente.id === id,
+  };
+  /** Lote 43 (PBI-0265): los clientes no tienen estado; el pie dice el total. */
+  protected readonly fichas = computed((): FichaDeResumen[] => [
+    { texto: textoDelTotal(this.resultados().length), tono: 'principal', icono: 'clientes' },
+  ]);
+  protected readonly exportacion = (): TablaExportable => ({
+    titulo: 'Clientes',
+    columnas: ['N°', 'Cliente', 'Correo', 'Documento', 'Pedidos'],
+    filas: this.resultados().map((c, i) => [i + 1, c.name, c.email, c.document, c.orders]),
+  });
+  protected readonly accion = CLASES_ACCION;
+  protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
+  protected readonly botonCancelar = CLASES_CANCELAR_SUAVE;
+  /** «1 pedido», «2 pedidos» (lote 43; antes, «1 pedidos»). */
+  protected pedidos(cantidad: number): string {
+    return textoDeCantidad(cantidad, 'pedido', 'pedidos');
+  }
+  protected numero(indice: number): number {
+    return numeroDeFila(this.pagina(), indice);
+  }
   protected readonly error = mensajeDeError;
   /** La plantilla del formulario, que se abre en la ventana emergente (PBI-0211). */
   private readonly registro = viewChild.required<TemplateRef<unknown>>('registro');
@@ -253,13 +299,19 @@ export class ClientesPage {
     }
     const base = this.base;
     this.errorGuardado.set(null);
+    const id = base?.id ?? this.idNuevo;
     const saved = await this.admin.guardarCliente(base, {
-      id: base?.id ?? this.idNuevo,
+      id,
       orders: base?.orders ?? 0,
       ...this.form.getRawValue(),
     });
-    if (saved) this.dialogo.cerrar();
-    else this.errorGuardado.set(this.admin.tomarError());
+    if (!saved) {
+      this.errorGuardado.set(this.admin.tomarError());
+      return;
+    }
+    this.dialogo.cerrar();
+    // Lote 43 (PBI-0265): al crear, el listado va a la página donde quedó el registro nuevo, para que se vea.
+    if (!base) this.filtros.irAlRegistro(this.busqueda, id);
   }
   /** «Agregar» (PBI-0171): abre la ventana con «Nuevo cliente», vacía. */
   protected nuevo(): void {
@@ -275,13 +327,16 @@ export class ClientesPage {
     this.form.reset(CLIENTE_VACIO);
   }
   /** Si se elimina el cliente en edición, el formulario sale de la edición: «Guardar» no lo vuelve a crear (PBI-0122). */
-  protected async remove(id: string) {
-    await eliminarRegistro({
-      pregunta: '¿Eliminar cliente?',
+  protected async remove(id: string, evento: Event) {
+    const lugar = this.foco.recordar(evento);
+    const eliminado = await eliminarRegistro({
+      nombre: this.admin.customers().find((c) => c.id === id)?.name ?? '',
       id,
+      confirmar: (nombre) => confirmarEliminacion(this.dialog, nombre),
       editando: () => this.editing(),
       eliminar: (idEliminado) => this.admin.eliminarCliente(idEliminado),
       salirDeLaEdicion: () => this.reset(),
     });
+    if (eliminado) this.foco.restaurar(lugar);
   }
 }

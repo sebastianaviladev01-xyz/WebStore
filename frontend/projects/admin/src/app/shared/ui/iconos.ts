@@ -48,6 +48,17 @@ export const ICONOS = {
   contrasena: 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4M12 15v2',
   salir: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   deshacer: 'M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3',
+  // Lote 43 (ADR-0033, PBI-0265 y PBI-0269): exportar, la paginación del pie, las fichas del resumen y la confirmación.
+  exportar: 'M12 4v11M7 10l5 5 5-5M4 20h16',
+  hojaDeCalculo: 'M6 3h9l4 4v14H6zM14 3v5h5M9 12h7M9 16h7M12.5 12v8',
+  imprimir: 'M6 9V3h12v6M6 18H4v-8h16v8h-2M6 14h12v7H6z',
+  desplegar: 'M6 9l6 6 6-6',
+  primera: 'M17 6l-6 6 6 6M7 6v12',
+  ultima: 'M7 6l6 6-6 6M17 6v12',
+  confirmar: 'M5 12.5l4.5 4.5L19 7',
+  lista: 'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  inactivo: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8 12h8',
+  alerta: 'M12 3.5l9.5 16.5h-19zM12 10v4.5M12 17.5h.01',
 } as const;
 
 export type NombreIcono = keyof typeof ICONOS;

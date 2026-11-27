@@ -8,7 +8,9 @@ import {
   leerProductos,
   leerSnapshot,
   productoDePrueba,
+  retirarClientes,
   retirarProductos,
+  sembrarClientes,
 } from './apoyo/catalogo';
 import {
   correoUnico,
@@ -18,6 +20,7 @@ import {
   terminosAceptados,
   urls,
 } from './apoyo/entorno';
+import { aceptarEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { cargarImagenPrincipal } from './apoyo/fotos';
 import { conservarElStock } from './apoyo/pedidos';
 
@@ -219,34 +222,42 @@ test.describe('Guardado del Admin', () => {
   }) => {
     const nombre = 'Cliente Lote 06';
     const correo = correoUnico('cliente-lote06');
-    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    await page.goto('/clientes');
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
-    const nuevo = page.getByRole('dialog', { name: 'Nuevo cliente' });
-    await nuevo.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
-    await nuevo.getByRole('textbox', { name: 'Correo' }).fill(correo);
-    await nuevo.getByRole('textbox', { name: 'Documento' }).fill('11112222');
-    await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(nuevo).toBeHidden();
-    const eliminar = page.getByRole('button', { name: `Eliminar cliente ${nombre}` });
-    await expect(eliminar).toBeVisible();
+    // Lote 43 (PBI-0265): con más de 10 clientes, como al final de la suite completa, el nuevo queda en otra página de
+    // 10 y el listado salta a ella al guardar.
+    const relleno = await sembrarClientes(11, 'l43-guardado');
+    try {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto('/clientes');
+      await page.getByRole('button', { name: 'Agregar cliente' }).click();
+      const nuevo = page.getByRole('dialog', { name: 'Nuevo cliente' });
+      await nuevo.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+      await nuevo.getByRole('textbox', { name: 'Correo' }).fill(correo);
+      await nuevo.getByRole('textbox', { name: 'Documento' }).fill('11112222');
+      await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(nuevo).toBeHidden();
+      const eliminar = page.getByRole('button', { name: `Eliminar cliente ${nombre}` });
+      await expect(eliminar).toBeVisible();
 
-    // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
-    await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
-    const edicion = page.getByRole('dialog', { name: 'Editar cliente' });
-    await expect(edicion.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
-    await edicion.getByRole('button', { name: 'Cancelar' }).click();
-    await expect(edicion).toBeHidden();
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
-    await expect(nuevo.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
-    await page.keyboard.press('Escape');
-    await expect(nuevo).toBeHidden();
+      // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
+      await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
+      const edicion = page.getByRole('dialog', { name: 'Editar cliente' });
+      await expect(edicion.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
+      await edicion.getByRole('button', { name: 'Cancelar' }).click();
+      await expect(edicion).toBeHidden();
+      await page.getByRole('button', { name: 'Agregar cliente' }).click();
+      await expect(nuevo.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
+      await page.keyboard.press('Escape');
+      await expect(nuevo).toBeHidden();
 
-    page.once('dialog', (dialogo) => void dialogo.accept());
-    await eliminar.click();
-    await expect(eliminar).toHaveCount(0);
-    const clientes = (await leerSnapshot()).customers;
-    expect(clientes.some((cliente) => cliente.email === correo)).toBe(false);
+      // Lote 43 (PBI-0269): la ventana propia de confirmación, con el nombre del cliente.
+      await eliminar.click();
+      await aceptarEliminacion(page, nombre);
+      await expect(eliminar).toHaveCount(0);
+      const clientes = (await leerSnapshot()).customers;
+      expect(clientes.some((cliente) => cliente.email === correo)).toBe(false);
+    } finally {
+      await retirarClientes(relleno);
+    }
   });
 
   test('PBI-0130: el vendedor edita un producto con el título de edición y «Cancelar»', async ({ page }) => {
@@ -286,6 +297,7 @@ test.describe('Lo que no se guarda se dice antes de enviar', () => {
       'No se puede eliminar la categoría «TV y audio»: tiene 1 subcategoría. Muévela o elimínala antes.',
     );
     expect(dialogos(), 'no pide confirmar algo que no se puede hacer').toBe(0);
+    await expect(ventanaDeConfirmacion(page), 'ni con la ventana propia (PBI-0269)').toHaveCount(0);
     expect(guardados()).toBe(0);
     expect(await leerMarcas()).toEqual(marcas);
   });
@@ -420,10 +432,14 @@ test.describe('Pedidos', () => {
       page.getByText(/Aceptados el \d{2}\/\d{2}\/\d{4} \d{2}:\d{2}:\d{2}\s*Versión \d+/),
     ).toBeVisible();
 
-    // PBI-0126: responder «Cancelar» a la confirmación deja el selector como estaba.
-    page.once('dialog', (dialogo) => void dialogo.dismiss());
+    // PBI-0126: responder «No, volver» a la confirmación deja el selector como estaba. Lote 43 (PBI-0269): la ventana
+    // propia «Cancelar pedido», con el código del pedido.
     await cambiar.click();
     await page.getByRole('option', { name: 'Cancelado' }).click();
+    const cancelacion = ventanaDeConfirmacion(page, 'Cancelar pedido');
+    await expect(cancelacion).toContainText(`«${id}»`);
+    await cancelacion.getByRole('button', { name: 'No, volver' }).click();
+    await expect(cancelacion).toHaveCount(0);
     await expect(cambiar).toHaveText('Confirmado');
     expect(await estadoDelPedido(id)).toBe('confirmed');
 
