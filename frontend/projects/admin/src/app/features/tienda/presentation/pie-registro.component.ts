@@ -8,7 +8,8 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
  * «Cancelar», con relleno suave, vuelve al listado con sus filtros; «Guardar y continuar», con borde y solo al crear,
  * guarda y abre el registro creado en «Editar» para seguir completándolo; y «Guardar», relleno del principal, guarda y
  * vuelve al listado. Al editar, solo «Cancelar» y «Guardar». El motivo de un guardado rechazado se proyecta encima de
- * los botones, junto a ellos.
+ * los botones, junto a ellos. Por debajo de 640 px, los botones van a todo el ancho y en columna, con «Guardar»
+ * arriba; el orden del DOM y del tabulador es el de escritorio.
  */
 @Component({
   selector: 'ws-admin-pie-registro',
@@ -16,9 +17,14 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
   host: { class: 'block border-t border-line pt-5' },
   template: `
     <ng-content />
-    <div class="flex flex-wrap justify-end gap-3">
+    <!--
+      Por debajo de 640 px, los botones van a todo el ancho y en columna, con «Guardar» arriba, al alcance del pulgar
+      (flex-col-reverse). El DOM y el tabulador siguen el orden de escritorio: «Cancelar», «Guardar y continuar» y
+      «Guardar».
+    -->
+    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
       <a
-        class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-soft px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-ink"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-soft px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-ink"
         [routerLink]="listado()"
         queryParamsHandling="preserve"
       >
@@ -28,7 +34,7 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
       @if (creando()) {
         <button
           type="button"
-          class="inline-flex min-h-11 items-center gap-2 rounded-lg border border-link bg-surface px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-link disabled:opacity-50"
+          class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-link bg-surface px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-link disabled:opacity-50"
           [disabled]="guardando() || deshabilitado()"
           (click)="continuar.emit()"
         >
@@ -38,7 +44,7 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
       }
       <button
         type="submit"
-        class="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-on-primary disabled:opacity-50"
+        class="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold whitespace-nowrap text-on-primary disabled:opacity-50"
         [disabled]="guardando() || deshabilitado()"
       >
         <svg wsAdminIcono="guardar"></svg>
