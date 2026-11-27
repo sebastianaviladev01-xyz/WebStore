@@ -29,3 +29,10 @@ Siguen provisionales, porque no son decisiones de negocio de Daniel: el adaptado
 ### Verificación
 
 - `npm run verify` en verde (frontend 548, BFF 761 y 34 de arquitectura). Sin e2e: no cambia ningún comportamiento.
+
+## Las preguntas de negocio ya no esperan a Daniel
+
+Sebastián Avila pidió corregir la regla del flujo que mandaba a Daniel las preguntas de negocio sin respuesta explícita y bloqueaba la feature hasta su respuesta. [ADR-0034](../adrs/0034-decidir-las-preguntas-de-negocio-sin-esperar-a-daniel.md) la sustituye. La pregunta se presenta en el hito con sus alternativas, la recomendación y las citas. La decide Sebastián Avila, o la sesión aplica la recomendada si él delegó la decisión. Se registra como «Decidido por Sebastián Avila (fecha), sin esperar a Daniel» y la feature sigue. Solo bloquean las decisiones de terceros, del cliente o de lo que entrega Daniel (modelo de datos, nombre y logo).
+
+- Cambian [`AGENTS.md`](../../AGENTS.md), los [hitos humanos](../architecture/development-workflow.md#hitos-humanos), el skill [`sdd-specify`](../../.agents/skills/sdd-specify/SKILL.md) y la cabecera de las [decisiones pendientes](../planning/PENDING-DECISIONS.md).
+- No cambia ningún comportamiento de la aplicación.

@@ -42,5 +42,5 @@ Argumentos: una historia de usuario, un requisito de `docs/planning/`, una mejor
 
 - No inventes roles, reglas de negocio ni endpoints.
 - No resuelvas contradicciones en silencio, ni cierres una decisión que `PENDING-DECISIONS.md` deja abierta.
-- No pidas a la persona del hito que decida una regla de negocio que las fuentes no dicen de forma explícita: regístrala en `PENDING-DECISIONS.md` para quien decide el producto y deja la feature bloqueada (`docs/architecture/development-workflow.md`, apartado «Hitos humanos»).
+- No dejes como provisional ni bloqueada una regla de negocio que las fuentes no dicen de forma explícita. Preséntala con sus alternativas, la recomendación y las citas. La decide Sebastián Avila, y se registra en `PENDING-DECISIONS.md` como «Decidido por Sebastián Avila (fecha), sin esperar a Daniel» ([ADR-0034](../../../docs/adrs/0034-decidir-las-preguntas-de-negocio-sin-esperar-a-daniel.md); `docs/architecture/development-workflow.md`, apartado «Hitos humanos»). Solo bloquea lo que depende de terceros, del cliente o de lo que entrega Daniel.
 - No implementes código en esta etapa.
