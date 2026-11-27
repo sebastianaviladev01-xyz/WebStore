@@ -1,7 +1,7 @@
 /**
- * Imagen de la categoría en el guardado del Admin (lote 11, ADR-0021, PBI-0176; provisional): una imagen nueva o
- * cambiada debe ser un PNG, un JPEG o un WebP de 100 × 100 px y caber en `MAX_IMAGEN_DE_CATEGORIA`. Las guardadas antes
- * (160 px o SVG, del lote 07b) siguen valiendo mientras no cambien, para no bloquear otros guardados.
+ * Imagen de la categoría en el guardado del Admin (lote 11, ADR-0021, PBI-0176; confirmado por Sebastián Avila): una
+ * imagen nueva o cambiada debe ser un PNG, un JPEG o un WebP de 100 × 100 px y caber en `MAX_IMAGEN_DE_CATEGORIA`. Las
+ * guardadas antes (160 px o SVG, del lote 07b) siguen valiendo mientras no cambien, para no bloquear otros guardados.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

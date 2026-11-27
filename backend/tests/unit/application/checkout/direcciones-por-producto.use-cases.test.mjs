@@ -1,6 +1,6 @@
 /**
  * Una dirección por pedido o una por producto en el checkout, el pedido y el Admin (lote 19, ADR-0021, PBI-0006;
- * provisional, por confirmar con Daniel), con un almacén en memoria y el reloj fijo:
+ * confirmado por Sebastián Avila), con un almacén en memoria y el reloj fijo:
  *
  * - La configuración guarda `deliveryAddressMode` (`per-order` por defecto, o `per-product`) y la publica.
  * - Con `per-product`, cada línea puede llevar su dirección: el pedido la guarda en la línea, `shipping` sigue siendo

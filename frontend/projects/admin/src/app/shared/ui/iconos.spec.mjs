@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-// Lote 31 (ADR-0027, PBI-0243; provisional, por confirmar con Daniel): el título de cada página del backoffice lleva el
+// Lote 31 (ADR-0027, PBI-0243; confirmado por Sebastián Avila): el título de cada página del backoffice lleva el
 // ícono de su módulo, el mismo de su entrada del menú lateral. Los dos lo toman de `iconoDelModulo()`, así que no
 // pueden separarse; los botones toman sus íconos del mismo `ICONOS`.
 const fuente = await readFile(new URL('./iconos.ts', import.meta.url), 'utf8');

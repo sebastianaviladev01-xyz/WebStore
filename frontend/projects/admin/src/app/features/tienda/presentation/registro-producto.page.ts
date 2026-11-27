@@ -146,7 +146,7 @@ const conAlgunaCaracteristica = (filas: AbstractControl<string[]>): ValidationEr
                 <input matInput formControlName="sku" />
                 <mat-error>{{ mensaje(form.controls.sku.errors) }}</mat-error>
               </mat-form-field>
-              <!-- Lote 29 (ADR-0027, PBI-0238; provisional): la categoría se elige con búsqueda, con su ruta en el árbol. -->
+              <!-- Lote 29 (ADR-0027, PBI-0238; confirmado por Sebastián Avila): la categoría se elige con búsqueda, con su ruta en el árbol. -->
               <ws-admin-selector-categoria
                 [control]="form.controls.categoryId"
                 [categorias]="admin.categories()"
@@ -187,8 +187,8 @@ const conAlgunaCaracteristica = (filas: AbstractControl<string[]>): ValidationEr
                 <mat-error>{{ mensaje(form.controls.price.errors) }}</mat-error>
               </mat-form-field>
               <!--
-                Lote 23 (ADR-0025, PBI-0226; provisional): el stock sale del registro y se gestiona solo en Inventario.
-                Un producto nuevo empieza sin stock.
+                Lote 23 (ADR-0025, PBI-0226; confirmado por Sebastián Avila): el stock sale del registro y se gestiona
+                solo en Inventario. Un producto nuevo empieza sin stock.
               -->
               <p class="self-center pb-5 text-xs text-muted">
                 <ws-admin-texto-ayuda>
@@ -200,8 +200,8 @@ const conAlgunaCaracteristica = (filas: AbstractControl<string[]>): ValidationEr
           </ws-admin-seccion-registro>
           <ws-admin-seccion-registro titulo="Imágenes" icono="banners">
             <!--
-              Lote 24 (ADR-0026, PBI-0214; provisional): la imagen se carga como archivo una sola vez y el Admin genera la
-              versión de la ficha y la miniatura de los listados; ya no se escribe una URL.
+              Lote 24 (ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen se carga como archivo una sola vez
+              y el Admin genera la versión de la ficha y la miniatura de los listados; ya no se escribe una URL.
             -->
             <fieldset
               class="min-w-0 rounded-xl border border-line p-4"
@@ -245,8 +245,8 @@ const conAlgunaCaracteristica = (filas: AbstractControl<string[]>): ValidationEr
             <fieldset class="min-w-0 rounded-xl border border-line p-4">
               <legend class="px-1 text-sm font-semibold">Galería de fotos</legend>
               <!--
-                Lote 25 (ADR-0026; provisional): las fotos se cargan como archivo, como la imagen principal; ya no se
-                escribe una URL (Daniel: «no adjuntas como URL»).
+                Lote 25 (ADR-0026; confirmado por Sebastián Avila): las fotos se cargan como archivo, como la imagen
+                principal; ya no se escribe una URL (Daniel: «no adjuntas como URL»).
               -->
               <p class="text-xs text-muted">
                 <ws-admin-texto-ayuda>
@@ -397,7 +397,7 @@ export class RegistroProductoPage {
   /** La consulta respondió y el producto en edición no está en el snapshot actual: otra persona lo eliminó. */
   protected readonly missing = signal(false);
   /**
-   * PBI-0256 (lote 40, ADR-0032; provisional, por confirmar con Daniel): la consulta falló y el panel no tenía el
+   * PBI-0256 (lote 40, ADR-0032; confirmado por Sebastián Avila): la consulta falló y el panel no tenía el
    * producto (por ejemplo, en una carga nueva). No se dice que no existe: se avisa del fallo con «Reintentar».
    */
   protected readonly sinDatos = signal(false);

@@ -2,10 +2,10 @@ import { esDiaHabil, fechasNoLaborables, sumarDias } from '../calendario/dias-no
 import { limaDate } from '../comun/reloj.mjs';
 
 /**
- * Primera fecha de entrega que puede elegir el comprador (lote 17, ADR-0021, PBI-0178; provisional, por confirmar con
- * Daniel). Daniel pidió que la configure cada tienda («Pueden haber clientes que permitan entrega el día calendario
- * siguiente, como pueden haber clientes que tengan normalizado las entregas a partir del siguiente dia hábil») y eligió
- * «Otra regla, con hora de corte», sin dar la hora. La configuración de la tienda tiene:
+ * Primera fecha de entrega que puede elegir el comprador (lote 17, ADR-0021, PBI-0178; confirmado por Sebastián Avila).
+ * Daniel pidió que la configure cada tienda («Pueden haber clientes que permitan entrega el día calendario siguiente,
+ * como pueden haber clientes que tengan normalizado las entregas a partir del siguiente dia hábil») y eligió «Otra
+ * regla, con hora de corte», sin dar la hora. La configuración de la tienda tiene:
  *
  * - `firstDeliveryDay`: `same-day` (hoy), `next-calendar-day` (mañana) o `next-business-day` (el siguiente día hábil:
  *   sin sábados, domingos ni días no laborables).

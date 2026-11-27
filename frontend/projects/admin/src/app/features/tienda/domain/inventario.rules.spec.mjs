@@ -46,7 +46,7 @@ test('PBI-0079: el texto del Dashboard dice el umbral que se usa', () => {
   assert.equal(NOTA_STOCK_BAJO, 'Productos con 5 unidades o menos');
 });
 
-// Lote 23 (ADR-0025, PBI-0226; provisional, por confirmar con Daniel): el stock sale del registro del producto y se
+// Lote 23 (ADR-0025, PBI-0226; confirmado por Sebastián Avila): el stock sale del registro del producto y se
 // gestiona solo en Inventario. Guardar la ficha no cambia el stock: conserva el del producto, y uno nuevo empieza sin
 // stock. Así, si Inventario (o una venta) lo cambió mientras la ficha estaba abierta, el guardado no lo pisa ni choca.
 const { productoDeLaFicha } = await import(

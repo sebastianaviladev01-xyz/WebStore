@@ -1,7 +1,8 @@
 /**
- * Imágenes cargadas servidas por dirección (lote 24, ADR-0026, PBI-0214; provisional). La tienda no recibe las Data URL
- * de la imagen principal, la miniatura ni las del banner dentro del JSON: recibe una dirección del BFF con la versión de
- * la imagen (`?v=`), que cambia cuando cambia la imagen. Las rutas de `assets/` llegan como siempre.
+ * Imágenes cargadas servidas por dirección (lote 24, ADR-0026, PBI-0214; confirmado por Sebastián Avila). La tienda no
+ * recibe las Data URL de la imagen principal, la miniatura ni las del banner dentro del JSON: recibe una dirección del
+ * BFF con la versión de la imagen (`?v=`), que cambia cuando cambia la imagen. Las rutas de `assets/` llegan como
+ * siempre.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -115,8 +116,8 @@ test('PBI-0214: una imagen que no existe o que no es una imagen cargada responde
 });
 
 /*
- * Lote 25 (ADR-0025 y ADR-0026; provisional): las fotos de la galería y la imagen de la categoría tampoco viajan como
- * Data URL dentro del JSON público. Cada foto de la galería tiene su dirección por posición
+ * Lote 25 (ADR-0025 y ADR-0026; confirmado por Sebastián Avila): las fotos de la galería y la imagen de la categoría
+ * tampoco viajan como Data URL dentro del JSON público. Cada foto de la galería tiene su dirección por posición
  * (`/bff/images/products/{id}/gallery/{n}`) y la imagen de la categoría, `/bff/images/categories/{id}/image`. Una imagen
  * guardada antes que no es PNG, JPEG ni WebP (la SVG de una categoría del lote 07b) o una ruta de `assets/` llega tal
  * cual.

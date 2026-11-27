@@ -1,5 +1,5 @@
 /**
- * Normalización del estado en el lote 19 (ADR-0021, PBI-0006; provisional, por confirmar con Daniel), sin disco ni red
+ * Normalización del estado en el lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila), sin disco ni red
  * y sin cambiar `schemaVersion`: una tienda guardada antes del lote, o con un modo desconocido, carga con una dirección
  * por pedido, que es lo que hacía; los pedidos antiguos, sin direcciones por línea, no cambian.
  */

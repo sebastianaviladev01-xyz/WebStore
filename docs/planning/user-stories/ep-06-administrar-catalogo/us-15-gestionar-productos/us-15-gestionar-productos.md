@@ -27,7 +27,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** agrega fotos cargando un archivo (el Admin lo reduce antes de guardarlo; lote 06, PBI-0119)
 - **Entonces** la ficha del producto muestra esas fotos después de la imagen principal.
 
-> Cambiado el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0214 y PBI-0227; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»): antes también se agregaban por URL. El BFF rechaza una URL nueva en la galería; las fotos que el producto ya tenía siguen valiendo. Lo prueban `admin-catalogo-filtros.spec.ts` y `admin-productos-movil.spec.ts`.
+> Cambiado el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0214 y PBI-0227; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»): antes también se agregaban por URL. El BFF rechaza una URL nueva en la galería; las fotos que el producto ya tenía siguen valiendo. Lo prueban `admin-catalogo-filtros.spec.ts` y `admin-productos-movil.spec.ts`.
 
 ### Escenario 03 – Alcance del vendedor
 
@@ -57,7 +57,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** carga la imagen principal como archivo (PNG, JPG o WebP)
 - **Entonces** el backoffice genera la imagen de la ficha y la miniatura de los listados; ve la imagen actual y puede reemplazarla. No hay campo para escribir una URL, y el BFF rechaza una URL nueva.
 
-> Añadido el 2026-11-24 por el lote 24 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0214; [ADR-0026](../../../../adrs/0026-guardar-las-imagenes-cargadas-en-el-bff-y-servirlas-por-direccion.md); decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-imagenes-y-banners.spec.ts`.
+> Añadido el 2026-11-24 por el lote 24 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0214; [ADR-0026](../../../../adrs/0026-guardar-las-imagenes-cargadas-en-el-bff-y-servirlas-por-direccion.md); decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-imagenes-y-banners.spec.ts`.
 
 ### Escenario 07 – Producto destacado
 
@@ -65,7 +65,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** marca o desmarca «Es destacado» y guarda
 - **Entonces** el inicio de la tienda lo muestra o deja de mostrarlo entre los destacados ([US01](../../ep-01-explorar-catalogo/us-01-ver-inicio/us-01-ver-inicio.md), Escenario 06).
 
-> Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0215; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts`.
+> Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0215; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts`.
 
 ### Escenario 08 – El stock fuera del registro
 
@@ -73,7 +73,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** mira el registro
 - **Entonces** no hay campo «Stock»: una línea remite a Inventario. Un producto nuevo empieza sin stock, y guardar el registro no cambia el stock que puso Inventario o dejó una venta.
 
-> Añadido el 2026-11-24 por el lote 23 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0226; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: inventario, stock y SKU»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-catalogo-filtros.spec.ts`.
+> Añadido el 2026-11-24 por el lote 23 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0226; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: inventario, stock y SKU»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-catalogo-filtros.spec.ts`.
 
 ### Escenario 09 – Listado de Productos
 
@@ -81,7 +81,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** mira la lista
 - **Entonces** el SKU va en su propia columna, sin el conteo de características ni de fotos, y el precio lleva dos decimales.
 
-> Añadido el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0218 y PBI-0219; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: mantenimientos»), sin especificación propia: lo prueban `frontend/tests/e2e/admin-listados.spec.ts` y `admin-productos-movil.spec.ts`.
+> Añadido el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0218 y PBI-0219; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: mantenimientos»), sin especificación propia: lo prueban `frontend/tests/e2e/admin-listados.spec.ts` y `admin-productos-movil.spec.ts`.
 
 ### Escenario 10 – Categoría con búsqueda
 
@@ -89,7 +89,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** escribe al menos tres caracteres en el campo «Categoría»
 - **Entonces** ve las categorías de cualquier nivel del árbol que coinciden, cada una con su ruta, y elige una sola; Enter elige la primera.
 
-> Añadido el 2026-11-24 por el lote 29 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0238; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: editor de temas y categoría con búsqueda»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-categoria-con-busqueda.spec.ts`. El filtro sigue incluyendo las subcategorías, y la categoría sigue siendo obligatoria en el registro.
+> Añadido el 2026-11-24 por el lote 29 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0238; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: editor de temas y categoría con búsqueda»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-categoria-con-busqueda.spec.ts`. El filtro sigue incluyendo las subcategorías, y la categoría sigue siendo obligatoria en el registro.
 
 ## Fuera de alcance y pendientes
 

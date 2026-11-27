@@ -4,7 +4,7 @@ import { contieneTexto } from './listado.rules';
 import { Categoria } from './tienda.model';
 
 /**
- * Árbol de Categorías del Admin (lote 22, ADR-0025, PBI-0220; provisional, por confirmar con Daniel). Daniel pidió una
+ * Árbol de Categorías del Admin (lote 22, ADR-0025, PBI-0220; confirmado por Sebastián Avila). Daniel pidió una
  * jerarquía con vista de árbol que se abre por niveles, como la configuración de Reddit, en lugar de la ruta en texto de
  * cada categoría. Una categoría sin hijas es el último nivel.
  */

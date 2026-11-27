@@ -290,7 +290,7 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
           ></textarea>
           <mat-error>{{ mensaje(form.controls.termsContent.errors) }}</mat-error>
         </mat-form-field>
-        <!-- Lote 17 (ADR-0021, PBI-0177; provisional): la versión vigente de los términos la numera el BFF. -->
+        <!-- Lote 17 (ADR-0021, PBI-0177; confirmado por Sebastián Avila): la versión vigente de los términos la numera el BFF. -->
         @if (versionDeTerminos(); as version) {
           <p id="ws-version-terminos" class="-mt-2 text-xs leading-5 text-muted sm:col-span-2">
             {{ version }}
@@ -305,7 +305,7 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
         <mat-checkbox formControlName="termsPageEnabled">Términos y condiciones</mat-checkbox>
       </div>
 
-      <!-- Lote 16 (ADR-0021, PBI-0179; provisional): dónde muestra la tienda «Producto agregado» con los sugeridos. -->
+      <!-- Lote 16 (ADR-0021, PBI-0179; confirmado por Sebastián Avila): dónde muestra la tienda «Producto agregado» con los sugeridos. -->
       <fieldset class="mt-6 rounded-2xl border border-line p-4">
         <legend id="ws-lugar-sugeridos" class="px-1 text-sm font-semibold">
           Productos sugeridos al agregar al carrito

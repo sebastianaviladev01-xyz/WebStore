@@ -1,5 +1,5 @@
 /**
- * Guardado y lectura del snapshot del Admin en el lote 17 (ADR-0021; provisional, por confirmar con Daniel), con un
+ * Guardado y lectura del snapshot del Admin en el lote 17 (ADR-0021; confirmado por Sebastián Avila), con un
  * almacén en memoria y el reloj fijo:
  *
  * - PBI-0177: guardar un texto nuevo de los términos publica la versión siguiente; el Admin ve la vigente en la

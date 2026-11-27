@@ -1,5 +1,5 @@
 /**
- * Productos destacados configurables (lote 22, ADR-0025, PBI-0215; provisional, por confirmar con Daniel): el producto
+ * Productos destacados configurables (lote 22, ADR-0025, PBI-0215; confirmado por Sebastián Avila): el producto
  * lleva una marca `featured` que el Admin elige con la casilla «Es destacado». El catálogo público la devuelve tal cual,
  * sin tope y sin depender de la posición del producto; el guardado del Admin rechaza un valor que no sea booleano.
  */

@@ -1,5 +1,5 @@
 /**
- * Productos destacados del inicio (lote 22, ADR-0025, PBI-0215; provisional, por confirmar con Daniel): los que el
+ * Productos destacados del inicio (lote 22, ADR-0025, PBI-0215; confirmado por Sebastián Avila): los que el
  * Admin marca con «Es destacado», solo con stock y en el orden del catálogo, sin tope. Con más de cuatro, el inicio los
  * muestra en un carrusel; con ninguno, la sección no sale.
  */

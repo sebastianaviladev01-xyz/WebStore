@@ -2,7 +2,7 @@ import type { TarifaEnvio } from '../../envios/domain/envio.model';
 import type { DireccionEnvio } from './pedido.model';
 
 /**
- * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional, por confirmar con Daniel).
+ * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; confirmado por Sebastián Avila).
  * Daniel: «la configuración de la tienda decidirá si un pedido lleva una sola dirección de entrega o una por producto».
  * La tienda repite la regla del BFF (`backend/src/domain/pedidos/direcciones-por-producto.rules.mjs`) para mostrar el
  * envío antes de enviar el pedido; el BFF lo vuelve a calcular y decide.

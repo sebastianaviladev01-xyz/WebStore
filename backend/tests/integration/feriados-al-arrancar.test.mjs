@@ -1,8 +1,8 @@
 /**
  * Aviso del calendario de días no laborables al arrancar (lote 02, PBI-0010). Desde el lote 17 (ADR-0021, PBI-0183;
- * provisional) el calendario vive en el estado del BFF y se edita en el Admin: `WEBSTORE_NON_WORKING_DATES` solo da el
- * valor inicial de un estado sin lista. El BFF avisa en su log si el calendario no tiene ninguna fecha del año en curso,
- * y sigue arrancando.
+ * confirmado por Sebastián Avila) el calendario vive en el estado del BFF y se edita en el Admin:
+ * `WEBSTORE_NON_WORKING_DATES` solo da el valor inicial de un estado sin lista. El BFF avisa en su log si el calendario
+ * no tiene ninguna fecha del año en curso, y sigue arrancando.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

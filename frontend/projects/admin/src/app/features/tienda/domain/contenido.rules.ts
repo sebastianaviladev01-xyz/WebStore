@@ -18,8 +18,9 @@ export const MAXIMOS_DE_CONTENIDO = {
 } as const;
 
 /**
- * Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, ADR-0021, PBI-0179; provisional). Los valores
- * son los del BFF (`MODOS_DE_SUGERIDOS`); el primero, el diálogo, es el que la tienda usa por defecto.
+ * Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, ADR-0021, PBI-0179; confirmado por Sebastián
+ * Avila). Los valores son los del BFF (`MODOS_DE_SUGERIDOS`); el primero, el diálogo, es el que la tienda usa por
+ * defecto.
  */
 export const LUGARES_DE_SUGERIDOS: readonly {
   readonly valor: LugarDeSugeridos;

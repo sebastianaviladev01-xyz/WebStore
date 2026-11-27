@@ -1,6 +1,6 @@
 # 0024. Dejar en inglés el vocabulario interno del código y el contrato HTTP
 
-- Estado: Aceptada (provisional, por confirmar con Sebastián Avila y Daniel Avila)
+- Estado: Aceptada (confirmada por Sebastián Avila el 2026-11-27, sin esperar a Daniel)
 - Fecha: 2026-11-23
 
 Decidida por la sesión principal por delegación de Sebastián Avila el 2026-11-23, en el lote 18 de [ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), que pidió cerrar todo lo que no depende de terceros y aplicar «la mejor solucion a cualquier pregunta que surja». Cierra PBI-0022. Completa [ADR-0003](0003-usar-espanol-para-el-vocabulario-de-negocio.md) sin sustituirlo.
@@ -34,3 +34,5 @@ No migraremos al español el vocabulario que ADR-0003 dejó en inglés:
 - **Más fácil:** no hay que planificar una migración ni coordinar el contrato con el BFF productivo; las ramas abiertas no chocan.
 - **Más difícil:** dentro de una misma clase conviven nombres en los dos idiomas. El [glosario](../architecture/glosario.md) da el nombre en el código de cada término de negocio, que es lo que evita confundirlos.
 - **Provisional:** la decidió la sesión principal por delegación. Si Sebastián Avila y Daniel Avila prefieren B o C, se hace como feature propia con su ADR, que sustituye a este.
+
+> Nota (2026-11-27): Sebastián Avila confirmó la opción A sin esperar a Daniel: el vocabulario interno del código y el contrato HTTP se quedan en inglés. Si Daniel pide B o C, se hace como feature propia con su ADR, que sustituye a este.

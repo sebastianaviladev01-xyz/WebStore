@@ -218,8 +218,8 @@ test('lote 15: config guarda las listas de Contenido normalizadas y avisa qué c
   });
 });
 
-// Lote 30 (ADR-0027, PBI-0244; provisional): el guardado de Contenido conserva el «Desde» y el «Hasta» de cada aviso y
-// rechaza un «Hasta» que no va después del «Desde», con el campo que falló.
+// Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): el guardado de Contenido conserva el «Desde» y el
+// «Hasta» de cada aviso y rechaza un «Hasta» que no va después del «Desde», con el campo que falló.
 test('PBI-0244: config guarda los avisos con su «Desde» y su «Hasta» y rechaza un «Hasta» anterior', () => {
   const programado = {
     text: 'Black Friday',

@@ -17,7 +17,7 @@ import { conservarElStock } from './apoyo/pedidos';
 conservarElStock();
 
 /**
- * Lote 19 (ADR-0021, PBI-0006; provisional, por confirmar con Daniel): el superadministrador elige en «Entregas y
+ * Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): el superadministrador elige en «Entregas y
  * feriados» una dirección por pedido o una por producto, y el detalle del pedido muestra la dirección de cada producto
  * que va a otra. Las pruebas que cambian la configuración la dejan como estaba en un `finally`.
  */

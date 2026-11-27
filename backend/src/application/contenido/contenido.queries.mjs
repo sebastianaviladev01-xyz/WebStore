@@ -34,10 +34,10 @@ const bannerToPublic = (banner) => ({
 /**
  * Contenido público de la tienda: configuración del CMS y campañas. `now` es el reloj (inyectable en las pruebas).
  *
- * Lote 30 (ADR-0027, PBI-0244; provisional): los ajustes públicos solo traen los avisos vigentes en el instante de cada
- * lectura. Filtra el BFF, no la tienda: así la tienda no recibe avisos futuros y un aviso aparece y desaparece sin
- * guardar ni redesplegar, porque las respuestas JSON no se guardan en caché (`no-store`). El snapshot del Admin trae
- * todos los avisos.
+ * Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): los ajustes públicos solo traen los avisos vigentes en
+ * el instante de cada lectura. Filtra el BFF, no la tienda: así la tienda no recibe avisos futuros y un aviso aparece y
+ * desaparece sin guardar ni redesplegar, porque las respuestas JSON no se guardan en caché (`no-store`). El snapshot
+ * del Admin trae todos los avisos.
  */
 export function createContenidoQueries({ store, now = () => new Date() }) {
   return {

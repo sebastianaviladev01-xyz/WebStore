@@ -1,5 +1,5 @@
 /**
- * Primera fecha de entrega (lote 17, ADR-0021, PBI-0178; provisional, por confirmar con Daniel): la tienda elige el
+ * Primera fecha de entrega (lote 17, ADR-0021, PBI-0178; confirmado por Sebastián Avila): la tienda elige el
  * mismo día, el día calendario siguiente o el siguiente día hábil, con una hora de corte opcional en hora de Lima. Por
  * defecto, el día calendario siguiente sin hora de corte. Los instantes se fijan en UTC: Lima es UTC−5 todo el año.
  */

@@ -5,7 +5,7 @@ import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 import { cargarImagenPrincipal, pngDeColor } from './apoyo/fotos';
 
 /**
- * Lote 24 (ADR-0025 y ADR-0026; provisional, por confirmar con Daniel).
+ * Lote 24 (ADR-0025 y ADR-0026; confirmado por Sebastián Avila).
  *
  * - PBI-0214: la imagen principal del producto y las del banner se cargan como archivo, no como URL. Con un solo
  *   archivo, el Admin genera la imagen de la ficha y la miniatura de los listados; el BFF las guarda y la tienda las

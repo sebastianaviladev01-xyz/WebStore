@@ -5,9 +5,9 @@ import ts from 'typescript';
 
 // Lote 06 (ADR-0017), PBI-0128: la vigencia de un banner es en hora de Lima, el fin no va antes del inicio y el tope
 // de tres banners principales activos solo cuenta los que coinciden en fechas con el que se guarda. Lote 24 (ADR-0025,
-// PBI-0221; provisional): la vigencia lleva fecha y hora. El formulario las muestra y las recibe en hora de Lima
-// (`AAAA-MM-DDTHH:mm`, el valor de un `datetime-local`), y se guardan como instantes con `-05:00`: el inicio al empezar
-// el minuto y el fin al terminarlo, así que 00:00 y 23:59 son el día completo de antes.
+// PBI-0221; confirmado por Sebastián Avila): la vigencia lleva fecha y hora. El formulario las muestra y las recibe en
+// hora de Lima (`AAAA-MM-DDTHH:mm`, el valor de un `datetime-local`), y se guardan como instantes con `-05:00`: el
+// inicio al empezar el minuto y el fin al terminarlo, así que 00:00 y 23:59 son el día completo de antes.
 const source = await readFile(new URL('./banner.rules.ts', import.meta.url), 'utf8');
 const moduleSource = ts.transpileModule(source.replace(/^import [\s\S]*?;$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
@@ -98,8 +98,8 @@ test('PBI-0221: con hora, dos banners del mismo día que no se cruzan no cuentan
   assert.equal(heroesQueCoinciden(banners, { ...tarde, startAt: '2026-12-10T11:59' }), 1);
 });
 
-// Lote 12 (ADR-0021), PBI-0184 (provisional): cada botón del banner va completo (texto y enlace) o vacío, y el texto
-// admite hasta 40 caracteres, como valida el BFF.
+// Lote 12 (ADR-0021), PBI-0184 (confirmado por Sebastián Avila): cada botón del banner va completo (texto y enlace) o
+// vacío, y el texto admite hasta 40 caracteres, como valida el BFF.
 const { errorDeBoton, MAXIMO_TEXTO_DE_BOTON } = await import(
   `data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`
 );

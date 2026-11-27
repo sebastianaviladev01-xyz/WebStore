@@ -14,9 +14,9 @@ import { Producto } from '../../catalogo/domain/producto.model';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
 /**
- * Carrusel de los productos destacados del inicio (lote 22, ADR-0025, PBI-0215; provisional, por confirmar con
- * Daniel): con más de cuatro destacados, una fila que se desplaza con «Anterior» y «Siguiente», de a una página (cuatro
- * en escritorio, dos en tablet). En el celular sigue siendo la fila que se desliza con el dedo, como la cuadrícula.
+ * Carrusel de los productos destacados del inicio (lote 22, ADR-0025, PBI-0215; confirmado por Sebastián Avila): con
+ * más de cuatro destacados, una fila que se desplaza con «Anterior» y «Siguiente», de a una página (cuatro en
+ * escritorio, dos en tablet). En el celular sigue siendo la fila que se desliza con el dedo, como la cuadrícula.
  *
  * Accesibilidad: los botones tienen nombre, no se desactivan con `disabled` (el foco se quedaría sin lugar al llegar
  * al final), sino con `aria-disabled`; el foco no se mueve al desplazar; con movimiento reducido el salto es inmediato;

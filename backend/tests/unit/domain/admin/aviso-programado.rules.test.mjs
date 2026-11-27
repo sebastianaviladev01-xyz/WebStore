@@ -1,5 +1,5 @@
 /**
- * Avisos programados de la barra superior (lote 30, ADR-0027, PBI-0244; provisional, por confirmar con Daniel): cada
+ * Avisos programados de la barra superior (lote 30, ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada
  * aviso lleva un «Desde» (`startAt`) y un «Hasta» (`endAt`) opcionales. La regla recibe el instante: no lee el reloj del
  * sistema (la lección de PBI-0245). Los extremos cuentan, como en los banners (PBI-0221). Un aviso sin fechas está
  * siempre vigente, como antes del lote.

@@ -2,7 +2,7 @@
  * Permisos de los roles en el guardado y la lectura del snapshot del Admin (lote 07, ADR-0017, PBI-0013; confirmados
  * por Daniel el 2026-11-18), con un almacén en memoria. El BFF es la autoridad: el Admin solo oculta.
  * - El vendedor crea productos y modifica todos sus campos, sobre cualquier producto; no los elimina. Desde el lote 11
- *   (ADR-0021, PBI-0170; provisional) gestiona el inventario y ve los pedidos sin cambiar su estado.
+ *   (ADR-0021, PBI-0170; confirmado por Sebastián Avila) gestiona el inventario y ve los pedidos sin cambiar su estado.
  * - Contenido es solo del superadministrador; banners y tarifas siguen con el administrador.
  * - El administrador ve y gestiona solo a los vendedores (crear, editar, activar y desactivar), sin eliminarlos ni
  *   asignar otro rol. El superadministrador gestiona a todos.

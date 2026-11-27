@@ -18,7 +18,7 @@ import { conservarElStock } from './apoyo/pedidos';
 conservarElStock();
 
 /**
- * Lote 17 (ADR-0021; provisional, por confirmar con Daniel): «Entregas y feriados» del superadministrador, con la
+ * Lote 17 (ADR-0021; confirmado por Sebastián Avila): «Entregas y feriados» del superadministrador, con la
  * primera fecha de entrega (PBI-0178) y los días no laborables (PBI-0183); la versión de los términos aceptada en el
  * detalle del pedido y la vigente en Contenido (PBI-0177). Las pruebas que cambian datos los dejan como estaban en un
  * `finally`: las suites van en serie.

@@ -1,8 +1,9 @@
 /**
- * Botones del banner en el guardado del Admin (lote 12, ADR-0021, PBI-0184; provisional): cada banner lleva hasta dos
- * botones opcionales, el principal (`cta` y `ctaUrl`) y el secundario (`secondaryCta` y `secondaryCtaUrl`). Un botón
- * con texto necesita su enlace y uno con enlace necesita su texto; el texto admite hasta `MAXIMO_TEXTO_DE_BOTON`
- * caracteres. Un banner guardado antes con un botón a medias sigue valiendo mientras ese botón no cambie.
+ * Botones del banner en el guardado del Admin (lote 12, ADR-0021, PBI-0184; confirmado por Sebastián Avila): cada
+ * banner lleva hasta dos botones opcionales, el principal (`cta` y `ctaUrl`) y el secundario (`secondaryCta` y
+ * `secondaryCtaUrl`). Un botón con texto necesita su enlace y uno con enlace necesita su texto; el texto admite hasta
+ * `MAXIMO_TEXTO_DE_BOTON` caracteres. Un banner guardado antes con un botón a medias sigue valiendo mientras ese botón
+ * no cambie.
  *
  * Lote 46 (ADR-0033, PBI-0266): cada botón elige su estilo entre los cuatro del tema, `ctaStyle` el primero y
  * `secondaryCtaStyle` el segundo: `primary` («Principal»), `accent` («Secundario»), `contrast` («Contraste») y

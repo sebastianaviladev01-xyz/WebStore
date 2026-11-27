@@ -1,8 +1,8 @@
 /**
- * Calendario de días no laborables de la tienda (feriados). Desde el lote 17 (ADR-0021, PBI-0183; provisional, por
- * confirmar con Daniel) es una lista del estado del BFF, `[{ id, date, name }]`, que edita el superadministrador desde
- * el Admin. `WEBSTORE_NON_WORKING_DATES` solo da el valor inicial cuando el estado no tiene lista. La usan el plazo de
- * los reclamos y la primera fecha de entrega.
+ * Calendario de días no laborables de la tienda (feriados). Desde el lote 17 (ADR-0021, PBI-0183; confirmado por
+ * Sebastián Avila) es una lista del estado del BFF, `[{ id, date, name }]`, que edita el superadministrador desde el
+ * Admin. `WEBSTORE_NON_WORKING_DATES` solo da el valor inicial cuando el estado no tiene lista. La usan el plazo de los
+ * reclamos y la primera fecha de entrega.
  */
 
 const FECHA_ISO = /^(\d{4})-(\d{2})-(\d{2})$/;

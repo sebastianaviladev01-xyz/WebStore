@@ -1,5 +1,5 @@
 /**
- * Normalización del estado en el lote 17 (ADR-0021; provisional, por confirmar con Daniel), sin disco ni red y sin
+ * Normalización del estado en el lote 17 (ADR-0021; confirmado por Sebastián Avila), sin disco ni red y sin
  * cambiar `schemaVersion`:
  *
  * - PBI-0183: sin `nonWorkingDates`, el estado toma las fechas de `WEBSTORE_NON_WORKING_DATES` como valor inicial; con

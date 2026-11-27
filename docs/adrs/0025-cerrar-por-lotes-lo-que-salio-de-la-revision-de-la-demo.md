@@ -102,3 +102,5 @@ Los registros quedaron al día en el lote 26: el [backlog](../planning/backlog.m
 - **Lo que ya estaba fuera:** terceros, una persona y el backend de producción, como al [cerrar ADR-0021](0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md#cierre).
 
 Falta informar a Daniel Avila, como decía la aprobación. No queda ninguna excepción vigente: esta termina al fusionar el [PR #86](https://github.com/sebastianaviladev01-xyz/WebStore/pull/86), el último, y desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel las decisiones provisionales de los lotes 21 a 27, también PBI-0211 y PBI-0217: se queda lo construido ([decisiones pendientes](../planning/PENDING-DECISIONS.md), filas «Revisión de la demo»).

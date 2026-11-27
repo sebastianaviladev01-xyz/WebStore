@@ -93,7 +93,7 @@ import { IconoDirective } from '../../../shared/ui/icono.directive';
           <mat-label>SKU</mat-label>
           <input matInput formControlName="sku" />
         </mat-form-field>
-        <!-- Lote 29 (ADR-0027, PBI-0238; provisional): la categoría se elige con búsqueda en todos los niveles del árbol. -->
+        <!-- Lote 29 (ADR-0027, PBI-0238; confirmado por Sebastián Avila): la categoría se elige con búsqueda en todos los niveles del árbol. -->
         <ws-admin-selector-categoria
           [control]="borrador.controls.categoriaId"
           [categorias]="admin.categories()"

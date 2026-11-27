@@ -1,5 +1,5 @@
 /**
- * Lote 17 (ADR-0021; provisional, por confirmar con Daniel), con un almacén en memoria y el reloj fijo:
+ * Lote 17 (ADR-0021; confirmado por Sebastián Avila), con un almacén en memoria y el reloj fijo:
  *
  * - PBI-0178: la primera fecha de entrega sale de la configuración de la tienda y de los días no laborables; el
  *   checkout y el cambio de fecha del pedido rechazan una anterior, y la tienda la consulta.

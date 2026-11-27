@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-// Lote 30 (ADR-0027, PBI-0244; provisional, por confirmar con Daniel): cada aviso de la barra superior lleva un
+// Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada aviso de la barra superior lleva un
 // «Desde» y un «Hasta» opcionales, con fecha y hora de Lima. El formulario los muestra y los recibe como el valor de un
 // `datetime-local` (`AAAA-MM-DDTHH:mm`) y se guardan como instantes con `-05:00`, como la vigencia de los banners: el
 // «Desde» al empezar el minuto y el «Hasta» al terminarlo. Contenido marca cada aviso como programado, vigente o

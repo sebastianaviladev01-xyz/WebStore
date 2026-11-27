@@ -55,12 +55,12 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
 /**
  * Interfaz de registro de un banner (lote 21, ADR-0025, PBI-0211): `/banners/nuevo` y `/banners/:id`. Tiene más de
  * tres campos, así que tiene su propia página, como «Nuevo producto». Desde el lote 24 (PBI-0214 y PBI-0221;
- * provisional), las imágenes se cargan como archivo, el tono de los controles del carrusel se calcula al cargar la de
- * escritorio, los campos tienen nombres y ayudas claras y la vigencia lleva fecha y hora de Lima. Al editar trae los
- * datos actuales con `refresh()`; con «Guardar», «Cancelar» y «Regresar» vuelve al listado con sus filtros y su página
- * (`queryParamsHandling: 'preserve'`). Desde el lote 44 (ADR-0033, PBI-0268) tiene la forma de los formularios del SGC:
- * secciones «Datos generales», «Botones», «Imágenes» y «Vigencia», el estado en la fila de cabecera, el contador bajo el
- * texto de cada botón y, al crear, «Guardar y continuar».
+ * confirmado por Sebastián Avila), las imágenes se cargan como archivo, el tono de los controles del carrusel se
+ * calcula al cargar la de escritorio, los campos tienen nombres y ayudas claras y la vigencia lleva fecha y hora de
+ * Lima. Al editar trae los datos actuales con `refresh()`; con «Guardar», «Cancelar» y «Regresar» vuelve al listado con
+ * sus filtros y su página (`queryParamsHandling: 'preserve'`). Desde el lote 44 (ADR-0033, PBI-0268) tiene la forma de
+ * los formularios del SGC: secciones «Datos generales», «Botones», «Imágenes» y «Vigencia», el estado en la fila de
+ * cabecera, el contador bajo el texto de cada botón y, al crear, «Guardar y continuar».
  */
 @Component({
   selector: 'ws-banner-form-page',
@@ -203,8 +203,8 @@ type ImagenDelBanner = 'imageUrl' | 'mobileImageUrl';
             }
           </ws-admin-seccion-registro>
           <!--
-            Lote 24 (ADR-0026, PBI-0214; provisional): las imágenes se cargan como archivo, ya no como URL. Una guardada
-            antes se ve y se conserva hasta que se reemplace.
+            Lote 24 (ADR-0026, PBI-0214; confirmado por Sebastián Avila): las imágenes se cargan como archivo, ya no
+            como URL. Una guardada antes se ve y se conserva hasta que se reemplace.
           -->
           <ws-admin-seccion-registro titulo="Imágenes" icono="banners">
             @for (imagen of imagenes; track imagen.campo) {
@@ -409,9 +409,9 @@ export class RegistroBannerPage {
     outline: { fondo: 'transparent', borde: 'var(--ws-link)' },
   };
   /**
-   * Las dos imágenes del banner (lote 24, ADR-0026, PBI-0214; provisional), con el lado y el peso máximos que acepta el
-   * BFF. Solo la de escritorio da el tono de los controles del carrusel (PBI-0221): en el celular, los controles van
-   * sobre el fondo del texto, no sobre la foto.
+   * Las dos imágenes del banner (lote 24, ADR-0026, PBI-0214; confirmado por Sebastián Avila), con el lado y el peso
+   * máximos que acepta el BFF. Solo la de escritorio da el tono de los controles del carrusel (PBI-0221): en el
+   * celular, los controles van sobre el fondo del texto, no sobre la foto.
    */
   protected readonly imagenes = [
     {

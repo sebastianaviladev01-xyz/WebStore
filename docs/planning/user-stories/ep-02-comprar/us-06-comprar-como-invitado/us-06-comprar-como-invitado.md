@@ -65,7 +65,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador abre el checkout o elige una fecha anterior
 - **Entonces** el campo propone la primera fecha permitida y no acepta una anterior; el BFF la vuelve a validar sin contar sábados, domingos ni días no laborables cuando la regla es de días hábiles.
 
-> Añadido el 2026-11-23 por el lote 17 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0178; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-carrito-checkout.spec.ts` y `admin-entregas-y-feriados.spec.ts`.
+> Añadido el 2026-11-23 por el lote 17 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0178; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/storefront-carrito-checkout.spec.ts` y `admin-entregas-y-feriados.spec.ts`.
 
 ### Escenario 09 – Versión de los términos
 
@@ -73,7 +73,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** finaliza la compra
 - **Entonces** el pedido guarda la versión aceptada y la fecha y hora con segundos; si los términos cambiaron mientras compraba, la tienda avisa, desmarca la casilla y pide aceptarlos otra vez.
 
-> Añadido el 2026-11-23 por el lote 17 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0177; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-checkout.spec.ts`.
+> Añadido el 2026-11-23 por el lote 17 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0177; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-checkout.spec.ts`.
 
 ### Escenario 10 – «Finalizar compra» al final
 
@@ -81,7 +81,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** llena sus datos, la entrega y el pago
 - **Entonces** la casilla de términos y «Finalizar compra» quedan al final, después del método de pago; en el celular, después del resumen con el total.
 
-> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0190; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-checkout.spec.ts`.
+> Añadido el 2026-11-23 por el lote 16 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0190; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-checkout.spec.ts`.
 
 ### Escenario 11 – Una dirección por producto
 
@@ -89,7 +89,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador envía algún producto a otra dirección
 - **Entonces** el envío se cobra una vez por cada dirección distinta y el resumen lo desglosa; el pedido guarda la dirección de cada línea. Si una dirección de línea no es válida, el campo de esa línea se marca. Con una dirección por pedido, el checkout es el de siempre.
 
-> Añadido el 2026-11-23 por el lote 19 y el 18 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0006 y PBI-0209; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-direcciones-por-producto.spec.ts`.
+> Añadido el 2026-11-23 por el lote 19 y el 18 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0006 y PBI-0209; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-direcciones-por-producto.spec.ts`.
 
 ## Fuera de alcance y pendientes
 

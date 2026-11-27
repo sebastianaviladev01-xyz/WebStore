@@ -1,7 +1,7 @@
 /**
- * Comparador de productos (lote 19, ADR-0021, PBI-0001; provisional, por confirmar con Daniel, que lo había dejado
- * «más adelante»). La lista se guarda solo en memoria y en la URL (`/comparar?ids=…`), porque STD-08 no permite más
- * datos en el navegador que el carrito y la sesión.
+ * Comparador de productos (lote 19, ADR-0021, PBI-0001; confirmado por Sebastián Avila; Daniel lo había
+ * dejado «más adelante»). La lista se guarda solo en memoria y en la URL (`/comparar?ids=…`), porque STD-08 no permite
+ * más datos en el navegador que el carrito y la sesión.
  *
  * - Hasta 4 productos, sin repetidos; al pasar el máximo no se agrega y se avisa.
  * - La URL se lee con tolerancia: espacios, vacíos y repetidos fuera, y solo los 4 primeros.

@@ -135,3 +135,5 @@ Los registros quedaron al día en el lote 18: el [backlog](../planning/backlog.m
 - **Sebastián Avila y Daniel Avila:** confirmar [ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md), que dejó en inglés el vocabulario interno y el contrato (PBI-0022) por delegación.
 
 Falta informar a Daniel Avila, como decía la aprobación. La excepción termina al fusionar el PR de este cierre: desde entonces rige [ADR-0016](0016-volver-a-un-pull-request-por-hito.md) sin excepción.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel las decisiones provisionales de los lotes 11 a 20 y [ADR-0024](0024-dejar-en-ingles-el-vocabulario-interno-y-el-contrato.md): se queda lo construido ([decisiones pendientes](../planning/PENDING-DECISIONS.md)).

@@ -1,8 +1,9 @@
 /**
- * Formato y medidas de una imagen leídos de sus primeros bytes (lote 11, ADR-0021, PBI-0176; provisional). Daniel pidió
- * que el backend guarde la imagen de la categoría en una sola versión de 100 × 100 px. El BFF de prueba no tiene
- * dependencias y no decodifica ni redimensiona imágenes: el Admin genera esa versión y el BFF comprueba aquí que es de
- * verdad un PNG, un JPEG o un WebP de esas medidas (el contrato lo declara como límite del BFF de prueba).
+ * Formato y medidas de una imagen leídos de sus primeros bytes (lote 11, ADR-0021, PBI-0176; confirmado por Sebastián
+ * Avila). Daniel pidió que el backend guarde la imagen de la categoría en una sola versión de 100 × 100 px. El BFF de
+ * prueba no tiene dependencias y no decodifica ni redimensiona imágenes: el Admin genera esa versión y el BFF comprueba
+ * aquí que es de verdad un PNG, un JPEG o un WebP de esas medidas (el contrato lo declara como límite del BFF de
+ * prueba).
  */
 
 /** Lado de la única versión que se guarda de la imagen de la categoría. */
@@ -86,10 +87,10 @@ export function leerImagen(valor) {
 }
 
 /**
- * Imágenes del producto y del banner cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; provisional). El
- * backoffice genera cada versión y el BFF de prueba, sin dependencias, solo comprueba en los bytes el formato, el lado
- * mayor y el peso (en caracteres de la Data URL; el archivo pesa unas tres cuartas partes). La imagen principal del
- * producto es la de la ficha y la miniatura, su reducción, la de los listados.
+ * Imágenes del producto y del banner cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; confirmado por
+ * Sebastián Avila). El backoffice genera cada versión y el BFF de prueba, sin dependencias, solo comprueba en los bytes
+ * el formato, el lado mayor y el peso (en caracteres de la Data URL; el archivo pesa unas tres cuartas partes). La
+ * imagen principal del producto es la de la ficha y la miniatura, su reducción, la de los listados.
  */
 export const LADO_IMAGEN_DE_PRODUCTO = 1600;
 export const MAX_IMAGEN_DE_PRODUCTO = 250 * 1024;

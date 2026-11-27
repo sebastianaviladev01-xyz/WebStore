@@ -1,7 +1,7 @@
 /**
- * Lote 24 (ADR-0026, PBI-0214; provisional): la imagen principal y la miniatura de un producto cargadas en el Admin se
- * guardan y la tienda las pide por `GET /bff/images/{collection}/{id}/{field}`, con su tipo y una caché larga cuando la
- * dirección lleva la versión vigente. Una URL nueva en lugar de la imagen se rechaza.
+ * Lote 24 (ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen principal y la miniatura de un producto
+ * cargadas en el Admin se guardan y la tienda las pide por `GET /bff/images/{collection}/{id}/{field}`, con su tipo y
+ * una caché larga cuando la dirección lleva la versión vigente. Una URL nueva en lugar de la imagen se rechaza.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

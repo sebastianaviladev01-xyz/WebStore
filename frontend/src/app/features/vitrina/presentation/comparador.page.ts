@@ -23,9 +23,10 @@ import { EmptyStateComponent } from '../../../shared/ui/empty-state.component';
 import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 
 /**
- * `/comparar` (lote 19, ADR-0021, PBI-0001; provisional): hasta 4 productos lado a lado, con imagen, nombre, marca,
- * categoría, precio, disponibilidad y características, y «Agregar al carrito» y «Quitar» en cada uno. La lista está en
- * la URL (`?ids=p-001,p-004`) para compartirla; en el celular, la tabla se desliza de lado con la primera columna fija.
+ * `/comparar` (lote 19, ADR-0021, PBI-0001; confirmado por Sebastián Avila): hasta 4 productos lado a lado, con imagen,
+ * nombre, marca, categoría, precio, disponibilidad y características, y «Agregar al carrito» y «Quitar» en cada uno. La
+ * lista está en la URL (`?ids=p-001,p-004`) para compartirla; en el celular, la tabla se desliza de lado con la primera
+ * columna fija.
  */
 @Component({
   selector: 'ws-compare-page',

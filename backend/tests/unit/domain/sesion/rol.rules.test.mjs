@@ -42,7 +42,8 @@ const OPERACION = [
 const TABLA = {
   superadmin: [...OPERACION, 'users.delete', 'content.manage', 'store.reset', 'themes.manage'],
   admin: OPERACION,
-  // PBI-0170 (lote 11, ADR-0021; provisional): el vendedor gestiona Inventario y ve Pedidos sin cambiar su estado.
+  // PBI-0170 (lote 11, ADR-0021; confirmado por Sebastián Avila): el vendedor gestiona Inventario y ve Pedidos sin
+  // cambiar su estado.
   vendedor: ['dashboard.view', 'products.edit', 'products.manage', 'inventory.manage', 'orders.view'],
 };
 

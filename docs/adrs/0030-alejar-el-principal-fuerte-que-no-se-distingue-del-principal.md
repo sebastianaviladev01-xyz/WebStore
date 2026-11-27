@@ -3,7 +3,7 @@
 - Estado: Aceptada
 - Fecha: 2026-11-25
 
-Decidida en el lote 34 de [ADR-0029](0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md) (PBI-0247), con su decisión provisional de partida. Queda «Provisional, por confirmar con Daniel». Amplía la derivación del principal fuerte de los temas propios ([ADR-0011](0011-guardar-los-temas-como-recurso-propio-del-bff.md), D2) con la regla del acento fuerte del lote 20 ([ADR-0023](0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md)), y cierra lo que [ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md) dejó fuera de alcance.
+Decidida en el lote 34 de [ADR-0029](0029-cerrar-por-lotes-los-hallazgos-de-los-lotes-28-a-31.md) (PBI-0247), con su decisión provisional de partida. Quedó «Provisional, por confirmar con Daniel» hasta el 2026-11-27, cuando Sebastián Avila la confirmó sin esperar a Daniel. Amplía la derivación del principal fuerte de los temas propios ([ADR-0011](0011-guardar-los-temas-como-recurso-propio-del-bff.md), D2) con la regla del acento fuerte del lote 20 ([ADR-0023](0023-dar-al-tema-un-borde-del-acento-y-un-acento-fuerte-legible.md)), y cierra lo que [ADR-0028](0028-hacer-visible-el-secundario-en-la-tienda-e-invertir-el-tema-c.md) dejó fuera de alcance.
 
 ## Contexto
 
@@ -41,3 +41,5 @@ Aplicar a todos los temas propios la regla del acento fuerte (que el puntero enc
 - La réplica del Admin (`tema.rules.ts`) repite la regla; `casos-tema.json` las compara (TEST-14).
 
 **Fuera de alcance:** Daniel puede pedir otra diferencia para el botón principal; las dos cifras son constantes de `tema.rules`.
+
+> Nota (2026-11-27): Sebastián Avila confirmó sin esperar a Daniel los dos umbrales (1.1:1 para detectar y 1.3:1 como objetivo) y que la franja superior y el texto sobre el tinte sigan con la mezcla derivada.

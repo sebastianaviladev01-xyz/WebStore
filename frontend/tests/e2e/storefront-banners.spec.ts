@@ -18,7 +18,7 @@ import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
  * Lote 12 (ADR-0021):
  * - PBI-0174: un enlace externo `https://…` o `http://…` se abre en otra pestaña, con `rel="noopener noreferrer"`;
  *   `mailto:` y las rutas de la tienda siguen en la misma.
- * - PBI-0184 (provisional): cada banner lleva hasta dos botones, el principal con la paleta primaria
+ * - PBI-0184 (confirmado por Sebastián Avila): cada banner lleva hasta dos botones, el principal con la paleta primaria
  *   (`--ws-primary` y `--ws-on-primary`) y el secundario con la secundaria (`--ws-accent` y `--ws-on-accent`), con el
  *   texto a 4.5:1 o más con A, B y C.
  */

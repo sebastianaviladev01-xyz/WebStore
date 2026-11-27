@@ -1,5 +1,5 @@
 /**
- * Errores de compra de la campana del Admin (lote 13, ADR-0021, PBI-0173; provisional, por confirmar con Daniel): los
+ * Errores de compra de la campana del Admin (lote 13, ADR-0021, PBI-0173; confirmado por Sebastián Avila): los
  * intentos de checkout que el BFF rechaza porque la tienda cambió bajo el comprador (total, stock, producto fuera de
  * venta o distrito sin tarifa). Se guardan sin datos del comprador ni del pago: el código, el instante y, si lo hay,
  * el producto del catálogo.

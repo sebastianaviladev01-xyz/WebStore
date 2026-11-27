@@ -33,7 +33,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** mira la lista o trabaja en una pantalla de menos de 1280 px
 - **Entonces** la lista marca el reclamo abierto (también para un lector de pantalla) y, en la pantalla angosta, la vista baja al detalle y el foco pasa a su título.
 
-> Añadido el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0223 y PBI-0232; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: reclamaciones»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-listados.spec.ts`. La gestión de reclamaciones se queda como estaba (lote 23).
+> Añadido el 2026-11-24 por el lote 25 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0223 y PBI-0232; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: reclamaciones»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-listados.spec.ts`. La gestión de reclamaciones se queda como estaba (lote 23).
 
 ## Fuera de alcance y pendientes
 

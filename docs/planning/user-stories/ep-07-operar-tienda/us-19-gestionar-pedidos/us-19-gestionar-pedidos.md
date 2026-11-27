@@ -61,7 +61,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** una persona del equipo abre la campana de la cabecera
 - **Entonces** ve los avisos que le corresponden por su rol (pedidos con `orders.view`, reclamos con `complaints.manage`, errores de compra con `orders.manage`), cada uno lleva a su página, y el número cuenta los que llegaron desde la última vez que la abrió.
 
-> Añadido el 2026-11-23 por el lote 13 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0173; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
+> Añadido el 2026-11-23 por el lote 13 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0173; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
 
 ### Escenario 08 – El vendedor ve los pedidos
 
@@ -69,4 +69,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** mira un pedido
 - **Entonces** ve su detalle, también la dirección de cada línea que va a otra, pero no puede cambiar su estado.
 
-> Añadido el 2026-11-23 por el lote 11 y el 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0170 y PBI-0006; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-permisos.spec.ts` y `admin-direcciones-por-producto.spec.ts`.
+> Añadido el 2026-11-23 por el lote 11 y el 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0170 y PBI-0006; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueban `frontend/tests/e2e/admin-permisos.spec.ts` y `admin-direcciones-por-producto.spec.ts`.

@@ -38,7 +38,7 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
 });
 
 /**
- * «Entregas y feriados» (lote 17, ADR-0021; provisional, por confirmar con Daniel), del superadministrador, como
+ * «Entregas y feriados» (lote 17, ADR-0021; confirmado por Sebastián Avila), del superadministrador, como
  * Contenido: la primera fecha de entrega que puede elegir el comprador (PBI-0178) y el calendario de días no laborables
  * (PBI-0183), que usan esa fecha con «el siguiente día hábil» y el plazo de los reclamos. Desde el lote 19 (PBI-0006),
  * también si el pedido lleva una sola dirección de entrega o una por producto. El BFF valida y decide.
@@ -115,7 +115,7 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
           </div>
         </form>
 
-        <!-- Lote 19 (ADR-0021, PBI-0006; provisional): una dirección por pedido o una por producto. -->
+        <!-- Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): una dirección por pedido o una por producto. -->
         <form
           [formGroup]="direcciones"
           (ngSubmit)="guardarDirecciones()"

@@ -80,7 +80,7 @@ El tema activo se guarda en el BFF y sigue activo tras reiniciarlo.
 
 ## 5. Calendario de días no laborables
 
-El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles, y la primera fecha de entrega puede ser «el siguiente día hábil». En los dos casos el BFF excluye sábados, domingos y los **días no laborables** de la tienda. Desde el lote 17 ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), PBI-0183; provisional, por confirmar con Daniel) se mantienen en el Admin, en **Tienda › Entregas y feriados**, que solo ve el superadministrador. El BFF los guarda en su archivo de estado.
+El plazo de respuesta del Libro de reclamaciones es de 15 días hábiles, y la primera fecha de entrega puede ser «el siguiente día hábil». En los dos casos el BFF excluye sábados, domingos y los **días no laborables** de la tienda. Desde el lote 17 ([ADR-0021](../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md), PBI-0183; confirmado por Sebastián Avila el 2026-11-27) se mantienen en el Admin, en **Tienda › Entregas y feriados**, que solo ve el superadministrador. El BFF los guarda en su archivo de estado.
 
 1. Cada año, antes de que empiece, entra al backoffice como superadministrador y abre «Entregas y feriados».
 2. En «Días no laborables», agrega cada feriado nacional de Perú del año, con su fecha y, si quieres, su nombre. De referencia: 1 de enero, Jueves y Viernes Santo (cambian cada año), 1 de mayo, 29 de junio, 28 y 29 de julio, 6 y 30 de agosto, 8 de octubre, 1 de noviembre, 8 y 9 de diciembre y 25 de diciembre. Confírmalos con el calendario oficial del año y añade los días no laborables que decrete el Gobierno (los «feriados puente») y los días en que la tienda no atiende.
@@ -98,7 +98,7 @@ Las fechas de ejemplo son de 2027 y hay que confirmarlas con el calendario ofici
 
 **Aviso de feriados:** si el calendario no tiene ninguna fecha del año en curso (Lima), el BFF escribe en su log «Aviso: el calendario de días no laborables no tiene ninguna fecha de AAAA…», con dónde completarlo en el backoffice, y sigue arrancando. Lo escribe al arrancar y otra vez cuando cambia el año de Lima con el BFF en marcha (se revisa cada hora), una sola vez por año. Si lo ves a comienzos de año, agrega los feriados de ese año.
 
-**Primera fecha de entrega:** en la misma página, «Primera fecha de entrega» elige desde cuándo puede pedir la entrega el comprador: el día calendario siguiente (por defecto), el siguiente día hábil o el mismo día, con una hora de corte opcional en hora de Lima (PBI-0178; provisional). Elige la que use la tienda antes de abrirla.
+**Primera fecha de entrega:** en la misma página, «Primera fecha de entrega» elige desde cuándo puede pedir la entrega el comprador: el día calendario siguiente (por defecto), el siguiente día hábil o el mismo día, con una hora de corte opcional en hora de Lima (PBI-0178; confirmado por Sebastián Avila el 2026-11-27). Elige la que use la tienda antes de abrirla.
 
 **Comprobación:** registra un reclamo de prueba en una copia de datos y revisa que `dueAt` salte los feriados de la lista; o arranca el BFF y comprueba que su log no trae el aviso.
 

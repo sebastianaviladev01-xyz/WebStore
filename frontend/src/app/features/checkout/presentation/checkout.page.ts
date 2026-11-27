@@ -258,8 +258,9 @@ function nuevaDireccionDeLinea(): DireccionDeLineaForm {
                 </p>
               }
               <!--
-                Lote 19 (ADR-0021, PBI-0006; provisional): con una dirección por producto, cada línea va a la dirección
-                de entrega o a otra. Con una por pedido (por defecto) no se muestra nada y el checkout es el de siempre.
+                Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): con una dirección por producto, cada línea
+                va a la dirección de entrega o a otra. Con una por pedido (por defecto) no se muestra nada y el checkout
+                es el de siempre.
               -->
               @if (lineasConDireccion().length) {
                 <div class="mt-6 grid gap-4">
@@ -419,9 +420,9 @@ function nuevaDireccionDeLinea(): DireccionDeLineaForm {
             <a routerLink="/carrito" class="ws-btn-secondary mt-6 w-full">Volver al carrito</a>
           </aside>
           <!--
-            Lote 16 (ADR-0021, PBI-0190; provisional): «Finalizar compra» es el último paso, después de los datos de pago
-            y de la casilla de términos. En escritorio va debajo de los pasos, con el resumen al lado; en el celular,
-            después del resumen, para que el total se vea antes de pagar.
+            Lote 16 (ADR-0021, PBI-0190; confirmado por Sebastián Avila): «Finalizar compra» es el último paso, después
+            de los datos de pago y de la casilla de términos. En escritorio va debajo de los pasos, con el resumen al
+            lado; en el celular, después del resumen, para que el total se vea antes de pagar.
           -->
           <div class="ws-checkout-confirm lg:col-start-1">
             @if (checkout.error()) {

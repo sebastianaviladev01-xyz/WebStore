@@ -6,7 +6,7 @@ import { can } from '../sesion/rol.rules.mjs';
  * (estado «confirmado») creados después de la última vez que la persona abrió el menú de la campana. «Visto» se guarda
  * por usuario en `adminNotificationsSeen` (`[{ userId, seenAt }]`).
  *
- * Lote 13 (ADR-0021, PBI-0173; provisional, por confirmar con Daniel): la campana avisa también de los reclamos nuevos
+ * Lote 13 (ADR-0021, PBI-0173; confirmado por Sebastián Avila): la campana avisa también de los reclamos nuevos
  * (estado «recibido», a quien gestiona Reclamaciones, `complaints.manage`) y de los errores de compra (a quien
  * gestiona los pedidos, `orders.manage`); los pedidos nuevos siguen siendo de quien los ve (`orders.view`). Un solo
  * «visto» por usuario para los tres tipos: el instante del aviso más reciente que vio.

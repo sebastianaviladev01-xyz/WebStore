@@ -90,10 +90,10 @@ const IMAGEN_DE_PRODUCTO = { lado: LADO_IMAGEN_DE_PRODUCTO, maximo: MAX_IMAGEN_D
 const MINIATURA_DE_PRODUCTO = { lado: LADO_MINIATURA_DE_PRODUCTO, maximo: MAX_MINIATURA_DE_PRODUCTO };
 
 /**
- * Lote 24 (ADR-0025 y ADR-0026, PBI-0214; provisional): la imagen principal y la miniatura se cargan como archivo. Una
- * imagen principal nueva o cambiada es un PNG, un JPEG o un WebP de hasta `LADO_IMAGEN_DE_PRODUCTO` px por lado, y
- * llega con su miniatura, la reducción a `LADO_MINIATURA_DE_PRODUCTO` px. Las que el producto ya tenía guardadas (rutas
- * de `assets/`, de antes del lote) siguen valiendo mientras no cambien.
+ * Lote 24 (ADR-0025 y ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen principal y la miniatura se cargan
+ * como archivo. Una imagen principal nueva o cambiada es un PNG, un JPEG o un WebP de hasta `LADO_IMAGEN_DE_PRODUCTO`
+ * px por lado, y llega con su miniatura, la reducción a `LADO_MINIATURA_DE_PRODUCTO` px. Las que el producto ya tenía
+ * guardadas (rutas de `assets/`, de antes del lote) siguen valiendo mientras no cambien.
  */
 function requireValidProductImages(product, anterior) {
   const imagenCambio = product.imageUrl !== anterior?.imageUrl;
@@ -120,10 +120,10 @@ function requireValidProductImages(product, anterior) {
 }
 
 /**
- * Lote 25 (ADR-0025 y ADR-0026; provisional): las fotos de la galería también se cargan como archivo, nunca como URL
- * (Daniel: «no adjuntas como URL»). Una foto nueva es un PNG, un JPEG o un WebP con el lado y el peso de la imagen
- * principal; las que el producto ya tenía en su galería (URL, rutas de `assets/` o Data URL de antes) siguen valiendo
- * mientras sigan en ella, aunque cambie el orden o se quiten otras.
+ * Lote 25 (ADR-0025 y ADR-0026; confirmado por Sebastián Avila): las fotos de la galería también se cargan como
+ * archivo, nunca como URL (Daniel: «no adjuntas como URL»). Una foto nueva es un PNG, un JPEG o un WebP con el lado y
+ * el peso de la imagen principal; las que el producto ya tenía en su galería (URL, rutas de `assets/` o Data URL de
+ * antes) siguen valiendo mientras sigan en ella, aunque cambie el orden o se quiten otras.
  */
 function requireValidGallery(product, anterior) {
   if (product.gallery === undefined) return;
@@ -182,9 +182,9 @@ export const MAX_IMAGEN_DE_CATEGORIA = 100_000;
 const IMAGEN_ANTERIOR = /^data:image\/(png|jpeg|webp|svg\+xml);base64,[A-Za-z0-9+/]+=*$/;
 
 /**
- * Lote 11 (ADR-0021, PBI-0176; provisional): una imagen nueva o cambiada es la única versión que se guarda, un PNG, un
- * JPEG o un WebP de 100 × 100 px (`leerImagen` comprueba el tipo y las medidas en sus bytes). La que la categoría ya
- * tenía guardada se acepta tal cual, para que una imagen del lote 07b no bloquee otros guardados.
+ * Lote 11 (ADR-0021, PBI-0176; confirmado por Sebastián Avila): una imagen nueva o cambiada es la única versión que se
+ * guarda, un PNG, un JPEG o un WebP de 100 × 100 px (`leerImagen` comprueba el tipo y las medidas en sus bytes). La que
+ * la categoría ya tenía guardada se acepta tal cual, para que una imagen del lote 07b no bloquee otros guardados.
  */
 function imagenDeCategoria(value, anterior) {
   if (value === null) return true;
@@ -376,9 +376,9 @@ const IMAGENES_DE_BANNER = [
 ];
 
 /**
- * Lote 24 (ADR-0025 y ADR-0026, PBI-0214; provisional): una imagen del banner nueva o cambiada se cargó como archivo
- * (PNG, JPEG o WebP dentro de su lado máximo y su peso); la del celular se puede quitar (`''`). Las que el banner ya
- * tenía guardadas (rutas de `assets/`) siguen valiendo mientras no cambien.
+ * Lote 24 (ADR-0025 y ADR-0026, PBI-0214; confirmado por Sebastián Avila): una imagen del banner nueva o cambiada se
+ * cargó como archivo (PNG, JPEG o WebP dentro de su lado máximo y su peso); la del celular se puede quitar (`''`). Las
+ * que el banner ya tenía guardadas (rutas de `assets/`) siguen valiendo mientras no cambien.
  */
 function requireValidBannerImages(banner, previous) {
   const anterior = previous.find((item) => item?.id === banner.id);
@@ -391,10 +391,10 @@ function requireValidBannerImages(banner, previous) {
 }
 
 /**
- * Lote 24 (ADR-0025, PBI-0221; provisional): un inicio o un fin nuevos o cambiados son instantes con hora y zona
- * (`Z` o `±hh:mm`), como los envía el backoffice en hora de Lima. Lote 33 (ADR-0029, PBI-0246): además su fecha existe
- * en el calendario, con la misma comprobación que los avisos (`esInstanteConZona`). Una vigencia guardada antes que no
- * cambia sigue valiendo, para no bloquear otros guardados.
+ * Lote 24 (ADR-0025, PBI-0221; confirmado por Sebastián Avila): un inicio o un fin nuevos o cambiados son instantes con
+ * hora y zona (`Z` o `±hh:mm`), como los envía el backoffice en hora de Lima. Lote 33 (ADR-0029, PBI-0246): además su
+ * fecha existe en el calendario, con la misma comprobación que los avisos (`esInstanteConZona`). Una vigencia guardada
+ * antes que no cambia sigue valiendo, para no bloquear otros guardados.
  */
 function requireValidBannerSchedule(banner, previous) {
   const anterior = previous.find((item) => item?.id === banner.id);
@@ -470,9 +470,9 @@ export const MAXIMO_DIAS_NO_LABORABLES = 400;
 const fechaVisible = (fecha) => fecha.split('-').reverse().join('/');
 
 /**
- * Días no laborables (lote 17, ADR-0021, PBI-0183; provisional): `date` es una fecha `AAAA-MM-DD` que existe, sin
- * repetir; `name`, opcional, texto de hasta 60 caracteres. Devuelve la lista con el nombre recortado, solo los campos
- * conocidos y ordenada por fecha.
+ * Días no laborables (lote 17, ADR-0021, PBI-0183; confirmado por Sebastián Avila): `date` es una fecha `AAAA-MM-DD`
+ * que existe, sin repetir; `name`, opcional, texto de hasta 60 caracteres. Devuelve la lista con el nombre recortado,
+ * solo los campos conocidos y ordenada por fecha.
  */
 export function requireValidNonWorkingDates(dias) {
   requireItems(dias, 'nonWorkingDates');

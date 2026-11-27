@@ -1,5 +1,5 @@
 /**
- * Comparador de productos (lote 19, ADR-0021, PBI-0001; provisional, por confirmar con Daniel). La lista son ids de
+ * Comparador de productos (lote 19, ADR-0021, PBI-0001; confirmado por Sebastián Avila). La lista son ids de
  * productos, sin repetidos y en el orden en que se agregaron. Vive en memoria y en la URL (`/comparar?ids=…`, para
  * compartirla): STD-08 no permite guardar en el navegador más que el carrito y la sesión.
  */

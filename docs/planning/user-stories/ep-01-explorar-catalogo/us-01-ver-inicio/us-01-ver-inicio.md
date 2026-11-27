@@ -33,7 +33,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador lo ve
 - **Entonces** el principal usa el color principal del tema y el secundario, el secundario; un enlace externo se abre en otra pestaña y lo anuncia a los lectores de pantalla.
 
-> Añadido el 2026-11-23 por el lote 12 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0184 y PBI-0174; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-banners.spec.ts`.
+> Añadido el 2026-11-23 por el lote 12 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0184 y PBI-0174; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-banners.spec.ts`.
 
 ### Escenario 04 – Avisos para los clientes
 
@@ -41,7 +41,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador abre la tienda
 - **Entonces** ve los avisos sobre la cabecera, cada uno con su enlace si lo tiene; si hay varios, rotan y se pueden pausar.
 
-> Añadido el 2026-11-23 por el lote 15 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0175; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-contenido.spec.ts`.
+> Añadido el 2026-11-23 por el lote 15 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0175; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-contenido.spec.ts`.
 
 ### Escenario 05 – Imagen en «Compra por categoría»
 
@@ -49,7 +49,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador ve «Compra por categoría» en el inicio
 - **Entonces** la tarjeta de esa categoría muestra su imagen; sin imagen, se ve como antes.
 
-> Añadido el 2026-11-23 por el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0162; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-categoria-imagen.spec.ts`.
+> Añadido el 2026-11-23 por el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0162; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-categoria-imagen.spec.ts`.
 
 ### Escenario 06 – Productos destacados
 
@@ -57,7 +57,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador abre el inicio
 - **Entonces** ve todos los destacados que tienen stock; si son más de cuatro, en un carrusel que se recorre con botones con nombre y respeta el movimiento reducido; si no hay ninguno con stock, la sección no sale.
 
-> Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0215; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueban `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts` y `destacados.rules.spec.mjs`. Los datos de ejemplo marcan los cuatro de siempre, así que la demo se ve igual.
+> Añadido el 2026-11-24 por el lote 22 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0215; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: destacados, categorías, imágenes y listado»), sin especificación propia: lo prueban `frontend/tests/e2e/admin-destacados-y-categorias.spec.ts` y `destacados.rules.spec.mjs`. Los datos de ejemplo marcan los cuatro de siempre, así que la demo se ve igual.
 
 ### Escenario 07 – Avisos programados
 
@@ -65,7 +65,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** el comprador abre la tienda
 - **Entonces** solo ve el aviso entre esas fechas; si pasa su «Hasta» con la página abierta, el aviso desaparece sin recargar.
 
-> Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-contenido.spec.ts`, con el reloj simulado. Un aviso sin fechas se ve siempre, como en el escenario 04.
+> Añadido el 2026-11-24 por el lote 30 ([ADR-0027](../../../../adrs/0027-cerrar-por-lotes-lo-que-salio-de-la-reunion-del-2026-11-20.md); PBI-0244; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Reunión del 2026-11-20: avisos programados»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-contenido.spec.ts`, con el reloj simulado. Un aviso sin fechas se ve siempre, como en el escenario 04.
 
 ## Fuera de alcance y pendientes
 

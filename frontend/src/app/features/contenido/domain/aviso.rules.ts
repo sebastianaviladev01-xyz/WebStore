@@ -1,9 +1,9 @@
 import type { AvisoTienda } from './contenido.model';
 
 /**
- * Avisos de la barra superior (lote 15, ADR-0021; PBI-0175, provisional): la «Navegación superior» de Contenido pasa
- * a ser una lista de avisos generales para los clientes (mantenimiento, próximas ofertas…), cada uno con su texto y un
- * enlace opcional. Sustituye la deducción del destino a partir de las palabras (PBI-0118 y PBI-0153).
+ * Avisos de la barra superior (lote 15, ADR-0021; PBI-0175, confirmado por Sebastián Avila): la «Navegación superior»
+ * de Contenido pasa a ser una lista de avisos generales para los clientes (mantenimiento, próximas ofertas…), cada uno
+ * con su texto y un enlace opcional. Sustituye la deducción del destino a partir de las palabras (PBI-0118 y PBI-0153).
  */
 
 /** Cada cuánto pasa al siguiente aviso, si hay varios: más de 5 s y con pausa (WCAG 2.2.2). */
@@ -50,10 +50,10 @@ export function avisosVisibles(avisos: readonly AvisoTienda[] | unknown): readon
 }
 
 /**
- * Los avisos que no vencieron en el instante dado (lote 30, ADR-0027, PBI-0244; provisional). El BFF solo envía los
- * vigentes; con la página abierta, la barra quita el que pasa su «Hasta» (el extremo cuenta). No filtra por el «Desde»:
- * un aviso programado llega al recargar o al volver a la pestaña, y así un reloj del equipo atrasado no oculta uno que
- * el BFF ya publicó. La regla recibe el instante: no lee el reloj.
+ * Los avisos que no vencieron en el instante dado (lote 30, ADR-0027, PBI-0244; confirmado por Sebastián Avila). El BFF
+ * solo envía los vigentes; con la página abierta, la barra quita el que pasa su «Hasta» (el extremo cuenta). No filtra
+ * por el «Desde»: un aviso programado llega al recargar o al volver a la pestaña, y así un reloj del equipo atrasado no
+ * oculta uno que el BFF ya publicó. La regla recibe el instante: no lee el reloj.
  */
 export function avisosSinVencer(avisos: readonly AvisoVisible[], instante: number): readonly AvisoVisible[] {
   return avisos.filter((aviso) => aviso.hasta === null || aviso.hasta >= instante);

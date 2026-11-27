@@ -67,11 +67,11 @@ export async function reducirFoto(
 }
 
 /**
- * Versión única de la imagen de una categoría (lote 11, ADR-0021, PBI-0176; provisional): un cuadrado de
- * `LADO_IMAGEN_CATEGORIA` px con la foto entera, centrada y sin agrandar (`encajeEnCuadrado`), comprimida hasta que cabe
- * en lo que acepta el BFF. El BFF de prueba no reduce imágenes, solo comprueba el formato y las medidas. Usa WebP, que
- * conserva la transparencia; si el navegador no lo genera, JPEG sobre el fondo de la superficie. Devuelve `null` si el
- * archivo no se puede leer como imagen o si ni con la menor calidad cabe.
+ * Versión única de la imagen de una categoría (lote 11, ADR-0021, PBI-0176; confirmado por Sebastián Avila): un
+ * cuadrado de `LADO_IMAGEN_CATEGORIA` px con la foto entera, centrada y sin agrandar (`encajeEnCuadrado`), comprimida
+ * hasta que cabe en lo que acepta el BFF. El BFF de prueba no reduce imágenes, solo comprueba el formato y las medidas.
+ * Usa WebP, que conserva la transparencia; si el navegador no lo genera, JPEG sobre el fondo de la superficie. Devuelve
+ * `null` si el archivo no se puede leer como imagen o si ni con la menor calidad cabe.
  */
 export async function imagenDeCategoria(archivo: Blob): Promise<string | null> {
   let imagen: ImageBitmap;
@@ -134,10 +134,10 @@ const comprimir = ({ lienzo, tipo }: { lienzo: HTMLCanvasElement; tipo: string }
   );
 
 /**
- * Imagen principal y miniatura de un producto a partir de un solo archivo (lote 24, ADR-0026, PBI-0214; provisional):
- * la de la ficha, con el lado mayor reducido a `LADO_MAXIMO_FOTO` px, y la miniatura de los listados, que es esa misma
- * imagen reducida a `LADO_MINIATURA` px (el BFF comprueba que lo sea). Devuelve `null` si el archivo no se puede leer
- * como imagen o si alguna versión no cabe ni con la menor calidad.
+ * Imagen principal y miniatura de un producto a partir de un solo archivo (lote 24, ADR-0026, PBI-0214; confirmado por
+ * Sebastián Avila): la de la ficha, con el lado mayor reducido a `LADO_MAXIMO_FOTO` px, y la miniatura de los listados,
+ * que es esa misma imagen reducida a `LADO_MINIATURA` px (el BFF comprueba que lo sea). Devuelve `null` si el archivo
+ * no se puede leer como imagen o si alguna versión no cabe ni con la menor calidad.
  */
 export async function versionesDelProducto(
   archivo: Blob,
@@ -160,10 +160,10 @@ export async function versionesDelProducto(
 }
 
 /**
- * Imagen del banner a partir de un archivo (lote 24, ADR-0026, PBI-0214 y PBI-0221; provisional): reducida a
- * `ladoMaximo` px de lado mayor y comprimida hasta caber en `maximo` caracteres, con el tono de la esquina inferior
- * derecha, donde van los controles del carrusel (`tonoDeLaZona`). Devuelve `null` si el archivo no se puede leer como
- * imagen o si no cabe ni con la menor calidad.
+ * Imagen del banner a partir de un archivo (lote 24, ADR-0026, PBI-0214 y PBI-0221; confirmado por Sebastián Avila):
+ * reducida a `ladoMaximo` px de lado mayor y comprimida hasta caber en `maximo` caracteres, con el tono de la esquina
+ * inferior derecha, donde van los controles del carrusel (`tonoDeLaZona`). Devuelve `null` si el archivo no se puede
+ * leer como imagen o si no cabe ni con la menor calidad.
  */
 export async function imagenDelBanner(
   archivo: Blob,

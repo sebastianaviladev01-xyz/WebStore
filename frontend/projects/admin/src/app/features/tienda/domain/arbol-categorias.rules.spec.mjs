@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-// Lote 22 (ADR-0025, PBI-0220; provisional, por confirmar con Daniel): la lista de Categorías del Admin es un árbol que
+// Lote 22 (ADR-0025, PBI-0220; confirmado por Sebastián Avila): la lista de Categorías del Admin es un árbol que
 // se abre y se cierra por niveles, en lugar de la ruta en texto. Una categoría sin hijas es el último nivel. Los filtros
 // siguen: «Categoría padre» deja las hijas de esa categoría (con sus ramas) y «Nombre» deja las que coinciden, con las
 // categorías que las contienen abiertas para que se vean. El teclado sigue el patrón de árbol de WAI-ARIA.

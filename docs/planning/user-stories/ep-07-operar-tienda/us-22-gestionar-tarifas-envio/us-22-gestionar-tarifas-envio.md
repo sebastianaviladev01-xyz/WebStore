@@ -33,7 +33,7 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** abre Tarifas de envío
 - **Entonces** cambia el precio tarifa por tarifa: no hay ajuste porcentual.
 
-> Cambiado el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0217; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: tarifas»): antes, un ajuste porcentual cambiaba las tarifas de una tienda de origen o de todas. Lo prueban `tarifa-envio.rules.spec.mjs` y `admin-mantenimientos.spec.ts`.
+> Cambiado el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0217; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: tarifas»): antes, un ajuste porcentual cambiaba las tarifas de una tienda de origen o de todas. Lo prueban `tarifa-envio.rules.spec.mjs` y `admin-mantenimientos.spec.ts`.
 
 ### Escenario 04 – Búsqueda y páginas
 
@@ -55,4 +55,4 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Cuando** pulsa «Agregar» o «Editar»
 - **Entonces** lo hace en una ventana emergente y elige el distrito de una lista (los 43 de Lima Metropolitana y los 7 del Callao, más los que ya tienen tarifa): varios al crear y uno al editar. Sin distrito, la ventana no guarda y lo dice.
 
-> Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211 y PBI-0216; decisiones provisionales, por confirmar con Daniel, en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: tarifas»), sin especificación propia: lo prueban `distrito.rules.spec.mjs` y `frontend/tests/e2e/admin-mantenimientos.spec.ts`.
+> Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211 y PBI-0216; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: tarifas»), sin especificación propia: lo prueban `distrito.rules.spec.mjs` y `frontend/tests/e2e/admin-mantenimientos.spec.ts`.

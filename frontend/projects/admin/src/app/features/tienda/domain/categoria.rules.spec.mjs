@@ -101,7 +101,7 @@ test('TEST-07: idsDescendientes termina con un ciclo y no se incluye a sí misma
   assert.deepEqual([...idsDescendientes(categorias, 'x')], ['y']);
 });
 
-// Lote 29 (ADR-0027, PBI-0238; provisional, por confirmar con Daniel): la categoría del filtro de Productos y del registro
+// Lote 29 (ADR-0027, PBI-0238; confirmado por Sebastián Avila): la categoría del filtro de Productos y del registro
 // del producto se elige con búsqueda. Daniel: busca «en todos los niveles donde esté una categoría» (electrodomésticos,
 // refrigeradoras y, dentro, side by side), desde «mínimo tres caracteres», y cada opción muestra su ruta.
 // Electrodomésticos › Refrigeradoras › (Frigobar, Side by side); Electrodomésticos › Lavadoras; TV y audio › OLED;

@@ -1,11 +1,12 @@
 /**
- * Listas de Contenido (lote 15, ADR-0021; provisional, por confirmar con Daniel):
+ * Listas de Contenido (lote 15, ADR-0021; confirmado por Sebastián Avila):
  *
  * - `contactEmails` y `contactPhones` (PBI-0169): `{ value, label }`; el primero es el principal donde la tienda solo
  *   muestra uno. `socialLinks`: `{ label, url }`, con `https://`.
  * - `announcements` (PBI-0175): los avisos de la barra superior, `{ text, url }`, con el enlace opcional (una ruta de
- *   la tienda o `https://`). Desde el lote 30 (ADR-0027, PBI-0244; provisional), cada aviso puede llevar `startAt` y
- *   `endAt`, instantes con hora y zona (`aviso-programado.rules.mjs`); vacíos no se guardan, y `endAt` va después.
+ *   la tienda o `https://`). Desde el lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila), cada aviso puede
+ *   llevar `startAt` y `endAt`, instantes con hora y zona (`aviso-programado.rules.mjs`); vacíos no se guardan, y
+ *   `endAt` va después.
  * - `quickLinks` (PBI-0185): los accesos del pie, `{ group, label, url }`; cada grupo es una columna del pie.
  *
  * `validarListaDeContenido` recibe lo que llegó del Admin y devuelve la lista normalizada (texto recortado y solo los
@@ -31,8 +32,9 @@ export const CAMPOS_ANTERIORES_DE_CONTENIDO = Object.freeze([
 ]);
 
 /**
- * Dónde muestra la tienda los productos sugeridos al agregar al carrito (lote 16, ADR-0021, PBI-0179; provisional): en
- * el diálogo «Producto agregado», como hasta ahora y lo que Daniel dijo que basta, o en un panel lateral.
+ * Dónde muestra la tienda los productos sugeridos al agregar al carrito (lote 16, ADR-0021, PBI-0179; confirmado por
+ * Sebastián Avila): en el diálogo «Producto agregado», como hasta ahora y lo que Daniel dijo que basta, o en un panel
+ * lateral.
  */
 export const MODOS_DE_SUGERIDOS = Object.freeze(['dialog', 'side-panel']);
 export const MODO_DE_SUGERIDOS_POR_DEFECTO = 'dialog';

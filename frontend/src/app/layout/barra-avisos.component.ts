@@ -23,9 +23,10 @@ const prefiereMenosMovimiento = () =>
   typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Avisos de la barra superior (lote 15, ADR-0021; PBI-0175, provisional): ocupan el lugar del mensaje superior. Uno
- * solo queda fijo. Con varios, pasan cada 6 s y se detienen al pasar el ratón o el foco por la barra; las flechas
- * cambian de aviso y el botón de pausa los detiene (WCAG 2.2.2). Un enlace a otra web se abre en otra pestaña.
+ * Avisos de la barra superior (lote 15, ADR-0021; PBI-0175, confirmado por Sebastián Avila): ocupan el lugar del
+ * mensaje superior. Uno solo queda fijo. Con varios, pasan cada 6 s y se detienen al pasar el ratón o el foco por la
+ * barra; las flechas cambian de aviso y el botón de pausa los detiene (WCAG 2.2.2). Un enlace a otra web se abre en
+ * otra pestaña.
  */
 @Component({
   selector: 'ws-store-announcements',

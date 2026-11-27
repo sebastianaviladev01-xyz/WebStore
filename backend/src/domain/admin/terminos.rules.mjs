@@ -1,7 +1,7 @@
 import { DomainError } from '../comun/domain-error.mjs';
 
 /**
- * Versiones de los términos y condiciones (lote 17, ADR-0021, PBI-0177; provisional, por confirmar con Daniel). Daniel
+ * Versiones de los términos y condiciones (lote 17, ADR-0021, PBI-0177; confirmado por Sebastián Avila). Daniel
  * pidió que cada versión se registre y que, al aceptar, se guarden la fecha y la hora con minutos y segundos y el
  * número de la versión aceptada. El estado guarda `termsVersions`, `[{ version, publishedAt, content }]`: el número
  * sube cada vez que cambia el texto de los términos de Contenido (`config.termsContent`), y lo calcula el BFF al

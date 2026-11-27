@@ -1,7 +1,7 @@
 import { DomainError } from '../comun/domain-error.mjs';
 
 /**
- * Errores de compra (lote 13, ADR-0021, PBI-0173; provisional, por confirmar con Daniel): los intentos de checkout que
+ * Errores de compra (lote 13, ADR-0021, PBI-0173; confirmado por Sebastián Avila): los intentos de checkout que
  * el BFF rechaza porque la tienda cambió bajo el comprador, que el equipo puede resolver (precio o stock, un producto
  * que dejó de venderse o un distrito sin tarifa). Los errores del formulario (datos inválidos, términos sin aceptar)
  * no lo son: los corrige el propio comprador. El BFF de prueba no rechaza pagos, así que no hay «pago rechazado».

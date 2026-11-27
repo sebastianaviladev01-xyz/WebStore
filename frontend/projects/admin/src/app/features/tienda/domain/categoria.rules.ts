@@ -83,7 +83,7 @@ export function opcionesDeCategoria(categories: readonly Categoria[]): readonly 
 }
 
 /**
- * Las opciones que coinciden con lo escrito (lote 29, ADR-0027, PBI-0238; provisional, por confirmar con Daniel). Con
+ * Las opciones que coinciden con lo escrito (lote 29, ADR-0027, PBI-0238; confirmado por Sebastián Avila). Con
  * menos de `MINIMO_PARA_BUSCAR_CATEGORIA` caracteres no se filtra: están todas, para elegir sin escribir. Desde ahí, sin
  * distinguir mayúsculas ni tildes, primero las que lo llevan en su nombre y después las que lo llevan solo en la ruta
  * (están dentro de una que coincide), cada grupo en el orden del árbol. Así Enter, que elige la primera, elige una cuyo

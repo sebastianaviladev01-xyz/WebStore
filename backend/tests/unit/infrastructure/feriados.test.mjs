@@ -1,7 +1,8 @@
 /**
  * Aviso de que faltan los feriados del año en curso (lote 02, PBI-0010; PBI-0163). Desde el lote 17 (ADR-0021,
- * PBI-0183; provisional) el calendario de días no laborables se mantiene desde el Admin y vive en el estado del BFF:
- * el aviso mira esa lista y dice dónde completarla. `WEBSTORE_NON_WORKING_DATES` solo da el valor inicial.
+ * PBI-0183; confirmado por Sebastián Avila) el calendario de días no laborables se mantiene desde el Admin y vive en el
+ * estado del BFF: el aviso mira esa lista y dice dónde completarla. `WEBSTORE_NON_WORKING_DATES` solo da el valor
+ * inicial.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

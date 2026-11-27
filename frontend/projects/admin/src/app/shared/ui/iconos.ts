@@ -1,8 +1,8 @@
 /**
  * Íconos del backoffice: trazos de un SVG de 24 × 24, solo trazo (1.8), sin dependencias nuevas ni fuentes de íconos.
  * Los de los módulos son los del menú lateral (lote 07b, PBI-0044; el camión de «Tarifas de envío» es el del menú de
- * la tienda). Los de las acciones van a la izquierda del texto de cada botón (lote 31, ADR-0027, PBI-0243; provisional,
- * por confirmar con Daniel; los del panel de filtros son los del lote 11, PBI-0171).
+ * la tienda). Los de las acciones van a la izquierda del texto de cada botón (lote 31, ADR-0027, PBI-0243; confirmado
+ * por Sebastián Avila; los del panel de filtros son los del lote 11, PBI-0171).
  */
 export const ICONOS = {
   // Módulos: el menú lateral y el título de cada página.

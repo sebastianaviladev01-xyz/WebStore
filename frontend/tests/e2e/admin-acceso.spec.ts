@@ -79,7 +79,7 @@ test('el vendedor ve el Dashboard, Productos, Inventario y Pedidos (PBI-0013, PB
 
   await comprobarEnlacesDelMenu(page, 'vendedor');
 
-  // PBI-0170 (lote 11, provisional): gestiona el inventario y ve los pedidos, sin cambiar su estado.
+  // PBI-0170 (lote 11, confirmado por Sebastián Avila): gestiona el inventario y ve los pedidos, sin cambiar su estado.
   await page.goto('/inventario');
   await expect(page.getByRole('heading', { level: 1, name: 'Inventario' })).toBeVisible();
   await page.goto('/pedidos');

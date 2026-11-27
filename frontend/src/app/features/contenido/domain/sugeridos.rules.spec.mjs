@@ -1,7 +1,8 @@
 /**
- * Dónde muestra la tienda los productos sugeridos al agregar al carrito (lote 16, ADR-0021, PBI-0179; provisional): el
- * diálogo «Producto agregado» (por defecto) o un panel lateral, según la configuración de la tienda. Un valor que la
- * tienda no conoce, o la configuración de respaldo sin el campo, se lee como el diálogo: lo de siempre.
+ * Dónde muestra la tienda los productos sugeridos al agregar al carrito (lote 16, ADR-0021, PBI-0179; confirmado por
+ * Sebastián Avila): el diálogo «Producto agregado» (por defecto) o un panel lateral, según la configuración de la
+ * tienda. Un valor que la tienda no conoce, o la configuración de respaldo sin el campo, se lee como el diálogo: lo de
+ * siempre.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
