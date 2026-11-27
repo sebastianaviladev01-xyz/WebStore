@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { cuentasAdmin, ingresarAlAdmin, menuAdmin } from './apoyo/entorno';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Íconos de los botones y de los títulos del backoffice (lote 31, ADR-0027, PBI-0243; provisional, por confirmar con
@@ -223,8 +224,12 @@ test.describe('íconos del backoffice (PBI-0243)', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
 
     await page.goto('/temas');
-    await page.getByRole('button', { name: 'Nuevo tema', exact: true }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // PBI-0275: se mide con la ventana ya abierta (Material la escala al abrir) y su foco inicial puesto.
+    await abrirVentana(
+      page.getByRole('button', { name: 'Nuevo tema', exact: true }),
+      'Nuevo tema',
+      campoNombre,
+    );
     await comprobarBotones(page, 'el diálogo de Temas');
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
@@ -235,8 +240,7 @@ test.describe('íconos del backoffice (PBI-0243)', () => {
       ['/envios', 'tarifa'],
     ] as const) {
       await page.goto(ruta);
-      await page.getByRole('button', { name: `Agregar ${que}` }).click();
-      await expect(page.getByRole('dialog')).toBeVisible();
+      await abrirVentana(page.getByRole('button', { name: `Agregar ${que}` }), /^(Nueva|Nuevo|Precio)/);
       await comprobarBotones(page, `el registro de ${que}`);
       await page.keyboard.press('Escape');
       await expect(page.getByRole('dialog')).toBeHidden();

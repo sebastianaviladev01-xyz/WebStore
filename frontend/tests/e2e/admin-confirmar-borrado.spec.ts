@@ -12,6 +12,7 @@ import {
   urls,
 } from './apoyo/entorno';
 import { conservarElStock } from './apoyo/pedidos';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Lote 43 (ADR-0033, PBI-0269): los borrados del backoffice se confirman en una ventana propia, como la del SGC, y ya no
@@ -123,8 +124,11 @@ test('«Sí, eliminar» borra el registro hasta el BFF, sin ventana nativa', asy
   try {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/clientes');
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
-    const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
+    const registro = await abrirVentana(
+      page.getByRole('button', { name: 'Agregar cliente' }),
+      'Nuevo cliente',
+      campoNombre,
+    );
     await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
     await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);
     await registro.getByRole('textbox', { name: 'Documento' }).fill('70000043');
@@ -153,8 +157,11 @@ test('al crear desde la ventana, el listado va a la página del registro nuevo; 
     const lista = page.getByRole('region', { name: 'Lista de clientes' });
     const paginacion = page.getByRole('navigation', { name: 'Páginas de clientes' });
     const crear = async (nombre: string) => {
-      await page.getByRole('button', { name: 'Agregar cliente' }).click();
-      const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
+      const registro = await abrirVentana(
+        page.getByRole('button', { name: 'Agregar cliente' }),
+        'Nuevo cliente',
+        campoNombre,
+      );
       const correo = correoUnico('l43-pagina');
       await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
       await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);
@@ -240,6 +247,36 @@ test('el foco tras eliminar va a la fila que ocupa su lugar, a la anterior o al 
   } finally {
     const quedan = (await leerSnapshot()).customers.filter((cliente) => ids.includes(cliente.id));
     if (quedan.length) await enviarCambios({ customers: { remove: quedan.map((cliente) => cliente.id) } });
+  }
+});
+
+// PBI-0273 (hallazgo del lote 43): al borrar la única fila de la última página, la lista vuelve a la página anterior y
+// el foco iba a su primera fila, lejos de la borrada. Va a la última fila de la página nueva, la más cercana.
+test('al borrar la única fila de la última página, el foco va a la última fila de la página anterior', async ({
+  page,
+}) => {
+  const prefijo = 'l273-ultima';
+  const relleno = await sembrarClientes(11, prefijo);
+  try {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    // Con el filtro, 11 clientes: 10 en la página 1 y uno solo en la página 2.
+    await page.goto(`/clientes?texto=${encodeURIComponent(`Relleno ${prefijo}`)}&pagina=2`);
+    const lista = page.getByRole('region', { name: 'Lista de clientes' });
+    const paginacion = page.getByRole('navigation', { name: 'Páginas de clientes' });
+    const botones = lista.getByRole('button', { name: /^Eliminar cliente / });
+    await expect(paginacion).toContainText('11 - 11 de 11');
+    await expect(botones).toHaveCount(1);
+    const unica = (await botones.getAttribute('aria-label')) ?? '';
+    const nombre = unica.replace(/^Eliminar cliente /, '');
+
+    await botones.click();
+    await aceptarEliminacion(page, nombre);
+    await expect(lista.getByRole('button', { name: unica })).toHaveCount(0);
+    await expect(paginacion).toContainText('1 - 10 de 10');
+    await expect(botones).toHaveCount(10);
+    await expect(botones.last()).toBeFocused();
+  } finally {
+    await retirarClientes(relleno);
   }
 });
 

@@ -362,9 +362,14 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
   `,
   // Lote 27 (PBI-0235): lo que daba mat-dialog-content, con sus mismos tokens públicos, salvo el alto máximo de 65vh. En
   // la columna flexible de la ventana, el contenido ocupa lo que dejan el título y los botones y se desplaza dentro.
+  // PBI-0272: `position: relative` hace del contenido el bloque contenedor de lo que va en posición absoluta dentro (los
+  // textos `sr-only`, como el pie de la vista previa). Sin él, se colocaban respecto de la ventana, le daban desplazamiento
+  // propio y, al llegar al final del contenido con la rueda o el dedo, la ventana entera subía y dejaba un hueco bajo los
+  // botones.
   styles: `
     .ws-tema-dialog-contenido {
       display: block;
+      position: relative;
       flex: 1 1 auto;
       min-height: 0;
       box-sizing: border-box;

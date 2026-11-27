@@ -15,6 +15,7 @@ import {
 } from './apoyo/catalogo';
 import { aceptarEliminacion, responderEliminacion } from './apoyo/confirmacion';
 import { correoUnico, cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
+import { abrirVentana, campoTiendaDeOrigen } from './apoyo/ventanas';
 
 /**
  * Lote 08 (ADR-0017), PBI-0133: lo que faltaba de los recorridos de altas, ediciones y borrados del Admin, que es
@@ -147,8 +148,11 @@ test.describe('Tarifas de envío: alta, edición y borrado', () => {
     try {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await page.goto('/envios');
-      await page.getByRole('button', { name: 'Agregar tarifa' }).click();
-      const ventana = page.getByRole('dialog', { name: 'Precio para uno o varios distritos' });
+      const ventana = await abrirVentana(
+        page.getByRole('button', { name: 'Agregar tarifa' }),
+        'Precio para uno o varios distritos',
+        campoTiendaDeOrigen,
+      );
       await ventana.getByRole('combobox', { name: 'Tienda de origen' }).fill('Origen E2E Ocho');
       await ventana.getByRole('combobox', { name: 'Distritos' }).click();
       await page.getByRole('option', { name: distrito, exact: true }).click();
@@ -164,8 +168,11 @@ test.describe('Tarifas de envío: alta, edición y borrado', () => {
       await panel.getByRole('button', { name: 'Buscar', exact: true }).click();
       await expect(lista).toContainText(distrito);
 
-      await lista.getByRole('button', { name: `Editar tarifa de Origen E2E Ocho a ${distrito}` }).click();
-      const edicion = page.getByRole('dialog', { name: 'Editar tarifa' });
+      const edicion = await abrirVentana(
+        lista.getByRole('button', { name: `Editar tarifa de Origen E2E Ocho a ${distrito}` }),
+        'Editar tarifa',
+        campoTiendaDeOrigen,
+      );
       await expect(edicion.getByRole('combobox', { name: 'Distrito', exact: true })).toHaveText(distrito);
       await edicion.getByRole('spinbutton', { name: 'Precio (S/)' }).fill('15');
       await edicion.getByRole('button', { name: 'Guardar tarifa' }).click();

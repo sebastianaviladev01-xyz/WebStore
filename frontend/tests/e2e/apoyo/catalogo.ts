@@ -235,3 +235,68 @@ export async function retirarClientes(ids: readonly string[]): Promise<void> {
   const quedan = (await leerSnapshot()).customers.filter((cliente) => ids.includes(cliente.id));
   if (quedan.length) await enviarCambios({ customers: { remove: quedan.map((cliente) => cliente.id) } });
 }
+
+/** Colecciones del snapshot que las e2e siembran y retiran con `{ upsert, remove }`. */
+type ColeccionSembrable = 'customers' | 'products' | 'categories' | 'brands' | 'users' | 'banners';
+
+/** Quita de una colección del BFF los registros con esos ids que sigan allí. */
+export async function retirarDelSnapshot(
+  coleccion: ColeccionSembrable,
+  ids: readonly string[],
+): Promise<void> {
+  if (!ids.length) return;
+  const snapshot = (await leerSnapshot()) as unknown as Record<string, { id: string }[]>;
+  const quedan = (snapshot[coleccion] ?? []).filter((item) => ids.includes(item.id));
+  if (quedan.length) await enviarCambios({ [coleccion]: { remove: quedan.map((item) => item.id) } });
+}
+
+/**
+ * PBI-0274: siembra `cantidad` registros de relleno de una colección como «otra sesión», para que su listado tenga más
+ * de una página de 10 y el registro que cree la prueba quede fuera de la primera. Cada `registro(n, id)` recibe el
+ * número (`01`, `02`…) y el id. Devuelve los ids, para quitarlos con `retirarDelSnapshot`.
+ */
+async function sembrar(
+  coleccion: ColeccionSembrable,
+  cantidad: number,
+  prefijo: string,
+  registro: (n: string, id: string) => Record<string, unknown>,
+): Promise<string[]> {
+  const registros = Array.from({ length: cantidad }, (_, i) => {
+    const n = String(i + 1).padStart(2, '0');
+    return { id: `e2e-${prefijo}-${n}`, ...registro(n, `e2e-${prefijo}-${n}`) };
+  });
+  await enviarCambios({ [coleccion]: { upsert: registros } });
+  return registros.map((item) => item.id);
+}
+
+/** Productos de relleno, al final del catálogo (PBI-0274). */
+export const sembrarProductos = (cantidad: number, prefijo: string) =>
+  sembrar('products', cantidad, prefijo, (n, id) => ({
+    ...productoDePrueba({ id, sku: `E2E-${prefijo}-${n}`.toUpperCase(), name: `Relleno ${prefijo} ${n}` }),
+  }));
+
+/** Categorías de primer nivel de relleno, sin orden: van después de las ordenadas, por nombre (PBI-0274). */
+export const sembrarCategorias = (cantidad: number, prefijo: string) =>
+  sembrar('categories', cantidad, prefijo, (n) => ({ name: `Relleno ${prefijo} ${n}` }));
+
+/** Marcas de relleno, al final de la lista (PBI-0274). */
+export const sembrarMarcas = (cantidad: number, prefijo: string) =>
+  sembrar('brands', cantidad, prefijo, (n) => ({ name: `Relleno ${prefijo} ${n}`, active: true }));
+
+/** Vendedores de relleno, al final de la lista; inactivos, para que no abran sesión (PBI-0274). */
+export const sembrarUsuarios = (cantidad: number, prefijo: string) =>
+  sembrar('users', cantidad, prefijo, (n) => ({
+    name: `Relleno ${prefijo} ${n}`,
+    email: `relleno-${prefijo}-${n}@example.com`,
+    role: 'vendedor',
+    active: false,
+    temporaryPassword: 'Temporal1234',
+  }));
+
+/** Banners de promoción de relleno, inactivos y sin imagen: no salen en la tienda (PBI-0274). */
+export const sembrarBanners = (cantidad: number, prefijo: string) =>
+  sembrar('banners', cantidad, prefijo, (n) => ({
+    title: `Relleno ${prefijo} ${n}`,
+    placement: 'promotion',
+    active: false,
+  }));

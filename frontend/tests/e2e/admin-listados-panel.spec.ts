@@ -14,6 +14,7 @@ import {
   restablecerTemas,
 } from './apoyo/contraste';
 import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
+import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
  * Lote 43 (ADR-0033, PBI-0265): cada listado del backoffice en un solo panel, como la lista de proveedores del SGC.
@@ -355,8 +356,8 @@ test.describe('PBI-0265: listados en un solo panel', () => {
       ['/clientes', 'Agregar cliente', 'Nuevo cliente'],
     ] as const) {
       await page.goto(ruta);
-      await page.getByRole('button', { name: boton }).click();
-      const dialogo = page.getByRole('dialog', { name: ventana });
+      // PBI-0275: se mide con la ventana ya abierta (Material la escala al abrir) y su foco inicial puesto.
+      const dialogo = await abrirVentana(page.getByRole('button', { name: boton }), ventana, campoNombre);
       const cancelar = dialogo.getByRole('button', { name: 'Cancelar' });
       const guardar = dialogo.getByRole('button', { name: 'Guardar', exact: true });
       await expect(guardar).toHaveCSS('background-color', await colorDelToken(page, '--ws-primary'));

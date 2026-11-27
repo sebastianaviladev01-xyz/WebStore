@@ -235,7 +235,8 @@ export class MarcasPage {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
-  private readonly foco = focoTrasEliminar();
+  // PBI-0273: con la página, el foco sabe cuándo la lista volvió a la anterior.
+  private readonly foco = focoTrasEliminar({ pagina: () => this.pagina().page });
   protected readonly insignia = clasesDeInsignia;
   protected readonly accion = CLASES_ACCION;
   protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
