@@ -1,4 +1,5 @@
 import { avisosVigentes } from '../../domain/admin/aviso-programado.rules.mjs';
+import { estilosDeLosBotones } from '../../domain/admin/colecciones.rules.mjs';
 import { terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
 import { direccionDeImagen } from '../catalogo/imagenes.queries.mjs';
 
@@ -13,6 +14,8 @@ const bannerToPublic = (banner) => ({
   ctaUrl: banner.ctaUrl ?? '/catalogo',
   secondaryCtaLabel: banner.secondaryCta ?? '',
   secondaryCtaUrl: banner.secondaryCtaUrl ?? '',
+  // Lote 46 (ADR-0033, PBI-0266): el estilo de cada botón, uno de los cuatro del tema; sin él, el de siempre.
+  ...estilosDeLosBotones(banner),
   // Lote 24 (ADR-0026, PBI-0214): las imágenes cargadas llegan como dirección del BFF, no como Data URL.
   imageUrl: direccionDeImagen('banners', banner.id, 'image', banner.imageUrl ?? 'assets/brand/hero.svg'),
   mobileImageUrl: direccionDeImagen('banners', banner.id, 'mobile-image', banner.mobileImageUrl ?? ''),

@@ -5,6 +5,10 @@
 declare module 'node:fs' {
   export function rmSync(path: string, options?: { force?: boolean; recursive?: boolean }): void;
 }
+// Lote 43 (PBI-0265): leer el CSV que descarga «Exportar».
+declare module 'node:fs/promises' {
+  export function readFile(path: string, codificacion: 'utf8'): Promise<string>;
+}
 declare module 'node:os' {
   export function tmpdir(): string;
 }

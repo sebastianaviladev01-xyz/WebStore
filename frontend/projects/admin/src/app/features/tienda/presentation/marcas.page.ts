@@ -13,31 +13,42 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ActivatedRoute, Router } from '@angular/router';
 import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { motivoParaNoEliminarMarca } from '../domain/eliminacion.rules';
+import { TablaExportable } from '../domain/exportacion.rules';
 import { EstadoFiltro, FILTROS_MARCAS_VACIOS } from '../domain/filtro-catalogo.model';
 import {
   filtrarMarcas,
   leerFiltrosMarcas,
-  leerPagina,
   ParametrosUrl,
   parametrosDeFiltrosMarcas,
 } from '../domain/filtro-catalogo.rules';
 import { mensajeDeError } from '../domain/formulario.rules';
-import { ELEMENTOS_POR_PAGINA, paginar } from '../domain/listado.rules';
+import { contarPorClave, numeroDeFila, textoDeCantidad, textoDelTotal } from '../domain/listado.rules';
 import { Marca } from '../domain/tienda.model';
 import { conservarBorrador } from './borrador';
 import { dialogoDeRegistro } from './dialogo-de-registro';
-import { PaginacionComponent } from './paginacion.component';
+import {
+  CLASES_ACCION,
+  CLASES_ACCION_ELIMINAR,
+  CLASES_CANCELAR_SUAVE,
+  clasesDeInsignia,
+  FichaDeResumen,
+} from './insignia';
+import { ListadoComponent } from './listado.component';
+import { BusquedaDelRegistro, paginacionDeLaUrl } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
-import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
+import { IconoDirective } from '../../../shared/ui/icono.directive';
 
 const MARCA_VACIA = { name: '', active: true };
 
@@ -54,85 +65,122 @@ interface BorradorMarca {
  * los datos actuales. Desde el lote 21 (ADR-0025, PBI-0211) la marca se crea y se edita en una ventana emergente, con
  * los mismos campos («Nombre» y «Activa»); antes tenía su propia interfaz (`/marcas/nueva` y `/marcas/:id`). Al editar
  * trae los datos actuales con `refresh()`.
+ *
+ * Lote 43 (ADR-0033, PBI-0265): en un solo panel, como la lista de proveedores del SGC, con «N°», el estado como
+ * insignia, las acciones de solo ícono, «Exportar» y el pie con el total, las activas y las inactivas; la ventana de
+ * registro, con «Cancelar» de relleno suave (PBI-0268).
  */
 @Component({
   selector: 'ws-brands-page',
   imports: [
     IconoDirective,
-    TituloPaginaDirective,
     ReactiveFormsModule,
     MatCheckboxModule,
     MatDialogModule,
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatTooltipModule,
+    ListadoComponent,
     PanelFiltrosComponent,
-    PaginacionComponent,
   ],
   template: `
-    <h1 wsAdminTitulo class="text-3xl font-semibold tracking-tight text-ink">Marcas</h1>
-    <ws-filter-panel
-      class="mt-7"
-      etiqueta="Filtros de marcas"
-      agregarQue="marca"
-      (agregar)="nueva()"
-      [formGroup]="borrador"
-      [buscando]="buscando()"
-      [error]="errorBusqueda()"
-      (buscar)="buscar()"
-      (limpiar)="limpiar()"
+    <ws-admin-listado
+      titulo="Marcas"
+      descripcion="Marcas que se asignan a los productos del catálogo."
+      que="marcas"
+      [exportacion]="exportacion"
+      [pagina]="pagina()"
+      [tamano]="paginacion.tamano()"
+      [fichas]="fichas()"
+      (cambiarPagina)="paginacion.irAPagina($event)"
+      (cambiarTamano)="paginacion.cambiarTamano($event)"
     >
-      <mat-form-field>
-        <mat-label>Nombre</mat-label>
-        <input matInput formControlName="nombre" />
-      </mat-form-field>
-      <mat-form-field>
-        <mat-label>Estado</mat-label>
-        <mat-select formControlName="estado">
-          <mat-option value="todos">Todos</mat-option>
-          <mat-option value="activos">Activos</mat-option>
-          <mat-option value="inactivos">Inactivos</mat-option>
-        </mat-select>
-      </mat-form-field>
-    </ws-filter-panel>
-    @if (avisoEliminar()) {
-      <p class="mt-6 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger" role="alert">
-        {{ avisoEliminar() }}
-      </p>
-    }
-    <section class="admin-card mt-6 p-4" aria-label="Lista de marcas">
-      @for (b of pagina().items; track b.id) {
-        <div class="flex items-center justify-between border-b border-line p-3">
-          <div>
-            <strong>{{ b.name }}</strong>
-            <p class="text-xs text-muted">{{ b.active ? 'Activa' : 'Inactiva' }}</p>
-          </div>
-          <div class="flex gap-3 text-sm font-semibold">
-            <button
-              class="inline-flex items-center gap-2 text-link"
-              [attr.aria-label]="'Editar marca ' + b.name"
-              (click)="editar(b.id)"
-            >
-              <svg wsAdminIcono="editar"></svg>
-              Editar
-            </button>
-            <button
-              class="inline-flex items-center gap-2 text-danger"
-              [attr.aria-label]="'Eliminar marca ' + b.name"
-              (click)="remove(b.id)"
-            >
-              <svg wsAdminIcono="eliminar"></svg>
-              Eliminar
-            </button>
-          </div>
-        </div>
-      } @empty {
-        <p class="p-10 text-center text-sm text-muted">
-          {{ admin.brands().length ? 'Ninguna marca cumple los filtros.' : 'Todavía no hay marcas.' }}
+      <ws-filter-panel
+        etiqueta="Filtros de marcas"
+        agregarQue="marca"
+        (agregar)="nueva()"
+        [formGroup]="borrador"
+        [buscando]="buscando()"
+        [error]="errorBusqueda()"
+        (buscar)="buscar()"
+        (limpiar)="limpiar()"
+      >
+        <mat-form-field>
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombre" placeholder="Buscar por nombre…" />
+        </mat-form-field>
+        <mat-form-field>
+          <mat-label>Estado</mat-label>
+          <mat-select formControlName="estado">
+            <mat-option value="todos">Todos</mat-option>
+            <mat-option value="activos">Activos</mat-option>
+            <mat-option value="inactivos">Inactivos</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ws-filter-panel>
+      @if (avisoEliminar()) {
+        <p
+          class="mx-5 mb-5 rounded-xl bg-danger-soft p-3 text-sm font-semibold text-danger sm:mx-6"
+          role="alert"
+        >
+          {{ avisoEliminar() }}
         </p>
       }
-      <ws-pagination [pagina]="pagina()" etiqueta="Páginas de marcas" (cambiar)="irAPagina($event)" />
-    </section>
+      <section class="border-t border-line" aria-label="Lista de marcas">
+        <div role="table" aria-label="Marcas">
+          <div
+            role="row"
+            class="grid grid-cols-[2.5rem_minmax(0,1fr)_96px_88px] gap-x-4 bg-subtle px-5 py-3 text-xs font-semibold uppercase text-muted max-md:sr-only"
+          >
+            <span role="columnheader">N°</span>
+            <span role="columnheader">Marca</span>
+            <span role="columnheader">Estado</span>
+            <span role="columnheader"><span class="sr-only">Acciones</span></span>
+          </div>
+          @for (b of pagina().items; track b.id; let i = $index) {
+            <div
+              role="row"
+              class="grid grid-cols-[2.5rem_minmax(0,1fr)_96px_88px] items-center gap-x-4 border-t border-line px-5 py-3 max-md:grid-cols-[2rem_minmax(0,1fr)_auto_auto]"
+            >
+              <span role="cell" class="text-sm tabular-nums text-muted">{{ numero(i) }}</span>
+              <strong role="cell" class="min-w-0 break-words">{{ b.name }}</strong>
+              <span role="cell">
+                <span [class]="insignia(b.active ? 'exito' : 'alerta')">
+                  {{ b.active ? 'Activo' : 'Inactivo' }}
+                </span>
+              </span>
+              <div role="cell" class="flex justify-end gap-2">
+                <button
+                  type="button"
+                  [class]="accion"
+                  [attr.aria-label]="'Editar marca ' + b.name"
+                  matTooltip="Editar"
+                  (click)="editar(b.id)"
+                >
+                  <svg wsAdminIcono="editar"></svg>
+                </button>
+                <button
+                  type="button"
+                  [class]="accionEliminar"
+                  [attr.aria-label]="'Eliminar marca ' + b.name"
+                  matTooltip="Eliminar"
+                  data-eliminar
+                  (click)="remove(b.id, $event)"
+                >
+                  <svg wsAdminIcono="eliminar"></svg>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+        @if (!pagina().items.length) {
+          <p class="border-t border-line p-10 text-center text-sm text-muted">
+            {{ admin.brands().length ? 'Ninguna marca cumple los filtros.' : 'Todavía no hay marcas.' }}
+          </p>
+        }
+      </section>
+    </ws-admin-listado>
 
     <!-- PBI-0211: el registro, en la ventana emergente. -->
     <ng-template #registro>
@@ -161,17 +209,14 @@ interface BorradorMarca {
             </p>
           }
         </mat-dialog-content>
-        <mat-dialog-actions align="end">
-          <button
-            type="button"
-            class="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold"
-            mat-dialog-close
-          >
+        <!-- Lote 43 (PBI-0268): el pie a la derecha, «Cancelar» de relleno suave y «Guardar» relleno del principal. -->
+        <mat-dialog-actions align="end" class="gap-2">
+          <button type="button" [class]="botonCancelar" mat-dialog-close>
             <svg wsAdminIcono="cancelar"></svg>
             Cancelar
           </button>
           <button
-            class="inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
+            class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-on-primary disabled:opacity-50"
             type="submit"
             [disabled]="admin.saving()"
           >
@@ -188,6 +233,13 @@ export class MarcasPage {
   protected readonly admin = inject(TiendaFacade);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
+  protected readonly insignia = clasesDeInsignia;
+  protected readonly accion = CLASES_ACCION;
+  protected readonly accionEliminar = CLASES_ACCION_ELIMINAR;
+  protected readonly botonCancelar = CLASES_CANCELAR_SUAVE;
   /** Parámetros de consulta de la URL; con un parámetro repetido, el primero. */
   private readonly parametros = toSignal(
     this.route.queryParamMap.pipe(
@@ -200,9 +252,44 @@ export class MarcasPage {
   /** Filtros de la última búsqueda, los de la URL. */
   protected readonly aplicados = computed(() => leerFiltrosMarcas(this.parametros()));
   protected readonly resultados = computed(() => filtrarMarcas(this.admin.brands(), this.aplicados()));
-  protected readonly pagina = computed(() =>
-    paginar(this.resultados(), leerPagina(this.parametros()), ELEMENTOS_POR_PAGINA),
-  );
+  /** La página y su tamaño, en la URL (lote 43). */
+  protected readonly paginacion = paginacionDeLaUrl(this.parametros);
+  protected readonly pagina = computed(() => this.paginacion.paginar(this.resultados()));
+  /** Dónde buscar una marca para ir a su página: con los filtros y sin ellos, en el orden del listado. */
+  private readonly busqueda: BusquedaDelRegistro<Marca> = {
+    filtrados: () => this.resultados(),
+    todos: () => filtrarMarcas(this.admin.brands(), FILTROS_MARCAS_VACIOS),
+    es: (marca, id) => marca.id === id,
+  };
+  /** El total y cuántas activas e inactivas cumplen los filtros (lote 43, PBI-0265). */
+  protected readonly fichas = computed((): FichaDeResumen[] => {
+    const resultados = this.resultados();
+    const [activas, inactivas] = contarPorClave(resultados, (b) => (b.active ? 'activas' : 'inactivas'), [
+      'activas',
+      'inactivas',
+    ]);
+    return [
+      { texto: textoDelTotal(resultados.length), tono: 'principal', icono: 'lista' },
+      {
+        texto: textoDeCantidad(activas?.cantidad ?? 0, 'activa', 'activas'),
+        tono: 'exito',
+        icono: 'activar',
+      },
+      {
+        texto: textoDeCantidad(inactivas?.cantidad ?? 0, 'inactiva', 'inactivas'),
+        tono: 'alerta',
+        icono: 'inactivo',
+      },
+    ];
+  });
+  protected readonly exportacion = (): TablaExportable => ({
+    titulo: 'Marcas',
+    columnas: ['N°', 'Marca', 'Estado'],
+    filas: this.resultados().map((b, i) => [i + 1, b.name, b.active ? 'Activo' : 'Inactivo']),
+  });
+  protected numero(indice: number): number {
+    return numeroDeFila(this.pagina(), indice);
+  }
   /** Lo que se escribe en el panel; se aplica con «Buscar». */
   protected readonly borrador = new FormGroup({
     nombre: new FormControl('', { nonNullable: true }),
@@ -275,19 +362,15 @@ export class MarcasPage {
     }
     await this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: parametrosDeFiltrosMarcas(this.borrador.getRawValue()),
+      queryParams: {
+        ...parametrosDeFiltrosMarcas(this.borrador.getRawValue()),
+        ...this.paginacion.conservar(),
+      },
     });
   }
   /** Vacía todos los filtros del panel de una vez, sin buscar (AC-14). */
   protected limpiar() {
     this.borrador.setValue({ ...FILTROS_MARCAS_VACIOS });
-  }
-  protected irAPagina(numero: number) {
-    void this.router.navigate([], {
-      relativeTo: this.route,
-      queryParams: { pagina: numero > 1 ? numero : null },
-      queryParamsHandling: 'merge',
-    });
   }
   /** «Agregar» (PBI-0171): abre la ventana con «Nueva marca», vacía. */
   protected nueva() {
@@ -322,12 +405,16 @@ export class MarcasPage {
       return;
     }
     this.error.set(null);
+    const nueva = !this.editing();
+    const id = this.editing() ?? this.idNuevo;
     const saved = await this.admin.guardarMarca(this.base, {
-      id: this.editing() ?? this.idNuevo,
+      id,
       ...this.form.getRawValue(),
     });
     if (saved) {
       this.dialogo.cerrar();
+      // Lote 43 (PBI-0265): al crear, el listado va a la página donde quedó el registro nuevo, para que se vea.
+      if (nueva) this.paginacion.irAlRegistro(this.busqueda, id);
       return;
     }
     this.error.set(this.admin.tomarError() ?? 'No pudimos guardar la marca. Inténtalo de nuevo.');
@@ -342,7 +429,7 @@ export class MarcasPage {
     this.form.reset(MARCA_VACIA);
   }
   /** PBI-0131: una marca que usan productos no se elimina; se dice cuántos la usan, sin pedir confirmación. */
-  protected async remove(id: string) {
+  protected async remove(id: string, evento: Event) {
     this.avisoEliminar.set(null);
     const marca = this.admin.brands().find((item) => item.id === id);
     if (!marca) return;
@@ -351,6 +438,9 @@ export class MarcasPage {
       this.avisoEliminar.set(motivo);
       return;
     }
-    if (confirm('¿Eliminar marca?')) await this.admin.eliminarMarca(id);
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con el nombre de la marca.
+    const lugar = this.foco.recordar(evento);
+    if (!(await confirmarEliminacion(this.dialog, marca.name))) return;
+    if (await this.admin.eliminarMarca(id)) this.foco.restaurar(lugar);
   }
 }

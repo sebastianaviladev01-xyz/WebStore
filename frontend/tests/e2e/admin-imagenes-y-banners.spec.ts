@@ -49,7 +49,7 @@ test.describe('PBI-0214: la imagen principal del producto se carga como archivo'
       await expect(grupo).toHaveAccessibleDescription(/una versión para la ficha y una miniatura/);
 
       // Sin imagen no se guarda, y se dice qué falta.
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(grupo.getByRole('alert')).toHaveText('Carga la imagen principal.');
 
       // Un archivo que no es una foto se rechaza sin tocar la imagen.
@@ -66,14 +66,14 @@ test.describe('PBI-0214: la imagen principal del producto se carga como archivo'
       await formulario.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Lavadora lote 24');
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill(SKU);
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Con foto cargada.');
-      await formulario
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Carga frontal');
+      await formulario.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Carga frontal');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('999');
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
-      await expect(page).toHaveURL(/\/productos$/);
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
 
       const guardado = (await leerProductos()).find((producto) => producto.sku === SKU);
       expect(guardado?.imageUrl).toMatch(/^data:image\/(webp|jpeg);base64,/);
@@ -162,18 +162,25 @@ test.describe('PBI-0214 y PBI-0221: el registro del banner', () => {
       await formulario.getByRole('textbox', { name: 'Título', exact: true }).fill(titulo);
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Con hora.');
       await expect(
-        formulario.getByRole('textbox', { name: 'Botón principal: lo que dice' }),
+        formulario.getByRole('textbox', { name: 'Primer botón: lo que dice' }),
       ).toHaveAccessibleDescription(/El texto que ve el comprador/);
-      await formulario.getByRole('textbox', { name: 'Botón principal: lo que dice' }).fill('Ver');
-      await formulario.getByRole('textbox', { name: 'Botón principal: adónde lleva' }).fill('/catalogo');
+      await formulario.getByRole('textbox', { name: 'Primer botón: lo que dice' }).fill('Ver');
+      await formulario.getByRole('textbox', { name: 'Primer botón: adónde lleva' }).fill('/catalogo');
       // El tope de tres banners principales ya lo ocupan los de ejemplo: se guarda como promoción.
       await elegir(page, formulario, 'Ubicación', 'Promoción');
       await expect(formulario.getByLabel('Inicio')).toHaveAccessibleDescription('Fecha y hora de Lima.');
       await formulario.getByLabel('Inicio').fill('2030-12-10T09:30');
       await formulario.getByLabel('Fin').fill('2030-12-20T18:00');
       await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
-      await expect(page).toHaveURL(/\/banners$/);
-      await expect(page.getByText('10/12/2030 09:30 → 20/12/2030 18:00 · Activo')).toBeVisible();
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` con el id, salta a su página y lo
+      // quita de la URL; la vigencia va en su columna y el estado, como insignia, en la suya.
+      await expect(page).toHaveURL(/\/banners(\?(?!.*nuevo=)[^#]*)?$/);
+      const fila = page
+        .getByRole('region', { name: 'Lista de banners' })
+        .getByRole('row')
+        .filter({ hasText: '10/12/2030 09:30 → 20/12/2030 18:00' });
+      await expect(fila).toBeVisible();
+      await expect(fila.getByText('Activo', { exact: true })).toBeVisible();
 
       const guardado = (await leerSnapshot()).banners.find((banner) => banner.cta === 'Ver') as unknown as {
         id: string;

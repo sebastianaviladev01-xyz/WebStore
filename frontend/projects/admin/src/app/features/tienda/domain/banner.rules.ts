@@ -1,4 +1,4 @@
-import { Banner } from './tienda.model';
+import { Banner, EstiloDeBoton } from './tienda.model';
 
 /**
  * Vigencia de los banners (lote 06, ADR-0017; PBI-0128), con fecha y hora desde el lote 24 (ADR-0025, PBI-0221;
@@ -16,8 +16,8 @@ export function aHoraDeLima(instante: string): string {
   return Number.isFinite(ms) ? new Date(ms + DESFASE_DE_LIMA_MS).toISOString().slice(0, 16) : '';
 }
 
-/** `DD/MM/AAAA HH:mm` en hora de Lima. */
-const fechaYHoraVisible = (instante: string): string => {
+/** `DD/MM/AAAA HH:mm` en hora de Lima. También la usa la fecha de la cabecera de los registros (lote 44, PBI-0268). */
+export const fechaYHoraVisible = (instante: string): string => {
   const local = aHoraDeLima(instante);
   return local ? `${local.slice(8, 10)}/${local.slice(5, 7)}/${local.slice(0, 4)} ${local.slice(11)}` : '—';
 };
@@ -72,7 +72,7 @@ export const MAXIMO_TEXTO_DE_BOTON = 40;
 export type ErrorDeBoton = 'sinTexto' | 'sinEnlace';
 
 /**
- * Cada botón del banner, el principal o el secundario, va completo (texto y enlace) o vacío (lote 12, ADR-0021,
+ * Cada botón del banner, el primero o el segundo, va completo (texto y enlace) o vacío (lote 12, ADR-0021,
  * PBI-0184). Los espacios no cuentan.
  */
 export function errorDeBoton(texto: string, enlace: string): ErrorDeBoton | null {
@@ -81,4 +81,26 @@ export function errorDeBoton(texto: string, enlace: string): ErrorDeBoton | null
   if (conTexto && !conEnlace) return 'sinEnlace';
   if (conEnlace && !conTexto) return 'sinTexto';
   return null;
+}
+
+/**
+ * Los cuatro estilos de un botón del banner (lote 46, ADR-0033, PBI-0266), en el orden de la lista «Estilo», con el
+ * nombre que ve la persona. Sin color libre (ADR-0022).
+ */
+export const ESTILOS_DE_BOTON: readonly { readonly valor: EstiloDeBoton; readonly nombre: string }[] = [
+  { valor: 'primary', nombre: 'Principal' },
+  { valor: 'accent', nombre: 'Secundario' },
+  { valor: 'contrast', nombre: 'Contraste' },
+  { valor: 'outline', nombre: 'Con borde' },
+];
+
+/** Por omisión, el primero es «Principal» y el segundo «Secundario», como desde el lote 12. */
+export const ESTILO_POR_OMISION: Readonly<{ ctaStyle: EstiloDeBoton; secondaryCtaStyle: EstiloDeBoton }> = {
+  ctaStyle: 'primary',
+  secondaryCtaStyle: 'accent',
+};
+
+/** El estilo guardado si es uno de los cuatro; si falta o no existe, el de por omisión de ese botón. */
+export function estiloDeBoton(valor: unknown, porOmision: EstiloDeBoton): EstiloDeBoton {
+  return ESTILOS_DE_BOTON.find((estilo) => estilo.valor === valor)?.valor ?? porOmision;
 }

@@ -51,7 +51,8 @@ test('la tienda y el Admin fechan en la misma zona horaria que el BFF', () => {
   assert.equal(delBff, 'America/Lima');
   assert.equal(zona.exec(leer('src/app/features/pedidos/domain/fecha-entrega.rules.ts'))?.[1], delBff);
   assert.match(
-    leer('projects/admin/src/app/features/tienda/domain/resumen.rules.ts'),
+    // Lote 45 (PBI-0270): la zona del Dashboard pasó de resumen.rules.ts a periodo.rules.ts.
+    leer('projects/admin/src/app/features/tienda/domain/periodo.rules.ts'),
     new RegExp(`export const ZONA_IANA_LIMA = '${delBff}';`),
   );
 });

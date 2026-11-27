@@ -298,10 +298,15 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
   test.use({ viewport: { width: 375, height: 812 } });
 
   for (const { ruta, tabla, encabezados } of [
-    { ruta: '/inventario', tabla: 'Inventario', encabezados: ['Producto', 'Stock', 'Estado'] },
+    // Lote 43 (PBI-0265): con «N°» y, en Productos, «Estado».
+    { ruta: '/inventario', tabla: 'Inventario', encabezados: ['N°', 'Producto', 'Stock', 'Estado'] },
     // Lote 25 (PBI-0219): con el SKU en su propia columna, la fila del celular sigue sin desbordar.
-    { ruta: '/productos', tabla: 'Productos', encabezados: ['Producto', 'SKU', 'Precio', 'Stock'] },
-    { ruta: '/clientes', tabla: 'Clientes', encabezados: ['Cliente', 'Pedidos', 'Acciones'] },
+    {
+      ruta: '/productos',
+      tabla: 'Productos',
+      encabezados: ['N°', 'Producto', 'SKU', 'Precio', 'Stock', 'Estado'],
+    },
+    { ruta: '/clientes', tabla: 'Clientes', encabezados: ['N°', 'Cliente', 'Pedidos', 'Acciones'] },
   ]) {
     test(`${ruta} no desborda y es una tabla con encabezados`, async ({ page }) => {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -313,11 +318,17 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
       );
       expect(desborde).toBe(0);
       const caja = (await tablaLista.boundingBox())!;
-      for (const celda of await tablaLista.getByRole('cell').all()) {
-        const c = (await celda.boundingBox())!;
-        expect(c.x).toBeGreaterThanOrEqual(caja.x - 0.5);
-        expect(c.x + c.width).toBeLessThanOrEqual(caja.x + caja.width + 0.5);
-        expect(c.width).toBeGreaterThan(40);
+      for (const fila of await tablaLista
+        .getByRole('row')
+        .filter({ has: page.getByRole('cell') })
+        .all()) {
+        for (const [i, celda] of (await fila.getByRole('cell').all()).entries()) {
+          const c = (await celda.boundingBox())!;
+          expect(c.x).toBeGreaterThanOrEqual(caja.x - 0.5);
+          expect(c.x + c.width).toBeLessThanOrEqual(caja.x + caja.width + 0.5);
+          // Lote 43: la primera celda es «N°», de dos cifras; las demás, legibles como antes.
+          expect(c.width).toBeGreaterThan(i === 0 ? 20 : 40);
+        }
       }
       // En Inventario la fila de encabezados se oculta en el celular; en Clientes es solo para lectores de pantalla.
       for (const nombre of encabezados)
@@ -330,8 +341,13 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
   // Lote 07b (PBI-0156): en el celular la fila de encabezados de Productos e Inventario sigue oculta (conserva la
   // medida de admin-productos-movil), pero cada celda de datos dice de qué columna es a un lector de pantalla.
   for (const { ruta, tabla, columnas } of [
-    { ruta: '/productos', tabla: 'Productos', columnas: ['Producto', 'SKU', 'Precio', 'Stock'] },
-    { ruta: '/inventario', tabla: 'Inventario', columnas: ['Producto', 'Stock', 'Estado'] },
+    // Lote 43 (PBI-0265): «N°» primero y, en Productos, «Estado».
+    {
+      ruta: '/productos',
+      tabla: 'Productos',
+      columnas: ['N°', 'Producto', 'SKU', 'Precio', 'Stock', 'Estado'],
+    },
+    { ruta: '/inventario', tabla: 'Inventario', columnas: ['N°', 'Producto', 'Stock', 'Estado'] },
   ]) {
     test(`${ruta}: cada celda dice su columna a un lector de pantalla (PBI-0156)`, async ({ page }) => {
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -341,7 +357,9 @@ test.describe('PBI-0059 y PBI-0132: tablas a 375 px', () => {
       const fila = tablaLista.getByRole('row').first();
       await expect(fila.getByRole('cell').first()).toBeVisible();
       for (const [i, columna] of columnas.entries())
-        await expect(fila.getByRole('cell').nth(i)).toHaveAccessibleName(new RegExp(`^${columna}\\b`));
+        await expect(fila.getByRole('cell').nth(i)).toHaveAccessibleName(
+          new RegExp(`^${columna.replace('°', '°:')}(\\b|\\s)`),
+        );
     });
   }
 });
@@ -351,17 +369,21 @@ test.describe('PBI-0132: accesibilidad de formularios y listas', () => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/productos');
     const tabla = page.getByRole('table', { name: 'Productos' });
-    // Lote 25 (PBI-0219 y PBI-0218): el SKU en su propia columna y el precio con dos decimales.
+    // Lote 25 (PBI-0219 y PBI-0218): el SKU en su propia columna y el precio con dos decimales. Lote 43 (PBI-0265):
+    // «N°» primero y «Estado» antes de las acciones.
     await expect(tabla.getByRole('columnheader')).toHaveText([
+      'N°',
       'Producto',
       'SKU',
       'Precio',
       'Stock',
+      'Estado',
       'Acciones',
     ]);
     const fila = tabla.getByRole('row').filter({ hasText: 'OLED Vision 55” 4K' });
-    await expect(fila.getByRole('cell').nth(1)).toHaveText('TV-OLED-55-VSN', { useInnerText: true });
-    await expect(fila.getByRole('cell').nth(2)).toHaveText(/S\/\s?[\d,]+\.\d{2}/);
+    await expect(fila.getByRole('cell').nth(2)).toHaveText('TV-OLED-55-VSN', { useInnerText: true });
+    await expect(fila.getByRole('cell').nth(3)).toHaveText(/S\/\s?[\d,]+\.\d{2}/);
+    await expect(fila.getByRole('cell').nth(5)).toHaveText('Activo', { useInnerText: true });
     await expect(fila).not.toContainText('características');
     await expect(tabla.getByRole('link', { name: 'Editar producto OLED Vision 55” 4K' })).toBeVisible();
     await expect(tabla.getByRole('button', { name: 'Eliminar producto OLED Vision 55” 4K' })).toBeVisible();
@@ -389,10 +411,10 @@ test.describe('PBI-0132: accesibilidad de formularios y listas', () => {
     );
 
     await page.goto('/usuarios/nuevo');
-    await page.getByRole('button', { name: 'Guardar usuario' }).click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(page.getByLabel('Contraseña temporal')).toHaveAccessibleDescription('Completa este campo.');
     await page.goto('/productos/nuevo');
-    await page.getByRole('button', { name: 'Guardar producto' }).click();
+    await page.getByRole('button', { name: 'Guardar', exact: true }).click();
     await expect(page.getByRole('combobox', { name: 'Categoría' })).toHaveAccessibleDescription(
       'Completa este campo.',
     );
@@ -423,7 +445,7 @@ test('PBI-0148: una categoría con la dirección de otra no se envía y se dice 
   await page.goto('/categorias/nueva');
   const nombre = page.getByRole('textbox', { name: 'Nombre' });
   await nombre.fill('tv Y Áudio');
-  await page.getByRole('button', { name: 'Guardar' }).click();
+  await page.getByRole('button', { name: 'Guardar', exact: true }).click();
   await expect(nombre).toHaveAccessibleDescription(
     'Ya hay una categoría con la dirección tv-y-audio: «TV y audio». Cambia el nombre.',
   );

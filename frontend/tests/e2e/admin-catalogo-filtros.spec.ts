@@ -56,8 +56,9 @@ import { cargarImagenPrincipal } from './apoyo/fotos';
  * - TEST-18 (AC-12): a 360, 375 y 390 px con A, B y C, las tres listas y sus registros (nuevo y edición) sin
  *   desplazamiento horizontal y con sus controles dentro de la pantalla. B queda activo al terminar. Desde el lote 41
  *   (PBI-0259), un test por tema y ancho; si una vista no carga, adjunta el texto que había en pantalla.
- * - TEST-19 (AC-15): con 30 productos, 25 en la página 1 y «Página 1 de 2»; «Siguiente» lleva a la 2; una búsqueda
- *   nueva vuelve a la 1; con 25 resultados o menos no hay paginación.
+ * - TEST-19 (AC-15): con 30 productos, 10 en la página 1 y «1 - 10 de 30» (lote 43, PBI-0265: 10 por omisión; antes, 25
+ *   y «Página 1 de 2»); «Página siguiente» lleva a la 2 y «Última página» a la 3; una búsqueda nueva vuelve a la 1; con
+ *   25 por página, los 24 resultados de una búsqueda caben en una sola página.
  * - TEST-20 (REQ-02, caso límite): si la consulta del snapshot falla al «Buscar», el aviso sale junto al panel y se
  *   conservan los filtros escritos y los resultados; el reintento funciona.
  * - TEST-21 (REQ-04, caso límite): si el BFF rechaza el guardado con un `400`, el registro de producto, de categoría
@@ -195,11 +196,11 @@ test.describe('Filtros y registro de productos del Admin', () => {
         ['textbox', 'Nombre'],
         ['textbox', 'SKU'],
         ['textbox', 'Descripción'],
-        ['textbox', 'Características (una por línea)'],
+        ['textbox', 'Característica 1'],
         ['spinbutton', 'Precio'],
         ['combobox', 'Categoría'],
         ['combobox', 'Marca'],
-        ['checkbox', 'Activo'],
+        ['combobox', 'Estado'],
       ] as const) {
         await expect(formulario.getByRole(rol, { name: campo, exact: true })).toBeVisible();
       }
@@ -220,8 +221,8 @@ test.describe('Filtros y registro de productos del Admin', () => {
         '/inventario',
       );
 
-      // «Volver a productos» sin guardar conserva filtros y página.
-      await page.getByRole('link', { name: 'Volver a productos' }).click();
+      // «Regresar» (lote 44, PBI-0268) sin guardar conserva filtros y página.
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(consulta);
       await expect(panel(page).getByRole('textbox', { name: 'Nombre' })).toHaveValue('ventilador');
 
@@ -231,15 +232,20 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await formulario.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VENT-008');
       await formulario.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Tres velocidades.');
       await cargarImagenPrincipal(formulario);
+      // Lote 44 (PBI-0268): una característica por fila de la tabla, con «Agregar fila».
       await formulario
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Tres velocidades\nTemporizador');
+        .getByRole('textbox', { name: 'Característica 1', exact: true })
+        .fill('Tres velocidades');
+      await formulario.getByRole('button', { name: 'Agregar fila', exact: true }).click();
+      await formulario.getByRole('textbox', { name: 'Característica 2', exact: true }).fill('Temporizador');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('249');
       await elegir(page, formulario, 'Categoría', 'Electrohogar');
       await elegir(page, formulario, 'Marca', 'Zenith');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
 
-      await expect(page).toHaveURL(consulta);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL; el filtro se conserva.
+      await expect(page).toHaveURL(/\/productos\?nombre=ventilador(&pagina=\d+)?$/);
       await expect(nombresEnLista(page)).toHaveText([nombre]);
 
       const tienda = await nuevoRequest.newContext({ baseURL: urls.bff });
@@ -278,7 +284,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(campoNombre).toHaveValue('Soundbar Cinema 500 Pro');
 
       await campoNombre.fill('Soundbar Cinema 500 editada');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
       await expect(filaDe(page, 'Soundbar Cinema 500 editada')).toHaveCount(1);
       await expect(filaDe(page, temporal.name)).toHaveCount(1);
@@ -289,7 +295,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(page).toHaveURL(/\/productos\/e2e-008-temporal$/);
       await expect(page.getByText('Este producto ya no existe')).toBeVisible();
       await expect(page.getByRole('form', { name: 'Editar producto' })).toHaveCount(0);
-      await page.getByRole('link', { name: 'Volver a productos' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
     } finally {
       await restaurar(originales);
@@ -319,7 +325,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await expect(formulario.getByRole('spinbutton', { name: 'Precio', exact: true })).toBeEditable();
       await expect(formulario.getByRole('combobox', { name: 'Categoría' })).toBeEnabled();
       await expect(formulario.getByRole('combobox', { name: 'Marca' })).toBeEnabled();
-      await expect(formulario.getByRole('checkbox', { name: 'Activo' })).toBeEnabled();
+      await expect(formulario.getByRole('combobox', { name: 'Estado', exact: true })).toBeEnabled();
       // PBI-0226 (lote 23): el stock no está en la ficha; se gestiona en Inventario, que el vendedor tiene.
       await expect(formulario.getByRole('spinbutton', { name: 'Stock' })).toHaveCount(0);
       await expect(formulario).toContainText('El stock se gestiona en Inventario');
@@ -328,7 +334,7 @@ test.describe('Filtros y registro de productos del Admin', () => {
         .getByRole('textbox', { name: 'Nombre', exact: true })
         .fill('Soundbar Cinema 500 vendedor');
       await formulario.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('321');
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
       await expect(nombresEnLista(page)).toHaveText(['Soundbar Cinema 500 vendedor']);
       expect((await leerProductos()).find((p) => p.id === 'p-004')).toMatchObject({
@@ -345,14 +351,15 @@ test.describe('Filtros y registro de productos del Admin', () => {
       await nuevo.getByRole('textbox', { name: 'SKU', exact: true }).fill('E2E-VEND-07');
       await nuevo.getByRole('textbox', { name: 'Descripción', exact: true }).fill('Portátil.');
       await cargarImagenPrincipal(nuevo);
-      await nuevo
-        .getByRole('textbox', { name: 'Características (una por línea)', exact: true })
-        .fill('Batería');
+      await nuevo.getByRole('textbox', { name: 'Característica 1', exact: true }).fill('Batería');
       await nuevo.getByRole('spinbutton', { name: 'Precio', exact: true }).fill('99');
       await elegir(page, nuevo, 'Categoría', 'Electrohogar');
       await elegir(page, nuevo, 'Marca', 'Zenith');
-      await nuevo.getByRole('button', { name: 'Guardar producto' }).click();
-      await expect(page).toHaveURL(/\/productos\?nombre=soundbar$/);
+      await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo` y salta al registro. El filtro
+      // «soundbar» no incluye el producto creado, así que el listado lo quita para mostrarlo.
+      await expect(page).toHaveURL(/\/productos(\?pagina=\d+)?$/);
+      await expect(page.getByText('Parlante del vendedor', { exact: true })).toBeVisible();
       expect((await leerProductos()).find((p) => p.sku === 'E2E-VEND-07')).toMatchObject({
         name: 'Parlante del vendedor',
         price: 99,
@@ -430,7 +437,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
         'Cocina',
       ]);
 
-      // «Agregar» abre el registro sin la lista; «Volver a categorías» conserva los filtros.
+      // «Agregar» abre el registro sin la lista; «Regresar» conserva los filtros.
       await page.getByRole('link', { name: 'Agregar categoría', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\/nueva\?padre=sin-padre$/);
       const nueva = page.getByRole('form', { name: 'Nueva categoría' });
@@ -439,7 +446,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await expect(nueva.getByRole('textbox', { name: 'Nombre', exact: true })).toBeVisible();
       await expect(nueva.getByRole('combobox', { name: 'Categoría padre' })).toBeVisible();
       await expect(nueva.getByRole('spinbutton', { name: 'Orden (opcional)' })).toBeVisible();
-      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
 
       // Guardar vuelve al listado con los mismos filtros; la categoría nueva cuelga de «TV y audio».
@@ -447,7 +454,9 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await nueva.getByRole('textbox', { name: 'Nombre', exact: true }).fill('Proyectores 008');
       await elegir(page, nueva, 'Categoría padre', 'TV y audio');
       await nueva.getByRole('button', { name: 'Guardar', exact: true }).click();
-      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre$/);
+      // Lotes 43 y 44 (PBI-0265 y PBI-0268): tras crear, el listado recibe `nuevo`, salta a la página del registro
+      // y lo quita de la URL; el filtro se conserva.
+      await expect(page).toHaveURL(/\/categorias\?padre=sin-padre(&pagina=\d+)?$/);
       expect((await leerCategorias()).find((c) => c.name === 'Proyectores 008')).toMatchObject({
         parentId: 'cat-tv',
       });
@@ -486,7 +495,7 @@ test.describe('Filtros y registro de categorías del Admin', () => {
       await expect(page).toHaveURL(/\/categorias\/e2e-008-barras\?padre=cat-tv$/);
       await expect(page.getByText('Esta categoría ya no existe')).toBeVisible();
       await expect(page.getByRole('form', { name: 'Editar categoría' })).toHaveCount(0);
-      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(page).toHaveURL(/\/categorias\?padre=cat-tv$/);
     } finally {
       await cambiarCategorias(() => originales);
@@ -496,8 +505,14 @@ test.describe('Filtros y registro de categorías del Admin', () => {
 
 const listaMarcas = (page: Page) => page.getByRole('region', { name: 'Lista de marcas' });
 const panelMarcas = (page: Page) => page.getByRole('search', { name: 'Filtros de marcas' });
-/** Filas de la lista de marcas: cada una con su nombre, «Activa» o «Inactiva», «Editar» y «Eliminar». */
-const filasMarcas = (page: Page) => listaMarcas(page).locator(':scope > div');
+/**
+ * Filas de la lista de marcas: cada una con su nombre, su estado, «Editar» y «Eliminar». Desde el lote 43 (PBI-0265) la
+ * lista es una tabla y el estado, una insignia «Activo» o «Inactivo»: las filas son las que tienen celdas.
+ */
+const filasMarcas = (page: Page) =>
+  listaMarcas(page)
+    .getByRole('row')
+    .filter({ has: page.getByRole('cell') });
 const filaMarca = (page: Page, nombre: string) =>
   filasMarcas(page).filter({ has: page.locator('strong', { hasText: nombre }) });
 
@@ -530,7 +545,7 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await buscarMarcas(page);
       await expect(page).toHaveURL(/\/marcas\?estado=inactivos$/);
       await expect(filasMarcas(page).locator('strong')).toHaveText(['Zenith']);
-      await expect(filasMarcas(page)).toContainText('Inactiva');
+      await expect(filasMarcas(page)).toContainText('Inactivo');
 
       await elegir(page, panelMarcas(page), 'Estado', 'Activos');
       await buscarMarcas(page);
@@ -582,7 +597,8 @@ test.describe('Filtros y registro de marcas del Admin', () => {
       await edicion.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(edicion).toBeHidden();
       await expect(page).toHaveURL(/\/marcas\?nombre=zen$/);
-      await expect(filaMarca(page, 'Zenith 008')).toContainText('Activa');
+      // Lote 43 (PBI-0265): el estado, como insignia «Activo».
+      await expect(filaMarca(page, 'Zenith 008').getByText('Activo', { exact: true })).toBeVisible();
 
       // Otra sesión elimina una marca con la lista abierta: al editarla, se dice que ya no existe, sin ventana.
       await cambiarMarcas((actuales) => actuales.filter((m) => m.name !== 'Zentro 008'));
@@ -665,8 +681,8 @@ const VISTAS_DEL_CATALOGO: readonly {
     ],
   })),
   ...[
-    ['/productos/nuevo', 'Nuevo producto', 'Guardar producto'],
-    ['/productos/p-001', 'Editar producto', 'Guardar producto'],
+    ['/productos/nuevo', 'Nuevo producto', 'Guardar'],
+    ['/productos/p-001', 'Editar producto', 'Guardar'],
     ['/categorias/nueva', 'Nueva categoría', 'Guardar'],
     ['/categorias/cat-tv-oled', 'Editar categoría', 'Guardar'],
   ].map(([ruta, formulario, guardar]) => ({
@@ -743,17 +759,15 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
       expect(cajaPanel.bottom, que('el panel acaba antes de la lista')).toBeLessThanOrEqual(cajaLista.top);
       expect(cajaNuevo.top, que('«Agregar» dentro del panel')).toBeGreaterThanOrEqual(cajaPanel.top);
       expect(cajaNuevo.bottom, que('«Agregar» dentro del panel')).toBeLessThanOrEqual(cajaPanel.bottom);
-      // «Agregar» a la derecha de «Limpiar», en su fila; la lista con el ancho del panel (todo el contenido).
+      // «Agregar» a la derecha de «Limpiar», en su fila. Lote 43 (PBI-0265): el panel y la lista van en la misma
+      // tarjeta; la lista ocupa su ancho y el panel, el mismo con el margen interior de la tarjeta a cada lado.
       const cajaLimpiar = await caja(filtros.getByRole('button', { name: 'Limpiar filtros' }));
       expect(cajaNuevo.left, que('«Agregar» a la derecha de «Limpiar»')).toBeGreaterThan(cajaLimpiar.right);
       expect(
-        Math.abs(cajaLista.left - cajaPanel.left),
-        que('lista y panel, mismo borde izquierdo'),
+        Math.abs(cajaPanel.left - cajaLista.left - (cajaLista.right - cajaPanel.right)),
+        que('el panel, centrado sobre la lista, con el mismo margen a cada lado'),
       ).toBeLessThan(TOLERANCIA + 0.5);
-      expect(
-        Math.abs(cajaLista.right - cajaPanel.right),
-        que('lista y panel, mismo borde derecho'),
-      ).toBeLessThan(TOLERANCIA + 0.5);
+      expect(cajaPanel.left, que('el panel, dentro del ancho de la lista')).toBeGreaterThan(cajaLista.left);
       medidas.push({ titulo: pagina.titulo, panel: cajaPanel, lista: cajaLista, nuevo: cajaNuevo });
     }
 
@@ -819,7 +833,7 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
     }
   });
 
-  test('TEST-19 · con 30 productos, 25 por página y una búsqueda nueva vuelve a la 1', async ({ page }) => {
+  test('TEST-19 · con 30 productos, 10 por página y una búsqueda nueva vuelve a la 1', async ({ page }) => {
     const originales = await leerProductos();
     const faltan = 30 - originales.length;
     const nuevos = Array.from({ length: faltan }, (_, i) => {
@@ -836,33 +850,40 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
       await ingresarAlAdmin(page, cuentasAdmin.superadmin);
       await abrirProductos(page);
 
-      // 30 resultados: los 25 primeros y «Página 1 de 2»; «Anterior» deshabilitado.
-      await expect(editar(lista(page))).toHaveCount(25);
-      await expect(paginacion).toContainText('Página 1 de 2');
-      await expect(paginacion.getByRole('button', { name: 'Anterior' })).toBeDisabled();
-      // La barra está dentro de la lista, después de las filas.
+      // 30 resultados: los 10 primeros y «1 - 10 de 30»; «Página anterior» deshabilitado.
+      await expect(editar(lista(page))).toHaveCount(10);
+      await expect(paginacion).toContainText('1 - 10 de 30');
+      await expect(paginacion.getByRole('button', { name: 'Página anterior' })).toBeDisabled();
+      // Lote 43: la barra va en el pie del panel, debajo de las filas.
       const cajaLista = await caja(lista(page));
       const cajaBarra = await caja(paginacion);
-      expect(cajaBarra.bottom).toBeLessThanOrEqual(cajaLista.bottom + TOLERANCIA);
+      expect(cajaBarra.top).toBeGreaterThanOrEqual(cajaLista.bottom - TOLERANCIA);
 
-      await paginacion.getByRole('button', { name: 'Siguiente' }).click();
+      await paginacion.getByRole('button', { name: 'Página siguiente' }).click();
       await expect(page).toHaveURL(/\/productos\?pagina=2$/);
-      await expect(paginacion).toContainText('Página 2 de 2');
-      await expect(editar(lista(page))).toHaveCount(5);
-      await expect(paginacion.getByRole('button', { name: 'Siguiente' })).toBeDisabled();
+      await expect(paginacion).toContainText('11 - 20 de 30');
+      await expect(editar(lista(page))).toHaveCount(10);
+      await paginacion.getByRole('button', { name: 'Última página' }).click();
+      await expect(page).toHaveURL(/\/productos\?pagina=3$/);
+      await expect(paginacion).toContainText('21 - 30 de 30');
+      await expect(paginacion.getByRole('button', { name: 'Página siguiente' })).toBeDisabled();
 
-      // Una búsqueda nueva, desde la página 2, vuelve a la 1.
+      // Una búsqueda nueva, desde la página 3, vuelve a la 1.
       await buscar(page);
       await expect(page).toHaveURL(/\/productos$/);
-      await expect(paginacion).toContainText('Página 1 de 2');
-      await expect(editar(lista(page))).toHaveCount(25);
+      await expect(paginacion).toContainText('1 - 10 de 30');
+      await expect(editar(lista(page))).toHaveCount(10);
 
-      // 25 resultados o menos: sin paginación.
+      // Con 25 por página, los resultados de una búsqueda (24) caben en una sola página.
       await panel(page).getByRole('textbox', { name: 'Nombre' }).fill('Producto paginado 008');
       await buscar(page);
       await expect(page).toHaveURL(/\/productos\?nombre=Producto(%20|\+)paginado(%20|\+)008$/);
+      await expect(editar(lista(page))).toHaveCount(Math.min(faltan, 10));
+      await paginacion.getByRole('combobox', { name: 'Elementos por página' }).click();
+      await page.getByRole('option', { name: '25' }).click();
       await expect(editar(lista(page))).toHaveCount(faltan);
-      await expect(paginacion).toHaveCount(0);
+      await expect(paginacion).toContainText(`1 - ${faltan} de ${faltan}`);
+      await expect(paginacion.getByRole('button', { name: 'Página siguiente' })).toBeDisabled();
     } finally {
       await restaurar(originales);
     }
@@ -931,7 +952,7 @@ test.describe('Filtros y registro del catálogo: las tres páginas y los casos d
 
     // Lote 21 (PBI-0211): la marca se edita en la ventana de registro, que se abre con «Editar».
     for (const [ruta, formulario, guardar, abrir] of [
-      ['/productos/p-004', 'Editar producto', 'Guardar producto', null],
+      ['/productos/p-004', 'Editar producto', 'Guardar', null],
       ['/categorias/cat-tv-oled', 'Editar categoría', 'Guardar', null],
       ['/marcas', 'Editar marca', 'Guardar', 'Editar marca Nova'],
     ] as const) {

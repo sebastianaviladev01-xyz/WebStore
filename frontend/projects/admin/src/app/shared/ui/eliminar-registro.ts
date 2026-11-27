@@ -1,12 +1,15 @@
 /** Lo que necesita eliminar un registro desde su página (lote 08, PBI-0134). */
 export interface EliminacionDeRegistro {
-  /** Pregunta de la confirmación, por ejemplo «¿Eliminar cliente?». */
-  readonly pregunta: string;
+  /** Nombre del registro que muestra la ventana de confirmación (lote 43, PBI-0269), por ejemplo «Ana Torres». */
+  readonly nombre: string;
   readonly id: string;
   /** `id` del registro que el formulario está editando, o `null`. Se lee al terminar, no al empezar. */
   readonly editando: () => string | null;
-  /** Por omisión, el `confirm()` del navegador. */
-  readonly confirmar?: (pregunta: string) => boolean;
+  /**
+   * Pide la confirmación con la ventana propia del backoffice (`confirmarEliminacion`, PBI-0269); responde `true` con
+   * «Sí, eliminar». Antes del lote 43, el `confirm()` del navegador.
+   */
+  readonly confirmar: (nombre: string) => Promise<boolean>;
   /** Elimina en el BFF; devuelve `true` si lo eliminó. */
   readonly eliminar: (id: string) => Promise<boolean>;
   /** Vuelve el formulario a «Nuevo»: «Guardar» no debe recrear el registro eliminado (PBI-0122). */
@@ -18,14 +21,14 @@ export interface EliminacionDeRegistro {
  * mismo flujo en Clientes, Usuarios, Tarifas de envío y Banners. Devuelve `true` si se eliminó.
  */
 export async function eliminarRegistro({
-  pregunta,
+  nombre,
   id,
   editando,
-  confirmar = (texto) => confirm(texto),
+  confirmar,
   eliminar,
   salirDeLaEdicion,
 }: EliminacionDeRegistro): Promise<boolean> {
-  if (!confirmar(pregunta)) return false;
+  if (!(await confirmar(nombre))) return false;
   if (!(await eliminar(id))) return false;
   if (editando() === id) salirDeLaEdicion();
   return true;

@@ -106,7 +106,7 @@ test.describe('PBI-0211: ventana de registro en Marcas, Clientes y Tarifas de en
 });
 
 test.describe('PBI-0211: interfaz de registro propia en Usuarios y Banners', () => {
-  test('Usuarios: «Editar» abre su interfaz con los datos y «Volver a usuarios» conserva los filtros', async ({
+  test('Usuarios: «Editar» abre su interfaz con los datos y «Regresar» conserva los filtros', async ({
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
@@ -121,7 +121,7 @@ test.describe('PBI-0211: interfaz de registro propia en Usuarios y Banners', () 
     await expect(registro.getByRole('combobox', { name: 'Rol', exact: true })).toContainText('Administrador');
     // La contraseña temporal solo se pide al crear.
     await expect(registro.getByLabel('Contraseña temporal')).toHaveCount(0);
-    await page.getByRole('link', { name: 'Volver a usuarios' }).click();
+    await page.getByRole('link', { name: 'Regresar', exact: true }).click();
     await expect(page).toHaveURL(/\/usuarios\?texto=admin$/);
   });
 

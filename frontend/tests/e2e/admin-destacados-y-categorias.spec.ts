@@ -41,7 +41,7 @@ test.describe('Productos destacados configurables (PBI-0215)', () => {
       const casilla = formulario.getByRole('checkbox', { name: 'Es destacado' });
       await expect(casilla).not.toBeChecked();
       await casilla.check();
-      await formulario.getByRole('button', { name: 'Guardar producto' }).click();
+      await formulario.getByRole('button', { name: 'Guardar', exact: true }).click();
       await expect(page).toHaveURL(/\/productos$/);
       expect((await leerProductos()).find((producto) => producto.id === 'p-005')?.featured).toBe(true);
 
@@ -125,7 +125,7 @@ test.describe('Categorías en árbol (PBI-0220)', () => {
       // Al volver de editar, el árbol sigue abierto donde estaba.
       await page.keyboard.press('Enter');
       await expect(page).toHaveURL(/\/categorias\/cat-tv-oled$/);
-      await page.getByRole('link', { name: 'Volver a categorías' }).click();
+      await page.getByRole('link', { name: 'Regresar', exact: true }).click();
       await expect(nodo(page, 'TV y audio')).toHaveAttribute('aria-expanded', 'true');
 
       // Inicio y Fin; con la fila de «TV y audio», ← la cierra.
