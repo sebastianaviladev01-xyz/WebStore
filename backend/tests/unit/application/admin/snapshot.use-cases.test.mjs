@@ -348,3 +348,39 @@ test('lote 16 (PBI-0179): config guarda dónde van los sugeridos y avisa si el v
     return true;
   });
 });
+
+test('lote 49 (PBI-0241): config guarda el número de WhatsApp con sus dígitos y el mensaje recortado', () => {
+  assert.equal(seed.config.whatsappNumber, '', 'la semilla no trae un número: sin número no hay botón');
+  assert.equal(seed.config.whatsappMessage, '');
+  const { store, resultado } = guardar(superadmin, {
+    config: { whatsappNumber: ' +51 987 654 321 ', whatsappMessage: '  Hola, quiero comprar  ' },
+  });
+  resultado();
+  assert.equal(store.state.config.whatsappNumber, '51987654321');
+  assert.equal(store.state.config.whatsappMessage, 'Hola, quiero comprar');
+});
+
+for (const [campo, valor, motivo] of [
+  ['whatsappNumber', '987 654 321', /código de país/],
+  ['whatsappNumber', 'abc', /de 8 a 15 dígitos/],
+  ['whatsappNumber', 51987654321, /no es válido/],
+  ['whatsappMessage', 'x'.repeat(201), /hasta 200 caracteres/],
+])
+  test(`lote 49 (PBI-0241): ${campo} ${JSON.stringify(valor).slice(0, 20)} se rechaza con su motivo, sin guardar`, () => {
+    const { store, resultado } = guardar(superadmin, { config: { [campo]: valor } });
+    const antes = structuredClone(store.state);
+    assert.throws(resultado, (error) => {
+      assert.equal(error.code, 'INVALID_COLLECTION');
+      assert.deepEqual(error.details, { collection: 'config', field: campo });
+      assert.match(error.message, /^Revisa el contenido de la tienda: /);
+      assert.match(error.message, motivo);
+      return true;
+    });
+    assert.deepEqual(store.state, antes);
+    assert.equal(store.guardados, 0);
+  });
+
+test('lote 49 (PBI-0241): el número de WhatsApp lo cambia quien gestiona Contenido, no un administrador', () => {
+  const { resultado } = guardar(admin, { config: { whatsappNumber: '51987654321' } });
+  assert.throws(resultado, { code: 'INSUFFICIENT_ROLE' });
+});
