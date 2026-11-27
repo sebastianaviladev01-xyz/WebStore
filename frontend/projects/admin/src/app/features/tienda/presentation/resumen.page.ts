@@ -115,7 +115,7 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
           </span>
         </h1>
         <p class="mt-2 flex items-center gap-2 text-sm text-muted">
-          <svg wsAdminIcono="informacion"></svg>
+          <svg wsAdminIcono="info"></svg>
           Hola, {{ session.user()?.name }}. Esto es lo que necesita atención hoy.
         </p>
       </div>

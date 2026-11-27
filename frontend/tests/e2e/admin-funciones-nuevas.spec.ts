@@ -63,23 +63,23 @@ test.describe('PBI-0155: Pedidos y Tarifas de envío con el panel estándar', ()
     expect(cajaPanel.y).toBeGreaterThan(cajaTitulo.y);
     expect(cajaLista.y).toBeGreaterThan(cajaPanel.y + cajaPanel.height - 1);
 
-    // Escribir no filtra: filtra «Buscar».
+    // Escribir no filtra: filtra «Buscar». Lote 43 (PBI-0265): con 10 por página, Breña, de la página 1 (antes, Surco).
     await panel.getByRole('textbox', { name: 'Buscar tarifa' }).fill('jesus maria');
-    await expect(lista).toContainText('Surco');
+    await expect(lista).toContainText('Breña');
     await panel.getByRole('button', { name: 'Buscar', exact: true }).click();
     await expect.poll(() => new URL(page.url()).searchParams.get('texto')).toBe('jesus maria');
     await expect(lista).toContainText('Jesús María');
-    await expect(lista).not.toContainText('Surco');
+    await expect(lista).not.toContainText('Breña');
 
     await page.reload();
     await expect(panel.getByRole('textbox', { name: 'Buscar tarifa' })).toHaveValue('jesus maria');
-    await expect(lista).not.toContainText('Surco');
+    await expect(lista).not.toContainText('Breña');
 
     await panel.getByRole('button', { name: 'Limpiar filtros' }).click();
     await expect(panel.getByRole('textbox', { name: 'Buscar tarifa' })).toHaveValue('');
     await panel.getByRole('button', { name: 'Buscar', exact: true }).click();
     await expect(page).toHaveURL(/\/envios$/);
-    await expect(lista).toContainText('Surco');
+    await expect(lista).toContainText('Breña');
   });
 
   test('Pedidos: el estado se elige en el panel y se aplica con «Buscar»', async ({ page }) => {

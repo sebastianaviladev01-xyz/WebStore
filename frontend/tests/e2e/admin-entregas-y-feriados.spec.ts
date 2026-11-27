@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
+import { aceptarEliminacion } from './apoyo/confirmacion';
 import {
   correoUnico,
   cuentasAdmin,
@@ -109,8 +110,9 @@ test('PBI-0183: el superadministrador agrega y quita días no laborables, con fi
     await page.getByRole('option', { name: anio }).click();
     await expect(page.getByRole('listbox')).toHaveCount(0);
 
-    page.once('dialog', (dialogo) => void dialogo.accept());
+    // Lote 43 (PBI-0269): la ventana propia de confirmación, con la fecha y su nombre.
     await tabla.getByRole('button', { name: `Quitar el ${visible}` }).click();
+    await aceptarEliminacion(page, `${visible} (Fiestas Patrias)`);
     await expect(tabla.getByRole('row').filter({ hasText: visible })).toHaveCount(0);
     await expect(tabla).toContainText(`No hay días no laborables en ${anio}`);
   } finally {

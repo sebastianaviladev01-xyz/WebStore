@@ -10,7 +10,7 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  * - TEST-01 (AC-01, AC-04): con A, B y C, a 360, 375 y 390 px, la página no desplaza en horizontal ni al entrar
  *   ni editando, y ningún elemento de `main` acaba a la derecha de `clientWidth`.
  * - TEST-02 (AC-02, AC-04): el formulario «Nuevo producto» tiene todos sus campos, la galería, «Cargar foto» y
- *   «Guardar producto» dentro de su caja (lote 25: sin «URL de foto» ni «Agregar», la foto solo se carga como archivo); el grupo «Imagen principal», con «Cargar imagen» (lote 24,
+ *   «Guardar» dentro de su caja (lote 25: sin «URL de foto» ni «Agregar», la foto solo se carga como archivo); el grupo «Imagen principal», con «Cargar imagen» (lote 24,
  *   PBI-0214: ya no hay URL ni miniatura que escribir), dentro de su caja y por encima de la galería; al editar «OLED Vision 55” 4K» y añadir una foto, las miniaturas, sus botones y el aviso de foto
  *   repetida quedan dentro de la galería.
  * - TEST-03 (AC-03, AC-04): para los seis productos del seed, el nombre, el SKU (una sola línea, en su propia celda
@@ -27,8 +27,8 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
  *
  * Los localizadores usan roles y textos visibles (`frontend/architecture.md` §6). La fila de un producto es un
  * `div` sin otro rol: se localiza como el `div` de la lista que tiene el enlace «Editar» y el nombre, y sus hijos
- * directos son, en orden, el bloque del producto (el nombre en `strong`), el SKU (lote 25, PBI-0219), el precio, el
- * stock y las acciones. Se leen con `evaluate` para medir sus cajas. Las aserciones son `expect.soft`, con el
+ * directos son, en orden, el «N°» (lote 43, PBI-0265), el bloque del producto (el nombre en `strong`), el SKU (lote 25,
+ * PBI-0219), el precio, el stock, el estado (lote 43) y las acciones. Se leen con `evaluate` para medir sus cajas. Las aserciones son `expect.soft`, con el
  * tema, el ancho y lo que se comprueba, para que el informe muestre todas las causas de un rojo.
  */
 const TOLERANCIA = 0.5;
@@ -109,7 +109,7 @@ const filaDe = (page: Page, nombre: string) =>
     .filter({ has: page.getByRole('link', { name: /^Editar / }) })
     .filter({ hasText: nombre });
 
-/** Hijos directos de la fila (bloque, SKU, precio, stock, acciones): cajas, y texto visible de cada uno. */
+/** Hijos directos de la fila (N°, bloque, SKU, precio, stock, estado, acciones): cajas, y texto visible de cada uno. */
 interface HijoDeFila {
   caja: Caja;
   texto: string;
@@ -130,7 +130,8 @@ async function hijosDeFila(fila: Locator): Promise<HijoDeFila[]> {
 /** Rectángulos del SKU en su celda: cuántas líneas ocupa (valores de `top` distintos con ancho mayor que 0). */
 async function lineasDelSku(fila: Locator, sku: string): Promise<number> {
   return fila.evaluate((nodo, buscado) => {
-    const celda = nodo.children[1];
+    // Lote 43 (PBI-0265): la primera celda es «N°»; el SKU, la tercera.
+    const celda = nodo.children[2];
     if (!celda) throw new Error('La fila no tiene la celda del SKU');
     const recorrido = document.createTreeWalker(celda, NodeFilter.SHOW_TEXT);
     for (let actual = recorrido.nextNode(); actual; actual = recorrido.nextNode()) {
@@ -250,13 +251,15 @@ async function comprobarLista(page: Page, lugar: Lugar, conEliminar: boolean): P
     expect.soft(lineas, que('líneas del SKU')).toBe(1);
 
     const hijos = await hijosDeFila(fila);
-    expect(hijos, que('hijos directos de la fila')).toHaveLength(5);
-    const [bloque, sku, precio, stock, acciones] = hijos;
+    expect(hijos, que('hijos directos de la fila')).toHaveLength(7);
+    const [numero, bloque, sku, precio, stock, estado, acciones] = hijos;
     const partes: [string, HijoDeFila][] = [
+      ['N°', numero],
       ['bloque del producto', bloque],
       ['SKU', sku],
       ['precio', precio],
       ['stock', stock],
+      ['estado', estado],
       ['acciones', acciones],
     ];
     for (const [parte, hijo] of partes) {
@@ -314,12 +317,13 @@ const CAMPOS: readonly (readonly [RolDeCampo, string])[] = [
   ['textbox', 'Nombre'],
   ['textbox', 'SKU'],
   ['textbox', 'Descripción'],
-  ['textbox', 'Características (una por línea)'],
+  ['textbox', 'Característica 1'],
   ['spinbutton', 'Precio'],
   // Sin «Stock» desde el lote 23 (ADR-0025, PBI-0226): se gestiona solo en Inventario.
   ['combobox', 'Categoría'],
   ['combobox', 'Marca'],
-  ['checkbox', 'Activo'],
+  // Lote 44 (PBI-0268): el estado, un selector en píldora de la fila de cabecera; las características, una tabla.
+  ['combobox', 'Estado'],
 ];
 
 /** TEST-02: el formulario «Nuevo producto» y sus piezas dentro de su caja. */
@@ -332,8 +336,14 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
   for (const [rol, nombre] of CAMPOS) {
     const control = formulario.getByRole(rol, { name: nombre, exact: true });
     const cajaDelCampo = await control.evaluate((nodo) => {
-      const campo = nodo.closest('mat-form-field') ?? nodo.closest('mat-checkbox');
-      if (!campo) throw new Error('El control no está en un mat-form-field ni en un mat-checkbox');
+      // Lote 44 (PBI-0268): el estado y las filas de las características son controles nativos; se mide el propio
+      // control.
+      const campo =
+        nodo.closest('mat-form-field') ??
+        nodo.closest('mat-checkbox') ??
+        (nodo.matches('select, table input') ? nodo : null);
+      if (!campo)
+        throw new Error('El control no está en un mat-form-field, un mat-checkbox, un select ni una tabla');
       const { left, top, right, bottom, width, height } = campo.getBoundingClientRect();
       return { left, top, right, bottom, width, height };
     });
@@ -351,7 +361,7 @@ async function comprobarFormularioNuevo(page: Page, lugar: Lugar): Promise<void>
     ['texto «Cargar imagen»', formulario.getByText('Cargar imagen', { exact: true })],
     ['grupo «Galería de fotos»', galeria],
     ['texto «Cargar foto»', formulario.getByText('Cargar foto', { exact: true })],
-    ['botón «Guardar producto»', formulario.getByRole('button', { name: 'Guardar producto' })],
+    ['botón «Guardar»', formulario.getByRole('button', { name: 'Guardar', exact: true })],
   ];
   for (const [parte, pieza] of piezas) {
     const cajaDeLaPieza = await caja(pieza);
@@ -489,16 +499,18 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
         await expect(fila).toHaveCount(1);
         const que = (parte: string) => etiqueta(lugar, `${producto.nombre} · ${parte}`);
         const hijos = await hijosDeFila(fila);
-        expect(hijos, que('hijos directos de la fila')).toHaveLength(5);
-        const [bloque, sku, precio, stock, acciones] = hijos;
+        expect(hijos, que('hijos directos de la fila')).toHaveLength(7);
+        const [numero, bloque, sku, precio, stock, estado, acciones] = hijos;
         // Desde el lote 25 (PBI-0219) el bloque del producto es solo el nombre y el SKU tiene su celda; el resto de
         // la fila se centra sobre él (`items-center`): el SKU, el precio, el stock y las acciones se comparan con el
         // centro del bloque (menos de 2 px) y, además, deben caer en la franja vertical del nombre, en su misma línea.
         const cajaDelNombre = await caja(fila.getByText(producto.nombre, { exact: true }));
         const alineados: [string, Caja][] = [
+          ['N°', numero.caja],
           ['SKU', sku.caja],
           ['precio', precio.caja],
           ['stock', stock.caja],
+          ['estado', estado.caja],
           ['acciones', acciones.caja],
         ];
         for (const [parte, cajaDeLaParte] of alineados) {
@@ -538,9 +550,9 @@ test.describe('Productos del Admin en pantallas estrechas', () => {
     expect.soft(await encabezado.isVisible(), etiqueta(lugar, 'cabecera oculta')).toBe(false);
     for (const producto of PRODUCTOS) {
       const hijos = await hijosDeFila(filaDe(page, producto.nombre));
-      expect(hijos).toHaveLength(5);
+      expect(hijos).toHaveLength(7);
       expect
-        .soft(hijos[3].texto, etiqueta(lugar, `${producto.nombre} · celda del stock`))
+        .soft(hijos[4].texto, etiqueta(lugar, `${producto.nombre} · celda del stock`))
         .toMatch(STOCK_CON_ETIQUETA);
     }
   });

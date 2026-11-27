@@ -68,7 +68,10 @@ test.describe('Componentes de Material del Admin con los temas', () => {
       // Lista desplegable abierta: el texto y la marca de la opción seleccionada sobre su fondo.
       await page.goto('/banners/nuevo');
       await page.getByRole('combobox', { name: 'Ubicación' }).click();
-      const seleccionada = page.getByRole('option', { selected: true });
+      // Lote 44: acotada a la lista abierta; el registro tiene también el <select> nativo «Estado».
+      const seleccionada = page
+        .getByRole('listbox', { name: 'Ubicación' })
+        .getByRole('option', { selected: true });
       await expect(seleccionada).toBeVisible();
       const opcion = await medirOpcionSeleccionada(seleccionada);
       exigir(

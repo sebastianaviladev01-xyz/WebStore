@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { MatDialog } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
@@ -25,6 +26,8 @@ import {
   ModoDeDireccion,
   ReglaDePrimeraEntrega,
 } from '../domain/tienda.model';
+import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
+import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
@@ -235,7 +238,8 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
                       type="button"
                       [disabled]="admin.saving()"
                       [attr.aria-label]="'Quitar el ' + fecha(dia.date)"
-                      (click)="quitar(dia)"
+                      data-eliminar
+                      (click)="quitar(dia, $event)"
                     >
                       <svg wsAdminIcono="quitar"></svg>
                       Quitar
@@ -259,6 +263,9 @@ const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
 })
 export class EntregasPage {
   protected readonly admin = inject(TiendaFacade);
+  private readonly dialog = inject(MatDialog);
+  /** Lote 43 (PBI-0269): el foco tras eliminar, en la fila que ocupa su lugar. */
+  private readonly foco = focoTrasEliminar();
   protected readonly reglas = REGLAS_DE_PRIMERA_ENTREGA;
   protected readonly maximoNombre = MAXIMO_NOMBRE_DE_DIA_NO_LABORABLE;
   protected readonly diaDeLaSemana = diaDeLaSemana;
@@ -384,11 +391,13 @@ export class EntregasPage {
     this.nuevoDia.reset();
   }
 
-  protected async quitar(dia: DiaNoLaborable): Promise<void> {
+  protected async quitar(dia: DiaNoLaborable, evento: Event): Promise<void> {
     this.errorDeDia.set(null);
     const nombre = dia.name ? ` (${dia.name})` : '';
-    if (!confirm(`¿Quitar el ${this.fecha(dia.date)}${nombre} de los días no laborables?`)) return;
-    if (!(await this.admin.quitarDiaNoLaborable(dia.id)))
-      this.errorDeDia.set(this.admin.tomarError() ?? 'No pudimos quitar el día. Inténtalo de nuevo.');
+    // Lote 43 (ADR-0033, PBI-0269): la ventana propia de confirmación, con la fecha y su nombre.
+    const lugar = this.foco.recordar(evento);
+    if (!(await confirmarEliminacion(this.dialog, `${this.fecha(dia.date)}${nombre}`))) return;
+    if (await this.admin.quitarDiaNoLaborable(dia.id)) this.foco.restaurar(lugar);
+    else this.errorDeDia.set(this.admin.tomarError() ?? 'No pudimos quitar el día. Inténtalo de nuevo.');
   }
 }
