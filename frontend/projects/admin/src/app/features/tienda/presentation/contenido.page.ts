@@ -258,11 +258,7 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
             <mat-form-field subscriptSizing="dynamic">
               <mat-label>Mensaje inicial</mat-label>
               <textarea matInput rows="2" formControlName="whatsappMessage"></textarea>
-              <mat-hint>
-                Opcional: el cliente lo ve escrito al abrir la conversación. Hasta
-                {{ maximoMensajeDeWhatsapp }}
-                caracteres.
-              </mat-hint>
+              <mat-hint>{{ ayudaDelMensajeDeWhatsapp }}</mat-hint>
               <mat-error>{{ mensaje(form.controls.whatsappMessage.errors) }}</mat-error>
             </mat-form-field>
           </div>
@@ -433,7 +429,8 @@ export class ContenidoPage {
 
   // --- WhatsApp (lote 49, ADR-0035, PBI-0241) ---
   protected readonly ejemploDeWhatsapp = EJEMPLO_DE_WHATSAPP;
-  protected readonly maximoMensajeDeWhatsapp = MAXIMO_MENSAJE_DE_WHATSAPP;
+  /** En una sola interpolación: un texto partido en varias líneas deja un espacio delante de la ayuda. */
+  protected readonly ayudaDelMensajeDeWhatsapp = `Opcional: el cliente lo ve escrito al abrir la conversación. Hasta ${MAXIMO_MENSAJE_DE_WHATSAPP} caracteres.`;
   /**
    * «Probar» abre el enlace que tendrá la tienda, solo con un número válido. Lee el formulario al dibujar, como la vista
    * previa del logo: al rellenarlo con lo que llega del BFF no se emite `valueChanges`.
