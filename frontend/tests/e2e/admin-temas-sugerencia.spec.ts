@@ -5,8 +5,9 @@ import { cuentasAdmin, desplegarGrupo, ingresarAlAdmin } from './apoyo/entorno';
 /**
  * Lote 47 (ADR-0033, PBI-0267): «Revisión de contraste» explica la relación y sugiere un color que cumple. Daniel no
  * entendía «1.4:1» ni «4.5:1»: «tiene que ir con sugerencia», «que sea explicativo, informativo para el usuario». La
- * sugerencia es una por color editable, en «Cómo corregirlo»: el color más cercano que hace llegar todos los pares que
- * dependen de él. Cada par dice dónde se ve y con qué color se corrige. Las pruebas no guardan.
+ * sugerencia es una por color editable, en cadena, en «Cómo corregirlo»: el color más cercano que hace llegar todos los
+ * pares que dependen de él, con los anteriores aplicados. Cada par dice dónde se ve y con qué color se corrige. Las
+ * pruebas no guardan.
  */
 /** Los colores de B: la base es la de B, así que hereda su escala neutra mientras no cambien el fondo ni el contraste. */
 const B = {
@@ -46,29 +47,81 @@ test('PBI-0267: varios avisos del mismo color dan una sola sugerencia, que los c
   await expect(revision).toContainText('al menos 4.5:1 para el texto y 3:1 para los bordes y los controles');
   await expect(formulario.getByText(/al menos 4\.5:1 para el texto/)).toHaveCount(1);
 
-  // Seis pares dependen del contraste: una sola línea y un solo botón para «Contraste».
+  // Ocho pares dependen del contraste, también los del secundario suave: la cadena trae solo «Contraste», sin orden
+  // que seguir, y no pide cambiar el secundario.
   const sugerencias = formulario.locator('[data-contraste="sugerencias"]');
   await expect(sugerencias.getByText('Cómo corregirlo', { exact: true })).toBeVisible();
+  await expect(sugerencias.getByRole('listitem')).toHaveCount(1);
+  await expect(sugerencias).not.toContainText('Aplícalas en este orden');
+  await expect(sugerencias).not.toContainText('«Secundario»');
   const contraste = sugerencias.getByRole('listitem').filter({ hasText: '«Contraste»' });
-  await expect(contraste).toHaveCount(1);
-  await expect(contraste).toContainText('Oscurece «Contraste»: hace llegar los 6 pares que dependen de él.');
+  await expect(contraste).toContainText('Oscurece «Contraste»: hace llegar los 8 pares que dependen de él.');
   await expect(contraste.getByRole('button', { name: /^Usar #[0-9A-F]{6}$/ })).toHaveCount(1);
 
   // Cada par conserva su cifra, dice dónde se ve y con qué color se corrige, sin botón.
   const aviso = formulario.locator('[data-contraste="aviso"]');
   await expect(aviso).toContainText('Texto secundario sobre el fondo principal: 2.6:1, mínimo 4.5:1');
   await expect(aviso).toContainText('Se ve en el borde de los campos.');
-  await expect(aviso.getByText('Se corrige con el color «Contraste».', { exact: true })).toHaveCount(6);
+  await expect(aviso.getByText('Se corrige con el color «Contraste».', { exact: true })).toHaveCount(8);
   await expect(aviso.getByRole('button')).toHaveCount(0);
 
+  // Tras aplicarla, no queda nada que corregir.
   const boton = contraste.getByRole('button', { name: /^Usar #[0-9A-F]{6}$/ });
   const sugerido = (await boton.textContent())!.trim().replace('Usar ', '');
   await boton.click();
   await expect(codigo(page, 'Contraste')).toHaveValue(sugerido);
   await expect(codigo(page, 'Contraste')).toBeFocused();
-  await expect(formulario.getByText(/del color «Contraste»/)).toHaveCount(0);
-  await expect(sugerencias.getByRole('listitem').filter({ hasText: '«Contraste»' })).toHaveCount(0);
-  await expect(formulario.locator('[data-contraste="bloqueo"]')).toHaveCount(0);
+  await expect(aviso).toHaveCount(0);
+  await expect(sugerencias).toHaveCount(0);
+  await expect(formulario.locator('[data-contraste="correcto"]')).toBeVisible();
+});
+
+test('PBI-0267: con varios colores, las sugerencias van en cadena y se aplican en orden', async ({
+  page,
+}) => {
+  // Un fondo secundario gris claro bajo un contraste gris oscuro: primero el fondo secundario, que arregla también dos
+  // pares del contraste, y después el contraste, sobre los pares que le quedan.
+  await nuevoTemaCon(page, {
+    ...B,
+    'Fondo principal': '#FFFFFF',
+    'Fondo secundario': '#A0A0A0',
+    Contraste: '#303030',
+  });
+  const formulario = dialogo(page);
+  const sugerencias = formulario.locator('[data-contraste="sugerencias"]');
+  await expect(sugerencias).toContainText('Aplícalas en este orden:');
+  const lineas = sugerencias.getByRole('listitem');
+  await expect(lineas).toHaveCount(2);
+  await expect(lineas.nth(0)).toContainText(
+    '1. Aclara «Fondo secundario»: hace llegar los 2 pares que dependen de él y 2 de otros colores.',
+  );
+  await expect(lineas.nth(1)).toContainText(
+    '2. Oscurece «Contraste»: hace llegar los 4 pares que dependen de él.',
+  );
+  const aviso = formulario.locator('[data-contraste="aviso"]');
+  await expect(aviso.getByText('Se corrige con el color «Fondo secundario».', { exact: true })).toHaveCount(
+    4,
+  );
+  await expect(aviso.getByText('Se corrige con el color «Contraste».', { exact: true })).toHaveCount(4);
+
+  // Tras la primera, la segunda pasa a ser la única.
+  await lineas
+    .nth(0)
+    .getByRole('button', { name: /^Usar #[0-9A-F]{6}$/ })
+    .click();
+  await expect(codigo(page, 'Fondo secundario')).toBeFocused();
+  await expect(sugerencias).not.toContainText('Aplícalas en este orden');
+  await expect(lineas).toHaveCount(1);
+  await expect(lineas.nth(0)).toContainText(
+    'Oscurece «Contraste»: hace llegar los 4 pares que dependen de él.',
+  );
+
+  await lineas
+    .nth(0)
+    .getByRole('button', { name: /^Usar #[0-9A-F]{6}$/ })
+    .click();
+  await expect(sugerencias).toHaveCount(0);
+  await expect(formulario.locator('[data-contraste="correcto"]')).toBeVisible();
 });
 
 test('PBI-0267: con un solo par, «Usar …» aplica el color sugerido y el aviso desaparece', async ({

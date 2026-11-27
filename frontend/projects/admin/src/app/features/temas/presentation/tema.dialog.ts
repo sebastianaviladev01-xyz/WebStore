@@ -242,9 +242,9 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
               </p>
               <div class="mt-2 grid gap-2" aria-live="polite">
                 <!--
-                  Lote 47 (PBI-0267): una sugerencia por color editable, no por par. El color más cercano que hace llegar
-                  todos los pares que dependen de él (o los más que se puede, con su recuento), con un botón que lo aplica
-                  a su campo; si no hay ninguno, lo dice una vez.
+                  Lote 47 (PBI-0267): una sugerencia por color editable, no por par, en cadena: primero el color que más
+                  pares arregla y, con él aplicado, el siguiente, sobre los pares que le quedan. Un color cuyos pares
+                  arregla uno anterior no aparece. Cada línea, con un botón que la aplica; si no hay color, lo dice.
                 -->
                 @if (sugerencias().length) {
                   <div
@@ -252,10 +252,16 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
                     data-contraste="sugerencias"
                   >
                     <p class="font-semibold">Cómo corregirlo</p>
-                    <ul class="mt-1 grid gap-2">
-                      @for (sugerencia of sugerencias(); track sugerencia.campo) {
+                    @if (sugerencias().length > 1) {
+                      <p class="mt-1">Aplícalas en este orden:</p>
+                    }
+                    <ol class="mt-1 grid gap-2">
+                      @for (sugerencia of sugerencias(); track sugerencia.campo; let i = $index) {
                         <li class="flex flex-wrap items-center gap-x-2 gap-y-1">
                           <span [id]="'tema-sugerencia-' + sugerencia.campo">
+                            @if (sugerencias().length > 1) {
+                              <span class="tabular-nums">{{ i + 1 }}.</span>
+                            }
                             {{ explicarSugerencia(sugerencia) }}
                           </span>
                           @if (sugerencia.tipo === 'color') {
@@ -275,7 +281,7 @@ const CODIGOS_DEL_NOMBRE = new Set(['INVALID_THEME_NAME', 'THEME_NAME_TAKEN']);
                           }
                         </li>
                       }
-                    </ul>
+                    </ol>
                   </div>
                 }
                 @if (bloqueos().length) {
@@ -456,17 +462,21 @@ export class TemaDialog {
     return DONDE_SE_VE_EL_PAR[par];
   }
 
-  /** «Se corrige con el color «Contraste».», o que ese color solo no basta (lote 47, PBI-0267). */
+  /**
+   * «Se corrige con el color «Contraste».» (lote 47, PBI-0267): el color de la primera sugerencia de la cadena que lo
+   * arregla, aunque el par sea de otro color. Si ninguna lo arregla, que su color solo no basta.
+   */
   protected comoSeCorrige({ par }: ParContraste): string {
-    const campo = CAMPO_DEL_PAR[par];
-    const etiqueta = this.etiquetaDe(campo);
-    const sugerencia = this.sugerencias().find((s) => s.campo === campo);
-    return sugerencia?.tipo === 'color' && sugerencia.corrige.includes(par)
-      ? `Se corrige con el color «${etiqueta}».`
-      : `Depende del color «${etiqueta}», pero cambiarlo solo no basta.`;
+    const paso = this.sugerencias().find((s) => s.tipo === 'color' && s.arregla.includes(par));
+    return paso
+      ? `Se corrige con el color «${this.etiquetaDe(paso.campo)}».`
+      : `Depende del color «${this.etiquetaDe(CAMPO_DEL_PAR[par])}», pero cambiarlo solo no basta.`;
   }
 
-  /** La línea de «Cómo corregirlo» de un color: qué hacer y cuántos pares hace llegar, o por qué no hay sugerencia. */
+  /**
+   * La línea de «Cómo corregirlo» de un color: qué hacer y cuántos de los pares que le quedan hace llegar (y cuántos de
+   * otros colores), o por qué no hay sugerencia.
+   */
   protected explicarSugerencia(sugerencia: SugerenciaDeColor): string {
     const etiqueta = this.etiquetaDe(sugerencia.campo);
     const total = sugerencia.pares.length;
@@ -480,11 +490,17 @@ export class TemaDialog {
             ? 'hace llegar el par que depende de él'
             : `hace llegar los ${total} pares que dependen de él`
           : `hace llegar ${corrige} de los ${total} pares que dependen de él`;
-      return `${accion} «${etiqueta}»: ${alcance}.`;
+      const otros = sugerencia.arregla.length - corrige;
+      const deOtros = otros > 0 ? ` y ${otros} de otros colores` : '';
+      return `${accion} «${etiqueta}»: ${alcance}${deOtros}.`;
     }
+    const pares = uno ? 'el par que depende' : `ninguno de los ${total} pares que dependen`;
+    const alguno = uno ? 'el par que depende' : `alguno de los ${total} pares que dependen`;
     if (sugerencia.tipo === 'imposible')
-      return `Aclarar u oscurecer «${etiqueta}» no hace llegar ${uno ? 'el par que depende' : `ninguno de los ${total} pares que dependen`} de él: prueba con otra combinación de colores.`;
-    return `Aclarar u oscurecer «${etiqueta}» haría llegar ${uno ? 'el par que depende' : `alguno de los ${total} pares que dependen`} de él, pero entonces no podrías guardar el tema: prueba con otra combinación de colores.`;
+      return `Aclarar u oscurecer «${etiqueta}» no hace llegar ${pares} de él: prueba con otra combinación de colores.`;
+    if (sugerencia.tipo === 'bloquearia')
+      return `Aclarar u oscurecer «${etiqueta}» haría llegar ${alguno} de él, pero entonces no podrías guardar el tema: prueba con otra combinación de colores.`;
+    return `Aclarar u oscurecer «${etiqueta}» haría llegar ${alguno} de él, pero otros pares dejarían de llegar: prueba con otra combinación de colores.`;
   }
 
   /** Nombre del color como lo ve la persona («Fondo secundario»). */
