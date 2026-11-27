@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 /**
- * Lote 19 (ADR-0021, PBI-0001; provisional, por confirmar con Daniel): el comparador de productos. «Comparar» en la
+ * Lote 19 (ADR-0021, PBI-0001; confirmado por Sebastián Avila): el comparador de productos. «Comparar» en la
  * tarjeta y en la ficha (botón de alternar, hasta 4 productos), el acceso de la cabecera con cuántos hay y `/comparar`,
  * con la lista en la URL para compartirla. La lista vive en memoria: no se guarda en el navegador (STD-08).
  */

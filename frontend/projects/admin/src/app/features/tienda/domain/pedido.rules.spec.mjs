@@ -23,7 +23,8 @@ test('PBI-0067: la fecha de entrega se muestra como dd/MM/aaaa sin pasar por nin
   assert.equal(fechaDeEntrega('no es fecha'), '—');
 });
 
-// Lote 17 (ADR-0021, PBI-0177; provisional): el detalle del pedido dice qué versión de los términos aceptó el comprador.
+// Lote 17 (ADR-0021, PBI-0177; confirmado por Sebastián Avila): el detalle del pedido dice qué versión de los términos
+// aceptó el comprador.
 test('PBI-0177: la versión aceptada, o que el pedido es anterior al registro de versiones', () => {
   assert.equal(versionDeTerminos(2), 'Versión 2');
   assert.equal(versionDeTerminos(1), 'Versión 1');
@@ -31,7 +32,8 @@ test('PBI-0177: la versión aceptada, o que el pedido es anterior al registro de
   assert.equal(versionDeTerminos(undefined), 'Sin registro de versión');
 });
 
-// Lote 19 (ADR-0021, PBI-0006; provisional): el detalle muestra la dirección de cada línea que va a otra.
+// Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): el detalle muestra la dirección de cada línea que va a
+// otra.
 test('PBI-0006: la dirección de una línea en una sola línea de texto, con la referencia si la trae', () => {
   const direccion = {
     addressLine: 'Calle Regalo 456',

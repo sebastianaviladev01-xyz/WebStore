@@ -1,8 +1,8 @@
 /**
  * Fecha de entrega del checkout en la fecha de Lima, no en UTC (PBI-0096, parte de la tienda; lote 04, ADR-0017).
  * Lima es UTC−5 todo el año: entre las 19:00 y las 23:59 de Lima, en UTC ya es el día siguiente. Desde el lote 17
- * (ADR-0021, PBI-0178; provisional) la primera fecha la calcula el BFF con la configuración de la tienda: la tienda la
- * usa como mínimo del campo y como fecha propuesta.
+ * (ADR-0021, PBI-0178; confirmado por Sebastián Avila) la primera fecha la calcula el BFF con la configuración de la
+ * tienda: la tienda la usa como mínimo del campo y como fecha propuesta.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

@@ -5,8 +5,8 @@ import { galleryOf } from '../../domain/catalogo/producto.rules.mjs';
 import { DomainError } from '../../domain/comun/domain-error.mjs';
 
 /**
- * Imágenes cargadas en el Admin servidas por dirección (lote 24, ADR-0026, PBI-0214; provisional). El BFF de prueba las
- * guarda como Data URL en su estado, pero la tienda no las recibe dentro del JSON: recibe
+ * Imágenes cargadas en el Admin servidas por dirección (lote 24, ADR-0026, PBI-0214; confirmado por Sebastián Avila).
+ * El BFF de prueba las guarda como Data URL en su estado, pero la tienda no las recibe dentro del JSON: recibe
  * `/bff/images/{collection}/{id}/{field}?v={versión}`, una dirección que la tienda trata como cualquier foto
  * (`NgOptimizedImage` no admite Data URL) y que el navegador guarda en caché. La versión es un resumen de la imagen:
  * cambia cuando cambia la imagen. Qué campos se sirven así, por colección y nombre en la dirección:

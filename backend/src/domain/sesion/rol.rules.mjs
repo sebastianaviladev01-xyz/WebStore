@@ -8,7 +8,7 @@
  * administrador opera la tienda, elimina productos y gestiona a los vendedores; el vendedor crea productos y
  * modifica todos sus campos, sin eliminarlos.
  *
- * Lote 11 (ADR-0021, PBI-0170; provisional, por confirmar con Daniel): el vendedor también gestiona Inventario y ve
+ * Lote 11 (ADR-0021, PBI-0170; confirmado por Sebastián Avila): el vendedor también gestiona Inventario y ve
  * Pedidos (`orders.view`) sin cambiar su estado (`orders.manage`, del administrador y del superadministrador).
  */
 export const ADMIN_PERMISSIONS = [

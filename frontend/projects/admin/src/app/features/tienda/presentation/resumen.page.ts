@@ -262,11 +262,11 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
 
       @if (verPedidos()) {
         <!--
-          Lote 23 (ADR-0025, PBI-0222; provisional): sin «Pedidos por distrito», que Daniel y Walther llamaron relleno, el
-          gráfico ocupa todo el ancho, como «Pedidos por estado». «Clientes nuevos» pasa a «Clientes web nuevos», como
-          pidió Walther: son quienes hicieron su primer pedido en la tienda en línea, no los que compran en persona.
-          Desde la auditoría del lote 45 (PBI-0270) sigue el periodo: por hora, día, semana o mes (serieDelPeriodo); el
-          subtítulo dice el tramo. Conserva el id del bloque, pedidos-por-dia.
+          Lote 23 (ADR-0025, PBI-0222; confirmado por Sebastián Avila): sin «Pedidos por distrito», que Daniel y Walther
+          llamaron relleno, el gráfico ocupa todo el ancho, como «Pedidos por estado». «Clientes nuevos» pasa a
+          «Clientes web nuevos», como pidió Walther: son quienes hicieron su primer pedido en la tienda en línea, no los
+          que compran en persona. Desde la auditoría del lote 45 (PBI-0270) sigue el periodo: por hora, día, semana o
+          mes (serieDelPeriodo); el subtítulo dice el tramo. Conserva el id del bloque, pedidos-por-dia.
         -->
         <section class="admin-card mt-5 min-w-0 p-6">
           <h2 class="text-lg font-semibold">

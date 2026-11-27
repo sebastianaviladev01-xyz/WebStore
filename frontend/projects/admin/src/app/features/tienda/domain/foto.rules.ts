@@ -23,10 +23,10 @@ export const primeraQueCabe = (versiones: readonly string[], maximo = BYTES_MAXI
   versiones.find((dataUrl) => dataUrl.length <= maximo) ?? null;
 
 /**
- * Imagen pequeña de una categoría (lote 07b, ADR-0017, PBI-0052). Desde el lote 11 (ADR-0021, PBI-0176; provisional)
- * se guarda una sola versión de 100 × 100 px, el lado que exige el BFF (`LADO_IMAGEN_DE_CATEGORIA`), y debe caber en
- * el máximo que acepta (`MAX_IMAGEN_DE_CATEGORIA`); la prueba los compara. El BFF de prueba no reduce imágenes, así
- * que esa versión la genera el Admin.
+ * Imagen pequeña de una categoría (lote 07b, ADR-0017, PBI-0052). Desde el lote 11 (ADR-0021, PBI-0176; confirmado por
+ * Sebastián Avila) se guarda una sola versión de 100 × 100 px, el lado que exige el BFF (`LADO_IMAGEN_DE_CATEGORIA`), y
+ * debe caber en el máximo que acepta (`MAX_IMAGEN_DE_CATEGORIA`); la prueba los compara. El BFF de prueba no reduce
+ * imágenes, así que esa versión la genera el Admin.
  */
 export const LADO_IMAGEN_CATEGORIA = 100;
 export const MAX_CARACTERES_IMAGEN_CATEGORIA = 100_000;
@@ -71,10 +71,10 @@ export const hayLugarEnLaGaleria = (cantidad: number): boolean => cantidad < MAX
 export const mensajeDeGaleriaLlena = (): string => `Máximo ${MAXIMO_FOTOS_DE_GALERIA} fotos adicionales.`;
 
 /**
- * Imágenes cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; provisional). La imagen principal del
- * producto se carga una vez: el Admin genera la de la ficha (`LADO_MAXIMO_FOTO`, `BYTES_MAXIMOS_FOTO`) y, a partir de
- * ella, la miniatura de los listados. El banner tiene su imagen de escritorio y, opcional, la del celular. Los lados y
- * pesos (caracteres de la Data URL) son los que valida el BFF; la prueba los compara.
+ * Imágenes cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; confirmado por Sebastián Avila). La imagen
+ * principal del producto se carga una vez: el Admin genera la de la ficha (`LADO_MAXIMO_FOTO`, `BYTES_MAXIMOS_FOTO`) y,
+ * a partir de ella, la miniatura de los listados. El banner tiene su imagen de escritorio y, opcional, la del celular.
+ * Los lados y pesos (caracteres de la Data URL) son los que valida el BFF; la prueba los compara.
  */
 export const LADO_MINIATURA = 480;
 export const MAX_CARACTERES_MINIATURA = 60 * 1024;

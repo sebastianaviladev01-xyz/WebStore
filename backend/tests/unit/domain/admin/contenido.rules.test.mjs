@@ -112,7 +112,7 @@ test('PBI-0175: un aviso sin texto, demasiado largo o con un enlace que no es de
     assert.match(error('announcements', [{ text: 'Aviso', url }]), /enlace/, url);
 });
 
-// --- PBI-0244 (lote 30, ADR-0027; provisional): avisos programados ---
+// --- PBI-0244 (lote 30, ADR-0027; confirmado por Sebastián Avila): avisos programados ---
 
 test('PBI-0244: cada aviso puede llevar un «Desde» y un «Hasta» con fecha, hora y zona; vacíos, no se guardan', () => {
   assert.deepEqual(

@@ -3,9 +3,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-// Lote 24 (ADR-0025, PBI-0221; provisional): Daniel no entendía «Tono de la foto». El backoffice lo calcula al cargar la
-// imagen de escritorio del banner: mira la esquina inferior derecha, donde van los controles del carrusel, y si es
-// oscura (luminancia media por debajo del gris medio, L* = 50) elige los controles oscuros (`dark`); si no, los claros.
+// Lote 24 (ADR-0025, PBI-0221; confirmado por Sebastián Avila): Daniel no entendía «Tono de la foto». El backoffice lo
+// calcula al cargar la imagen de escritorio del banner: mira la esquina inferior derecha, donde van los controles del
+// carrusel, y si es oscura (luminancia media por debajo del gris medio, L* = 50) elige los controles oscuros (`dark`);
+// si no, los claros.
 const source = await readFile(new URL('./tono-de-foto.rules.ts', import.meta.url), 'utf8');
 const moduleSource = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },

@@ -1,5 +1,5 @@
 /**
- * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional, por confirmar con Daniel).
+ * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; confirmado por Sebastián Avila).
  * Daniel: «la configuración de la tienda decidirá si un pedido lleva una sola dirección de entrega o una por producto».
  *
  * - La tienda elige `per-order` (por defecto, lo de siempre) o `per-product`.

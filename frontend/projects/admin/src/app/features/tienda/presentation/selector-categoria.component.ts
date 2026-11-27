@@ -31,7 +31,7 @@ import { textoBuscable } from '../domain/listado.rules';
 import { Categoria } from '../domain/tienda.model';
 
 /**
- * Selección de una categoría con búsqueda (lote 29, ADR-0027, PBI-0238; provisional, por confirmar con Daniel). La usan
+ * Selección de una categoría con búsqueda (lote 29, ADR-0027, PBI-0238; confirmado por Sebastián Avila). La usan
  * el filtro «Categoría» de Productos y el campo «Categoría» del registro del producto, en lugar del `mat-select` con las
  * categorías sangradas. Daniel: «es un input select» que busca «en todos los niveles donde esté una categoría», desde
  * «mínimo tres caracteres», y «en tu caso […] limitarlo únicamente a una categoría».

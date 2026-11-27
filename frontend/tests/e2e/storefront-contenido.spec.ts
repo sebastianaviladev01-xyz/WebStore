@@ -155,8 +155,9 @@ test.describe('Términos: la versión vigente y su fecha', () => {
   });
 });
 
-// Lote 30 (ADR-0027, PBI-0244; provisional): cada aviso lleva un «Desde» y un «Hasta» opcionales. El BFF solo publica
-// los vigentes, así que la tienda no recibe los programados ni los vencidos. La prueba deja los avisos como estaban.
+// Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada aviso lleva un «Desde» y un «Hasta» opcionales. El
+// BFF solo publica los vigentes, así que la tienda no recibe los programados ni los vencidos. La prueba deja los avisos
+// como estaban.
 test('PBI-0244: la barra superior solo muestra los avisos vigentes; los programados y los vencidos no llegan', async ({
   page,
 }) => {

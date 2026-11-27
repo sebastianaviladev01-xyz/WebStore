@@ -3,8 +3,9 @@ import { TarifaEnvio } from './tienda.model';
 
 /**
  * Distritos que se eligen en Tarifas de envío (lote 21, ADR-0025, PBI-0216): los 43 de Lima Metropolitana y los 7 del
- * Callao, con el nombre de uso común (Surco y Cercado de Lima). Provisional: el BFF no tiene una lista de distritos y
- * sigue aceptando cualquier texto; la tienda ofrece en el checkout los distritos que tienen tarifa.
+ * Callao, con el nombre de uso común (Surco y Cercado de Lima). Confirmado por Sebastián Avila: el BFF no tiene una
+ * lista de distritos y sigue aceptando cualquier texto; la tienda ofrece en el checkout los distritos que tienen
+ * tarifa.
  */
 export const DISTRITOS_DE_LIMA_Y_CALLAO: readonly string[] = [
   'Ancón',

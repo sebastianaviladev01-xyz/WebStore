@@ -98,8 +98,9 @@ import { PieTiendaComponent } from './pie-tienda.component';
             </a>
 
             <!--
-              Lote 16 (ADR-0021, PBI-0191; provisional): el buscador conserva su relleno también enfocado; el foco lo
-              marcan el borde del enlace y el anillo de foco (input:focus-visible), sin pasar a fondo blanco.
+              Lote 16 (ADR-0021, PBI-0191; confirmado por Sebastián Avila): el buscador conserva su relleno también
+              enfocado; el foco lo marcan el borde del enlace y el anillo de foco (input:focus-visible), sin pasar a
+              fondo blanco.
             -->
             <form
               class="ws-header-search mx-auto hidden min-w-0 max-w-[560px] flex-1 md:block"

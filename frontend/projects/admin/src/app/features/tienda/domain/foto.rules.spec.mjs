@@ -94,8 +94,9 @@ test('PBI-0119: la galería llena y la foto principal, con el resto del producto
   assert.ok((MAXIMO_FOTOS_DE_GALERIA + 1) * BYTES_MAXIMOS_FOTO < 2 * 1024 * 1024 - 64 * 1024);
 });
 
-// Lote 24 (ADR-0025 y ADR-0026, PBI-0214; provisional): la imagen principal y la miniatura del producto y las imágenes
-// del banner se cargan como archivo. El Admin genera cada versión con los mismos lados y pesos máximos que valida el BFF.
+// Lote 24 (ADR-0025 y ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen principal y la miniatura del
+// producto y las imágenes del banner se cargan como archivo. El Admin genera cada versión con los mismos lados y pesos
+// máximos que valida el BFF.
 test('PBI-0214: cada versión tiene el lado y el peso máximos que acepta el BFF', async () => {
   const foto = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
   const bff = await import('../../../../../../../../backend/src/domain/catalogo/imagen.rules.mjs');

@@ -2,7 +2,7 @@ import { aHoraDeLima, finEnLima, inicioEnLima, instanteDeLaVigencia } from './ba
 import type { AvisoTienda } from './tienda.model';
 
 /**
- * Avisos programados de la barra superior (lote 30, ADR-0027, PBI-0244; provisional, por confirmar con Daniel): cada
+ * Avisos programados de la barra superior (lote 30, ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada
  * aviso lleva un «Desde» y un «Hasta» opcionales, con fecha y hora de Lima. El formulario los muestra y los recibe como
  * el valor de un `datetime-local` (`AAAA-MM-DDTHH:mm`) y se guardan como instantes con `-05:00`, igual que la vigencia
  * de los banners (`banner.rules.ts`): el «Desde» al empezar el minuto y el «Hasta» al terminarlo. Sin fechas, el aviso

@@ -1,9 +1,9 @@
 /**
- * Botones del banner en la tienda (lote 12, ADR-0021, PBI-0184; provisional): cada banner muestra hasta dos botones,
- * primero el primero y después el segundo. Solo se muestra un botón con texto y enlace; uno a medias o sin configurar no
- * sale. Lote 46 (ADR-0033, PBI-0266): cada botón lleva el estilo que se eligió al registrar el banner, uno de los cuatro
- * del tema (`primary`, `accent`, `contrast` u `outline`); sin estilo, o con uno desconocido, el primero es `primary` y el
- * segundo `accent`, como hasta el lote.
+ * Botones del banner en la tienda (lote 12, ADR-0021, PBI-0184; confirmado por Sebastián Avila): cada banner muestra
+ * hasta dos botones, primero el primero y después el segundo. Solo se muestra un botón con texto y enlace; uno a medias
+ * o sin configurar no sale. Lote 46 (ADR-0033, PBI-0266): cada botón lleva el estilo que se eligió al registrar el
+ * banner, uno de los cuatro del tema (`primary`, `accent`, `contrast` u `outline`); sin estilo, o con uno desconocido,
+ * el primero es `primary` y el segundo `accent`, como hasta el lote.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

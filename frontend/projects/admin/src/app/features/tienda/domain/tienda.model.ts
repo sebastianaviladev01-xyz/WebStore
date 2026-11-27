@@ -189,7 +189,10 @@ export interface AccesoInferior {
 /** Primera fecha de entrega que puede elegir el comprador (lote 17, PBI-0178): hoy, mañana o el siguiente día hábil. */
 export type ReglaDePrimeraEntrega = 'same-day' | 'next-calendar-day' | 'next-business-day';
 
-/** Una dirección de entrega por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional). */
+/**
+ * Una dirección de entrega por pedido o una por producto (lote 19, ADR-0021, PBI-0006; confirmado por Sebastián
+ * Avila).
+ */
 export type ModoDeDireccion = 'per-order' | 'per-product';
 
 /** Un día no laborable del calendario de la tienda (lote 17, PBI-0183): su fecha (`AAAA-MM-DD`) y un nombre opcional. */

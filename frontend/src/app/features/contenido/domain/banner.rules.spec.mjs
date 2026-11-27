@@ -58,8 +58,9 @@ test('como mucho tres por zona, el mismo máximo que el Admin', () => {
   );
 });
 
-// Lote 24 (ADR-0025, PBI-0221; provisional): la vigencia lleva hora de Lima. El Admin guarda el inicio al empezar el
-// minuto y el fin al terminarlo, con `-05:00`; la tienda compara instantes, así que respeta la hora y la zona.
+// Lote 24 (ADR-0025, PBI-0221; confirmado por Sebastián Avila): la vigencia lleva hora de Lima. El Admin guarda el
+// inicio al empezar el minuto y el fin al terminarlo, con `-05:00`; la tienda compara instantes, así que respeta la
+// hora y la zona.
 test('PBI-0221: un banner de 09:30 a 18:00 de Lima sale a esas horas, no cinco horas antes', () => {
   const lista = [banner('mañana', 'hero', '2026-12-10T09:30:00.000-05:00', '2026-12-10T18:00:59.999-05:00')];
   const ids = (instante) => bannersVigentes(lista, new Date(instante)).map((b) => b.id);

@@ -1,7 +1,8 @@
 /**
- * Vigencia del banner con fecha y hora (lote 24, ADR-0025, PBI-0221; provisional). El backoffice envía el inicio y el
- * fin como instantes ISO 8601 con su zona (hora de Lima, `-05:00`); el BFF rechaza uno nuevo o cambiado que no lo sea y
- * un fin que no es posterior al inicio. Una vigencia guardada antes que no cambia sigue valiendo.
+ * Vigencia del banner con fecha y hora (lote 24, ADR-0025, PBI-0221; confirmado por Sebastián Avila). El backoffice
+ * envía el inicio y el fin como instantes ISO 8601 con su zona (hora de Lima, `-05:00`); el BFF rechaza uno nuevo o
+ * cambiado que no lo sea y un fin que no es posterior al inicio. Una vigencia guardada antes que no cambia sigue
+ * valiendo.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

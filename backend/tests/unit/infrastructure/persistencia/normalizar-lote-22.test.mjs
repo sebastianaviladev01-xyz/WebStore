@@ -1,5 +1,5 @@
 /**
- * Productos destacados configurables (lote 22, ADR-0025, PBI-0215; provisional, por confirmar con Daniel). Hasta el
+ * Productos destacados configurables (lote 22, ADR-0025, PBI-0215; confirmado por Sebastián Avila). Hasta el
  * lote, el BFF destacaba los cuatro primeros productos activos del catálogo (`featured ?? index < 4`). La migración a la
  * versión 5 guarda una sola vez ese resultado en cada producto, para que la tienda se vea igual; desde entonces, un
  * producto sin la marca no es destacado.

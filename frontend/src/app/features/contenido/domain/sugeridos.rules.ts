@@ -4,8 +4,8 @@ import type { ConfiguracionTienda, LugarDeSugeridos } from './contenido.model';
 export const LUGAR_DE_SUGERIDOS_POR_DEFECTO: LugarDeSugeridos = 'dialog';
 
 /**
- * Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, ADR-0021, PBI-0179; provisional): el panel
- * lateral solo si la configuración lo elige; cualquier otro valor, o ninguno, es el diálogo.
+ * Dónde muestra la tienda «Producto agregado» con los sugeridos (lote 16, ADR-0021, PBI-0179; confirmado por Sebastián
+ * Avila): el panel lateral solo si la configuración lo elige; cualquier otro valor, o ninguno, es el diálogo.
  */
 export function lugarDeLosSugeridos(
   configuracion: Partial<Pick<ConfiguracionTienda, 'addToCartDisplay'>>,

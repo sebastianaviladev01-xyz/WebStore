@@ -6,7 +6,7 @@ import { esperarFotos } from './apoyo/fotos';
 import { cancelarLosPedidosDelNavegador as cancelarPedidos, conservarElStock } from './apoyo/pedidos';
 
 /**
- * Lote 19 (ADR-0021, PBI-0006; provisional, por confirmar con Daniel): la configuración de la tienda elige una dirección
+ * Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): la configuración de la tienda elige una dirección
  * por pedido (por defecto) o una por producto. Con una por producto, el checkout deja enviar cada producto a otra
  * dirección y cobra el envío una vez por dirección distinta. Las pruebas que cambian la configuración la dejan como
  * estaba en un `finally`: las suites van en serie.

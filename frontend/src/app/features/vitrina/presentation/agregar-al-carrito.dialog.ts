@@ -21,9 +21,10 @@ interface DatosDelDialogo extends ResultadoAgregarAlCarrito {
 }
 
 /**
- * «Producto agregado» con los sugeridos (PBI-0039). Desde el lote 16 (ADR-0021, PBI-0179; provisional) se muestra en el
- * diálogo, por defecto, o en un panel lateral, según la configuración de la tienda. Los dos son el mismo `MatDialog`:
- * foco atrapado, Escape, `role="dialog"` y el título como nombre accesible; el panel, además, con `aria-modal="true"`.
+ * «Producto agregado» con los sugeridos (PBI-0039). Desde el lote 16 (ADR-0021, PBI-0179; confirmado por Sebastián
+ * Avila) se muestra en el diálogo, por defecto, o en un panel lateral, según la configuración de la tienda. Los dos son
+ * el mismo `MatDialog`: foco atrapado, Escape, `role="dialog"` y el título como nombre accesible; el panel, además, con
+ * `aria-modal="true"`.
  */
 @Component({
   selector: 'ws-add-to-cart-dialog',

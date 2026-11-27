@@ -2,9 +2,9 @@ import { Banner, EstiloDeBoton } from './tienda.model';
 
 /**
  * Vigencia de los banners (lote 06, ADR-0017; PBI-0128), con fecha y hora desde el lote 24 (ADR-0025, PBI-0221;
- * provisional). El formulario muestra y recibe la hora de Lima (UTC-5, sin horario de verano) como `AAAA-MM-DDTHH:mm`,
- * el valor de un `datetime-local`, y se guarda como instante con su zona: el inicio al empezar ese minuto y el fin al
- * terminarlo. Así, 00:00 y 23:59 son el día completo, como antes del lote.
+ * confirmado por Sebastián Avila). El formulario muestra y recibe la hora de Lima (UTC-5, sin horario de verano) como
+ * `AAAA-MM-DDTHH:mm`, el valor de un `datetime-local`, y se guarda como instante con su zona: el inicio al empezar ese
+ * minuto y el fin al terminarlo. Así, 00:00 y 23:59 son el día completo, como antes del lote.
  */
 const DESFASE_DE_LIMA_MS = -5 * 60 * 60 * 1000;
 export const inicioEnLima = (local: string): string => `${local}:00.000-05:00`;

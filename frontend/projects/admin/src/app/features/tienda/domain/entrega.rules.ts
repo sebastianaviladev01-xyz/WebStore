@@ -1,5 +1,5 @@
 /**
- * «Entregas y feriados» del superadministrador (lote 17, ADR-0021; provisional, por confirmar con Daniel). El BFF
+ * «Entregas y feriados» del superadministrador (lote 17, ADR-0021; confirmado por Sebastián Avila). El BFF
  * decide: la primera fecha de entrega (PBI-0178, `backend/src/domain/pedidos/primera-fecha-de-entrega.rules.mjs`) y
  * los días no laborables (PBI-0183, `backend/src/domain/calendario/dias-no-laborables.rules.mjs`). Estas reglas repiten
  * lo que hace falta para avisar antes de enviar y explicar la regla elegida; la prueba las compara con las del BFF.
@@ -17,7 +17,7 @@ export const REGLAS_DE_PRIMERA_ENTREGA: readonly {
 ];
 
 /**
- * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional, por confirmar con Daniel), con
+ * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; confirmado por Sebastián Avila), con
  * la de por defecto primero. El BFF decide (`backend/src/domain/pedidos/direcciones-por-producto.rules.mjs`).
  */
 export const MODOS_DE_DIRECCION: readonly {

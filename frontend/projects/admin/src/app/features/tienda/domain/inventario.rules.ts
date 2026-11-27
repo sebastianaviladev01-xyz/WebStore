@@ -32,7 +32,7 @@ export function estadoDeStock(stock: number): EstadoStock {
 export const STOCK_INICIAL = 0;
 
 /**
- * Lote 23 (ADR-0025, PBI-0226; provisional, por confirmar con Daniel): el stock sale del registro del producto y se
+ * Lote 23 (ADR-0025, PBI-0226; confirmado por Sebastián Avila): el stock sale del registro del producto y se
  * gestiona solo en Inventario. El producto que guarda la ficha lleva el stock con que se abrió (`base`), así el
  * guardado no lo envía ni choca si Inventario o una venta lo cambiaron mientras tanto; uno nuevo empieza sin stock.
  */

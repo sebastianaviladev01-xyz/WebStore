@@ -1,8 +1,8 @@
 import type { Producto } from './producto.model';
 
 /**
- * Cuántos destacados caben en el inicio sin carrusel (lote 22, ADR-0025, PBI-0215; provisional, por confirmar con
- * Daniel): los cuatro de una fila, como la demo de siempre.
+ * Cuántos destacados caben en el inicio sin carrusel (lote 22, ADR-0025, PBI-0215; confirmado por Sebastián Avila): los
+ * cuatro de una fila, como la demo de siempre.
  */
 export const MAXIMO_SIN_CARRUSEL = 4;
 

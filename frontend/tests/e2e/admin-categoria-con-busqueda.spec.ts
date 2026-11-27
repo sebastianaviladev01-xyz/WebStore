@@ -14,7 +14,7 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
 import { cargarImagenPrincipal } from './apoyo/fotos';
 
 /**
- * Lote 29 (ADR-0027, PBI-0238; provisional, por confirmar con Daniel): la categoría del filtro de Productos y del registro
+ * Lote 29 (ADR-0027, PBI-0238; confirmado por Sebastián Avila): la categoría del filtro de Productos y del registro
  * del producto se elige con búsqueda, en lugar del `mat-select` sangrado. Daniel: «es un input select» que busca «en
  * todos los niveles donde esté una categoría» (electrodomésticos, refrigeradoras y, dentro, side by side), desde «mínimo
  * tres caracteres y le doy enter», y se limita «únicamente a una categoría».

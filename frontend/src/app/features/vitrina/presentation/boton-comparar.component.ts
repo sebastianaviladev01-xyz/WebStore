@@ -6,8 +6,9 @@ import { ComparadorFacade } from '../../comparador/application/comparador.facade
 import { Producto } from '../../catalogo/domain/producto.model';
 
 /**
- * «Comparar» de la tarjeta y de la ficha (lote 19, ADR-0021, PBI-0001; provisional): un botón de alternar
- * (`aria-pressed`) que agrega o quita el producto de la comparación. Con 4 productos no agrega otro y lo avisa.
+ * «Comparar» de la tarjeta y de la ficha (lote 19, ADR-0021, PBI-0001; confirmado por Sebastián Avila): un botón de
+ * alternar (`aria-pressed`) que agrega o quita el producto de la comparación. Con 4 productos no agrega otro y lo
+ * avisa.
  */
 @Component({
   selector: 'ws-compare-toggle',

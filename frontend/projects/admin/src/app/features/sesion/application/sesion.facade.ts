@@ -34,7 +34,7 @@ export class SesionFacade {
   readonly pending = signal(false);
   readonly error = signal<string | null>(null);
   /**
-   * Lote 40 (ADR-0032, PBI-0257; provisional, por confirmar con Daniel): hay token, pero el BFF no respondió o falló
+   * Lote 40 (ADR-0032, PBI-0257; confirmado por Sebastián Avila): hay token, pero el BFF no respondió o falló
    * al comprobarlo. El token se conserva y el acceso ofrece «Reintentar»; sin usuario, los guards no dejan entrar al
    * panel. Solo un `401` borra el token.
    */

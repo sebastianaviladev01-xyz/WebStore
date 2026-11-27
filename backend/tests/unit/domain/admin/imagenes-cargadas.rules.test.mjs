@@ -1,8 +1,9 @@
 /**
- * Imágenes del producto y del banner cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; provisional). El
- * backoffice genera las versiones y el BFF comprueba en los bytes que una imagen nueva o cambiada es un PNG, un JPEG o
- * un WebP que no pasa de su lado máximo ni de su peso, y que la miniatura es la reducción de la imagen principal. Una
- * imagen guardada antes (una ruta como `assets/...`) sigue valiendo mientras no cambie. Una URL nueva ya no se acepta.
+ * Imágenes del producto y del banner cargadas como archivo (lote 24, ADR-0025 y ADR-0026, PBI-0214; confirmado por
+ * Sebastián Avila). El backoffice genera las versiones y el BFF comprueba en los bytes que una imagen nueva o cambiada
+ * es un PNG, un JPEG o un WebP que no pasa de su lado máximo ni de su peso, y que la miniatura es la reducción de la
+ * imagen principal. Una imagen guardada antes (una ruta como `assets/...`) sigue valiendo mientras no cambie. Una URL
+ * nueva ya no se acepta.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -169,9 +170,10 @@ test('PBI-0214: las imágenes del banner guardadas antes siguen valiendo mientra
 });
 
 /*
- * Lote 25 (ADR-0025 y ADR-0026; provisional): las fotos de la galería también se cargan como archivo, nunca como URL
- * (Daniel: «no adjuntas como URL»). Una foto nueva es un PNG, un JPEG o un WebP de hasta 1600 px por lado y 250 KB,
- * como la imagen principal; las que el producto ya tenía guardadas siguen valiendo mientras sigan en la galería.
+ * Lote 25 (ADR-0025 y ADR-0026; confirmado por Sebastián Avila): las fotos de la galería también se cargan como
+ * archivo, nunca como URL (Daniel: «no adjuntas como URL»). Una foto nueva es un PNG, un JPEG o un WebP de hasta 1600
+ * px por lado y 250 KB, como la imagen principal; las que el producto ya tenía guardadas siguen valiendo mientras sigan
+ * en la galería.
  */
 const imagenes = () => ({
   imageUrl: 'assets/products/tv-studio.jpg',

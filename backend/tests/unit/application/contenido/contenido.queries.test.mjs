@@ -57,7 +57,7 @@ test('PBI-0266: sin estilo, o con uno que no existe, el primero es el principal 
   }
 });
 
-// --- PBI-0244 (lote 30, ADR-0027; provisional): avisos programados ---
+// --- PBI-0244 (lote 30, ADR-0027; confirmado por Sebastián Avila): avisos programados ---
 
 const ajustes = (announcements, ahora) =>
   createContenidoQueries({

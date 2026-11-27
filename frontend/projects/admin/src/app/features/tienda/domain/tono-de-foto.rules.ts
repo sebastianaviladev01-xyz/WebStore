@@ -1,8 +1,9 @@
 /**
- * Tono de la foto del banner (lote 24, ADR-0025, PBI-0221; provisional). Daniel no entendía el campo «Tono de la foto»:
- * el backoffice lo calcula al cargar la imagen de escritorio. En el inicio, los controles del carrusel van en la esquina
- * inferior derecha del banner, sobre la foto; si esa zona es oscura, la tienda los pinta oscuros (`dark`, vidrio oscuro
- * con íconos claros) y, si no, claros (`light`). La persona puede corregirlo en el formulario.
+ * Tono de la foto del banner (lote 24, ADR-0025, PBI-0221; confirmado por Sebastián Avila). Daniel no entendía el campo
+ * «Tono de la foto»: el backoffice lo calcula al cargar la imagen de escritorio. En el inicio, los controles del
+ * carrusel van en la esquina inferior derecha del banner, sobre la foto; si esa zona es oscura, la tienda los pinta
+ * oscuros (`dark`, vidrio oscuro con íconos claros) y, si no, claros (`light`). La persona puede corregirlo en el
+ * formulario.
  */
 export type TonoDeFoto = 'light' | 'dark';
 

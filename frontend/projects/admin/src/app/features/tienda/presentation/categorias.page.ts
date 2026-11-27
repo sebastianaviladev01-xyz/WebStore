@@ -63,7 +63,7 @@ export class EstadoArbolCategorias {
  * Los filtros aplicados y la página viven en la URL; el panel edita un borrador que «Buscar» aplica después de traer los
  * datos actuales. El registro se abre en `/categorias/nueva` y `/categorias/:id` (`RegistroCategoriaPage`).
  *
- * Lote 22 (ADR-0025, PBI-0220; provisional, por confirmar con Daniel): la lista es un árbol que se abre y se cierra por
+ * Lote 22 (ADR-0025, PBI-0220; confirmado por Sebastián Avila): la lista es un árbol que se abre y se cierra por
  * niveles (`tree` y `treeitem` con `aria-expanded`), en lugar de la ruta en texto. La paginación cuenta las categorías
  * de primer nivel, cada una con sus ramas. Teclado: ↑ ↓ Inicio y Fin recorren las filas, → abre o baja a la primera
  * hija, ← cierra o sube a la que la contiene, `*` abre las hermanas, Intro o Espacio abre o cierra, y Tab lleva a

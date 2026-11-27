@@ -209,12 +209,14 @@ test.describe('Filtros y registro de productos del Admin', () => {
       // Lote 25 (ADR-0026): las fotos de la galería solo se cargan como archivo; ya no hay «URL de foto».
       await expect(formulario.getByRole('textbox', { name: 'URL de foto' })).toHaveCount(0);
       await expect(formulario.getByLabel('Cargar foto', { exact: true })).toHaveCount(1);
-      // Lote 24 (ADR-0026, PBI-0214; provisional): la imagen principal se carga como archivo; ya no hay URL ni miniatura.
+      // Lote 24 (ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen principal se carga como archivo; ya no
+      // hay URL ni miniatura.
       await expect(formulario.getByRole('group', { name: 'Imagen principal' })).toBeVisible();
       await expect(formulario.getByLabel('Cargar imagen', { exact: true })).toHaveCount(1);
       for (const campo of ['Imagen principal', 'Miniatura optimizada'])
         await expect(formulario.getByRole('textbox', { name: campo, exact: true })).toHaveCount(0);
-      // Lote 23 (ADR-0025, PBI-0226; provisional): el stock sale del registro y se gestiona solo en Inventario.
+      // Lote 23 (ADR-0025, PBI-0226; confirmado por Sebastián Avila): el stock sale del registro y se gestiona solo en
+      // Inventario.
       await expect(formulario.getByRole('spinbutton', { name: 'Stock' })).toHaveCount(0);
       await expect(formulario).toContainText('Empieza sin stock: se carga en Inventario');
       await expect(formulario.getByRole('link', { name: 'Inventario', exact: true })).toHaveAttribute(

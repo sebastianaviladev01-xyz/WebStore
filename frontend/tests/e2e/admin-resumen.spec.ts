@@ -6,10 +6,11 @@ import { cuentasAdmin, ingresarAlAdmin, menuAdmin } from './apoyo/entorno';
  * Dashboard del Admin (el «Resumen» hasta el lote 13, PBI-0168): estructura y textos de la especificación (tarjetas
  * con «Ver más», gráfico, alertas, últimos pedidos y estados). No comprueba cifras: dependen de los pedidos que hayan
  * creado otras specs. Desde el lote 13 las tarjetas van bajo el h2 «Cifras», que las pliega (PBI-0187), y su título es
- * un h3. Desde el lote 23 (ADR-0025, PBI-0222; provisional), el gráfico nombra «Clientes web nuevos» y ya no está
- * «Pedidos por distrito». Desde el lote 45 (ADR-0033, PBI-0270), el filtro principal («Periodo del Dashboard») va antes
- * de las cifras, la tarjeta de clientes cuenta los clientes web nuevos del periodo y, tras «Pedidos por estado», va
- * «Distribución de ventas por categoría»; el periodo tiene su propia spec, admin-dashboard-periodo.
+ * un h3. Desde el lote 23 (ADR-0025, PBI-0222; confirmado por Sebastián Avila), el gráfico nombra «Clientes web nuevos»
+ * y ya no está «Pedidos por distrito». Desde el lote 45 (ADR-0033, PBI-0270), el filtro principal («Periodo del
+ * Dashboard») va antes de las cifras, la tarjeta de clientes cuenta los clientes web nuevos del periodo y, tras
+ * «Pedidos por estado», va «Distribución de ventas por categoría»; el periodo tiene su propia spec,
+ * admin-dashboard-periodo.
  */
 const tarjetas = [
   { titulo: 'Total de pedidos', destino: '/pedidos' },
@@ -81,7 +82,8 @@ test('el vendedor ve las cifras de pedidos y el stock bajo, sin clientes ni acti
   await ingresarAlAdmin(page, cuentasAdmin.vendedor);
   const main = page.getByRole('main');
 
-  // PBI-0170 (lote 11, provisional): ve los pedidos, así que también sus cifras; los clientes y la actividad, no.
+  // PBI-0170 (lote 11, confirmado por Sebastián Avila): ve los pedidos, así que también sus cifras; los clientes y la
+  // actividad, no.
   for (const visible of ['Total de pedidos', 'Total de ventas', 'Stock bajo']) {
     await expect(main.getByRole('heading', { level: 3, name: visible })).toBeVisible();
   }

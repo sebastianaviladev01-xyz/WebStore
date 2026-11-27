@@ -1,5 +1,5 @@
 /**
- * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; provisional, por confirmar con Daniel).
+ * Una dirección por pedido o una por producto (lote 19, ADR-0021, PBI-0006; confirmado por Sebastián Avila).
  * La tienda repite la regla del BFF para mostrar el envío antes de enviar el pedido; el BFF vuelve a calcularlo y
  * decide. La prueba compara los casos con `backend/src/domain/pedidos/direcciones-por-producto.rules.mjs`.
  */

@@ -1,8 +1,9 @@
 /**
  * Fecha de entrega del pedido con la fecha de Lima, no la de UTC (PBI-0096). Desde el lote 17 (ADR-0021, PBI-0178;
- * provisional) la primera fecha que puede elegir el comprador la calcula el BFF con la configuración de la tienda
- * (`GET /checkout/delivery-dates`): la tienda no repite la regla, la usa como mínimo del campo y como fecha propuesta.
- * La usan el checkout y el detalle del pedido (PBI-0146): vive en `pedidos`, del que depende `checkout` (lote 05).
+ * confirmado por Sebastián Avila) la primera fecha que puede elegir el comprador la calcula el BFF con la configuración
+ * de la tienda (`GET /checkout/delivery-dates`): la tienda no repite la regla, la usa como mínimo del campo y como
+ * fecha propuesta. La usan el checkout y el detalle del pedido (PBI-0146): vive en `pedidos`, del que depende
+ * `checkout` (lote 05).
  */
 const FECHA_DE_LIMA = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Lima',

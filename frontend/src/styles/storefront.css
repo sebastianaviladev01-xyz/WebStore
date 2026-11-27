@@ -1406,9 +1406,10 @@
 }
 
 /*
- * «Producto agregado» en un panel lateral (lote 16, ADR-0021, PBI-0179; provisional), si la configuración de la tienda
- * lo elige. Es el mismo MatDialog que el diálogo, pegado a la derecha y con el alto de la ventana: solo se cambian sus
- * tokens (esquinas rectas) y el reparto del contenido, con las acciones siempre a la vista abajo.
+ * «Producto agregado» en un panel lateral (lote 16, ADR-0021, PBI-0179; confirmado por Sebastián Avila), si la
+ * configuración de la tienda lo elige. Es el mismo MatDialog que el diálogo, pegado a la derecha y con el alto de la
+ * ventana: solo se cambian sus tokens (esquinas rectas) y el reparto del contenido, con las acciones siempre a la vista
+ * abajo.
  */
 .ws-cart-side-panel {
   --mat-dialog-container-shape: 0;

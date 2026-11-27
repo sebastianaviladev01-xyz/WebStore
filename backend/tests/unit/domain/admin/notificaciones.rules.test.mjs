@@ -1,8 +1,8 @@
 /**
  * Notificaciones del Admin (lote 07b, ADR-0017, PBI-0033; confirmadas por Daniel el 2026-11-18): los pedidos nuevos
  * (estado «confirmado») creados desde la última vez que la persona abrió el menú de la campana. «Visto» se recuerda
- * por usuario. Lote 13 (ADR-0021, PBI-0173; provisional): también los reclamos nuevos (estado «recibido») y los
- * errores de compra, cada tipo para el rol que lo gestiona.
+ * por usuario. Lote 13 (ADR-0021, PBI-0173; confirmado por Sebastián Avila): también los reclamos nuevos (estado
+ * «recibido») y los errores de compra, cada tipo para el rol que lo gestiona.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

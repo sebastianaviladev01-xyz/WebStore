@@ -4,7 +4,7 @@ import { Aviso, ConteoDeAvisos, PresentacionDelAviso } from './notificacion.mode
 /**
  * Campana de notificaciones del Admin (lote 07b, ADR-0017, PBI-0033; confirmada por Daniel el 2026-11-18): cuántos
  * avisos nuevos hay desde la última vez que la persona abrió el menú y hasta cuál se vieron. Lote 13 (ADR-0021,
- * PBI-0173; provisional): además de los pedidos nuevos, los reclamos nuevos y los errores de compra.
+ * PBI-0173; confirmado por Sebastián Avila): además de los pedidos nuevos, los reclamos nuevos y los errores de compra.
  */
 
 /** Cada cuánto se pone al día la campana mientras la pestaña está visible (lote 08, PBI-0160). */

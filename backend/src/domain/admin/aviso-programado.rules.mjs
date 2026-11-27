@@ -1,5 +1,5 @@
 /**
- * Avisos programados de la barra superior (lote 30, ADR-0027, PBI-0244; provisional, por confirmar con Daniel): cada
+ * Avisos programados de la barra superior (lote 30, ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada
  * aviso de Contenido (`announcements`) lleva un «Desde» (`startAt`) y un «Hasta» (`endAt`) opcionales, instantes ISO
  * con zona que el backoffice elige en hora de Lima. La tienda solo muestra los vigentes y el backoffice marca cada uno
  * como programado, vigente o vencido.

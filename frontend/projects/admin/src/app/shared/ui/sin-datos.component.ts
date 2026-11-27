@@ -4,7 +4,7 @@ import { IconoDirective } from './icono.directive';
 
 /**
  * Tarjeta de las interfaces de registro cuando la consulta del snapshot falló y el panel no tenía el registro (lote 40,
- * ADR-0032, PBI-0256; provisional, por confirmar con Daniel): no se sabe si existe, así que en lugar del formulario
+ * ADR-0032, PBI-0256; confirmado por Sebastián Avila): no se sabe si existe, así que en lugar del formulario
  * avisa del fallo y ofrece «Reintentar». Tiene el mismo aspecto que la tarjeta «ya no existe» de cada registro.
  * `registro` completa el título: «del producto», «de la categoría»…
  */

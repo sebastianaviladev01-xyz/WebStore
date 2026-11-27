@@ -153,9 +153,9 @@ test('lote 16: Contenido elige el panel lateral para los sugeridos y la tienda l
   }
 });
 
-// Lote 30 (ADR-0027, PBI-0244; provisional): cada aviso lleva un «Desde» y un «Hasta» opcionales, con fecha y hora de
-// Lima, y Contenido marca su estado. Un «Hasta» que no va después del «Desde» se avisa en la fila y no se envía. La
-// tienda solo recibe los vigentes. La prueba deja los avisos como estaban.
+// Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada aviso lleva un «Desde» y un «Hasta» opcionales,
+// con fecha y hora de Lima, y Contenido marca su estado. Un «Hasta» que no va después del «Desde» se avisa en la fila y
+// no se envía. La tienda solo recibe los vigentes. La prueba deja los avisos como estaban.
 test('PBI-0244: Contenido programa un aviso con «Desde» y «Hasta» en hora de Lima y marca su estado', async ({
   page,
 }) => {

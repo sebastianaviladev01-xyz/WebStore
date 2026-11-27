@@ -4,8 +4,8 @@ import { cuentasAdmin, ingresarAlAdmin, menuAdmin } from './apoyo/entorno';
 import { abrirVentana, campoNombre } from './apoyo/ventanas';
 
 /**
- * Íconos de los botones y de los títulos del backoffice (lote 31, ADR-0027, PBI-0243; provisional, por confirmar con
- * Daniel). Daniel, sobre las capturas de SGC (2026-11-20): «¿Ves que los iconos de todos los botones están siempre a la
+ * Íconos de los botones y de los títulos del backoffice (lote 31, ADR-0027, PBI-0243; confirmado por Sebastián Avila).
+ * Daniel, sobre las capturas de SGC (2026-11-20): «¿Ves que los iconos de todos los botones están siempre a la
  * izquierda?» y «el icono aquí del módulo como tal».
  *
  * - Cada botón con texto visible (también los enlaces con forma de botón, las opciones de los menús y las etiquetas que

@@ -718,8 +718,8 @@ try {
     if (JSON.stringify(conListas[clave]) !== JSON.stringify(valor))
       throw new Error(`Contenido no publica ${clave} tal como se guardó`);
 
-  // Lote 30 (ADR-0027, PBI-0244; provisional): cada aviso lleva un «Desde» (`startAt`) y un «Hasta» (`endAt`)
-  // opcionales. El snapshot del Admin los trae todos; los ajustes públicos, solo los vigentes en ese momento.
+  // Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): cada aviso lleva un «Desde» (`startAt`) y un «Hasta»
+  // (`endAt`) opcionales. El snapshot del Admin los trae todos; los ajustes públicos, solo los vigentes en ese momento.
   const avisosProgramados = [
     { text: 'Siempre', url: '' },
     {
@@ -803,8 +803,8 @@ try {
     body: JSON.stringify({ revision: snapshot.revision, config: { addToCartDisplay: 'dialog' } }),
   });
 
-  // Lote 24 (ADR-0026, PBI-0214; provisional): la imagen del banner se carga como archivo y la tienda la pide por la
-  // dirección del BFF, con su versión.
+  // Lote 24 (ADR-0026, PBI-0214; confirmado por Sebastián Avila): la imagen del banner se carga como archivo y la
+  // tienda la pide por la dirección del BFF, con su versión.
   const imagenDeBanner = dataUrl('webp', webp(2560, 1024));
   snapshot.banners[0] = {
     ...snapshot.banners[0],
@@ -845,7 +845,8 @@ try {
     'PBI-0214: la imagen de un banner que no existe',
   );
 
-  // Lote 24 (PBI-0214 y PBI-0221; provisional): una URL nueva en lugar de la imagen y una vigencia sin hora se rechazan.
+  // Lote 24 (PBI-0214 y PBI-0221; confirmado por Sebastián Avila): una URL nueva en lugar de la imagen y una vigencia
+  // sin hora se rechazan.
   let bannerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   for (const [cambio, campo] of [
     [{ imageUrl: 'https://example.com/banner.jpg' }, 'imageUrl'],
@@ -869,7 +870,8 @@ try {
     if (rechazo.details?.field !== campo) throw new Error(`El rechazo debe señalar ${campo}`);
   }
 
-  // Lote 12 (PBI-0184, provisional): dos botones opcionales por banner, cada uno con su texto y su enlace.
+  // Lote 12 (PBI-0184, confirmado por Sebastián Avila): dos botones opcionales por banner, cada uno con su texto y su
+  // enlace.
   const conBotones = await raw('/bff/admin/snapshot', {
     method: 'PUT',
     headers: { ...authorization(owner.token), 'content-type': 'application/json' },
@@ -957,7 +959,8 @@ try {
 
   // Permisos de los roles (lote 07, PBI-0013, confirmados por Daniel el 2026-11-18): el vendedor crea y modifica
   // productos sin eliminarlos; el administrador gestiona solo a los vendedores y no tiene Contenido. Lote 11 (PBI-0170,
-  // provisional): el vendedor gestiona el inventario y ve los pedidos (`orders.view`) sin cambiar su estado.
+  // confirmado por Sebastián Avila): el vendedor gestiona el inventario y ve los pedidos (`orders.view`) sin cambiar su
+  // estado.
   const seller = await adminLogin('catalogo@webstore.demo', 'Catalogo#2026');
   let sellerSnapshot = await request('/bff/admin/snapshot', { headers: authorization(seller.token) });
   if (
@@ -1735,8 +1738,8 @@ try {
   if (publicas07b.some((item) => !('imageUrl' in item)))
     throw new Error('Cada categoría pública trae imageUrl');
 
-  // Lote 17 (ADR-0021; provisional): primera fecha de entrega (PBI-0178), versiones de los términos (PBI-0177) y
-  // calendario de días no laborables (PBI-0183).
+  // Lote 17 (ADR-0021; confirmado por Sebastián Avila): primera fecha de entrega (PBI-0178), versiones de los términos
+  // (PBI-0177) y calendario de días no laborables (PBI-0183).
   owner = await adminLogin();
   const manager17 = await adminLogin('admin@webstore.demo', 'Admin#2026');
   const primera = await request('/bff/checkout/delivery-dates');
@@ -1896,7 +1899,8 @@ try {
   });
   console.log('✓ Lote 17: primera fecha de entrega, días no laborables y versiones de los términos');
 
-  // Lote 19 (ADR-0021, PBI-0006; provisional): una dirección por pedido (por defecto) o una por producto.
+  // Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): una dirección por pedido (por defecto) o una por
+  // producto.
   let snapshot19 = await request('/bff/admin/snapshot', { headers: authorization(owner.token) });
   if (snapshot19.config.deliveryAddressMode !== 'per-order')
     throw new Error('La configuración debe traer una dirección por pedido por defecto');

@@ -10,7 +10,7 @@ import {
 import { cuentasAdmin, ingresarAlAdmin, urls } from './apoyo/entorno';
 
 /**
- * Lote 22 (ADR-0025; provisional, por confirmar con Daniel).
+ * Lote 22 (ADR-0025; confirmado por Sebastián Avila).
  *
  * - PBI-0215: el registro del producto tiene la casilla «Es destacado». El inicio de la tienda muestra los destacados
  *   con stock, sin tope; con más de cuatro, en un carrusel con «Destacados anteriores» y «Destacados siguientes», que no

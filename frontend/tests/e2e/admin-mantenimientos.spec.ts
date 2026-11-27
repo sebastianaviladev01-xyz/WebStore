@@ -4,7 +4,7 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
 import { abrirVentana, campoTiendaDeOrigen } from './apoyo/ventanas';
 
 /**
- * Lote 21 (ADR-0025): mantenimientos del backoffice, provisional hasta que Daniel confirme la regla.
+ * Lote 21 (ADR-0025): mantenimientos del backoffice; regla confirmada por Sebastián Avila.
  *
  * - PBI-0211: un registro de más de tres campos se crea y se edita en su propia interfaz (Usuarios y Banners, como
  *   «Nuevo producto»); uno de hasta tres, en una ventana emergente (Marcas, Clientes y Tarifas de envío). Ningún

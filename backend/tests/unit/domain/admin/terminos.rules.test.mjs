@@ -1,5 +1,5 @@
 /**
- * Versiones de los términos y condiciones (lote 17, ADR-0021, PBI-0177; provisional, por confirmar con Daniel): cada
+ * Versiones de los términos y condiciones (lote 17, ADR-0021, PBI-0177; confirmado por Sebastián Avila): cada
  * texto publicado es una versión con su número, su fecha de publicación y su texto. El número lo calcula el BFF al
  * guardar, nunca el Admin. Los términos de antes del lote son la versión 1, sin fecha registrada.
  */

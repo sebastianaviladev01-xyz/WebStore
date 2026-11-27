@@ -1,6 +1,6 @@
 /**
  * Qué muestra la interfaz de edición de un registro tras volver a pedir el snapshot al abrirla (lote 40, ADR-0032,
- * PBI-0256; provisional, por confirmar con Daniel):
+ * PBI-0256; confirmado por Sebastián Avila):
  * - `lista`: la consulta respondió y el registro está; el formulario, sin aviso.
  * - `no-existe`: la consulta respondió y el registro no está; otra persona lo eliminó.
  * - `desactualizada`: la consulta falló, pero el panel ya tenía el registro; el formulario con esos datos y un aviso.

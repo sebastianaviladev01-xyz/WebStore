@@ -3,10 +3,10 @@ import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/cor
 import { ContenidoFacade } from '../features/contenido/application/contenido.facade';
 
 /**
- * Aviso de mantenimiento (lote 15, ADR-0021; PBI-0182, provisional): si el contenido nunca llegó del BFF, la tienda no
- * se muestra a medias (sin nombre, contacto ni páginas): reemplaza la cabecera, la página y el pie, para que nadie
- * compre sobre una tienda que no responde. «Reintentar» vuelve a pedir el contenido; también se reintenta al volver a
- * la pestaña. Al llegar, la tienda aparece en la página en la que se estaba.
+ * Aviso de mantenimiento (lote 15, ADR-0021; PBI-0182, confirmado por Sebastián Avila): si el contenido nunca llegó del
+ * BFF, la tienda no se muestra a medias (sin nombre, contacto ni páginas): reemplaza la cabecera, la página y el pie,
+ * para que nadie compre sobre una tienda que no responde. «Reintentar» vuelve a pedir el contenido; también se
+ * reintenta al volver a la pestaña. Al llegar, la tienda aparece en la página en la que se estaba.
  */
 @Component({
   selector: 'ws-maintenance-notice',

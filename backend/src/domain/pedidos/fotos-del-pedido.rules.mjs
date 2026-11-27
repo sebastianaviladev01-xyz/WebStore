@@ -1,9 +1,10 @@
 import { galleryOf } from '../catalogo/producto.rules.mjs';
 
 /**
- * Fotos de los pedidos anteriores (lote 27, ADR-0025, PBI-0236; ADR-0026, provisional). Un pedido guarda la ficha
- * pública del producto. Hasta el lote 25, esa ficha llevaba las fotos de la galería como Data URL (hasta 250 KB cada
- * una, dentro de cada pedido); desde entonces lleva su dirección. Estas reglas llevan un pedido anterior a esa forma:
+ * Fotos de los pedidos anteriores (lote 27, ADR-0025, PBI-0236; ADR-0026, confirmado por Sebastián Avila). Un pedido
+ * guarda la ficha pública del producto. Hasta el lote 25, esa ficha llevaba las fotos de la galería como Data URL
+ * (hasta 250 KB cada una, dentro de cada pedido); desde entonces lleva su dirección. Estas reglas llevan un pedido
+ * anterior a esa forma:
  *
  * - Una foto de `images` que el producto todavía tiene en su galería pasa a `gallery/{n}`, su posición en `galleryOf`,
  *   como en un pedido nuevo. Si coincide con la imagen principal o la miniatura vigentes, a la de ese campo.

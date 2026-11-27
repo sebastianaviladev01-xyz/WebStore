@@ -8,9 +8,9 @@ import {
 } from '../domain/comparador.rules';
 
 /**
- * Comparador de productos (lote 19, ADR-0021, PBI-0001; provisional). La lista vive solo en memoria mientras dura la
- * visita (STD-08 no permite guardarla en el navegador); `/comparar` la refleja en la URL para compartirla y la toma de
- * ella al abrir un enlace. No llama al BFF: los productos salen del catálogo ya cargado.
+ * Comparador de productos (lote 19, ADR-0021, PBI-0001; confirmado por Sebastián Avila). La lista vive solo en memoria
+ * mientras dura la visita (STD-08 no permite guardarla en el navegador); `/comparar` la refleja en la URL para
+ * compartirla y la toma de ella al abrir un enlace. No llama al BFF: los productos salen del catálogo ya cargado.
  */
 @Injectable({ providedIn: 'root' })
 export class ComparadorFacade {

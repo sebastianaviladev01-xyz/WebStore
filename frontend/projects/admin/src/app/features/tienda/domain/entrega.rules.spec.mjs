@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import ts from 'typescript';
 
-// Lote 17 (ADR-0021; provisional, por confirmar con Daniel): «Entregas y feriados» del superadministrador. La primera
+// Lote 17 (ADR-0021; confirmado por Sebastián Avila): «Entregas y feriados» del superadministrador. La primera
 // fecha de entrega (PBI-0178) y los días no laborables (PBI-0183) los decide el BFF; el Admin repite sus reglas para
 // avisar antes de enviar, y las compara con las del BFF.
 const fuente = await readFile(new URL('./entrega.rules.ts', import.meta.url), 'utf8');
@@ -117,7 +117,8 @@ test('PBI-0183: no se agrega una fecha vacía, que no existe o repetida, ni un n
   assert.equal(motivoParaNoAgregarDia(dias, '2026-07-28', ` ${'x'.repeat(60)} `), null);
 });
 
-// Lote 19 (ADR-0021, PBI-0006; provisional): la tienda elige una dirección por pedido o una por producto.
+// Lote 19 (ADR-0021, PBI-0006; confirmado por Sebastián Avila): la tienda elige una dirección por pedido o una por
+// producto.
 test('PBI-0006: los modos de dirección son los del BFF, con el de por defecto primero', async () => {
   const { MODOS_DE_DIRECCION: delBff, MODO_DE_DIRECCION_POR_DEFECTO } = await import(
     new URL(`${BFF}pedidos/direcciones-por-producto.rules.mjs`, import.meta.url)

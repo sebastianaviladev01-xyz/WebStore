@@ -1,5 +1,5 @@
 /**
- * Calendario de días no laborables (lote 17, ADR-0021, PBI-0183; provisional, por confirmar con Daniel): la lista vive
+ * Calendario de días no laborables (lote 17, ADR-0021, PBI-0183; confirmado por Sebastián Avila): la lista vive
  * en el estado del BFF y la edita el superadministrador. `WEBSTORE_NON_WORKING_DATES` solo da el valor inicial cuando
  * el estado no tiene lista.
  */

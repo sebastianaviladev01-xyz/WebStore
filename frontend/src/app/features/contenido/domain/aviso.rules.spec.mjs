@@ -1,8 +1,8 @@
 /**
- * Avisos de la barra superior (lote 15, ADR-0021; PBI-0175, provisional): Daniel aclaró que la «Navegación superior»
- * se pensó para avisos generales a los clientes (mantenimiento, próximas ofertas…), con enlace opcional. La tienda
- * muestra cada aviso con su texto y, si tiene, su enlace: una ruta de la tienda pasa por el router y una dirección
- * `https://` se abre en otra pestaña. Con varios, rotan; el índice da la vuelta en los dos sentidos.
+ * Avisos de la barra superior (lote 15, ADR-0021; PBI-0175, confirmado por Sebastián Avila): Daniel aclaró que la
+ * «Navegación superior» se pensó para avisos generales a los clientes (mantenimiento, próximas ofertas…), con enlace
+ * opcional. La tienda muestra cada aviso con su texto y, si tiene, su enlace: una ruta de la tienda pasa por el router
+ * y una dirección `https://` se abre en otra pestaña. Con varios, rotan; el índice da la vuelta en los dos sentidos.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -72,11 +72,11 @@ test('PBI-0175: los avisos rotan cada 6 s (más de 5 s, con pausa: WCAG 2.2.2)',
   assert.equal(INTERVALO_DE_AVISOS_MS, 6000);
 });
 
-// Lote 30 (ADR-0027, PBI-0244; provisional): el BFF solo envía los avisos vigentes. La tienda, además, deja de mostrar
-// el que vence mientras la página sigue abierta: cada aviso lleva el instante de su «Hasta» y la barra los filtra con
-// el instante que recibe, sin leer el reloj en la regla. Un aviso programado no llega hasta recargar o volver a la
-// pestaña, y la tienda no filtra por el «Desde», para no ocultar por un reloj del equipo adelantado o atrasado uno que el
-// BFF ya publicó.
+// Lote 30 (ADR-0027, PBI-0244; confirmado por Sebastián Avila): el BFF solo envía los avisos vigentes. La tienda,
+// además, deja de mostrar el que vence mientras la página sigue abierta: cada aviso lleva el instante de su «Hasta» y
+// la barra los filtra con el instante que recibe, sin leer el reloj en la regla. Un aviso programado no llega hasta
+// recargar o volver a la pestaña, y la tienda no filtra por el «Desde», para no ocultar por un reloj del equipo
+// adelantado o atrasado uno que el BFF ya publicó.
 test('PBI-0244: cada aviso lleva el instante de su «Hasta»; sin «Hasta» o con uno ilegible, ninguno', () => {
   assert.deepEqual(
     avisosVisibles([

@@ -1,8 +1,8 @@
 /**
  * Reserva y liberación de stock (lote 01, ADR-0017): las líneas repetidas del mismo producto se suman antes de
  * validar y de descontar (PBI-0092), y un producto inactivo no se vende (PBI-0093).
- * Lote 23 (ADR-0025, PBI-0226; provisional): el stock se gestiona solo en Inventario. Un producto que llega sin stock
- * desde el registro del producto conserva el vigente, y uno nuevo empieza en 0.
+ * Lote 23 (ADR-0025, PBI-0226; confirmado por Sebastián Avila): el stock se gestiona solo en Inventario. Un producto
+ * que llega sin stock desde el registro del producto conserva el vigente, y uno nuevo empieza en 0.
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
