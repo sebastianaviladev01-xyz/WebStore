@@ -92,6 +92,7 @@ const {
   contarPorClave,
   textoDeCantidad,
   textoDelTotal,
+  paginaDelElemento,
 } = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
 
 test('PBI-0265: el tamaño de página es 10, 25 o 50, con 10 por omisión', () => {
@@ -164,4 +165,28 @@ test('PBI-0265: el texto de cada ficha va en singular o en plural, y el total di
   assert.equal(textoDeCantidad(3, 'inactivo', 'inactivos'), '3 inactivos');
   assert.equal(textoDelTotal(8), '8 en total');
   assert.equal(textoDelTotal(0), '0 en total');
+});
+
+// Lote 43 (auditoría de la suite completa): con 10 por página, el registro recién creado puede quedar en otra página;
+// el listado salta a la suya. La regla dice en qué página está, con el tamaño de la URL.
+test('PBI-0265: la página de un elemento depende de su posición y del tamaño', () => {
+  const ids = numeros(22).map((n) => ({ id: `c-${n}` }));
+  const es = (id) => (item) => item.id === id;
+  assert.equal(paginaDelElemento(ids, es('c-1'), 10), 1);
+  assert.equal(paginaDelElemento(ids, es('c-10'), 10), 1);
+  assert.equal(paginaDelElemento(ids, es('c-11'), 10), 2);
+  assert.equal(paginaDelElemento(ids, es('c-22'), 10), 3);
+  assert.equal(paginaDelElemento(ids, es('c-22'), 25), 1);
+  assert.equal(paginaDelElemento(ids, es('c-22'), 50), 1);
+});
+
+test('PBI-0265: un elemento que no está en la lista no tiene página', () => {
+  assert.equal(
+    paginaDelElemento([{ id: 'a' }], (item) => item.id === 'b', 10),
+    null,
+  );
+  assert.equal(
+    paginaDelElemento([], () => true, 10),
+    null,
+  );
 });

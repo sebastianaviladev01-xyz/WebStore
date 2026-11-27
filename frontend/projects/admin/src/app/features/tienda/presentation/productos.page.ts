@@ -20,6 +20,7 @@ import { map } from 'rxjs';
 
 import { TiendaFacade } from '../application/tienda.facade';
 import { TablaExportable } from '../domain/exportacion.rules';
+import { Producto } from '../domain/tienda.model';
 import { EstadoFiltro, FILTROS_PRODUCTOS_VACIOS } from '../domain/filtro-catalogo.model';
 import {
   filtrarProductos,
@@ -243,6 +244,15 @@ export class ProductosPage {
     filtrarProductos(this.admin.products(), this.admin.categories(), this.aplicados()),
   );
   protected readonly pagina = computed(() => this.paginacion.paginar(this.resultados()));
+  /**
+   * Lote 43 (PBI-0265): si la página de registro vuelve con `?nuevo=<id>` tras crear, el listado va a la página de ese
+   * registro (o, si los filtros lo dejan fuera, los quita y va a su página).
+   */
+  private readonly registroNuevo = this.paginacion.seguirRegistroNuevo<Producto>({
+    filtrados: () => this.resultados(),
+    todos: () => filtrarProductos(this.admin.products(), this.admin.categories(), FILTROS_PRODUCTOS_VACIOS),
+    es: (producto, id) => producto.id === id,
+  });
   /** El total y cuántos activos e inactivos cumplen los filtros (lote 43, PBI-0265). */
   protected readonly fichas = computed((): FichaDeResumen[] => {
     const resultados = this.resultados();

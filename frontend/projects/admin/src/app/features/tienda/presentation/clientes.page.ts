@@ -32,6 +32,7 @@ import { dialogoDeRegistro } from './dialogo-de-registro';
 import { filtrosDeListado } from './filtros-de-listado';
 import { CLASES_ACCION, CLASES_ACCION_ELIMINAR, CLASES_CANCELAR_SUAVE, FichaDeResumen } from './insignia';
 import { ListadoComponent } from './listado.component';
+import { BusquedaDelRegistro } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
 
@@ -215,6 +216,12 @@ export class ClientesPage {
     filtrarClientes(this.admin.customers(), this.filtros.aplicados()),
   );
   protected readonly pagina = computed(() => this.filtros.paginar(this.resultados()));
+  /** Dónde buscar un cliente para ir a su página: con los filtros y sin ellos, en el orden del listado. */
+  private readonly busqueda: BusquedaDelRegistro<Cliente> = {
+    filtrados: () => this.resultados(),
+    todos: () => filtrarClientes(this.admin.customers(), FILTROS_CLIENTES_VACIOS),
+    es: (cliente, id) => cliente.id === id,
+  };
   /** Lote 43 (PBI-0265): los clientes no tienen estado; el pie dice el total. */
   protected readonly fichas = computed((): FichaDeResumen[] => [
     { texto: textoDelTotal(this.resultados().length), tono: 'principal', icono: 'clientes' },
@@ -292,13 +299,19 @@ export class ClientesPage {
     }
     const base = this.base;
     this.errorGuardado.set(null);
+    const id = base?.id ?? this.idNuevo;
     const saved = await this.admin.guardarCliente(base, {
-      id: base?.id ?? this.idNuevo,
+      id,
       orders: base?.orders ?? 0,
       ...this.form.getRawValue(),
     });
-    if (saved) this.dialogo.cerrar();
-    else this.errorGuardado.set(this.admin.tomarError());
+    if (!saved) {
+      this.errorGuardado.set(this.admin.tomarError());
+      return;
+    }
+    this.dialogo.cerrar();
+    // Lote 43 (PBI-0265): al crear, el listado va a la página donde quedó el registro nuevo, para que se vea.
+    if (!base) this.filtros.irAlRegistro(this.busqueda, id);
   }
   /** «Agregar» (PBI-0171): abre la ventana con «Nuevo cliente», vacía. */
   protected nuevo(): void {

@@ -258,6 +258,18 @@ export class CategoriasPage {
   /** La página y su tamaño, en la URL (lote 43). */
   protected readonly paginacion = paginacionDeLaUrl(this.parametros);
   protected readonly pagina = computed(() => this.paginacion.paginar(this.arbol().raices));
+  /**
+   * Lote 43 (PBI-0265): si la página de registro vuelve con `?nuevo=<id>` tras crear, el listado va a la página de ese
+   * registro (o, si los filtros lo dejan fuera, los quita y va a su página). La paginación cuenta las de primer nivel:
+   * se va a la página de la que la contiene.
+   */
+  private readonly registroNuevo = this.paginacion.seguirRegistroNuevo<NodoCategoria>({
+    filtrados: () => this.arbol().raices,
+    todos: () => arbolDeCategorias(this.admin.categories(), FILTROS_CATEGORIAS_VACIOS).raices,
+    es: function contiene(nodo, id): boolean {
+      return nodo.category.id === id || nodo.children.some((hija) => contiene(hija, id));
+    },
+  });
   /** Todas las categorías del árbol filtrado, en su orden: las que cuenta el total y las que se exportan. */
   private readonly enElArbol = computed(() => {
     const todas: NodoCategoria[] = [];

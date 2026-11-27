@@ -13,6 +13,7 @@ import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
 import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { Rol, rolesGestionables } from '../../sesion/domain/rol.rules';
+import { UsuarioAdmin } from '../../sesion/domain/usuario-admin.model';
 import { TablaExportable } from '../domain/exportacion.rules';
 import {
   FILTROS_USUARIOS_VACIOS,
@@ -212,6 +213,15 @@ export class UsuariosPage {
     filtrarUsuarios(this.admin.users(), this.filtros.aplicados()),
   );
   protected readonly pagina = computed(() => this.filtros.paginar(this.resultados()));
+  /**
+   * Lote 43 (PBI-0265): si la página de registro vuelve con `?nuevo=<id>` tras crear, el listado va a la página de ese
+   * registro (o, si los filtros lo dejan fuera, los quita y va a su página).
+   */
+  private readonly registroNuevo = this.filtros.seguirRegistroNuevo<UsuarioAdmin>({
+    filtrados: () => this.resultados(),
+    todos: () => filtrarUsuarios(this.admin.users(), FILTROS_USUARIOS_VACIOS),
+    es: (usuario, id) => usuario.id === id,
+  });
   /** El total, cuántos activos e inactivos y cuántos de cada rol que la sesión ve (lote 43, PBI-0265). */
   protected readonly fichas = computed((): FichaDeResumen[] => {
     const resultados = this.resultados();

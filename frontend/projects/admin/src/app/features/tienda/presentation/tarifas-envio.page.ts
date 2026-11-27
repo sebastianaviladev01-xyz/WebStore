@@ -37,6 +37,7 @@ import { dialogoDeRegistro } from './dialogo-de-registro';
 import { filtrosDeListado } from './filtros-de-listado';
 import { CLASES_ACCION, CLASES_ACCION_ELIMINAR, CLASES_CANCELAR_SUAVE, FichaDeResumen } from './insignia';
 import { ListadoComponent } from './listado.component';
+import { BusquedaDelRegistro } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
 
@@ -290,6 +291,12 @@ export class TarifasEnvioPage {
   );
   /** Páginas de 10, 25 o 50 (con unas 1.600 tarifas), con la página y el tamaño en la URL (lote 43). */
   protected readonly ratePage = computed(() => this.filtros.paginar(this.visibleRates()));
+  /** Dónde buscar una tarifa para ir a su página: con los filtros y sin ellos, en el orden del listado. */
+  private readonly busqueda: BusquedaDelRegistro<TarifaEnvio> = {
+    filtrados: () => this.visibleRates(),
+    todos: () => filtrarTarifasDeEnvio(this.admin.rates(), FILTROS_TARIFAS_VACIOS),
+    es: (rate, id) => rate.id === id,
+  };
   /** El total de las que cumplen los filtros y de cuántos orígenes salen (lote 43, PBI-0265). */
   protected readonly fichas = computed((): FichaDeResumen[] => {
     const tarifas = this.visibleRates();
@@ -385,8 +392,18 @@ export class TarifasEnvioPage {
           price,
         })
       : await this.admin.assignRatePrice(origin, destinations, price);
-    if (saved) this.dialogo.cerrar();
-    else this.errorGuardado.set(this.admin.tomarError());
+    if (!saved) {
+      this.errorGuardado.set(this.admin.tomarError());
+      return;
+    }
+    this.dialogo.cerrar();
+    // Lote 43 (PBI-0265): al crear, el listado va a la página donde quedó el registro nuevo, para que se vea. Con
+    // varios distritos, a la del primero.
+    if (editing) return;
+    const nueva = this.admin
+      .rates()
+      .find((rate) => rate.origin.trim() === origin.trim() && rate.destination === destinations[0]);
+    if (nueva) this.filtros.irAlRegistro(this.busqueda, nueva.id);
   }
 
   protected async remove(id: string, evento: Event): Promise<void> {

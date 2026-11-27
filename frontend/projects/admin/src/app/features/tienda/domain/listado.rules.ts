@@ -79,3 +79,16 @@ export function textoDeCantidad(cantidad: number, singular: string, plural: stri
 export function textoDelTotal(cantidad: number): string {
   return `${cantidad} en total`;
 }
+
+/**
+ * Página (desde 1) en que queda el primer elemento que cumple `es`, con páginas de `tamano`; `null` si no está. Sirve
+ * para llevar el listado a la página de un registro recién creado (lote 43, PBI-0265).
+ */
+export function paginaDelElemento<T>(
+  items: readonly T[],
+  es: (item: T) => boolean,
+  tamano: number,
+): number | null {
+  const indice = items.findIndex(es);
+  return indice < 0 ? null : Math.floor(indice / tamano) + 1;
+}

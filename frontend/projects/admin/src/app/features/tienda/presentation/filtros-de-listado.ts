@@ -84,5 +84,9 @@ export function filtrosDeListado<F extends Filtros<F>>(opciones: OpcionesFiltros
       borrador.setValue({ ...opciones.vacios } as never);
     },
     irAPagina: paginacion.irAPagina,
+    /** Lote 43: lleva el listado a la página de un registro (recién creado); ver `paginacionDeLaUrl`. */
+    irAlRegistro: paginacion.irAlRegistro,
+    /** Lote 43: con `?nuevo=<id>` en la URL, lleva el listado a la página de ese registro. */
+    seguirRegistroNuevo: paginacion.seguirRegistroNuevo,
   };
 }

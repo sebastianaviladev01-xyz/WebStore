@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-import { enviarCambios, leerSnapshot } from './apoyo/catalogo';
+import { enviarCambios, leerSnapshot, retirarClientes, sembrarClientes } from './apoyo/catalogo';
 import { aceptarEliminacion, responderEliminacion, ventanaDeConfirmacion } from './apoyo/confirmacion';
 import { relacionDeContraste, medirTexto, MINIMO } from './apoyo/contraste';
 import {
@@ -118,23 +118,77 @@ test('«Sí, eliminar» borra el registro hasta el BFF, sin ventana nativa', asy
   const nativas = contarVentanasNativas(page);
   const nombre = 'Cliente del lote 43';
   const correo = correoUnico('lote43');
-  await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-  await page.goto('/clientes');
-  await page.getByRole('button', { name: 'Agregar cliente' }).click();
-  const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
-  await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
-  await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);
-  await registro.getByRole('textbox', { name: 'Documento' }).fill('70000043');
-  await registro.getByRole('button', { name: 'Guardar', exact: true }).click();
-  await expect(registro).toBeHidden();
+  // Más de 10 clientes, como al final de la suite completa: el nuevo queda en otra página y el listado salta a ella.
+  const relleno = await sembrarClientes(11, 'l43-borrar');
+  try {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    await page.goto('/clientes');
+    await page.getByRole('button', { name: 'Agregar cliente' }).click();
+    const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
+    await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+    await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);
+    await registro.getByRole('textbox', { name: 'Documento' }).fill('70000043');
+    await registro.getByRole('button', { name: 'Guardar', exact: true }).click();
+    await expect(registro).toBeHidden();
 
-  await page.getByRole('button', { name: `Eliminar cliente ${nombre}` }).click();
-  await aceptarEliminacion(page, nombre);
-  await expect(page.getByRole('button', { name: `Eliminar cliente ${nombre}` })).toHaveCount(0);
-  await expect
-    .poll(async () => (await leerSnapshot()).customers.some((cliente) => cliente.email === correo))
-    .toBe(false);
-  expect(nativas()).toBe(0);
+    await page.getByRole('button', { name: `Eliminar cliente ${nombre}` }).click();
+    await aceptarEliminacion(page, nombre);
+    await expect(page.getByRole('button', { name: `Eliminar cliente ${nombre}` })).toHaveCount(0);
+    await expect
+      .poll(async () => (await leerSnapshot()).customers.some((cliente) => cliente.email === correo))
+      .toBe(false);
+    expect(nativas()).toBe(0);
+  } finally {
+    await retirarClientes(relleno);
+  }
+});
+
+test('al crear desde la ventana, el listado va a la página del registro nuevo; si los filtros lo dejan fuera, los quita', async ({
+  page,
+}) => {
+  const relleno = await sembrarClientes(11, 'l43-pagina');
+  const creados: string[] = [];
+  try {
+    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+    const lista = page.getByRole('region', { name: 'Lista de clientes' });
+    const paginacion = page.getByRole('navigation', { name: 'Páginas de clientes' });
+    const crear = async (nombre: string) => {
+      await page.getByRole('button', { name: 'Agregar cliente' }).click();
+      const registro = page.getByRole('dialog', { name: 'Nuevo cliente' });
+      const correo = correoUnico('l43-pagina');
+      await registro.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+      await registro.getByRole('textbox', { name: 'Correo' }).fill(correo);
+      await registro.getByRole('textbox', { name: 'Documento' }).fill('70000044');
+      await registro.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(registro).toBeHidden();
+      await expect
+        .poll(async () => (await leerSnapshot()).customers.find((cliente) => cliente.email === correo)?.id)
+        .toBeTruthy();
+      creados.push((await leerSnapshot()).customers.find((cliente) => cliente.email === correo)!.id);
+    };
+
+    // Desde la página 1, con más de 10 clientes: el nuevo queda al final y el listado salta a su página.
+    await page.goto('/clientes');
+    await expect(paginacion).toContainText(/^.*1 - 10 de \d+/);
+    await crear('Nuevo de la página 43');
+    await expect(page).toHaveURL(/[?&]pagina=\d+/);
+    await expect(lista.getByRole('button', { name: 'Eliminar cliente Nuevo de la página 43' })).toBeVisible();
+    const total = (await leerSnapshot()).customers.length;
+    await expect(paginacion).toContainText(`de ${total}`);
+
+    // Con un filtro que no lo incluye: se quitan los filtros y se va a su página.
+    await page.goto('/clientes?texto=relleno');
+    await crear('Fuera del filtro 43');
+    await expect(page).not.toHaveURL(/texto=/);
+    await expect(lista.getByRole('button', { name: 'Eliminar cliente Fuera del filtro 43' })).toBeVisible();
+    await expect(
+      page
+        .getByRole('search', { name: 'Filtros de clientes' })
+        .getByRole('textbox', { name: 'Buscar cliente' }),
+    ).toHaveValue('');
+  } finally {
+    await retirarClientes([...relleno, ...creados]);
+  }
 });
 
 test('el foco tras eliminar va a la fila que ocupa su lugar, a la anterior o al título; al cancelar, al botón', async ({

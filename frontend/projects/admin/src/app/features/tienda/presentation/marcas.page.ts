@@ -44,7 +44,7 @@ import {
   FichaDeResumen,
 } from './insignia';
 import { ListadoComponent } from './listado.component';
-import { paginacionDeLaUrl } from './paginacion-de-la-url';
+import { BusquedaDelRegistro, paginacionDeLaUrl } from './paginacion-de-la-url';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { confirmarEliminacion } from '../../../shared/ui/confirmacion.dialog';
 import { focoTrasEliminar } from '../../../shared/ui/foco-tras-eliminar';
@@ -255,6 +255,12 @@ export class MarcasPage {
   /** La página y su tamaño, en la URL (lote 43). */
   protected readonly paginacion = paginacionDeLaUrl(this.parametros);
   protected readonly pagina = computed(() => this.paginacion.paginar(this.resultados()));
+  /** Dónde buscar una marca para ir a su página: con los filtros y sin ellos, en el orden del listado. */
+  private readonly busqueda: BusquedaDelRegistro<Marca> = {
+    filtrados: () => this.resultados(),
+    todos: () => filtrarMarcas(this.admin.brands(), FILTROS_MARCAS_VACIOS),
+    es: (marca, id) => marca.id === id,
+  };
   /** El total y cuántas activas e inactivas cumplen los filtros (lote 43, PBI-0265). */
   protected readonly fichas = computed((): FichaDeResumen[] => {
     const resultados = this.resultados();
@@ -399,12 +405,16 @@ export class MarcasPage {
       return;
     }
     this.error.set(null);
+    const nueva = !this.editing();
+    const id = this.editing() ?? this.idNuevo;
     const saved = await this.admin.guardarMarca(this.base, {
-      id: this.editing() ?? this.idNuevo,
+      id,
       ...this.form.getRawValue(),
     });
     if (saved) {
       this.dialogo.cerrar();
+      // Lote 43 (PBI-0265): al crear, el listado va a la página donde quedó el registro nuevo, para que se vea.
+      if (nueva) this.paginacion.irAlRegistro(this.busqueda, id);
       return;
     }
     this.error.set(this.admin.tomarError() ?? 'No pudimos guardar la marca. Inténtalo de nuevo.');

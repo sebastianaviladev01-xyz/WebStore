@@ -13,7 +13,7 @@ import { eliminarRegistro } from '../../../shared/ui/eliminar-registro';
 import { TiendaFacade } from '../application/tienda.facade';
 import { vigenciaVisible } from '../domain/banner.rules';
 import { TablaExportable } from '../domain/exportacion.rules';
-import { ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
+import { Banner, ETIQUETAS_UBICACION_BANNER } from '../domain/tienda.model';
 import {
   FILTROS_BANNERS_VACIOS,
   filtrarBanners,
@@ -191,6 +191,15 @@ export class BannersPage {
     filtrarBanners(this.admin.banners(), this.filtros.aplicados()),
   );
   protected readonly pagina = computed(() => this.filtros.paginar(this.resultados()));
+  /**
+   * Lote 43 (PBI-0265): si la página de registro vuelve con `?nuevo=<id>` tras crear, el listado va a la página de ese
+   * registro (o, si los filtros lo dejan fuera, los quita y va a su página).
+   */
+  private readonly registroNuevo = this.filtros.seguirRegistroNuevo<Banner>({
+    filtrados: () => this.resultados(),
+    todos: () => filtrarBanners(this.admin.banners(), FILTROS_BANNERS_VACIOS),
+    es: (banner, id) => banner.id === id,
+  });
   protected readonly fichas = computed((): FichaDeResumen[] => {
     const resultados = this.resultados();
     const [activos, inactivos] = contarPorClave(resultados, (b) => (b.active ? 'activos' : 'inactivos'), [

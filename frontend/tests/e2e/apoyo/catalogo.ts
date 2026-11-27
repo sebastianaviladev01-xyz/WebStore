@@ -210,3 +210,28 @@ export async function enviarCambios(cambios: Record<string, unknown>): Promise<v
     }
   });
 }
+
+/**
+ * Lote 43 (PBI-0265): siembra `cantidad` clientes de relleno como «otra sesión», para que el listado tenga más de una
+ * página de 10 (como al final de la suite completa). Devuelve sus ids, para quitarlos con `retirarClientes`.
+ */
+export async function sembrarClientes(cantidad: number, prefijo: string): Promise<string[]> {
+  const clientes = Array.from({ length: cantidad }, (_, i) => {
+    const n = String(i + 1).padStart(2, '0');
+    return {
+      id: `c-e2e-${prefijo}-${n}`,
+      name: `Relleno ${prefijo} ${n}`,
+      email: `relleno-${prefijo}-${n}@example.com`,
+      document: `8${n}000000`.slice(0, 8),
+      orders: 0,
+    };
+  });
+  await enviarCambios({ customers: { upsert: clientes } });
+  return clientes.map((cliente) => cliente.id);
+}
+
+/** Quita los clientes con esos ids que sigan en el BFF. */
+export async function retirarClientes(ids: readonly string[]): Promise<void> {
+  const quedan = (await leerSnapshot()).customers.filter((cliente) => ids.includes(cliente.id));
+  if (quedan.length) await enviarCambios({ customers: { remove: quedan.map((cliente) => cliente.id) } });
+}

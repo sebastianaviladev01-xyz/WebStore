@@ -8,7 +8,9 @@ import {
   leerProductos,
   leerSnapshot,
   productoDePrueba,
+  retirarClientes,
   retirarProductos,
+  sembrarClientes,
 } from './apoyo/catalogo';
 import {
   correoUnico,
@@ -220,35 +222,42 @@ test.describe('Guardado del Admin', () => {
   }) => {
     const nombre = 'Cliente Lote 06';
     const correo = correoUnico('cliente-lote06');
-    await ingresarAlAdmin(page, cuentasAdmin.superadmin);
-    await page.goto('/clientes');
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
-    const nuevo = page.getByRole('dialog', { name: 'Nuevo cliente' });
-    await nuevo.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
-    await nuevo.getByRole('textbox', { name: 'Correo' }).fill(correo);
-    await nuevo.getByRole('textbox', { name: 'Documento' }).fill('11112222');
-    await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
-    await expect(nuevo).toBeHidden();
-    const eliminar = page.getByRole('button', { name: `Eliminar cliente ${nombre}` });
-    await expect(eliminar).toBeVisible();
+    // Lote 43 (PBI-0265): con más de 10 clientes, como al final de la suite completa, el nuevo queda en otra página de
+    // 10 y el listado salta a ella al guardar.
+    const relleno = await sembrarClientes(11, 'l43-guardado');
+    try {
+      await ingresarAlAdmin(page, cuentasAdmin.superadmin);
+      await page.goto('/clientes');
+      await page.getByRole('button', { name: 'Agregar cliente' }).click();
+      const nuevo = page.getByRole('dialog', { name: 'Nuevo cliente' });
+      await nuevo.getByRole('textbox', { name: 'Nombre' }).fill(nombre);
+      await nuevo.getByRole('textbox', { name: 'Correo' }).fill(correo);
+      await nuevo.getByRole('textbox', { name: 'Documento' }).fill('11112222');
+      await nuevo.getByRole('button', { name: 'Guardar', exact: true }).click();
+      await expect(nuevo).toBeHidden();
+      const eliminar = page.getByRole('button', { name: `Eliminar cliente ${nombre}` });
+      await expect(eliminar).toBeVisible();
 
-    // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
-    await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
-    const edicion = page.getByRole('dialog', { name: 'Editar cliente' });
-    await expect(edicion.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
-    await edicion.getByRole('button', { name: 'Cancelar' }).click();
-    await expect(edicion).toBeHidden();
-    await page.getByRole('button', { name: 'Agregar cliente' }).click();
-    await expect(nuevo.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
-    await page.keyboard.press('Escape');
-    await expect(nuevo).toBeHidden();
+      // Lote 07 (PBI-0132): «Editar» dice de qué cliente es.
+      await page.getByRole('button', { name: `Editar cliente ${nombre}` }).click();
+      const edicion = page.getByRole('dialog', { name: 'Editar cliente' });
+      await expect(edicion.getByRole('textbox', { name: 'Nombre' })).toHaveValue(nombre);
+      await edicion.getByRole('button', { name: 'Cancelar' }).click();
+      await expect(edicion).toBeHidden();
+      await page.getByRole('button', { name: 'Agregar cliente' }).click();
+      await expect(nuevo.getByRole('textbox', { name: 'Nombre' })).toHaveValue('');
+      await page.keyboard.press('Escape');
+      await expect(nuevo).toBeHidden();
 
-    // Lote 43 (PBI-0269): la ventana propia de confirmación, con el nombre del cliente.
-    await eliminar.click();
-    await aceptarEliminacion(page, nombre);
-    await expect(eliminar).toHaveCount(0);
-    const clientes = (await leerSnapshot()).customers;
-    expect(clientes.some((cliente) => cliente.email === correo)).toBe(false);
+      // Lote 43 (PBI-0269): la ventana propia de confirmación, con el nombre del cliente.
+      await eliminar.click();
+      await aceptarEliminacion(page, nombre);
+      await expect(eliminar).toHaveCount(0);
+      const clientes = (await leerSnapshot()).customers;
+      expect(clientes.some((cliente) => cliente.email === correo)).toBe(false);
+    } finally {
+      await retirarClientes(relleno);
+    }
   });
 
   test('PBI-0130: el vendedor edita un producto con el título de edición y «Cancelar»', async ({ page }) => {
