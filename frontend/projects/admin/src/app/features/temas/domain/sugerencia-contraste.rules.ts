@@ -4,8 +4,9 @@ import type { ColoresTema, ParContraste, Tema } from './tema.model';
 /**
  * Lote 47 (ADR-0033, PBI-0267): lo que «Revisión de contraste» dice de cada par que no llega a su mínimo. Daniel no
  * entendía «1.4:1» ni «4.5:1»: «tiene que ir con sugerencia», «que sea explicativo, informativo para el usuario». Cada
- * par dice dónde se ve y propone el color más cercano al elegido que lo hace llegar, aclarándolo u oscureciéndolo y
- * conservando su tono. La regla no cambia: lo que bloquea y lo que solo avisa siguen en `tema.rules.ts`, que es la
+ * par dice dónde se ve y con qué color editable se corrige; por cada color, una sola sugerencia: el más cercano al
+ * elegido que hace llegar todos los pares que dependen de él, aclarándolo u oscureciéndolo y conservando su tono (en la
+ * revisión del lote, ocho botones para el mismo color confundían). La regla no cambia: lo que bloquea y lo que solo avisa siguen en `tema.rules.ts`, que es la
  * réplica del BFF; esto solo lo explica.
  *
  * Funciones puras, sin I/O. La prueba transpila este archivo con `tema.rules.ts` delante y borra sus líneas `import`: por
@@ -89,19 +90,25 @@ export const DONDE_SE_VE_EL_PAR: Readonly<Record<NombreDelPar, string>> = Object
 });
 
 /**
- * Lo que se propone para un par que no llega: un color para su campo, o por qué no hay ninguno. `imposible`: ni
- * aclarando ni oscureciendo el campo llega al mínimo. `bloquearia`: llega, pero cada color que lo hace impide guardar el
- * tema (crea un bloqueo que no había).
+ * Lo que se propone para un color editable con pares que no llegan (`pares`, en el orden de la revisión): una sola
+ * sugerencia por color, no una por par. `color`: el color y los pares que hace llegar (`corrige`: todos, o los más que se
+ * puede). `imposible`: ni aclarando ni oscureciendo llega ninguno. `bloquearia`: alguno llegaría, pero cada color que lo
+ * hace impide guardar el tema (crea un bloqueo que no había).
  */
 export type SugerenciaDeColor =
   | {
       readonly tipo: 'color';
       readonly campo: CampoEditable;
+      readonly pares: readonly NombreDelPar[];
       readonly color: string;
       readonly sentido: 'aclarar' | 'oscurecer';
+      readonly corrige: readonly NombreDelPar[];
     }
-  | { readonly tipo: 'imposible'; readonly campo: CampoEditable }
-  | { readonly tipo: 'bloquearia'; readonly campo: CampoEditable };
+  | {
+      readonly tipo: 'imposible' | 'bloquearia';
+      readonly campo: CampoEditable;
+      readonly pares: readonly NombreDelPar[];
+    };
 
 /** Tono (0 a 360), saturación y luminosidad (0 a 1) HSL. */
 type Hsl = readonly [number, number, number];
@@ -130,9 +137,18 @@ function hslAHex([h, s, l]: Hsl): string {
   return `#${canal(0)}${canal(8)}${canal(4)}`.toUpperCase();
 }
 
-/** Paso de la búsqueda en luminosidad (1 %) y vueltas del ajuste fino entre el último que no sirve y el primero que sí. */
-const PASO_DE_LUMINOSIDAD = 0.01;
-const VUELTAS_DEL_AJUSTE = 7;
+/** Paso de la búsqueda en luminosidad (2 %) y vueltas del ajuste fino entre el último que no sirve y el primero que sí. */
+const PASO_DE_LUMINOSIDAD = 0.02;
+const VUELTAS_DEL_AJUSTE = 8;
+
+/** Los colores editables en el orden del formulario: las sugerencias salen en este orden. */
+const ORDEN_DE_LOS_CAMPOS: readonly CampoEditable[] = [
+  'primary',
+  'secondary',
+  'background',
+  'surface',
+  'contrast',
+];
 
 const bloqueosDe = (pares: readonly ParContraste[]): Set<NombreDelPar> =>
   new Set(
@@ -140,102 +156,120 @@ const bloqueosDe = (pares: readonly ParContraste[]): Set<NombreDelPar> =>
   );
 
 /**
- * Sugerencias para cada par que no llega a su mínimo, por su nombre; los que llegan no aparecen. Cada búsqueda mide el
- * tema con el campo cambiado; las medidas se guardan por campo y color, porque varios pares comparten campo.
+ * Una sugerencia por cada color editable con pares que no llegan a su mínimo, en el orden del formulario; sin pares que
+ * no lleguen, ninguna. Cada búsqueda mide el tema con el campo cambiado; las medidas se guardan por color.
  */
 export function sugerirColores(
   colores: ColoresTema,
   predefinidos: TemasDeBase = [],
-): Readonly<Partial<Record<NombreDelPar, SugerenciaDeColor>>> {
+): readonly SugerenciaDeColor[] {
   const actuales = revisarContraste(colores, predefinidos);
   const bloqueosActuales = bloqueosDe(actuales);
-  const medidas = new Map<string, readonly ParContraste[]>();
-  const medir = (campo: CampoEditable, color: string): readonly ParContraste[] => {
-    const clave = `${campo}${color}`;
-    let pares = medidas.get(clave);
-    if (!pares) {
-      pares = revisarContraste({ ...colores, [campo]: color }, predefinidos);
-      medidas.set(clave, pares);
-    }
-    return pares;
-  };
-  const resultado: Partial<Record<NombreDelPar, SugerenciaDeColor>> = {};
-  for (const { par, relacion, minimo } of actuales) {
-    if (relacion >= minimo) continue;
-    resultado[par] = buscar(colores, par, bloqueosActuales, medir);
+  const sugerencias: SugerenciaDeColor[] = [];
+  for (const campo of ORDEN_DE_LOS_CAMPOS) {
+    const pares = actuales
+      .filter(({ par, relacion, minimo }) => relacion < minimo && CAMPO_DEL_PAR[par] === campo)
+      .map(({ par }) => par);
+    if (pares.length)
+      sugerencias.push(buscar(colores, campo, Object.freeze(pares), bloqueosActuales, predefinidos));
   }
-  return Object.freeze(resultado);
-}
-
-/** La sugerencia para un par; `null` si el par ya llega a su mínimo. */
-export function sugerirColor(
-  colores: ColoresTema,
-  par: NombreDelPar,
-  predefinidos: TemasDeBase = [],
-): SugerenciaDeColor | null {
-  return sugerirColores(colores, predefinidos)[par] ?? null;
+  return Object.freeze(sugerencias);
 }
 
 /**
- * El color más cercano al del campo, en luminosidad HSL y con el mismo tono y saturación, que hace llegar el par a su
- * mínimo (con la cifra redondeada hacia abajo, como la muestra la revisión) sin crear un bloqueo nuevo. Recorre la
- * luminosidad de 1 en 1 % hacia el blanco y hacia el negro; en cada sentido, el primero que sirve se afina entre él y el
- * anterior. Si un color llega pero crearía un bloqueo, sigue con el siguiente. Gana el sentido que menos se aleja.
+ * El color más cercano al del campo, en luminosidad HSL y con el mismo tono y saturación, que hace llegar a su mínimo
+ * (con la cifra redondeada hacia abajo, como la muestra la revisión) todos los pares del campo sin crear un bloqueo nuevo.
+ * Si ninguno los hace llegar todos, el que hace llegar más y, entre esos, el más cercano.
+ *
+ * Recorre la luminosidad de 2 en 2 % hacia el blanco y hacia el negro a la par, hasta que un paso los hace llegar todos o
+ * hasta los extremos. El más cercano de los que hacen llegar más se afina entre él y el paso anterior, que hacía llegar
+ * menos.
  */
 function buscar(
   colores: ColoresTema,
-  par: NombreDelPar,
+  campo: CampoEditable,
+  pares: readonly NombreDelPar[],
   bloqueosActuales: ReadonlySet<NombreDelPar>,
-  medir: (campo: CampoEditable, color: string) => readonly ParContraste[],
+  predefinidos: TemasDeBase,
 ): SugerenciaDeColor {
-  const campo = CAMPO_DEL_PAR[par];
   const [h, s, l] = hexAHsl(colores[campo]);
+  const medidas = new Map<string, readonly NombreDelPar[]>();
   let alguno = false;
-  const evaluar = (luminosidad: number): { color: string; sirve: boolean } => {
+  /** Los pares que hace llegar un color, o ninguno si crearía un bloqueo nuevo. */
+  const evaluar = (luminosidad: number): { color: string; corrige: readonly NombreDelPar[] } => {
     const color = hslAHex([h, s, luminosidad]);
-    const pares = medir(campo, color);
-    const medida = pares.find((p) => p.par === par);
-    const llega = !!medida && medida.relacion >= medida.minimo;
-    if (llega) alguno = true;
-    const sirve = llega && [...bloqueosDe(pares)].every((bloqueo) => bloqueosActuales.has(bloqueo));
-    return { color, sirve };
-  };
-  /** Entre el último que no sirve (`cerca`) y el primero que sí (`lejos`), el que sirve más cerca del original. */
-  const afinar = (cerca: number, lejos: number, color: string) => {
-    let elegido = color;
-    for (let vuelta = 0; vuelta < VUELTAS_DEL_AJUSTE; vuelta++) {
-      const medio = (lejos + cerca) / 2;
-      const intento = evaluar(medio);
-      if (intento.sirve) {
-        lejos = medio;
-        elegido = intento.color;
-      } else cerca = medio;
+    let corrige = medidas.get(color);
+    if (!corrige) {
+      const medida = revisarContraste({ ...colores, [campo]: color }, predefinidos);
+      const llegan = pares.filter((par) => {
+        const p = medida.find((m) => m.par === par);
+        return !!p && p.relacion >= p.minimo;
+      });
+      if (llegan.length) alguno = true;
+      const sinBloqueosNuevos = [...bloqueosDe(medida)].every((bloqueo) => bloqueosActuales.has(bloqueo));
+      corrige = sinBloqueosNuevos ? llegan : [];
+      medidas.set(color, corrige);
     }
-    return { color: elegido, distancia: Math.abs(lejos - l) };
+    return { color, corrige };
   };
-  // Los dos sentidos avanzan a la par: en cuanto uno encuentra un color que sirve, el otro ya no puede quedar más cerca
-  // que el paso en que va.
+
+  interface Punto {
+    readonly luminosidad: number;
+    readonly anterior: number;
+    readonly paso: number;
+    readonly sentido: 'aclarar' | 'oscurecer';
+    readonly color: string;
+    readonly corrige: readonly NombreDelPar[];
+  }
+  const puntos: Punto[] = [];
   const sentidos = [
     { signo: 1, sentido: 'aclarar' as const, anterior: l, activo: true },
     { signo: -1, sentido: 'oscurecer' as const, anterior: l, activo: true },
   ];
   for (let paso = 1; sentidos.some(({ activo }) => activo); paso++) {
-    const hallados: { color: string; distancia: number; sentido: 'aclarar' | 'oscurecer' }[] = [];
+    let todos = false;
     for (const actual of sentidos) {
       if (!actual.activo) continue;
       const luminosidad = Math.min(1, Math.max(0, l + actual.signo * paso * PASO_DE_LUMINOSIDAD));
-      const prueba = evaluar(luminosidad);
-      if (prueba.sirve) {
-        hallados.push({ ...afinar(actual.anterior, luminosidad, prueba.color), sentido: actual.sentido });
-        continue;
-      }
+      const { color, corrige } = evaluar(luminosidad);
+      puntos.push({ luminosidad, anterior: actual.anterior, paso, sentido: actual.sentido, color, corrige });
+      if (corrige.length === pares.length) todos = true;
       if (luminosidad === 0 || luminosidad === 1) actual.activo = false;
       actual.anterior = luminosidad;
     }
-    if (hallados.length) {
-      const mejor = hallados.reduce((a, b) => (b.distancia < a.distancia ? b : a));
-      return { tipo: 'color', campo, color: mejor.color, sentido: mejor.sentido };
-    }
+    // Lo que queda por recorrer está más lejos: no puede ganar a uno que los hace llegar todos.
+    if (todos) break;
   }
-  return { tipo: alguno ? 'bloquearia' : 'imposible', campo };
+
+  const mejor = Math.max(0, ...puntos.map(({ corrige }) => corrige.length));
+  if (mejor === 0) return { tipo: alguno ? 'bloquearia' : 'imposible', campo, pares };
+  const primerPaso = Math.min(
+    ...puntos.filter(({ corrige }) => corrige.length === mejor).map(({ paso }) => paso),
+  );
+  const afinados = puntos
+    .filter(({ corrige, paso }) => corrige.length === mejor && paso === primerPaso)
+    .map((punto) => {
+      // Entre el paso anterior (`cerca`, hace llegar menos) y este (`lejos`), el más cercano que hace llegar tantos.
+      let cerca = punto.anterior;
+      let lejos = punto.luminosidad;
+      let elegido = { color: punto.color, corrige: punto.corrige };
+      for (let vuelta = 0; vuelta < VUELTAS_DEL_AJUSTE; vuelta++) {
+        const medio = (lejos + cerca) / 2;
+        const intento = evaluar(medio);
+        if (intento.corrige.length >= mejor) {
+          lejos = medio;
+          elegido = intento;
+        } else cerca = medio;
+      }
+      return { ...elegido, sentido: punto.sentido, distancia: Math.abs(lejos - l) };
+    });
+  const elegido = afinados.reduce((a, b) => (b.distancia < a.distancia ? b : a));
+  return {
+    tipo: 'color',
+    campo,
+    pares,
+    color: elegido.color,
+    sentido: elegido.sentido,
+    corrige: elegido.corrige,
+  };
 }

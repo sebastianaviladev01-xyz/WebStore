@@ -1,6 +1,6 @@
 /**
- * Lote 47 (ADR-0033, PBI-0267): «Revisión de contraste» dice dónde se ve cada par que no llega y sugiere el color más
- * cercano que cumple. Como los demás `*.spec.mjs`, transpila el `.ts` y borra sus líneas `import`; la réplica de las
+ * Lote 47 (ADR-0033, PBI-0267): «Revisión de contraste» dice dónde se ve cada par que no llega y, por cada color
+ * editable, sugiere el color más cercano que hace llegar sus pares. Como los demás `*.spec.mjs`, transpila el `.ts` y borra sus líneas `import`; la réplica de las
  * reglas de temas se antepone porque la sugerencia mide con ella.
  */
 import { test } from 'node:test';
@@ -13,14 +13,8 @@ const source = [await readFile(new URL('./tema.rules.ts', import.meta.url), 'utf
 const modulo = ts.transpileModule(source.replace(/^import [\s\S]*?;$/gm, ''), {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const {
-  CAMPO_DEL_PAR,
-  DONDE_SE_VE_EL_PAR,
-  PARES_DE_CONTRASTE,
-  revisarContraste,
-  sugerirColor,
-  sugerirColores,
-} = await import(`data:text/javascript;base64,${Buffer.from(modulo).toString('base64')}`);
+const { CAMPO_DEL_PAR, DONDE_SE_VE_EL_PAR, PARES_DE_CONTRASTE, revisarContraste, sugerirColores } =
+  await import(`data:text/javascript;base64,${Buffer.from(modulo).toString('base64')}`);
 
 /** Los colores de B, de los que parte «Nuevo tema». */
 const B = {
@@ -28,7 +22,7 @@ const B = {
   secondary: '#C2410C',
   background: '#F3F5F8',
   surface: '#FFFFFF',
-  contrast: '#16202E',
+  contrast: '#0F172A',
 };
 /** Una base oscura con un contraste gris: el texto se lee, el texto secundario no. */
 const OSCURO = {
@@ -95,67 +89,122 @@ test('PBI-0267: cada par se corrige en el color editable del que sale', () => {
   assert.equal(CAMPO_DEL_PAR['warning/surface'], 'surface');
 });
 
-test('PBI-0267: un par que llega no lleva sugerencia, y sugerirColores solo trae los que no llegan', () => {
-  assert.equal(sugerirColor(B, 'contrast/background'), null);
-  for (const colores of [B, { ...B, contrast: '#5F6B7A' }]) {
-    const noLlegan = revisarContraste(colores)
-      .filter(({ relacion, minimo }) => relacion < minimo)
-      .map(({ par }) => par);
-    assert.deepEqual(Object.keys(sugerirColores(colores)).sort(), [...noLlegan].sort());
-  }
-  assert.ok(Object.keys(sugerirColores({ ...B, contrast: '#5F6B7A' })).length > 1);
+/** Pares que no llegan y se corrigen con `campo`, en el orden de la revisión. */
+const noLlegan = (colores, campo) =>
+  revisarContraste(colores)
+    .filter(({ par, relacion, minimo }) => relacion < minimo && CAMPO_DEL_PAR[par] === campo)
+    .map(({ par }) => par);
+const sugerenciaDe = (colores, campo) => sugerirColores(colores).find((s) => s.campo === campo);
+
+test('PBI-0267: sin pares que no lleguen no hay sugerencias; con ellos, una por color editable, en el orden de los colores', () => {
+  assert.deepEqual(sugerirColores(B), []);
+  const colores = { ...B, contrast: '#5F6B7A' };
+  const sugerencias = sugerirColores(colores);
+  assert.deepEqual(
+    sugerencias.map(({ campo }) => campo),
+    ['secondary', 'contrast'],
+  );
+  for (const { campo, pares } of sugerencias) assert.deepEqual(pares, noLlegan(colores, campo));
+  assert.ok(Object.isFrozen(sugerencias));
 });
 
-test('PBI-0267: sobre un fondo claro, oscurece el contraste hasta el color más cercano que llega a 4.5:1, con su tono', () => {
+test('PBI-0267: un mismo color con varios pares da una sola sugerencia, el color más cercano que los hace llegar todos', () => {
   const colores = { ...B, contrast: '#5F6B7A' };
-  assert.ok(medida(colores, 'muted/background').relacion < 4.5);
-  const sugerencia = sugerirColor(colores, 'muted/background');
+  const pares = noLlegan(colores, 'contrast');
+  assert.equal(pares.length, 6);
+  const sugerencia = sugerenciaDe(colores, 'contrast');
   assert.equal(sugerencia.tipo, 'color');
-  assert.equal(sugerencia.campo, 'contrast');
   assert.equal(sugerencia.sentido, 'oscurecer');
   assert.match(sugerencia.color, /^#[0-9A-F]{6}$/);
-  // Llega exactamente al mínimo con el redondeo de la cifra: el más cercano no lo pasa de largo.
-  assert.equal(medida({ ...colores, contrast: sugerencia.color }, 'muted/background').relacion, 4.5);
+  assert.deepEqual(sugerencia.pares, pares);
+  assert.deepEqual(sugerencia.corrige, pares);
+  const aplicado = { ...colores, contrast: sugerencia.color };
+  assert.deepEqual(noLlegan(aplicado, 'contrast'), []);
+  assert.deepEqual(bloqueos(aplicado), []);
+  // El más cercano: el par más exigente queda justo en su mínimo con el redondeo de la cifra.
+  assert.ok(
+    pares.some((par) => medida(aplicado, par).relacion === medida(aplicado, par).minimo),
+    pares.map((par) => `${par} ${medida(aplicado, par).relacion}`).join(', '),
+  );
+  // El borde de los campos se mide con su mínimo de 3:1, no con el del texto.
+  assert.ok(medida(aplicado, 'borderStrong/surface').relacion >= 3);
   const antes = hsl(colores.contrast);
   const despues = hsl(sugerencia.color);
   assert.ok(despues.l < antes.l);
-  assert.ok(Math.abs(despues.h - antes.h) < 2, `tono ${antes.h} → ${despues.h}`);
+  // En un color oscuro, redondear a #RRGGBB mueve el tono unos grados.
+  assert.ok(Math.abs(despues.h - antes.h) < 6, `tono ${antes.h} → ${despues.h}`);
   assert.ok(Math.abs(despues.s - antes.s) < 0.05, `saturación ${antes.s} → ${despues.s}`);
 });
 
-test('PBI-0267: sobre un fondo oscuro, aclara el contraste hasta el color más cercano que llega', () => {
+test('PBI-0267: sobre un fondo oscuro, aclara el contraste hasta que todos sus pares llegan', () => {
   assert.deepEqual(bloqueos(OSCURO), []);
-  assert.ok(medida(OSCURO, 'muted/background').relacion < 4.5);
-  const sugerencia = sugerirColor(OSCURO, 'muted/background');
+  const pares = noLlegan(OSCURO, 'contrast');
+  assert.ok(pares.length > 1);
+  const sugerencia = sugerenciaDe(OSCURO, 'contrast');
   assert.equal(sugerencia.tipo, 'color');
-  assert.equal(sugerencia.campo, 'contrast');
   assert.equal(sugerencia.sentido, 'aclarar');
-  assert.equal(medida({ ...OSCURO, contrast: sugerencia.color }, 'muted/background').relacion, 4.5);
+  assert.deepEqual(sugerencia.corrige, pares);
+  const aplicado = { ...OSCURO, contrast: sugerencia.color };
+  assert.deepEqual(noLlegan(aplicado, 'contrast'), []);
+  assert.ok(pares.some((par) => medida(aplicado, par).relacion === medida(aplicado, par).minimo));
   assert.ok(hsl(sugerencia.color).l > hsl(OSCURO.contrast).l);
 });
 
-test('PBI-0267: un borde o un control llega a su mínimo de 3:1, no al del texto', () => {
-  const colores = { ...B, contrast: '#5F6B7A' };
-  assert.ok(medida(colores, 'borderStrong/surface').relacion < 3);
-  const sugerencia = sugerirColor(colores, 'borderStrong/surface');
+test('PBI-0267: si ningún color los hace llegar todos, el que hace llegar más, con su recuento', () => {
+  // Con un fondo secundario gris claro, el texto deshabilitado no llega con ningún contraste; los otros tres pares sí,
+  // oscureciéndolo.
+  const colores = { ...B, background: '#FFFFFF', surface: '#A0A0A0', contrast: '#303030' };
+  assert.deepEqual(bloqueos(colores), []);
+  const pares = noLlegan(colores, 'contrast');
+  assert.deepEqual(pares, [
+    'muted/surface',
+    'footerText/footer',
+    'disabledText/disabled',
+    'borderStrong/surface',
+  ]);
+  const sugerencia = sugerenciaDe(colores, 'contrast');
   assert.equal(sugerencia.tipo, 'color');
-  assert.equal(medida({ ...colores, contrast: sugerencia.color }, 'borderStrong/surface').relacion, 3);
+  assert.equal(sugerencia.sentido, 'oscurecer');
+  assert.deepEqual(sugerencia.pares, pares);
+  assert.deepEqual(sugerencia.corrige, ['muted/surface', 'footerText/footer', 'borderStrong/surface']);
+  const aplicado = { ...colores, contrast: sugerencia.color };
+  assert.deepEqual(noLlegan(aplicado, 'contrast'), ['disabledText/disabled']);
+  assert.deepEqual(bloqueos(aplicado), []);
+  assert.ok(
+    sugerencia.corrige.some((par) => medida(aplicado, par).relacion === medida(aplicado, par).minimo),
+  );
 });
 
-test('PBI-0267: si aclarar u oscurecer el color no alcanza el mínimo, lo dice en lugar de sugerir', () => {
-  // Con un fondo secundario gris medio, el texto deshabilitado y su fondo salen los dos del contraste y de ese gris:
-  // ni con el negro ni con el blanco llegan a 4.5:1.
-  const colores = { ...B, background: '#FFFFFF', surface: '#808080', contrast: '#000000' };
+test('PBI-0267: si aclarar u oscurecer el color no hace llegar ningún par, lo dice una vez en lugar de sugerir', () => {
+  // Con un fondo secundario gris claro, el texto deshabilitado y su fondo salen los dos del contraste y de ese gris: ni
+  // con el negro ni con el blanco llegan a 4.5:1.
+  const colores = { ...B, background: '#FFFFFF', surface: '#A0A0A0', contrast: '#000000' };
   assert.deepEqual(bloqueos(colores), []);
-  assert.ok(medida(colores, 'disabledText/disabled').relacion < 4.5);
-  assert.deepEqual(sugerirColor(colores, 'disabledText/disabled'), {
+  assert.deepEqual(sugerenciaDe(colores, 'contrast'), {
     tipo: 'imposible',
     campo: 'contrast',
+    pares: ['disabledText/disabled'],
   });
 });
 
-test('PBI-0267: una sugerencia nunca crea un bloqueo nuevo; si todas lo crearían, lo dice', () => {
-  // Recorre temas al azar (con semilla fija) y comprueba cada sugerencia: el par llega y no aparece ningún bloqueo.
+test('PBI-0267: si los colores que los hacen llegar impedirían guardar, lo dice una vez en lugar de sugerir', () => {
+  // Un fondo principal blanco y un fondo secundario gris oscuro: el contraste negro se lee sobre el blanco y bloquea sobre
+  // el gris. Aclararlo haría llegar sus pares sobre el fondo secundario, pero dejaría de leerse sobre el blanco: crearía
+  // otro bloqueo.
+  const colores = { ...B, background: '#FFFFFF', surface: '#333333', contrast: '#000000' };
+  assert.deepEqual(bloqueos(colores), ['contrast/surface']);
+  const sugerencia = sugerenciaDe(colores, 'contrast');
+  assert.deepEqual(sugerencia, {
+    tipo: 'bloquearia',
+    campo: 'contrast',
+    pares: noLlegan(colores, 'contrast'),
+  });
+  assert.ok(sugerencia.pares.includes('contrast/surface'));
+});
+
+test('PBI-0267: una sugerencia nunca crea un bloqueo nuevo y hace llegar los pares que dice', () => {
+  // Recorre temas al azar (con semilla fija) y comprueba cada sugerencia: una por color, los pares que dice que corrige
+  // llegan y no aparece ningún bloqueo.
   let semilla = 47;
   const azar = () => {
     semilla = (semilla * 1103515245 + 12345) % 2147483648;
@@ -170,32 +219,31 @@ test('PBI-0267: una sugerencia nunca crea un bloqueo nuevo; si todas lo crearía
       )
       .join('')}`.toUpperCase();
   let sugeridos = 0;
+  let parciales = 0;
   let bloquearian = 0;
   for (let i = 0; i < 40; i++) {
     const tema = Object.fromEntries(CAMPOS.map((campo) => [campo, colorAlAzar()]));
     const antes = new Set(bloqueos(tema));
-    for (const [par, sugerencia] of Object.entries(sugerirColores(tema))) {
-      assert.equal(sugerencia.campo, CAMPO_DEL_PAR[par]);
+    const sugerencias = sugerirColores(tema);
+    assert.equal(new Set(sugerencias.map(({ campo }) => campo)).size, sugerencias.length);
+    for (const sugerencia of sugerencias) {
+      assert.deepEqual(sugerencia.pares, noLlegan(tema, sugerencia.campo));
       if (sugerencia.tipo === 'bloquearia') bloquearian++;
       if (sugerencia.tipo !== 'color') continue;
       sugeridos++;
+      assert.ok(sugerencia.corrige.length > 0);
+      if (sugerencia.corrige.length < sugerencia.pares.length) parciales++;
       const aplicado = { ...tema, [sugerencia.campo]: sugerencia.color };
-      const p = medida(aplicado, par);
-      assert.ok(p.relacion >= p.minimo, `${par} en ${JSON.stringify(tema)} con ${sugerencia.color}`);
-      for (const nuevo of bloqueos(aplicado)) assert.ok(antes.has(nuevo), `${par} crea el bloqueo ${nuevo}`);
+      const siguen = noLlegan(aplicado, sugerencia.campo);
+      for (const par of sugerencia.corrige)
+        assert.ok(!siguen.includes(par), `${par} en ${JSON.stringify(tema)} con ${sugerencia.color}`);
+      for (const nuevo of bloqueos(aplicado))
+        assert.ok(antes.has(nuevo), `${sugerencia.campo} crea el bloqueo ${nuevo}`);
     }
   }
-  assert.ok(sugeridos > 30, `sugeridos: ${sugeridos}`);
-  assert.ok(bloquearian > 0, 'algún tema al azar debería tener un par que solo se corrige bloqueando');
-});
-
-test('PBI-0267: el caso en que corregir el par bloquearía se informa como tal', () => {
-  // Un fondo principal blanco y un fondo secundario casi negro: el contraste negro se lee sobre el blanco y bloquea sobre
-  // el casi negro. Aclararlo lo haría leerse sobre el fondo secundario, pero dejaría de leerse sobre el blanco: crearía
-  // otro bloqueo.
-  const colores = { ...B, background: '#FFFFFF', surface: '#2B2B2B', contrast: '#000000' };
-  assert.deepEqual(bloqueos(colores), ['contrast/surface']);
-  assert.deepEqual(sugerirColor(colores, 'contrast/surface'), { tipo: 'bloquearia', campo: 'contrast' });
+  assert.ok(sugeridos > 20, `sugeridos: ${sugeridos}`);
+  assert.ok(parciales > 0, 'algún tema al azar debería tener una sugerencia parcial');
+  assert.ok(bloquearian > 0, 'algún tema al azar debería tener un color que solo corrige bloqueando');
 });
 
 test('PBI-0267: las líneas import de sugerencia-contraste.rules.ts traen tipos o la réplica de tema.rules', () => {

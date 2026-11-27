@@ -15,6 +15,13 @@ const nuevoTemaCon = (contraste) => async (page) => {
     const codigo = dialogo.getByRole('textbox', { name: 'Código hexadecimal de Contraste', exact: true });
     await codigo.fill(contraste);
     await codigo.press('Tab');
+    // Las sugerencias se calculan 150 ms después del último cambio: con avisos, se espera a «Cómo corregirlo». Antes del
+    // lote no hay «Se ve en …» y no se espera.
+    await page.waitForFunction(
+      () =>
+        !document.body.textContent.includes('Se ve en') ||
+        !!document.querySelector('[data-contraste="sugerencias"]'),
+    );
   }
   await dialogo
     .getByRole('heading', { name: 'Revisión de contraste' })
