@@ -14,7 +14,9 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-Ninguna.
+| Excepción | Ámbito | Vigencia |
+|---|---|---|
+| [ADR-0035](../adrs/0035-construir-por-lotes-el-acceso-a-whatsapp.md): construir por lotes el acceso a WhatsApp, sin las etapas SDD | PBI-0241 y los hallazgos de su lote, en el BFF, el backoffice y el storefront | Hasta fusionar el PR del lote 49. Responsable: Sebastián Avila |
 
 ## Excepciones cerradas
 
