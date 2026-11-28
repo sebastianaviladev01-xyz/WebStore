@@ -52,7 +52,8 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 
 ## Backoffice (proyecto `admin`)
 
-- Dashboard con filtro de periodo (de hoy al año en curso; todas las cifras y el gráfico siguen el periodo), cifras plegables en tarjetas de color (ventas sin el envío), el gráfico de pedidos y «Clientes web nuevos» a todo el ancho (sin «Pedidos por distrito»), la distribución de ventas por categoría, últimos pedidos, alertas y actividad reciente.
+- No se indexa en los buscadores: etiqueta `robots` con `noindex, nofollow` y, en la demo publicada, la cabecera `X-Robots-Tag`; la tienda sigue indexable.
+- Dashboard con filtro de periodo (de hoy al año en curso; todas las cifras y el gráfico siguen el periodo), cifras plegables en tarjetas de color (ventas sin el envío), el gráfico de pedidos y «Clientes web nuevos» a todo el ancho (sin «Pedidos por distrito»), la distribución de ventas por categoría (un color por barra, de los colores del tema y de estado), últimos pedidos, alertas y actividad reciente.
 - Campana de avisos: pedidos nuevos, reclamos nuevos y errores de compra.
 - Mantenimientos estándar: un registro de más de tres campos tiene su propia interfaz y uno de hasta tres, una ventana emergente; ningún formulario va al costado de una lista. Los campos usan el contorno del storefront.
 - Productos, con la casilla «Es destacado», la imagen y la galería cargadas como archivo, el precio con dos decimales, el SKU en su columna y la categoría elegida con búsqueda, en el registro y en el filtro. El stock no está en el registro: se gestiona en Inventario.
@@ -60,11 +61,11 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Categorías jerárquicas y ordenables (orden explícito; fallback alfabético), en un árbol que se abre por niveles, con una imagen opcional de 100 × 100 px.
 - Marcas, en una ventana emergente.
 - Clientes, incluidos los creados por checkout guest, en una ventana emergente.
-- Usuarios administrativos, en su propia interfaz; login y roles aplicados en frontend y BFF. Las tarjetas de los roles no cuentan usuarios.
+- Usuarios administrativos, en su propia interfaz; login y roles aplicados en frontend y BFF. Las tarjetas de los roles no cuentan usuarios, y el pie del listado cuenta el total, los activos y los inactivos, no cada rol.
 - Reclamos con estado y respuesta del proveedor; la lista marca el abierto.
 - Pedidos y estados.
 - Banners en su propia interfaz, con las imágenes cargadas como archivo, fecha y hora de inicio y fin (que deben existir en el calendario), el tono de los controles calculado al cargar la foto y hasta dos botones.
-- CMS: logo gráfico cargable/configurable, contacto múltiple, WhatsApp de la tienda (número con código de país y mensaje inicial, con «Probar»), avisos para los clientes (con «Desde» y «Hasta» opcionales), navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
+- CMS: logo gráfico cargado como archivo (PNG, JPG o WebP, como las demás imágenes) o escrito como dirección, contacto múltiple, WhatsApp de la tienda (número con código de país y mensaje inicial, con «Probar»), avisos para los clientes (con «Desde» y «Hasta» opcionales), navegación lateral, accesos inferiores (pie), sugeridos en diálogo o panel lateral y versión de los términos.
 - Contacto, Envíos, Privacidad y Términos con activación/desactivación efectiva mediante guards; al desactivarlas, tampoco son accesibles por URL directa.
 - Tipografía única bloqueada en el MVP.
 - Tabla configurable origen → destino, con el distrito elegido de una lista y sin ajuste porcentual.

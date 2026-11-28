@@ -37,7 +37,7 @@ Criterio: esta matriz incluye los **acuerdos finales aplicables a WebStore** ide
 | Pedidos visibles en Admin | `/bff/admin/snapshot`; `PedidosPage` |
 | Tabla envío origen → destino | `TarifasEnvioPage` + `BffEnvioGateway`; el checkout solo pide el distrito y el BFF asigna la tienda de origen más próxima (tarifa más baja) |
 | Banners con vigencia | `BannersPage` + `activeBanners`. Lote 06 (PBI-0128): las fechas son días de Lima, el fin no va antes del inicio (Admin y BFF) y un enlace externo se abre con `href` en la tienda (`banner.rules.spec.mjs`, `enlace.rules.spec.mjs`; `admin-guardado-y-datos.spec.ts`, `storefront-banners.spec.ts`) |
-| Logo gráfico configurable | CMS permite URL o carga de imagen → BFF → Storefront shell |
+| Logo gráfico configurable | CMS permite URL o carga de imagen → BFF → Storefront shell; desde el lote 50 (PBI-0289), el logo cargado se guarda como las demás imágenes y la tienda lo recibe por dirección |
 | Color principal configurable | Sustituido por los temas de la feature 002 (filas «Temas configurables»): Contenido ya no tiene colores; el color vive en el tema activo |
 | Contacto configurable | CMS → footer |
 | Header/footer configurables | CMS → Storefront shell |
@@ -255,3 +255,14 @@ El acceso a WhatsApp que Daniel dejó para el backlog en la reunión del 2026-11
 |---|---|
 | La tienda muestra un botón de WhatsApp abajo a la derecha, en todas las páginas menos el checkout, que abre `wa.me` en otra pestaña; sin número no hay botón (lote 49: PBI-0241) | `whatsapp.rules.ts` (`enlaceDeWhatsapp` y `muestraWhatsappEn`), `BotonWhatsappComponent` (`ws-store-whatsapp`, en `layout/`) y `.ws-whatsapp` en `storefront.css`. Pruebas: `whatsapp.rules.spec.mjs` y `storefront-whatsapp.spec.ts` |
 | Contenido del backoffice tiene la sección «WhatsApp»: el número con código de país y un mensaje inicial, con «Probar»; el BFF guarda los dígitos y valida (lote 49: PBI-0241) | `whatsapp.rules.mjs` y `requireValidConfig` del BFF, `whatsapp.rules.ts` y `contenido.page.ts` del backoffice; [contrato](../../backend/docs/BFF-CONTRACT.md). Pruebas: `whatsapp.rules.test.mjs`, `snapshot.use-cases.test.mjs`, `normalizar-lote-49.test.mjs`, `contrato.smoke.mjs`, `whatsapp.rules.spec.mjs` del backoffice y `storefront-whatsapp.spec.ts` |
+
+## Ajustes del backoffice: lote 50 (2026-11-27)
+
+Los pendientes del backoffice que no dependen de terceros (PBI-0276, PBI-0277, PBI-0288 y PBI-0289) se construyeron sin feature nueva ([ADR-0037](../adrs/0037-cerrar-por-lotes-los-pendientes-que-no-dependen-de-terceros.md)). Las decisiones están en las [decisiones pendientes](PENDING-DECISIONS.md) («Lotes 50 a 56», decisiones 1 a 4) y el detalle, en el [backlog](backlog.md).
+
+| Requisito consolidado | Evidencia de implementación |
+|---|---|
+| El pie de Usuarios cuenta el total, los activos y los inactivos, sin las fichas por rol (lote 50: PBI-0276) | `usuarios.page.ts` (`fichas`). Prueba: `admin-listados-panel.spec.ts` |
+| Los buscadores no indexan el backoffice; la tienda sigue indexable (lote 50: PBI-0277) | `<meta name="robots" content="noindex, nofollow">` en `projects/admin/src/index.html`; en la demo publicada, `X-Robots-Tag: noindex, nofollow` en cada respuesta bajo `/admin/` (`tools/demo/cabeceras-demo.mjs`, usado por `servidor-demo.mjs`). Pruebas: `tools/demo/cabeceras-demo.test.mjs` (`npm run test:tools`) y `admin-ajustes-del-backoffice.spec.ts` |
+| Cada barra de «Distribución de ventas por categoría» lleva un color distinto de una serie fija del tema y de estado, en el mismo orden en cada carga; «Otras», en gris; 3:1 o más contra la tarjeta con A, B y C (lote 50: PBI-0288) | `SERIE_DE_TONOS` y `tonoDeParticipacion` (`distribucion-ventas.rules.ts`) y `colorDeParticipacion` (`resumen.page.ts`). Pruebas: `distribucion-ventas.rules.spec.mjs` y `admin-ajustes-del-backoffice.spec.ts` |
+| El logo cargado con «Cargar logo» se guarda como las demás imágenes y la tienda lo recibe por dirección (`/bff/images/logo?v=…`); el campo «URL/Data URL del logo» se queda y acepta una dirección escrita; un logo guardado antes se sigue viendo (lote 50: PBI-0289) | `motivoParaNoUsarLogo` (`foto.rules.ts`) y `contenido.page.ts` del backoffice; `LADO_LOGO` y `MAX_LOGO` (`imagen.rules.mjs`), `requireValidConfig`, `direccionDelLogo` y `obtenerLogo` (`imagenes.queries.mjs`) y `GET /bff/images/logo` del BFF; [contrato](../../backend/docs/BFF-CONTRACT.md#imágenes-cargadas). Pruebas: `logo.rules.test.mjs`, `imagenes.queries.test.mjs`, `imagenes-cargadas.test.mjs`, `contrato.smoke.mjs`, `foto.rules.spec.mjs` y `admin-ajustes-del-backoffice.spec.ts` |
