@@ -437,7 +437,7 @@ export function requireValidRates(rates) {
  */
 function logoValido(value, anterior) {
   if (typeof value !== 'string') return false;
-  if (value === anterior || !/^s*data:/i.test(value)) return true;
+  if (value === anterior || !/^\s*data:/i.test(value)) return true;
   return imagenCargada(value, { lado: LADO_LOGO, maximo: MAX_LOGO }) !== null;
 }
 

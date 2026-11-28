@@ -66,3 +66,12 @@ test('PBI-0289: un logo que no es texto se rechaza', () => {
     (error) => error.code === 'INVALID_COLLECTION' && error.details.field === 'logoUrl',
   );
 });
+
+test('PBI-0289: una Data URL con espacios o mayúsculas delante también se valida como logo cargado', () => {
+  for (const logo of [` ${SVG}`, `\t${SVG}`, ` DATA:text/html;base64,PGgxPkhvbGE8L2gxPg==`])
+    assert.throws(
+      () => requireValidConfig({ logoUrl: logo }, vigente()),
+      rechazaElLogo,
+      JSON.stringify(logo.slice(0, 20)),
+    );
+});
