@@ -13,9 +13,16 @@ import { cuentasAdmin, ingresarAlAdmin } from './apoyo/entorno';
 
 const ESTILOS = ['Principal', 'Secundario', 'Contraste', 'Con borde'];
 
+/**
+ * Abre la lista del campo y elige la opción dentro de esa lista. Espera a que la lista se cierre: si la siguiente se
+ * abriera mientras la anterior aún se anima al cerrarse, `getByRole('option')` podría tomar la opción de la lista que
+ * sale del DOM (prueba intermitente del lote 51, «element was detached from the DOM»).
+ */
 async function elegir(page: Page, zona: Locator, campo: string, opcion: string): Promise<void> {
   await zona.getByRole('combobox', { name: campo }).click();
-  await page.getByRole('option', { name: opcion, exact: true }).click();
+  const lista = page.getByRole('listbox', { name: campo });
+  await lista.getByRole('option', { name: opcion, exact: true }).click();
+  await expect(lista).toBeHidden();
 }
 
 test('PBI-0266: cada botón del banner elige su estilo entre los cuatro del tema y se conserva al guardar', async ({
@@ -57,6 +64,7 @@ test('PBI-0266: cada botón del banner elige su estilo entre los cuatro del tema
       expect(mismoColor(fondo, esperado), `la muestra de «${nombre}» (${fondo}) es ${token}`).toBe(true);
     }
     await page.keyboard.press('Escape');
+    await expect(lista).toBeHidden();
 
     await elegir(page, formulario, 'Primer botón: estilo', 'Con borde');
     await elegir(page, formulario, 'Segundo botón: estilo', 'Contraste');
