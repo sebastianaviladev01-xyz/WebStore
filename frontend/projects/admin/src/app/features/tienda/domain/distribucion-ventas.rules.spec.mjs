@@ -14,7 +14,7 @@ const fuente = (await readFile(new URL('./distribucion-ventas.rules.ts', import.
 const salida = ts.transpileModule(fuente, {
   compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
 }).outputText;
-const { distribucionPorCategoria, MAXIMO_DE_CATEGORIAS } = await import(
+const { distribucionPorCategoria, MAXIMO_DE_CATEGORIAS, SERIE_DE_TONOS, tonoDeParticipacion } = await import(
   `data:text/javascript;base64,${Buffer.from(salida).toString('base64')}`
 );
 
@@ -162,4 +162,44 @@ test('sin ventas (sin pedidos, solo cancelados o con subtotal 0) no hay distribu
     [],
   );
   assert.deepEqual(distribucionPorCategoria([pedido([linea('p-tv', 1, 0)], 0)], PRODUCTOS, CATEGORIAS), []);
+});
+
+// Lote 50 (ADR-0037, PBI-0288; decisión de Sebastián Avila del 2026-11-27, «Lotes 50 a 56»): cada barra lleva un color
+// distinto de una serie fija sacada de los colores del tema y de estado, en el mismo orden en cada carga (por la posición
+// de la fila, que ya va de mayor a menor); «Otras» sigue en gris. La cifra y el nombre siguen en texto.
+test('PBI-0288: la serie es fija, sin repetir, y alcanza para todas las categorías con nombre', () => {
+  assert.deepEqual(SERIE_DE_TONOS, ['principal', 'exito', 'acento', 'principal-fuerte', 'peligro', 'alerta']);
+  assert.equal(new Set(SERIE_DE_TONOS).size, SERIE_DE_TONOS.length);
+  assert.ok(SERIE_DE_TONOS.length >= MAXIMO_DE_CATEGORIAS, 'ninguna barra con nombre repite color');
+  assert.ok(!SERIE_DE_TONOS.includes('neutro'), 'el gris queda para «Otras»');
+});
+
+test('PBI-0288: cada fila toma el color de su posición; «Otras», el gris', () => {
+  const claves = ['cat-1', 'cat-2', 'cat-3', 'cat-4', 'cat-5', 'cat-6', 'otras'];
+  assert.deepEqual(
+    claves.map((clave, posicion) => tonoDeParticipacion(clave, posicion)),
+    [...SERIE_DE_TONOS, 'neutro'],
+  );
+  assert.equal(tonoDeParticipacion('otras', 0), 'neutro');
+  assert.equal(tonoDeParticipacion('sin-categoria', 2), 'acento', '«Sin categoría» es una categoría más');
+});
+
+test('PBI-0288: el mismo orden da los mismos colores en cada carga', () => {
+  const primera = distribucionPorCategoria(
+    [pedido([linea('p-tv', 1, 60), linea('p-home', 1, 40)], 100)],
+    PRODUCTOS,
+    CATEGORIAS,
+  );
+  const segunda = distribucionPorCategoria(
+    [pedido([linea('p-home', 1, 40), linea('p-tv', 1, 60)], 100)],
+    PRODUCTOS,
+    CATEGORIAS,
+  );
+  const tonos = (filas) =>
+    filas.map((fila, posicion) => [fila.nombre, tonoDeParticipacion(fila.clave, posicion)]);
+  assert.deepEqual(tonos(primera), [
+    ['TV y audio', 'principal'],
+    ['Electrohogar', 'exito'],
+  ]);
+  assert.deepEqual(tonos(segunda), tonos(primera));
 });

@@ -14,7 +14,11 @@ import {
 } from '../../../shared/ui/plegable.directive';
 import { SesionFacade } from '../../sesion/application/sesion.facade';
 import { TiendaFacade } from '../application/tienda.facade';
-import { distribucionPorCategoria } from '../domain/distribucion-ventas.rules';
+import {
+  distribucionPorCategoria,
+  TonoDeParticipacion,
+  tonoDeParticipacion,
+} from '../domain/distribucion-ventas.rules';
 import {
   fechaDelEncabezado,
   leerPeriodo,
@@ -446,7 +450,8 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
         <!--
           Lote 45 (PBI-0270): «Distribución» del panel del SGC. Cada categoría principal con «PARTICIPACIÓN», su nombre, su
           porcentaje y su barra, de mayor a menor; pasadas las seis primeras, «Otras». Son las ventas de «Total de ventas»
-          (sin envío ni cancelados) del periodo, así que la ve quien ve las ventas.
+          (sin envío ni cancelados) del periodo, así que la ve quien ve las ventas. Lote 50 (ADR-0037, PBI-0288): cada
+          barra con un color de la serie fija del tema y de estado, por su posición; «Otras», en gris.
         -->
         <section class="admin-card mt-5 p-6">
           <h2 class="text-lg font-semibold">
@@ -464,7 +469,7 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
               </p>
               @if (distribucion().length) {
                 <ul class="mt-4 grid gap-x-8 gap-y-5 md:grid-cols-2" aria-label="Ventas por categoría">
-                  @for (fila of distribucion(); track fila.clave) {
+                  @for (fila of distribucion(); track fila.clave; let posicion = $index) {
                     <li>
                       <p class="text-[11px] font-semibold tracking-wider text-muted uppercase">
                         Participación
@@ -476,7 +481,7 @@ const INSIGNIA_DE_EVENTO: Readonly<Record<EventoActividad['type'], string>> = {
                       <div class="mt-2 h-2 rounded-full bg-soft" aria-hidden="true">
                         <div
                           class="h-full rounded-full"
-                          [class]="fila.clave === 'otras' ? 'bg-muted' : 'bg-primary'"
+                          [class]="colorDeParticipacion[tonoDeParticipacion(fila.clave, posicion)]"
                           [style.width.%]="fila.porcentaje"
                         ></div>
                       </div>
@@ -608,6 +613,17 @@ export class ResumenPage {
     enProceso: 'bg-primary',
     otros: 'bg-danger',
   };
+  /** Lote 50 (PBI-0288): el relleno de cada tono de la serie de la distribución; 3:1 o más sobre la tarjeta con A, B y C. */
+  protected readonly colorDeParticipacion: Readonly<Record<TonoDeParticipacion, string>> = {
+    principal: 'bg-primary',
+    exito: 'bg-success',
+    acento: 'bg-accent-line',
+    'principal-fuerte': 'bg-primary-strong',
+    peligro: 'bg-danger',
+    alerta: 'bg-warning',
+    neutro: 'bg-muted',
+  };
+  protected readonly tonoDeParticipacion = tonoDeParticipacion;
   protected readonly notaStockBajo = NOTA_STOCK_BAJO;
   protected readonly ayudaVentas = AYUDA_VENTAS;
   protected readonly idDeRegion = idDeBloque;

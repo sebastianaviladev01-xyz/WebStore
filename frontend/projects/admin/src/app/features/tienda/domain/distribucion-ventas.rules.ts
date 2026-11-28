@@ -114,3 +114,29 @@ export function distribucionPorCategoria(
     porcentaje: porcentajes[indice] ?? 0,
   }));
 }
+
+/**
+ * Color de cada barra de la distribución (lote 50, ADR-0037, PBI-0288; decisión de Sebastián Avila del 2026-11-27): una
+ * serie fija sacada de los colores del tema y de estado, como «Distribución por procesos» del SGC. Cada color da 3:1 o
+ * más contra el fondo de la tarjeta con A, B y C (WCAG 1.4.11); el principal y el principal fuerte, que en C son dos
+ * grafitos, van separados. El color no es la única señal: la cifra y el nombre siguen en texto.
+ */
+export const SERIE_DE_TONOS = [
+  'principal',
+  'exito',
+  'acento',
+  'principal-fuerte',
+  'peligro',
+  'alerta',
+] as const;
+
+export type TonoDeParticipacion = (typeof SERIE_DE_TONOS)[number] | 'neutro';
+
+/**
+ * El tono de la fila en `posicion` de `distribucionPorCategoria`: el de su posición en la serie, así el mismo orden da
+ * los mismos colores en cada carga; «Otras», el gris.
+ */
+export function tonoDeParticipacion(clave: string, posicion: number): TonoDeParticipacion {
+  if (clave === OTRAS.clave) return 'neutro';
+  return SERIE_DE_TONOS[posicion % SERIE_DE_TONOS.length] ?? 'principal';
+}
