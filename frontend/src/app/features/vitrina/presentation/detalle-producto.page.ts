@@ -3,10 +3,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
   inject,
   input,
   linkedSignal,
   signal,
+  viewChild,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
@@ -17,6 +19,7 @@ import { ContenidoFacade } from '../../contenido/application/contenido.facade';
 import { lugarDeLosSugeridos } from '../../contenido/domain/sugeridos.rules';
 import { abrirAgregarAlCarrito } from './agregar-al-carrito.dialog';
 import { BotonCompararComponent } from './boton-comparar.component';
+import { abrirFotoAmpliada } from './foto-ampliada.dialog';
 import { ComparadorFacade } from '../../comparador/application/comparador.facade';
 
 /** Lado mayor de la miniatura de los listados (lote 24, ADR-0026): 480 px. */
@@ -67,32 +70,50 @@ export function cargadorDeLaFicha({ src, width, loaderParams }: ImageLoaderConfi
                   {{ item.badge }}
                 </span>
               }
-              @if (selectedImage() === 0) {
-                <!--
-                  La imagen principal conserva la optimización de LCP. 800 × 600: la proporción 4:3 de las fotos de
-                  producto. Lote 25 (NG02960): la miniatura de 480 px o la foto de la ficha, según el ancho que se pinta
-                  (cargadorDeLaFicha); desde lg, la columna de la foto mide unos 640 px.
-                -->
-                <img
-                  [ngSrc]="item.imageUrl"
-                  [loaderParams]="{ miniatura: item.thumbnailUrl }"
-                  ngSrcset="480w, 1600w"
-                  sizes="(min-width: 1024px) 640px, 100vw"
-                  [alt]="item.name"
-                  width="800"
-                  height="600"
-                  priority
-                  class="h-auto max-h-[500px] w-full object-contain"
-                />
-              } @else {
-                <img
-                  [src]="images()[selectedImage()]"
-                  [alt]="item.name + ', foto ' + (selectedImage() + 1) + ' de ' + images().length"
-                  width="800"
-                  height="600"
-                  class="is-photo h-auto max-h-[500px] w-full object-contain"
-                />
-              }
+              <!--
+                Lote 52 (ADR-0037, PBI-0282): la foto es un botón que abre la vista ampliada, con el cursor de ampliar,
+                una lupa en la esquina y un nombre accesible que lo dice. Al cerrarla, el foco vuelve aquí.
+              -->
+              <button
+                #botonAmpliar
+                type="button"
+                class="ws-pdp-zoom"
+                [attr.aria-label]="etiquetaAmpliar()"
+                (click)="ampliarFoto()"
+              >
+                @if (selectedImage() === 0) {
+                  <!--
+                    La imagen principal conserva la optimización de LCP. 800 × 600: la proporción 4:3 de las fotos de
+                    producto. Lote 25 (NG02960): la miniatura de 480 px o la foto de la ficha, según el ancho que se pinta
+                    (cargadorDeLaFicha); desde lg, la columna de la foto mide unos 640 px.
+                  -->
+                  <img
+                    [ngSrc]="item.imageUrl"
+                    [loaderParams]="{ miniatura: item.thumbnailUrl }"
+                    ngSrcset="480w, 1600w"
+                    sizes="(min-width: 1024px) 640px, 100vw"
+                    [alt]="item.name"
+                    width="800"
+                    height="600"
+                    priority
+                    class="h-auto max-h-[500px] w-full object-contain"
+                  />
+                } @else {
+                  <img
+                    [src]="images()[selectedImage()]"
+                    [alt]="item.name + ', foto ' + (selectedImage() + 1) + ' de ' + images().length"
+                    width="800"
+                    height="600"
+                    class="is-photo h-auto max-h-[500px] w-full object-contain"
+                  />
+                }
+                <span class="ws-pdp-zoom-hint" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <circle cx="10.5" cy="10.5" r="6.5" />
+                    <path d="m15.5 15.5 5 5M10.5 7.5v6M7.5 10.5h6" />
+                  </svg>
+                </span>
+              </button>
             </div>
             @if (images().length > 1) {
               <div class="ws-pdp-thumbs" role="group" aria-label="Fotos del producto">
@@ -255,6 +276,31 @@ export class DetalleProductoPage {
   });
   /** Se reinicia a la imagen principal al cambiar de producto. */
   protected readonly selectedImage = linkedSignal({ source: this.slug, computation: () => 0 });
+  private readonly botonAmpliar = viewChild<ElementRef<HTMLButtonElement>>('botonAmpliar');
+  /** El nombre accesible de la foto: dice que se amplía, cuál es y de qué producto (PBI-0282). */
+  protected readonly etiquetaAmpliar = computed(() => {
+    const nombre = this.product()?.name ?? '';
+    const total = this.images().length;
+    return total > 1
+      ? `Ampliar foto ${this.selectedImage() + 1} de ${total}: ${nombre}`
+      : `Ampliar foto: ${nombre}`;
+  });
+
+  /**
+   * Abre la vista ampliada en la foto que se ve, con las fotos grandes de la galería (la principal a su tamaño de ficha,
+   * no la miniatura de 480 px). Al cerrarla, la ficha queda en la última foto vista y el foco vuelve a la foto (PBI-0282).
+   */
+  protected ampliarFoto(): void {
+    const product = this.product();
+    if (!product) return;
+    const ref = abrirFotoAmpliada(this.dialog, {
+      nombre: product.name,
+      fotos: this.images(),
+      inicial: this.selectedImage(),
+    });
+    ref.beforeClosed().subscribe(() => this.selectedImage.set(ref.componentInstance.fotoActual()));
+    ref.afterClosed().subscribe(() => this.botonAmpliar()?.nativeElement.focus());
+  }
 
   protected decreaseQuantity(): void {
     this.quantity.update((value) => Math.max(1, value - 1));
