@@ -63,6 +63,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-23 por el lote 19 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md); PBI-0001; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md)), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-comparador.spec.ts`.
 
+### Escenario 08 – Ordenar el catálogo
+
+- **Dado** que el comprador está en el catálogo, con o sin filtros
+- **Cuando** elige en «Ordenar por» «Relevancia» (el orden de siempre, por defecto), «Precio: menor a mayor», «Precio: mayor a menor», «Nombre: A–Z» o «Nombre: Z–A»
+- **Entonces** ve los mismos productos en ese orden; la dirección guarda `orden` (sin él, o con un valor desconocido, es «Relevancia») junto a los filtros, que se conservan al cambiar el orden, y «Limpiar filtros» quita los filtros y deja el orden. El nombre se ordena en español sin distinguir mayúsculas ni tildes y, a igual precio o nombre, manda el orden de «Relevancia». A 375 px, «Ordenar por» ocupa su propia fila debajo de «Filtros».
+
+> Añadido el 2026-11-27 por el lote 52 ([ADR-0037](../../../../adrs/0037-cerrar-por-lotes-los-pendientes-que-no-dependen-de-terceros.md); PBI-0278; decisión de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Lotes 50 a 56»), sin especificación propia: lo prueba `frontend/tests/e2e/storefront-orden-y-foto-ampliada.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - El comparador se construyó en el lote 19 (escenario 07, PBI-0001). Su lista no se guarda en el navegador: vive en memoria y en la dirección.

@@ -29,9 +29,9 @@ Formato del código: `npm run format` aplica Prettier y `npm run format:check` l
 - Productos destacados que elige el backoffice: todos los que tienen stock, en un carrusel si son más de cuatro; sin ninguno, la sección no sale.
 - Avisos para los clientes en la parte superior, con enlace opcional, que rotan si hay varios. Cada uno puede llevar un «Desde» y un «Hasta»: solo se ven los vigentes.
 - Categorías jerárquicas por nombre, sin dependencia de iconografía.
-- Catálogo con filtros acordados: nombre, categoría (con su imagen, si la tiene) y un rango de precio con mínimo y máximo.
+- Catálogo con filtros acordados: nombre, categoría (con su imagen, si la tiene) y un rango de precio con mínimo y máximo. Se ordena por relevancia (por defecto), precio o nombre, en los dos sentidos; el orden va en la dirección y se combina con los filtros.
 - Comparador de hasta 4 productos (`/comparar`), con la lista en la URL.
-- PDP con precio, descripción, características y stock. Las fotos llegan por dirección del BFF (`/bff/images/...`), no dentro del JSON, y en el celular se carga la miniatura.
+- PDP con precio, descripción, características y stock. La foto se amplía en una vista con la galería (botones y flechas del teclado), que en el celular ocupa la pantalla. Las fotos llegan por dirección del BFF (`/bff/images/...`), no dentro del JSON, y en el celular se carga la miniatura.
 - Compra bloqueada cuando no hay stock.
 - Confirmación al añadir: seguir comprando o ver el carrito, con productos sugeridos en un diálogo o, si la tienda lo elige, en un panel lateral.
 - Carrito: agregar, cambiar cantidad, eliminar, valor de venta, IGV y subtotal.
