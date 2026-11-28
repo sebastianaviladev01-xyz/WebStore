@@ -842,6 +842,26 @@
   display: none;
 }
 
+/* Lote 52 (ADR-0037, PBI-0278): el conteo a la izquierda y «Ordenar por» a la derecha. En el celular el conteo
+   está en la barra de «Filtros» y el orden ocupa su propia fila (ver la consulta de 900 px). */
+.ws-catalog-results-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+}
+
+.ws-catalog-results-bar p {
+  margin: 0;
+}
+
+/* Con dos clases: `.mat-mdc-form-field` de styles.css, que va después, lo pone al 100 %. */
+.ws-catalog-results-bar .ws-catalog-sort {
+  width: 240px;
+  max-width: 100%;
+}
+
 .ws-catalog-products {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1146,6 +1166,10 @@
     border-block: 1px solid var(--ws-border);
   }
   .ws-catalog-results-bar {
+    justify-content: flex-end;
+  }
+  /* El conteo ya está en la barra de «Filtros»; el orden sigue a la vista (PBI-0278). */
+  .ws-catalog-results-bar p {
     display: none;
   }
   .ws-catalog-mobile-toolbar p {
@@ -1211,6 +1235,9 @@
   }
   .ws-catalog-filters > div {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .ws-catalog-results-bar .ws-catalog-sort {
+    width: 100%;
   }
   .ws-catalog-products {
     grid-template-columns: minmax(0, 1fr);

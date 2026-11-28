@@ -27,6 +27,13 @@ import {
   parametrosDeFiltrosCatalogo,
   validarRangoDePrecio,
 } from '../../catalogo/domain/filtro-catalogo.rules';
+import {
+  leerOrdenCatalogo,
+  OPCIONES_DE_ORDEN,
+  OrdenCatalogo,
+  ordenarProductos,
+  parametrosDeOrdenCatalogo,
+} from '../../catalogo/domain/orden-catalogo.rules';
 import { TarjetaProductoComponent } from './tarjeta-producto.component';
 
 /**
@@ -206,6 +213,18 @@ const FOTOS_PRIORITARIAS = 6;
             <p class="text-sm font-semibold text-muted">
               {{ filteredProducts().length }} {{ filteredProducts().length === 1 ? 'producto' : 'productos' }}
             </p>
+            <!--
+              Lote 52 (ADR-0037, PBI-0278): el orden del catálogo, con su etiqueta a la vista. Va en la URL (orden) y se
+              aplica sobre lo filtrado; en el celular ocupa su propia fila, debajo de «Filtros».
+            -->
+            <mat-form-field class="ws-catalog-sort" subscriptSizing="dynamic">
+              <mat-label>Ordenar por</mat-label>
+              <mat-select [value]="ordenElegido()" (selectionChange)="ordenar($event.value)">
+                @for (opcion of opcionesDeOrden; track opcion.valor) {
+                  <mat-option [value]="opcion.valor">{{ opcion.etiqueta }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
           </div>
 
           @if (catalog.loading()) {
@@ -238,7 +257,7 @@ const FOTOS_PRIORITARIAS = 6;
             </div>
           } @else {
             <div class="ws-catalog-products">
-              @for (product of filteredProducts(); track product.id; let index = $index) {
+              @for (product of productosOrdenados(); track product.id; let index = $index) {
                 <ws-product-card [product]="product" [priority]="index < fotosPrioritarias" />
               }
             </div>
@@ -257,6 +276,8 @@ export class CatalogoPage {
   readonly precioMax = input<string | undefined>();
   /** El tope del filtro anterior (lote 05): un enlace guardado con `precio` se lee como el máximo (PBI-0181). */
   readonly precio = input<string | undefined>();
+  /** El orden del catálogo (lote 52, PBI-0278); un valor desconocido se lee como «Relevancia». */
+  readonly orden = input<string | undefined>();
 
   protected readonly catalog = inject(CatalogoFacade);
   private readonly router = inject(Router);
@@ -303,6 +324,12 @@ export class CatalogoPage {
     filtrarProductos(this.catalog.products(), this.catalog.categories(), this.filtros()),
   );
   protected readonly hasFilters = computed(() => hayFiltrosCatalogo(this.filtros()));
+  protected readonly opcionesDeOrden = OPCIONES_DE_ORDEN;
+  protected readonly ordenElegido = computed(() => leerOrdenCatalogo(this.orden()));
+  /** Lo filtrado, en el orden elegido: el conteo no cambia con el orden (PBI-0278). */
+  protected readonly productosOrdenados = computed(() =>
+    ordenarProductos(this.filteredProducts(), this.ordenElegido()),
+  );
 
   protected onSearch(event: Event): void {
     // Cada letra reemplaza la entrada del historial, para que «Atrás» no las recorra una por una.
@@ -330,14 +357,32 @@ export class CatalogoPage {
     this.aplicar({ precioMinimo: rango.precioMinimo, precioMaximo: rango.precioMaximo });
   }
 
+  /** Quita los filtros y conserva el orden: ordenar no es filtrar (PBI-0278). */
   protected clearFilters(): void {
-    void this.router.navigate(['/catalogo']);
+    void this.router.navigate(['/catalogo'], {
+      queryParams: parametrosDeOrdenCatalogo(this.ordenElegido()),
+    });
   }
 
+  /** Cambia un filtro y conserva el orden elegido (PBI-0278). */
   protected aplicar(cambio: Partial<FiltrosCatalogo>, reemplazar = false): void {
     void this.router.navigate(['/catalogo'], {
-      queryParams: parametrosDeFiltrosCatalogo({ ...this.filtros(), ...cambio }),
+      queryParams: {
+        ...parametrosDeFiltrosCatalogo({ ...this.filtros(), ...cambio }),
+        ...parametrosDeOrdenCatalogo(this.ordenElegido()),
+      },
       replaceUrl: reemplazar,
+    });
+  }
+
+  /** Cambia el orden y conserva los filtros (PBI-0278). El catálogo de la tienda no se pagina: se ve todo lo filtrado. */
+  protected ordenar(orden: OrdenCatalogo): void {
+    if (orden === this.ordenElegido()) return;
+    void this.router.navigate(['/catalogo'], {
+      queryParams: {
+        ...parametrosDeFiltrosCatalogo(this.filtros()),
+        ...parametrosDeOrdenCatalogo(orden),
+      },
     });
   }
 
