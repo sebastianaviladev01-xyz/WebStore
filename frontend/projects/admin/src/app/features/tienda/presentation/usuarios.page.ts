@@ -28,20 +28,17 @@ import { ListadoComponent } from './listado.component';
 import { PanelFiltrosComponent } from './panel-filtros.component';
 import { IconoDirective } from '../../../shared/ui/icono.directive';
 
-/** Plural del nombre de un rol para las fichas del pie: «Vendedor» → «vendedores». */
-function pluralDelRol(nombre: string): string {
-  const minusculas = nombre.toLocaleLowerCase('es-PE');
-  return /[aeiou]$/.test(minusculas) ? `${minusculas}s` : `${minusculas}es`;
-}
-
 /**
  * Usuarios y roles. Lote 21 (ADR-0025): el usuario se crea y se edita en su propia interfaz, `/usuarios/nuevo` y
  * `/usuarios/:id` (`RegistroUsuarioPage`), porque tiene más de tres campos (PBI-0211); las tarjetas de los roles dicen
  * su nombre y su descripción, sin el conteo de usuarios (PBI-0213).
  *
  * Lote 43 (ADR-0033, PBI-0265): la lista en un solo panel, como la lista de proveedores del SGC, con «N°», el rol, el
- * estado como insignia, las acciones de solo ícono, «Exportar» y el pie con el total, cada estado y cada rol. Las
- * tarjetas de los roles van debajo del panel.
+ * estado como insignia, las acciones de solo ícono, «Exportar» y el pie con el total y cada estado. Las tarjetas de los
+ * roles van debajo del panel.
+ *
+ * Lote 50 (ADR-0037, PBI-0276): el pie ya no cuenta cada rol, como el SGC, que cuenta el total y cada estado (Daniel,
+ * 2026-11-17: «no nos suma […] cuántos usuarios tenemos de cada rol»).
  */
 @Component({
   selector: 'ws-users-page',
@@ -223,19 +220,13 @@ export class UsuariosPage {
     todos: () => filtrarUsuarios(this.admin.users(), FILTROS_USUARIOS_VACIOS),
     es: (usuario, id) => usuario.id === id,
   });
-  /** El total, cuántos activos e inactivos y cuántos de cada rol que la sesión ve (lote 43, PBI-0265). */
+  /** El total y cuántos activos e inactivos (lote 43, PBI-0265; sin las fichas por rol desde el lote 50, PBI-0276). */
   protected readonly fichas = computed((): FichaDeResumen[] => {
     const resultados = this.resultados();
     const [activos, inactivos] = contarPorClave(resultados, (u) => (u.active ? 'activos' : 'inactivos'), [
       'activos',
       'inactivos',
     ]);
-    const roles = this.rolesVisibles();
-    const porRol = contarPorClave(
-      resultados,
-      (u) => u.role,
-      roles.map((role) => role.id),
-    );
     return [
       { texto: textoDelTotal(resultados.length), tono: 'principal', icono: 'lista' },
       {
@@ -248,14 +239,6 @@ export class UsuariosPage {
         tono: 'alerta',
         icono: 'inactivo',
       },
-      ...porRol.map(({ clave, cantidad }): FichaDeResumen => {
-        const nombre = this.roleLabel(clave);
-        return {
-          texto: textoDeCantidad(cantidad, nombre.toLocaleLowerCase('es-PE'), pluralDelRol(nombre)),
-          tono: 'neutro',
-          icono: 'perfil',
-        };
-      }),
     ];
   });
   protected readonly exportacion = (): TablaExportable => ({

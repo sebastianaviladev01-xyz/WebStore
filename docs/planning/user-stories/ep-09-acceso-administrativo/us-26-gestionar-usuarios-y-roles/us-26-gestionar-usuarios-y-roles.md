@@ -63,6 +63,14 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 
 > Añadido el 2026-11-24 por el lote 21 ([ADR-0025](../../../../adrs/0025-cerrar-por-lotes-lo-que-salio-de-la-revision-de-la-demo.md); PBI-0211 y PBI-0213; decisiones de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Revisión de la demo: mantenimientos»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-mantenimientos.spec.ts`.
 
+### Escenario 08 – El pie cuenta el total y cada estado
+
+- **Dado** que el superadministrador o el administrador está en Usuarios y roles
+- **Cuando** mira el pie del listado
+- **Entonces** ve el total, los activos y los inactivos, como el SGC; no ve cuántos usuarios hay de cada rol (Daniel, 2026-11-17: «no nos suma […] cuántos usuarios tenemos de cada rol»).
+
+> Añadido el 2026-11-27 por el lote 50 ([ADR-0037](../../../../adrs/0037-cerrar-por-lotes-los-pendientes-que-no-dependen-de-terceros.md); PBI-0276; decisión de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Lotes 50 a 56»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-listados-panel.spec.ts`.
+
 ## Fuera de alcance y pendientes
 
 - Daniel confirmó el 2026-11-18 los permisos de los roles con un cambio en el vendedor, que también gestiona Inventario y ve Pedidos (PBI-0170 del [backlog](../../../backlog.md)), construido en el lote 11 ([ADR-0021](../../../../adrs/0021-aplicar-por-lotes-los-cambios-que-pidio-daniel.md)).

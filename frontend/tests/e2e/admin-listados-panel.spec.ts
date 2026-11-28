@@ -306,17 +306,19 @@ test.describe('PBI-0265: listados en un solo panel', () => {
     await expect(filas(page)).toHaveCount(10);
   });
 
-  test('Usuarios cuenta cada estado y cada rol; Pedidos y Tarifas toman la misma paginación', async ({
+  test('Usuarios cuenta el total y cada estado, sin cada rol; Pedidos y Tarifas toman la misma paginación', async ({
     page,
   }) => {
     await ingresarAlAdmin(page, cuentasAdmin.superadmin);
     await page.goto('/usuarios');
     const resumen = page.getByRole('list', { name: 'Resumen de usuarios' });
-    await expect(resumen.getByRole('listitem').first()).toHaveText(/^\d+ en total$/);
-    await expect(resumen).toContainText(/\d+ activos?/);
-    await expect(resumen).toContainText(/\d+ inactivos?/);
-    for (const rol of [/superadministrador/, /administrador/, /vendedor/])
-      await expect(resumen).toContainText(rol);
+    // Lote 50 (ADR-0037, PBI-0276): solo el total, los activos y los inactivos, como el SGC; sin las fichas por rol.
+    await expect(resumen.getByRole('listitem')).toHaveText([
+      /^\d+ en total$/,
+      /^\d+ activos?$/,
+      /^\d+ inactivos?$/,
+    ]);
+    await expect(resumen).not.toContainText(/administrador|vendedor/i);
 
     for (const [ruta, que] of [
       ['/pedidos', 'pedidos'],
