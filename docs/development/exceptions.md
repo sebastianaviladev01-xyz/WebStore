@@ -14,7 +14,9 @@ Una excepción no sirve para publicar secretos, versionar `backend/data.json`, s
 
 ## Excepciones vigentes
 
-Ninguna.
+| Excepción | Ámbito | Cierre |
+|---|---|---|
+| [ADR-0037](../adrs/0037-cerrar-por-lotes-los-pendientes-que-no-dependen-de-terceros.md): cerrar por lotes los pendientes que no dependen de terceros, sin las etapas SDD por elemento | PBI-0197, PBI-0198, PBI-0276 a PBI-0283, PBI-0288 y PBI-0289, en el BFF, el backoffice y el storefront | Al fusionar el PR del lote 56. Responsable: Sebastián Avila |
 
 ## Excepciones cerradas
 
