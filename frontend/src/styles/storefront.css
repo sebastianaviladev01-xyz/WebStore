@@ -972,6 +972,169 @@
   border-radius: 10px;
 }
 
+/*
+ * Foto ampliada (lote 52, ADR-0037, PBI-0282). La foto de la ficha es un botón: sin fondo ni borde propios, para que la
+ * foto siga fundida con la galería; con el cursor de ampliar y una lupa en la esquina (tinta sobre superficie, el mismo
+ * par que el texto). El foco se dibuja por dentro: la galería recorta lo que sale de ella.
+ */
+.ws-pdp-zoom {
+  position: relative;
+  display: grid;
+  width: 100%;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  padding: 0;
+}
+
+/* Gana a `button:not(:disabled)` de styles.css, que va después y pone la mano. */
+.ws-pdp-zoom:not(:disabled) {
+  cursor: zoom-in;
+}
+
+.ws-pdp-zoom:focus-visible {
+  outline-offset: -2px;
+}
+
+.ws-pdp-zoom-hint {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--ws-border);
+  border-radius: 50%;
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ws-ink) 12%, transparent);
+}
+
+.ws-pdp-zoom-hint svg,
+.ws-zoom-close svg,
+.ws-zoom-nav svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* La vista ampliada: el encabezado con el nombre, el conteo y «Cerrar», y la foto con «anterior» y «siguiente». */
+.ws-zoom {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+}
+
+.ws-zoom-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px 12px 24px;
+  border-bottom: 1px solid var(--ws-border);
+}
+
+.ws-zoom .ws-zoom-title {
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-zoom .ws-zoom-title::before {
+  display: none;
+}
+
+.ws-zoom-counter {
+  margin: 2px 0 0;
+  color: var(--ws-muted);
+  font-size: 13px;
+}
+
+.ws-zoom-close,
+.ws-zoom-nav {
+  display: grid;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border: 1px solid var(--ws-border-strong);
+  border-radius: 50%;
+  background: var(--ws-surface);
+  color: var(--ws-ink);
+  cursor: pointer;
+}
+
+.ws-zoom-close:hover,
+.ws-zoom-nav:hover {
+  background: var(--ws-surface-subtle);
+}
+
+.ws-zoom-stage {
+  position: relative;
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  place-items: center;
+  padding: 16px 72px;
+  background: var(--ws-surface-soft);
+}
+
+.ws-zoom-stage img {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+}
+
+.ws-zoom-stage img.is-photo {
+  mix-blend-mode: normal;
+}
+
+.ws-zoom-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ws-ink) 12%, transparent);
+}
+
+.ws-zoom-nav.is-previous {
+  left: 16px;
+}
+
+.ws-zoom-nav.is-next {
+  right: 16px;
+}
+
+/* Más chico que el diálogo (1200 px de ancho): ocupa toda la ventana, sin esquinas redondeadas. */
+@media (max-width: 1200px) {
+  .ws-zoom-panel {
+    --mat-dialog-container-shape: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .ws-zoom-stage {
+    padding: 12px 12px 76px;
+  }
+  .ws-zoom-nav {
+    top: auto;
+    bottom: 16px;
+    transform: none;
+  }
+}
+
 .ws-pdp-thumbs {
   display: flex;
   flex-wrap: wrap;
