@@ -48,3 +48,11 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 - **Entonces** el BFF lo guarda si el correo no es de otro usuario y la contraseña nueva es segura, y al cambiar la contraseña cierra sus demás sesiones.
 
 > Añadido el 2026-11-15 por el lote 07b ([ADR-0017](../../../../adrs/0017-cerrar-el-backlog-por-lotes-como-excepcion-al-flujo.md); PBI-0034; decisión provisional en [decisiones pendientes](../../../PENDING-DECISIONS.md); el 2026-11-18 Daniel pidió que el correo nuevo se verifique, PBI-0161), sin especificación propia: lo prueba `frontend/tests/e2e/admin-funciones-nuevas.spec.ts`.
+
+### Escenario 06 – El backoffice no se indexa
+
+- **Dado** que un buscador visita el backoffice
+- **Cuando** lee su página
+- **Entonces** encuentra la etiqueta `robots` con `noindex, nofollow` y, en la demo publicada, la cabecera `X-Robots-Tag: noindex, nofollow` en cada respuesta bajo `/admin/`, así que no lo indexa; la tienda sigue indexable.
+
+> Añadido el 2026-11-27 por el lote 50 ([ADR-0037](../../../../adrs/0037-cerrar-por-lotes-los-pendientes-que-no-dependen-de-terceros.md); PBI-0277; decisión de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Lotes 50 a 56»), sin especificación propia: lo prueba `frontend/tests/e2e/admin-ajustes-del-backoffice.spec.ts` y, la cabecera de la demo, `tools/demo/cabeceras-demo.test.mjs`.

@@ -3,14 +3,18 @@
  * - arranca el BFF de prueba como proceso hijo en un puerto interno y le pasa las peticiones a `/bff/` y `/health`;
  * - sirve el build de la tienda en `/` y el del Admin en `/admin/` (compilado con `--base-href /admin/`),
  *   con la vuelta a `index.html` que necesitan las rutas de Angular.
+ * - el Admin no se indexa: sus respuestas llevan `X-Robots-Tag: noindex, nofollow` (lote 50, PBI-0277,
+ *   `cabeceras-demo.mjs`); la tienda sigue indexable.
  * No es el servidor de un cliente: solo publica la demo del equipo. Sin dependencias: solo módulos de Node.
  */
 import { spawn } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
 import { createServer, request } from 'node:http';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { cabecerasDeLaRedireccion, cabecerasDelEstatico } from './cabeceras-demo.mjs';
 
 const raiz = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const puertoPublico = Number(process.env.PORT ?? 8080);
@@ -20,26 +24,6 @@ const APLICACIONES = [
   { prefijo: '/admin/', carpeta: join(raiz, 'frontend', 'dist', 'admin', 'browser') },
   { prefijo: '/', carpeta: join(raiz, 'frontend', 'dist', 'storefront', 'browser') },
 ];
-
-const TIPOS = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-  '.mjs': 'text/javascript; charset=utf-8',
-  '.css': 'text/css; charset=utf-8',
-  '.json': 'application/json; charset=utf-8',
-  '.svg': 'image/svg+xml',
-  '.png': 'image/png',
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.webp': 'image/webp',
-  '.avif': 'image/avif',
-  '.gif': 'image/gif',
-  '.ico': 'image/x-icon',
-  '.woff': 'font/woff',
-  '.woff2': 'font/woff2',
-  '.txt': 'text/plain; charset=utf-8',
-  '.webmanifest': 'application/manifest+json',
-};
 
 /** El BFF como proceso hijo, con el entorno de la demo. Si termina, termina también el servidor. */
 const bff = spawn(process.execPath, [join(raiz, 'backend', 'src', 'main.mjs')], {
@@ -90,10 +74,7 @@ async function estatico(req, res, ruta) {
     return;
   }
   const archivo = relativa && (await esArchivo(destino)) ? destino : join(app.carpeta, 'index.html');
-  const tipo = TIPOS[extname(archivo).toLowerCase()] ?? 'application/octet-stream';
-  // Los archivos con hash del build no cambian; index.html se revalida para tomar cada versión nueva.
-  const cache = archivo.endsWith('index.html') ? 'no-cache' : 'public, max-age=31536000, immutable';
-  res.writeHead(200, { 'content-type': tipo, 'cache-control': cache, 'x-content-type-options': 'nosniff' });
+  res.writeHead(200, cabecerasDelEstatico(app.prefijo, archivo));
   if (req.method === 'HEAD') {
     res.end();
     return;
@@ -112,7 +93,7 @@ createServer(async (req, res) => {
   }
   if (ruta === '/health' || ruta === '/bff' || ruta.startsWith('/bff/')) return alBff(req, res);
   if (ruta === '/admin') {
-    res.writeHead(301, { location: '/admin/' }).end();
+    res.writeHead(301, cabecerasDeLaRedireccion('/admin/')).end();
     return;
   }
   if (req.method !== 'GET' && req.method !== 'HEAD') {
