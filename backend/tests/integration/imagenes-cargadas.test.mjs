@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
 import { bearer, conBff, ingresarAlAdmin, pedir } from './apoyo/servidor.mjs';
-import { dataUrl, imagenesDeProducto } from '../apoyo/imagenes.mjs';
+import { dataUrl, imagenesDeProducto, png } from '../apoyo/imagenes.mjs';
 
 test('PBI-0214: la imagen cargada de un producto se sirve por su dirección, con su tipo y su caché', async () => {
   await conBff({ port: 3176 }, async (base) => {
@@ -52,5 +52,63 @@ test('PBI-0214: la imagen cargada de un producto se sirve por su dirección, con
     });
     assert.equal(conUrl.status, 400);
     assert.equal(conUrl.body.error.details.field, 'imageUrl');
+  });
+});
+
+/*
+ * Lote 50 (ADR-0037, PBI-0289; decisión de Sebastián Avila del 2026-11-27): el logo cargado se guarda como las demás
+ * imágenes y la tienda lo pide por `GET /bff/images/logo`. El campo de la URL se queda: una dirección escrita se acepta y
+ * llega tal cual; un logo nuevo en Data URL que no es PNG, JPG ni WebP se rechaza.
+ */
+test('PBI-0289: el logo cargado se sirve por su dirección; una dirección escrita llega tal cual', async () => {
+  await conBff({ port: 3178 }, async (base) => {
+    const { token } = await ingresarAlAdmin(base);
+    const { revision, config } = (await pedir(base, '/bff/admin/snapshot', { headers: bearer(token) })).body;
+    const logo = dataUrl('png', png(64, 64));
+    const guardado = await pedir(base, '/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: bearer(token),
+      body: { revision, config: { ...config, logoUrl: logo } },
+    });
+    assert.equal(guardado.status, 200, JSON.stringify(guardado.body).slice(0, 300));
+    assert.equal(guardado.body.config.logoUrl, logo, 'el backoffice sigue recibiendo lo guardado');
+
+    const { logoUrl } = (await pedir(base, '/bff/content/settings')).body;
+    assert.match(logoUrl, /^\/bff\/images\/logo\?v=[A-Za-z0-9_-]{12}$/);
+    const respuesta = await fetch(base + logoUrl);
+    assert.equal(respuesta.status, 200);
+    assert.equal(respuesta.headers.get('content-type'), 'image/png');
+    assert.match(respuesta.headers.get('cache-control'), /max-age=31536000/);
+    assert.equal(dataUrl('png', Buffer.from(await respuesta.arrayBuffer())), logo);
+    const sinVersion = await fetch(`${base}/bff/images/logo`);
+    assert.equal(sinVersion.headers.get('cache-control'), 'no-cache');
+
+    const svg = await pedir(base, '/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: bearer(token),
+      body: {
+        revision: guardado.body.revision,
+        config: { ...config, logoUrl: 'data:image/svg+xml;base64,PHN2Zy8+' },
+      },
+    });
+    assert.equal(svg.status, 400);
+    assert.equal(svg.body.error.details.field, 'logoUrl');
+
+    const escrita = await pedir(base, '/bff/admin/snapshot', {
+      method: 'PUT',
+      headers: bearer(token),
+      body: {
+        revision: guardado.body.revision,
+        config: { ...config, logoUrl: 'https://cdn.example.com/logo.png' },
+      },
+    });
+    assert.equal(escrita.status, 200);
+    assert.equal(
+      (await pedir(base, '/bff/content/settings')).body.logoUrl,
+      'https://cdn.example.com/logo.png',
+    );
+    const sinLogo = await pedir(base, '/bff/images/logo');
+    assert.equal(sinLogo.status, 404);
+    assert.equal(sinLogo.body.error.code, 'IMAGE_NOT_FOUND');
   });
 });

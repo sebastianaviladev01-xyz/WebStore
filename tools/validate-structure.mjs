@@ -134,7 +134,8 @@ for (const [label, ok] of [
   ],
   [
     'Admin permite cargar logo gráfico',
-    contentPage.includes('type="file"') && contentPage.includes('readAsDataURL'),
+    // Lote 50 (PBI-0289): el logo se carga como las demás imágenes, reducido en el navegador (`reducirFoto`).
+    contentPage.includes('type="file"') && contentPage.includes('reducirFoto('),
   ],
   [
     'Storefront renderiza logo gráfico',

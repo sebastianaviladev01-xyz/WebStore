@@ -51,6 +51,21 @@ export function direccionDeImagen(coleccion, id, campo, valor) {
   return `/bff/images/${coleccion}/${encodeURIComponent(id)}/${campo}?v=${versionDeImagen(valor)}`;
 }
 
+/**
+ * Dirección pública del logo de la tienda (lote 50, ADR-0037, PBI-0289): el cargado, `/bff/images/logo?v={versión}`;
+ * una dirección escrita en el campo, un logo SVG guardado antes o ninguno, tal cual.
+ */
+export function direccionDelLogo(valor) {
+  return esServible(valor) ? `/bff/images/logo?v=${versionDeImagen(valor)}` : valor;
+}
+
+/** Tipo, bytes y versión de una imagen guardada servible; si no lo es, `404 IMAGE_NOT_FOUND`. */
+function servir(valor) {
+  const imagen = esServible(valor) ? bytesDeImagen(valor) : null;
+  if (!imagen) throw new DomainError('not-found', 'IMAGE_NOT_FOUND', 'Imagen no encontrada.');
+  return { ...imagen, version: versionDeImagen(valor) };
+}
+
 /** Lo guardado en `campo` de un registro: una propiedad de `CAMPOS` o, en un producto, una foto de su galería. */
 function valorGuardado(coleccion, registro, campo) {
   const foto = coleccion === 'products' ? FOTO_DE_GALERIA.exec(campo) : null;
@@ -59,16 +74,17 @@ function valorGuardado(coleccion, registro, campo) {
   return Object.hasOwn(campos, campo) ? registro[campos[campo]] : undefined;
 }
 
-/** `GET /bff/images/{collection}/{id}/{field}`: el tipo, los bytes y la versión de una imagen cargada. */
+/**
+ * `GET /bff/images/{collection}/{id}/{field}` y, desde el lote 50 (PBI-0289), `GET /bff/images/logo`: el tipo, los
+ * bytes y la versión de una imagen cargada.
+ */
 export function createImagenesQueries({ store }) {
   return {
     obtener(coleccion, id, campo) {
       const registros = Object.hasOwn(CAMPOS, coleccion) ? store.state[coleccion] : undefined;
       const registro = registros?.find((item) => item.id === id);
-      const valor = registro ? valorGuardado(coleccion, registro, campo) : undefined;
-      const imagen = esServible(valor) ? bytesDeImagen(valor) : null;
-      if (!imagen) throw new DomainError('not-found', 'IMAGE_NOT_FOUND', 'Imagen no encontrada.');
-      return { ...imagen, version: versionDeImagen(valor) };
+      return servir(registro ? valorGuardado(coleccion, registro, campo) : undefined);
     },
+    obtenerLogo: () => servir(store.state.config?.logoUrl),
   };
 }

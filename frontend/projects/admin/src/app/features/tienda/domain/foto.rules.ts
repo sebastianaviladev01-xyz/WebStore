@@ -99,3 +99,19 @@ export function motivoParaNoUsarFoto(archivo: {
   if (archivo.size > LIMITE_ARCHIVO_FOTO) return 'La foto pesa más de 15 MB. Usa una más liviana.';
   return null;
 }
+
+/**
+ * Por qué no se puede usar el archivo elegido como logo de la tienda, o `null` si se puede (lote 50, ADR-0037, PBI-0289;
+ * decisión de Sebastián Avila del 2026-11-27): se carga como las demás imágenes (ADR-0026), así que es un PNG, un JPG o
+ * un WebP; un SVG no, porque la tienda lo recibe por dirección. El campo «URL/Data URL del logo» se queda para escribir
+ * la dirección de otro.
+ */
+export function motivoParaNoUsarLogo(archivo: {
+  readonly type: string;
+  readonly size: number;
+}): string | null {
+  if (!TIPOS_FOTO_CATEGORIA.includes(archivo.type))
+    return 'Usa un logo PNG, JPG o WebP, o escribe su dirección en «URL/Data URL del logo».';
+  if (archivo.size > LIMITE_ARCHIVO_FOTO) return 'El logo pesa más de 15 MB. Usa uno más liviano.';
+  return null;
+}

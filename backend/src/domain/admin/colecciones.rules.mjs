@@ -9,11 +9,13 @@ import {
   LADO_IMAGEN_DE_CATEGORIA,
   LADO_IMAGEN_DE_PRODUCTO,
   LADO_IMAGEN_MOVIL_DE_BANNER,
+  LADO_LOGO,
   LADO_MINIATURA_DE_PRODUCTO,
   leerImagen,
   MAX_IMAGEN_DE_BANNER,
   MAX_IMAGEN_DE_PRODUCTO,
   MAX_IMAGEN_MOVIL_DE_BANNER,
+  MAX_LOGO,
   MAX_MINIATURA_DE_PRODUCTO,
 } from '../catalogo/imagen.rules.mjs';
 import { DomainError } from '../comun/domain-error.mjs';
@@ -427,6 +429,19 @@ export function requireValidRates(rates) {
 }
 
 /**
+ * Logo de la tienda (lote 50, ADR-0037, PBI-0289; decisión de Sebastián Avila del 2026-11-27). El que se carga con
+ * «Cargar logo» llega como Data URL y se guarda como las demás imágenes (ADR-0026): un logo nuevo o cambiado en Data URL
+ * es un PNG, un JPEG o un WebP de hasta `LADO_LOGO` px y `MAX_LOGO` caracteres, comprobado en los bytes. El campo
+ * «URL/Data URL del logo» se queda, así que una dirección escrita (o vacío) se acepta como hasta ahora. El logo guardado
+ * antes, también una SVG en Data URL, sigue valiendo mientras no cambie.
+ */
+function logoValido(value, anterior) {
+  if (typeof value !== 'string') return false;
+  if (value === anterior || !/^s*data:/i.test(value)) return true;
+  return imagenCargada(value, { lado: LADO_LOGO, maximo: MAX_LOGO }) !== null;
+}
+
+/**
  * Contenido de la tienda: un objeto con las claves conocidas (las de `current`), cada una de su tipo, y un nombre
  * de tienda. Las claves desconocidas se descartan; las que no llegan conservan el valor vigente.
  */
@@ -462,6 +477,12 @@ export function requireValidConfig(config, current) {
     // Lote 19 (ADR-0021, PBI-0006): una dirección por pedido o una por producto.
     if (key === 'deliveryAddressMode' && !esModoDeDireccion(value))
       throw invalid('config', key, 'el pedido lleva una dirección por pedido o una por producto');
+    if (key === 'logoUrl' && !logoValido(value, current.logoUrl))
+      throw invalid(
+        'config',
+        key,
+        `el logo cargado debe ser PNG, JPG o WebP de hasta ${LADO_LOGO} px por lado; vuelve a cargarlo o escribe su dirección`,
+      );
     if (key === 'deliveryCutoffTime' && !esHoraDeCorte(value))
       throw invalid('config', key, 'la hora de corte va en formato de 24 horas (14:00) o vacía');
     const expected = typeof current[key];

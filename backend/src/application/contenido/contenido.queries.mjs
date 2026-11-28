@@ -1,7 +1,7 @@
 import { avisosVigentes } from '../../domain/admin/aviso-programado.rules.mjs';
 import { estilosDeLosBotones } from '../../domain/admin/colecciones.rules.mjs';
 import { terminosVigentes } from '../../domain/admin/terminos.rules.mjs';
-import { direccionDeImagen } from '../catalogo/imagenes.queries.mjs';
+import { direccionDeImagen, direccionDelLogo } from '../catalogo/imagenes.queries.mjs';
 
 /** Banner público con valores por defecto para los campos que el Admin no completó. */
 const bannerToPublic = (banner) => ({
@@ -44,6 +44,8 @@ export function createContenidoQueries({ store, now = () => new Date() }) {
     // Lote 17 (PBI-0177): con la versión vigente de los términos, que el checkout envía al aceptarlos.
     getSettings: () => ({
       ...store.state.config,
+      // Lote 50 (ADR-0037, PBI-0289): el logo cargado llega como dirección del BFF, como las demás imágenes.
+      logoUrl: direccionDelLogo(store.state.config.logoUrl),
       announcements: avisosVigentes(store.state.config.announcements ?? [], now()),
       ...terminosVigentes(store.state.termsVersions),
     }),

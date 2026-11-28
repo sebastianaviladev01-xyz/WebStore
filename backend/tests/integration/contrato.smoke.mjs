@@ -639,7 +639,8 @@ try {
     storeName: 'Tienda Smoke',
     primaryColor: '#123456',
     secondaryColor: '#654321',
-    logoUrl: 'data:image/svg+xml;base64,PHN2Zy8+',
+    // Lote 50 (ADR-0037, PBI-0289): el logo cargado se guarda como las demás imágenes y se publica por dirección.
+    logoUrl: dataUrl('png', png(64, 64)),
     sideNavigation: 'TV y audio, Cocina',
     shippingPageEnabled: false,
     privacyContent: 'Privacidad contractual',
@@ -658,11 +659,18 @@ try {
     throw new Error('CMS Admin no llegó al Storefront');
   if (coloresDeContenido(publicSettings).length || coloresDeContenido(snapshot.config).length)
     throw new Error('El PUT del snapshot con primaryColor y secondaryColor no debe publicarlos (AC-22)');
+  if (!/^\/bff\/images\/logo\?v=[A-Za-z0-9_-]{12}$/.test(publicSettings.logoUrl))
+    throw new Error(
+      'PBI-0289: los ajustes públicos deben traer la dirección del logo cargado, no su Data URL',
+    );
+  const logoServido = await raw(publicSettings.logoUrl);
   if (
-    publicSettings.logoUrl !== settings.logoUrl ||
-    publicSettings.sideNavigation !== 'TV y audio, Cocina' ||
-    publicSettings.shippingPageEnabled !== false
+    logoServido.status !== 200 ||
+    logoServido.headers.get('content-type') !== 'image/png' ||
+    dataUrl('png', Buffer.from(await logoServido.arrayBuffer())) !== settings.logoUrl
   )
+    throw new Error('PBI-0289: GET /bff/images/logo no sirve el logo cargado');
+  if (publicSettings.sideNavigation !== 'TV y audio, Cocina' || publicSettings.shippingPageEnabled !== false)
     throw new Error('Configuración pública incompleta');
 
   // Lote 15 (ADR-0021): listas de Contenido. La semilla ya no trae los campos de texto de antes.

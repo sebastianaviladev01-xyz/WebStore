@@ -18,10 +18,12 @@ Derivados de las fuentes citadas. Cada escenario se convierte en el `AC` del mis
 ### Escenario 01 – Identidad
 
 - **Dado** que el superadministrador está en Contenido
-- **Cuando** carga un logo, o indica su URL
-- **Entonces** la tienda muestra el logo nuevo. Los colores ya no se cambian en Contenido sino en Temas, desde la feature 002 (temas A, B y C y temas propios).
+- **Cuando** carga un logo como archivo («Cargar logo», PNG, JPG o WebP), o escribe su dirección en «URL/Data URL del logo»
+- **Entonces** la tienda muestra el logo nuevo. El logo cargado se guarda como las demás imágenes y la tienda lo recibe por dirección (ADR-0026); una dirección escrita llega tal cual, y un logo guardado antes se sigue viendo. Los colores ya no se cambian en Contenido sino en Temas, desde la feature 002 (temas A, B y C y temas propios).
 
-> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal. El logo se carga como archivo («Cargar logo»), pero se guarda como Data URL y el campo «URL/Data URL del logo» todavía acepta una URL escrita; desde la revisión de la demo del 2026-11-17 las demás imágenes se cargan como archivo y se sirven por dirección (PBI-0214, ADR-0026). Igualarlo queda registrado en PBI-0289.
+> Corregido el 2026-11-27 por la auditoría de las reuniones: el escenario seguía diciendo que Contenido cambia el color principal. El logo se cargaba como archivo («Cargar logo»), pero se guardaba como Data URL; desde la revisión de la demo del 2026-11-17 las demás imágenes se cargan como archivo y se sirven por dirección (PBI-0214, ADR-0026). Igualarlo quedó registrado en PBI-0289.
+>
+> Cambiado el 2026-11-27 por el lote 50 ([ADR-0037](../../../../adrs/0037-cerrar-por-lotes-los-pendientes-que-no-dependen-de-terceros.md); PBI-0289; decisión de Sebastián Avila (2026-11-27), en [decisiones pendientes](../../../PENDING-DECISIONS.md), «Lotes 50 a 56»), sin especificación propia: el logo se carga como archivo y se guarda por dirección, como las demás imágenes; un SVG ya no se carga, porque la tienda no puede recibirlo por dirección. El campo «URL/Data URL del logo» se queda por decisión de Sebastián Avila del 2026-11-27 («excepto lo de quitar el campo URL, eso se queda»). Lo prueban `frontend/tests/e2e/admin-ajustes-del-backoffice.spec.ts`, `backend/tests/integration/imagenes-cargadas.test.mjs` y `backend/tests/unit/domain/admin/logo.rules.test.mjs`.
 
 ### Escenario 02 – Navegación, contacto y pie
 

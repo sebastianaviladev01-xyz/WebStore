@@ -102,6 +102,12 @@ export const MAX_IMAGEN_DE_BANNER = 550 * 1024;
 /** Imagen del celular del banner, opcional: las de ejemplo miden 1100 px de ancho. */
 export const LADO_IMAGEN_MOVIL_DE_BANNER = 1200;
 export const MAX_IMAGEN_MOVIL_DE_BANNER = 200 * 1024;
+/**
+ * Logo de la tienda (lote 50, ADR-0037, PBI-0289; decisión de Sebastián Avila del 2026-11-27): se carga como las demás
+ * imágenes y el backoffice lo reduce como la imagen principal del producto, así que tiene sus mismos límites.
+ */
+export const LADO_LOGO = LADO_IMAGEN_DE_PRODUCTO;
+export const MAX_LOGO = MAX_IMAGEN_DE_PRODUCTO;
 
 /**
  * Formato y medidas de una imagen cargada si es una Data URL PNG, JPEG o WebP cuyo lado mayor no pasa de `lado` y que

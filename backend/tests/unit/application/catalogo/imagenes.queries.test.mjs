@@ -190,3 +190,40 @@ test('lote 25: sirve una foto de la galería por su posición y la imagen de la 
       `${coleccion}/${id}/${campo}`,
     );
 });
+
+/*
+ * Lote 50 (ADR-0037, PBI-0289; decisión de Sebastián Avila del 2026-11-27): el logo cargado se sirve por dirección,
+ * como las demás imágenes (ADR-0026): los ajustes públicos traen `/bff/images/logo?v={versión}` en lugar de la Data
+ * URL. Una dirección escrita en el campo, o un logo guardado antes como SVG, llegan tal cual.
+ */
+const conLogo = (logoUrl) => estado({ config: { storeName: 'Mi tienda', logoUrl } });
+
+test('PBI-0289: los ajustes públicos traen la dirección del logo cargado, con su versión', () => {
+  const logo = dataUrl('png', png(64, 64));
+  const ajustes = createContenidoQueries({ store: { state: conLogo(logo) } }).getSettings();
+  assert.match(ajustes.logoUrl, /^\/bff\/images\/logo\?v=[A-Za-z0-9_-]{12}$/);
+  assert.ok(!JSON.stringify(ajustes).includes('data:'), 'ninguna Data URL en los ajustes públicos');
+  const otro = createContenidoQueries({
+    store: { state: conLogo(dataUrl('png', png(32, 32))) },
+  }).getSettings();
+  assert.notEqual(otro.logoUrl, ajustes.logoUrl, 'la versión cambia con el logo');
+});
+
+test('PBI-0289: una dirección escrita, un logo SVG guardado antes o ninguno llegan tal cual', () => {
+  for (const logo of ['https://cdn.example.com/logo.png', svg, ''])
+    assert.equal(createContenidoQueries({ store: { state: conLogo(logo) } }).getSettings().logoUrl, logo);
+});
+
+test('PBI-0289: sirve el logo cargado; sin uno cargado PNG, JPG o WebP responde IMAGE_NOT_FOUND', () => {
+  const logo = dataUrl('webp', webp(400, 200));
+  const imagen = createImagenesQueries({ store: { state: conLogo(logo) } }).obtenerLogo();
+  assert.equal(imagen.tipo, 'webp');
+  assert.deepEqual(imagen.bytes, Buffer.from(logo.split(',')[1], 'base64'));
+  assert.match(imagen.version, VERSION);
+  for (const otro of ['https://cdn.example.com/logo.png', svg, ''])
+    assert.throws(
+      () => createImagenesQueries({ store: { state: conLogo(otro) } }).obtenerLogo(),
+      (error) => error.code === 'IMAGE_NOT_FOUND' && error.kind === 'not-found',
+      otro || '(vacío)',
+    );
+});

@@ -143,3 +143,26 @@ test('PBI-0214: el producto con la galería llena y la miniatura, y el banner co
   );
   assert.ok(foto.MAX_CARACTERES_IMAGEN_BANNER + foto.MAX_CARACTERES_IMAGEN_MOVIL_BANNER < limite);
 });
+
+// Lote 50 (ADR-0037, PBI-0289; decisión de Sebastián Avila del 2026-11-27): el logo se carga como las demás imágenes. Es
+// un PNG, un JPG o un WebP de hasta 15 MB que el Admin reduce como la imagen principal, con los límites que valida el BFF
+// (ya no un SVG, que la tienda no puede recibir por dirección). El campo de la URL se queda para escribir otra.
+test('PBI-0289: el logo es PNG, JPG o WebP de hasta 15 MB, con los límites del BFF; si no, se dice por qué', async () => {
+  const foto = await import(`data:text/javascript;base64,${Buffer.from(moduleSource).toString('base64')}`);
+  const bff = await import('../../../../../../../../backend/src/domain/catalogo/imagen.rules.mjs');
+  assert.equal(foto.LADO_MAXIMO_FOTO, bff.LADO_LOGO);
+  assert.equal(foto.BYTES_MAXIMOS_FOTO, bff.MAX_LOGO);
+  const { LIMITE_ARCHIVO_FOTO, motivoParaNoUsarLogo } = foto;
+  for (const type of ['image/png', 'image/jpeg', 'image/webp'])
+    assert.equal(motivoParaNoUsarLogo({ type, size: LIMITE_ARCHIVO_FOTO }), null, type);
+  for (const type of ['image/svg+xml', 'image/gif', 'application/pdf', ''])
+    assert.equal(
+      motivoParaNoUsarLogo({ type, size: 10 }),
+      'Usa un logo PNG, JPG o WebP, o escribe su dirección en «URL/Data URL del logo».',
+      type,
+    );
+  assert.equal(
+    motivoParaNoUsarLogo({ type: 'image/png', size: LIMITE_ARCHIVO_FOTO + 1 }),
+    'El logo pesa más de 15 MB. Usa uno más liviano.',
+  );
+});

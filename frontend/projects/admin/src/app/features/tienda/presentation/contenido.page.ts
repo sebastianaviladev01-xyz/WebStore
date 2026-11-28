@@ -23,7 +23,7 @@ import {
   FilaDeAviso,
   motivoDeVigenciaDeAviso,
 } from '../domain/aviso.rules';
-import { BYTES_MAXIMOS_FOTO } from '../domain/foto.rules';
+import { motivoParaNoUsarLogo } from '../domain/foto.rules';
 import {
   LUGARES_DE_SUGERIDOS,
   MAXIMOS_DE_CONTENIDO,
@@ -46,7 +46,7 @@ import { mensajeDeError } from '../domain/formulario.rules';
 import { ZONA_HORARIA_LIMA } from '../domain/pedido.rules';
 import { conservarBorrador } from './borrador';
 import { CampoDeLista, FilaDeLista, ListaContenidoComponent } from './lista-contenido.component';
-import { BYTES_MAXIMOS_ARCHIVO, MENSAJE_LOGO_NO_CABE, reducirFoto } from './reducir-foto';
+import { MENSAJE_LOGO_NO_CABE, reducirFoto } from './reducir-foto';
 import { IconoDirective, TituloPaginaDirective } from '../../../shared/ui/icono.directive';
 
 /** Control de texto vacío con sus validadores. */
@@ -152,9 +152,13 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
         </div>
         <div>
           <h2 class="text-lg font-semibold">Logo de la tienda</h2>
+          <!--
+            Lote 50 (ADR-0037, PBI-0289): el logo se carga como las demás imágenes; el campo de la URL se queda
+            (Sebastián Avila, 2026-11-27).
+          -->
           <p class="mt-1 text-sm leading-6 text-muted">
-            Puedes cargar PNG, JPG, WebP o SVG. En esta demo se guarda como Data URL en el Mock BFF para que
-            el Storefront lo consuma de inmediato.
+            Puedes cargar PNG, JPG o WebP de hasta 15 MB: lo reducimos y la tienda lo recibe como las demás
+            imágenes. También puedes escribir la dirección de un logo publicado en «URL/Data URL del logo».
           </p>
           <div class="mt-4 flex flex-wrap gap-3">
             <label
@@ -162,7 +166,12 @@ const gruposDelPieValidos: ValidatorFn = (control) => {
             >
               <svg wsAdminIcono="cargar"></svg>
               Cargar logo
-              <input type="file" accept="image/*,.svg" class="sr-only" (change)="onLogoSelected($event)" />
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                class="sr-only"
+                (change)="onLogoSelected($event)"
+              />
             </label>
             @if (form.controls.logoUrl.value) {
               <button
@@ -484,39 +493,22 @@ export class ContenidoPage {
   }
 
   /**
-   * Carga el logo como Data URL. Una imagen de mapa de bits se reduce y se comprime como las fotos de los productos
-   * (PBI-0119); un SVG se usa tal cual si no pesa más que una foto. Lo que no cabe se rechaza con un motivo.
+   * Carga el logo como las demás imágenes (lote 50, ADR-0037, PBI-0289): un PNG, un JPG o un WebP que se reduce y se
+   * comprime como la imagen principal del producto (PBI-0119); el BFF lo guarda y la tienda lo recibe por dirección
+   * (ADR-0026). Lo que no se puede usar, o no cabe, se rechaza con un motivo.
    */
   protected onLogoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
     const file = input.files?.[0];
+    input.value = '';
     this.logoError.set(null);
     if (!file) return;
-    const svg = file.type === 'image/svg+xml' || file.name.toLocaleLowerCase().endsWith('.svg');
-    if (!file.type.startsWith('image/') && !svg) {
-      input.value = '';
+    const motivo = motivoParaNoUsarLogo(file);
+    if (motivo) {
+      this.logoError.set(motivo);
       return;
     }
-    if (file.size > BYTES_MAXIMOS_ARCHIVO) {
-      input.value = '';
-      this.logoError.set('El logo pesa más de 15 MB. Usa uno más liviano.');
-      return;
-    }
-    if (!svg) {
-      input.value = '';
-      void reducirFoto(file).then((url) => this.usarLogo(url, MENSAJE_LOGO_NO_CABE));
-      return;
-    }
-    const reader = new FileReader();
-    reader.addEventListener('load', () => {
-      const url = typeof reader.result === 'string' ? reader.result : '';
-      this.usarLogo(
-        url.length <= BYTES_MAXIMOS_FOTO ? url : null,
-        `El SVG pesa más de ${Math.round(BYTES_MAXIMOS_FOTO / 1024)} KB. Simplifícalo o usa una URL.`,
-      );
-      input.value = '';
-    });
-    reader.readAsDataURL(file);
+    void reducirFoto(file).then((url) => this.usarLogo(url, MENSAJE_LOGO_NO_CABE));
   }
 
   private usarLogo(url: string | null, motivo: string): void {
